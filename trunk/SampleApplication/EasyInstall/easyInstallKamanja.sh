@@ -57,33 +57,64 @@ mkdir -p $installPath/template
 mkdir -p $installPath/template/config
 mkdir -p $installPath/template/script
 mkdir -p $installPath/input
-mkdir -p $installPath/input/application-2-Healthcare
-mkdir -p $installPath/input/application-2-Healthcare/bin
-mkdir -p $installPath/input/application-2-Healthcare/data
-mkdir -p $installPath/input/application-2-Healthcare/metadata
-mkdir -p $installPath/input/application-2-Healthcare/metadata/config
-mkdir -p $installPath/input/application-2-Healthcare/metadata/container
-mkdir -p $installPath/input/application-2-Healthcare/metadata/function
-mkdir -p $installPath/input/application-2-Healthcare/metadata/message
-mkdir -p $installPath/input/application-2-Healthcare/metadata/model
-mkdir -p $installPath/input/application-2-Healthcare/metadata/script
-mkdir -p $installPath/input/application-2-Healthcare/metadata/type
-mkdir -p $installPath/input/application-2-Healthcare/template
+mkdir -p $installPath/input/Medical
+mkdir -p $installPath/input/Medical/bin
+mkdir -p $installPath/input/Medical/data
+mkdir -p $installPath/input/Medical/metadata
+mkdir -p $installPath/input/Medical/metadata/config
+mkdir -p $installPath/input/Medical/metadata/container
+mkdir -p $installPath/input/Medical/metadata/function
+mkdir -p $installPath/input/Medical/metadata/message
+mkdir -p $installPath/input/Medical/metadata/model
+mkdir -p $installPath/input/Medical/metadata/script
+mkdir -p $installPath/input/Medical/metadata/type
+mkdir -p $installPath/input/Medical/template
 
-# application-1-HelloWorld
-mkdir -p $installPath/input/application-1-HelloWorld
-mkdir -p $installPath/input/application-1-HelloWorld/bin
-mkdir -p $installPath/input/application-1-HelloWorld/data
-mkdir -p $installPath/input/application-1-HelloWorld/metadata
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/config
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/container
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/function
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/message
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/model
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/script
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/type
-mkdir -p $installPath/input/application-1-HelloWorld/template
-# application-1-HelloWorld
+# HelloWorld
+mkdir -p $installPath/input/HelloWorld
+mkdir -p $installPath/input/HelloWorld/bin
+mkdir -p $installPath/input/HelloWorld/data
+mkdir -p $installPath/input/HelloWorld/metadata
+mkdir -p $installPath/input/HelloWorld/metadata/config
+mkdir -p $installPath/input/HelloWorld/metadata/container
+mkdir -p $installPath/input/HelloWorld/metadata/function
+mkdir -p $installPath/input/HelloWorld/metadata/message
+mkdir -p $installPath/input/HelloWorld/metadata/model
+mkdir -p $installPath/input/HelloWorld/metadata/script
+mkdir -p $installPath/input/HelloWorld/metadata/type
+mkdir -p $installPath/input/HelloWorld/template
+# HelloWorld
+
+# Telecom
+mkdir -p $installPath/input/Telecom
+mkdir -p $installPath/input/Telecom/bin
+mkdir -p $installPath/input/Telecom/data
+mkdir -p $installPath/input/Telecom/metadata
+mkdir -p $installPath/input/Telecom/metadata/config
+mkdir -p $installPath/input/Telecom/metadata/container
+mkdir -p $installPath/input/Telecom/metadata/function
+mkdir -p $installPath/input/Telecom/metadata/message
+mkdir -p $installPath/input/Telecom/metadata/model
+mkdir -p $installPath/input/Telecom/metadata/script
+mkdir -p $installPath/input/Telecom/metadata/type
+mkdir -p $installPath/input/Telecom/template
+# Telecom
+
+#Finance
+mkdir -p $installPath/input/Finance
+mkdir -p $installPath/input/Finance/bin
+mkdir -p $installPath/input/Finance/data
+mkdir -p $installPath/input/Finance/metadata
+mkdir -p $installPath/input/Finance/metadata/config
+mkdir -p $installPath/input/Finance/metadata/container
+mkdir -p $installPath/input/Finance/metadata/function
+mkdir -p $installPath/input/Finance/metadata/message
+mkdir -p $installPath/input/Finance/metadata/model
+mkdir -p $installPath/input/Finance/metadata/script
+mkdir -p $installPath/input/Finance/metadata/type
+mkdir -p $installPath/input/Finance/template
+#Finance
+
 
 bin=$installPath/bin
 systemlib=$installPath/lib/system
@@ -133,9 +164,7 @@ cp $ivyPath/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.0.4.1.jar 
 cp $ivyPath/cache/org.codehaus.jackson/jackson-core-asl/jars/jackson-core-asl-1.8.8.jar $systemlib
 cp $ivyPath/cache/javax.xml.bind/jaxb-api/jars/jaxb-api-2.2.2.jar $systemlib
 cp $ivyPath/cache/com.sun.jersey/jersey-core/bundles/jersey-core-1.9.jar $systemlib
-cp $ivyPath/cache/com.sun.xml.bind/jaxb-impl/jars/jaxb-impl-2.2.7.jar $systemlib
 cp $ivyPath/cache/com.google.guava/guava/bundles/guava-16.0.1.jar $systemlib
-cp $ivyPath/cache/org.apache.commons/commons-math3/jars/commons-math3-3.5.jar $systemlib
 cp $srcPath/EnvContexts/SimpleEnvContextImpl/target/scala-2.10/simpleenvcontextimpl_2.10-1.0.jar $systemlib
 cp $srcPath/MetadataAPI/target/scala-2.10/metadataapi_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/commons-digester/commons-digester/jars/commons-digester-1.8.jar $systemlib
@@ -187,7 +216,6 @@ cp $ivyPath/cache/com.sdicons.jsontools/jsontools-core/jars/jsontools-core-1.7.j
 cp $srcPath/Utils/Controller/target/scala-2.10/controller_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/junit/junit/jars/junit-3.8.1.jar $systemlib
 cp $ivyPath/cache/com.typesafe/config/bundles/config-1.2.0.jar $systemlib
-cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.8.1-javadoc.jar $systemlib
 cp $srcPath/ApiImpl/target/scala-2.10/apiimpl_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/dhbcore.jar $systemlib
 cp $ivyPath/cache/com.google.guava/guava/bundles/guava-18.0.jar $systemlib
@@ -237,10 +265,8 @@ cp $ivyPath/cache/org.scalamacros/quasiquotes_2.10.4/jars/quasiquotes_2.10.4-2.0
 cp $ivyPath/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar $systemlib
 cp $ivyPath/cache/org.cloudera.htrace/htrace-core/jars/htrace-core-2.04.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-util/bundles/spray-util-1.3.1.jar $systemlib
-cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.3.jar $systemlib
 cp $srcPath/Utils/Security/SimpleApacheShiroAdapter/target/scala-2.10/simpleapacheshiroadapter_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.wmq.common.jar $systemlib
-cp $ivyPath/cache/com.sun.xml.fastinfoset/FastInfoset/jars/FastInfoset-1.2.12.jar $systemlib
 cp $ivyPath/cache/org.hamcrest/hamcrest-core/jars/hamcrest-core-1.3.jar $systemlib
 cp $ivyPath/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar $systemlib
 cp $ivyPath/cache/org.parboiled/parboiled-scala_2.10/bundles/parboiled-scala_2.10-1.1.6.jar $systemlib
@@ -251,7 +277,6 @@ cp $ivyPath/cache/org.apache.zookeeper/zookeeper/jars/zookeeper-3.4.6.jar $syste
 cp $ivyPath/cache/org.objenesis/objenesis/jars/objenesis-1.2.jar $systemlib
 cp $ivyPath/cache/org.apache.hadoop/hadoop-annotations/jars/hadoop-annotations-2.4.1.jar $systemlib
 cp $srcPath/SampleApplication/CustomUdfLib/target/scala-2.10/customudflib_2.10-1.0.jar $systemlib
-cp $ivyPath/cache/com.sun.xml.bind/jaxb-core/jars/jaxb-core-2.2.7.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.wmq.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/json-simple-1.1.1.jar $systemlib
 cp $srcPath/Utils/Serialize/target/scala-2.10/serialize_2.10-1.0.jar $systemlib
@@ -260,7 +285,6 @@ cp $ivyPath/cache/org.apache.httpcomponents/httpclient/jars/httpclient-4.1.2.jar
 cp $srcPath/BaseTypes/target/scala-2.10/basetypes_2.10-0.1.0.jar $systemlib
 cp $ivyPath/cache/ch.qos.logback/logback-classic/jars/logback-classic-1.0.12.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.provider.jar $systemlib
-cp $ivyPath/cache/javax.xml.bind/jaxb-api/jars/jaxb-api-2.2.7.jar $systemlib
 cp $srcPath/MetadataBootstrap/Bootstrap/target/scala-2.10/bootstrap_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.jvnet.mimepull/mimepull/jars/mimepull-1.9.4.jar $systemlib
 cp $ivyPath/cache/io.netty/netty/bundles/netty-3.9.0.Final.jar $systemlib
@@ -308,11 +332,9 @@ cp $ivyPath/cache/voldemort/voldemort/jars/voldemort-0.96.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-http/bundles/spray-http-1.3.1.jar $systemlib
 cp $srcPath/Utils/JdbcDataCollector/target/scala-2.10/jdbcdatacollector_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/uk.co.bigbeeconsultants/bee-client_2.10/jars/bee-client_2.10-0.28.0.jar $systemlib
-cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.7.jar $systemlib
 cp $ivyPath/cache/com.fasterxml.jackson.core/jackson-core/bundles/jackson-core-2.3.1.jar $systemlib
 cp $ivyPath/cache/commons-lang/commons-lang/jars/commons-lang-2.6.jar $systemlib
 cp $ivyPath/cache/commons-digester/commons-digester/jars/commons-digester-1.8.1.jar $systemlib
-cp $ivyPath/cache/com.sun.istack/istack-commons-runtime/jars/istack-commons-runtime-2.16.jar $systemlib
 cp $ivyPath/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.10.jar $systemlib
 cp $ivyPath/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.23.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.ref.jar $systemlib
@@ -331,7 +353,6 @@ cp $ivyPath/cache/org.apache.hbase/hbase-common/jars/hbase-common-0.98.4-hadoop2
 cp $ivyPath/cache/com.datastax.cassandra/cassandra-driver-core/bundles/cassandra-driver-core-2.1.2.jar $systemlib
 cp $ivyPath/cache/org.apache.shiro/shiro-core/bundles/shiro-core-1.2.3.jar $systemlib
 cp $ivyPath/cache/commons-beanutils/commons-beanutils/jars/commons-beanutils-1.8.3.jar $systemlib
-cp $ivyPath/cache/javax.xml.bind/jsr173_api/jars/jsr173_api-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.matchspace.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-sslengine/jars/jetty-sslengine-6.1.26.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.remote.jar $systemlib
@@ -346,14 +367,12 @@ cp $ivyPath/cache/javax.servlet/servlet-api/jars/servlet-api-2.5.jar $systemlib
 cp $srcPath/KamanjaData/target/scala-2.10/kamanjadata_2.10-0.1.0.jar $systemlib
 
 cp $ivyPath/cache/org.ow2.asm/asm-commons/jars/asm-commons-4.0.jar $systemlib
-cp $ivyPath/cache/org.scala-lang/scala-actors/jars/scala-actors-2.10.4.jar $systemlib
 cp $srcPath/Utils/ZooKeeper/CuratorListener/target/scala-2.10/zookeeperlistener_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.kafka/kafka_2.10/jars/kafka_2.10-0.8.1.1.jar $systemlib
 cp $srcPath/Pmml/PmmlUdfs/target/scala-2.10/pmmludfs_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.jar $systemlib
-cp $ivyPath/cache/commons-codec/commons-codec/jars/commons-codec-1.10.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.local.jar $systemlib
-cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.8.1.jar $systemlib
+cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.8.2.jar $systemlib
 cp $ivyPath/cache/com.typesafe.akka/akka-slf4j_2.10/jars/akka-slf4j_2.10-2.3.2.jar $systemlib
 cp $ivyPath/cache/jline/jline/jars/jline-0.9.94.jar $systemlib
 cp $ivyPath/cache/org.apache.commons/commons-math3/jars/commons-math3-3.1.1.jar $systemlib
@@ -361,7 +380,6 @@ cp $ivyPath/cache/xmlenc/xmlenc/jars/xmlenc-0.52.jar $systemlib
 cp $ivyPath/cache/org.apache.httpcomponents/httpcore/jars/httpcore-4.1.2.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-json_2.10/jars/spray-json_2.10-1.2.5.jar $systemlib
 cp $ivyPath/cache/com.codahale.metrics/metrics-core/bundles/metrics-core-3.0.2.jar $systemlib
-cp $ivyPath/cache/commons-codec/commons-codec/jars/commons-codec-1.4.jar $systemlib
 cp $ivyPath/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-testkit/jars/spray-testkit-1.3.1.jar $systemlib
 cp $srcPath/Storage/Cassandra/target/scala-2.10/*.jar $systemlib
@@ -375,6 +393,7 @@ cp $srcPath/Storage/Voldemort/target/scala-2.10/*.jar $systemlib
 cp $srcPath/InputOutputAdapters/InputOutputAdapterBase/target/scala-2.10/*.jar $systemlib
 cp $srcPath/KamanjaUtils/target/scala-2.10/kamanjautils_2.10-1.0.jar $systemlib
 cp $srcPath/SecurityAdapters/SecurityAdapterBase/target/scala-2.10/*.jar $systemlib
+cp $ivyPath/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar $systemlib
 
 # an extra copy to make sure ?  
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/*.jar $systemlib
@@ -396,15 +415,26 @@ cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 
 echo "Prepare test messages and copy them into place..."
 cd $srcPath/Utils/KVInit/src/main/resources
-cp copd_demo.csv.gz $installPath/input/application-2-Healthcare/data
+cp copd_demo.csv.gz $installPath/input/Medical/data
 
 cd $srcPath/SampleApplication/Medical/SampleData
-cp *.csv $installPath/input/application-2-Healthcare/data
+cp *.csv $installPath/input/Medical/data
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/data
-cp * $installPath/input/application-1-HelloWorld/data
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/data
+# HelloWorld
+
+#Finance
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
+cp * $installPath/input/Finance/data
+#Finance
+
+# Telecom
+cd $srcPath/SampleApplication/Telecom/data
+cp * $installPath/input/Telecom/data
+# Telecom
+
 
 # *******************************
 # Copy documentation files
@@ -420,60 +450,97 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 
 # Not copying anything from here
 # cd $srcPath/SampleApplication/Medical/Configs
-# cp * $installPath/input/application-2-Healthcare/metadata/config
+# cp * $installPath/input/Medical/metadata/config
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
-cp * $installPath/input/application-2-Healthcare/metadata/container
+cp * $installPath/input/Medical/metadata/container
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/container
-cp * $installPath/input/application-1-HelloWorld/metadata/container
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/metadata/container
+# HelloWorld
 
 cd $srcPath/SampleApplication/Medical/Functions
-cp * $installPath/input/application-2-Healthcare/metadata/function
+cp * $installPath/input/Medical/metadata/function
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
-cp * $installPath/input/application-2-Healthcare/metadata/message
+cp * $installPath/input/Medical/metadata/message
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/message
-cp * $installPath/input/application-1-HelloWorld/metadata/message
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/metadata/message
+# HelloWorld
 
 cd $srcPath/SampleApplication/Medical/Models
-cp *.* $installPath/input/application-2-Healthcare/metadata/model
+cp *.* $installPath/input/Medical/metadata/model
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/model
-cp * $installPath/input/application-1-HelloWorld/metadata/model
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/metadata/model
+# HelloWorld
 
 cd $srcPath/SampleApplication/Medical/Types
-cp * $installPath/input/application-2-Healthcare/metadata/type
+cp * $installPath/input/Medical/metadata/type
 
 cd $srcPath/SampleApplication/Medical/template
-cp -rf * $installPath/input/application-2-Healthcare/template
+cp -rf * $installPath/input/Medical/template
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/template
-cp -rf * $installPath/input/application-1-HelloWorld/template
-# application-1-HelloWorld
+cp -rf * $installPath/input/HelloWorld/template
+# HelloWorld
+
+#Finance
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/container
+cp * $installPath/input/Finance/metadata/container
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/message
+cp * $installPath/input/Finance/metadata/message
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/model
+cp *.* $installPath/input/Finance/metadata/model
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/type
+cp * $installPath/input/Finance/metadata/type
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/template
+cp -rf * $installPath/input/Finance/template
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/config
+cp -rf * $installPath/input/Finance/metadata/config
+#Finance
+
+#Telecom
+cd $srcPath/SampleApplication/Telecom/metadata/container
+cp * $installPath/input/Telecom/metadata/container
+
+cd $srcPath/SampleApplication/Telecom/metadata/message
+cp * $installPath/input/Telecom/metadata/message
+
+cd $srcPath/SampleApplication/Telecom/metadata/model
+cp *.* $installPath/input/Telecom/metadata/model
+
+cd $srcPath/SampleApplication/Telecom/metadata/template
+cp -rf * $installPath/input/Telecom/template
+
+cd $srcPath/SampleApplication/Telecom/metadata/config
+cp -rf * $installPath/input/Telecom/metadata/config
+#Telecom
 
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
 
 cd $srcPath/SampleApplication/HelloWorld/config
-cp -rf * $installPath/input/application-1-HelloWorld/metadata/config
+cp -rf * $installPath/input/HelloWorld/metadata/config
 
 cd $srcPath/SampleApplication/Medical/Configs
-cp -rf * $installPath/input/application-2-Healthcare/metadata/config
+cp -rf * $installPath/input/Medical/metadata/config
 
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
 
 bash $installPath/bin/SetPaths.sh $KafkaRootDir
 
-chmod 0700 $installPath/input/application-2-Healthcare/bin/*sh
+chmod 0700 $installPath/input/Medical/bin/*sh
 
 echo "Kamanja install complete..."

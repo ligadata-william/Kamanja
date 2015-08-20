@@ -16,6 +16,9 @@
 		"Type": "System.Long"
 	  }
 	],
+	"PrimaryKey": [
+	  "actNo"
+	],
 	"PartitionKey": [
 	  "actNo"
 	]

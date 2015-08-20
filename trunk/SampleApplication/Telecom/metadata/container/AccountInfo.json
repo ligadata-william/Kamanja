@@ -9,12 +9,15 @@
 	"Fields": [
 	  {
 		"Name": "actNo",
-		"Type": "System.Long"
+		"Type": "System.String"
 	  },
 	  {
 		"Name": "thresholdAlertOptOut",
 		"Type": "System.Boolean"
 	  }
+	],
+	"PrimaryKey": [
+	  "actNo"
 	],
 	"PartitionKey": [
 	  "actNo"

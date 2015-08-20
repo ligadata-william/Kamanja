@@ -212,6 +212,10 @@ class MappedModelResults extends ModelResultBase {
 }
 
 trait EnvContext {
+  var _mgr: MdMgr = _
+  def setMdMgr(mgr: MdMgr) : Unit
+  def getPropertyValue(clusterId: String, key:String): String
+  
   def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase]
   def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase]
   def saveOne(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit
@@ -220,7 +224,7 @@ trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
   def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
-  def AddNewMessageOrContainers(mgr: MdMgr, dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit
+  def AddNewMessageOrContainers(dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit
   def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase
   def getHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] // if appendCurrentChanges is true return output includes the in memory changes (new or mods) at the end otherwise it ignore them.
@@ -230,19 +234,27 @@ trait EnvContext {
   def containsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size
 
   // Adapters Keys & values
-  def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit
-  def getAdapterUniqueKeyValue(transId: Long, key: String): (String, Int, Int)
+  def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit
+  def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)])
+/*
   def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] // Get all Status information from intermediate table. No Transaction required here.
   def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from intermediate table for given keys. No Transaction required here.
-  def getAllFinalStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from Final table. No Transaction required here.
-  def saveStatus(transId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit // Saving Status
+*/
+  def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String))] // Get Status information from Final table. No Transaction required here.
 
+  def getAllIntermediateCommittingInfo: Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information. Once we commit we don't have this, because we remove after commit
+
+  def getAllIntermediateCommittingInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information.
+
+  def removeCommittedKey(transId: Long, key: String): Unit
+  def removeCommittedKeys(keys: Array[String]): Unit
+  
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
   def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit
   def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult]
 
   // Final Commit for the given transaction
-  def commitData(transId: Long): Unit
+  def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit
 
   // Save State Entries on local node & on Leader
   def PersistLocalNodeStateEntries: Unit
@@ -294,8 +306,10 @@ class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames
 }
 
 class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
+  def getPropertyValue(clusterId: String, key:String): String = (txnContext.getPropertyValue(clusterId, key))
 }
 
 class TransactionContext(val transId: Long, val gCtx: EnvContext, val tenantId: String) {
+  def getPropertyValue(clusterId: String, key:String): String = {gCtx.getPropertyValue(clusterId, key)}
 }
 

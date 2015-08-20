@@ -28,16 +28,10 @@ trait InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter
 }
 
-class ValidateAdapterFoundInfo {
-  var _val: PartitionUniqueRecordValue = null
-  var _transformProcessingMsgIdx: Int = 0
-  var _transformTotalMsgIdx: Int = 0
-}
-
 class StartProcPartInfo {
   var _key: PartitionUniqueRecordKey = null
   var _val: PartitionUniqueRecordValue = null
-  var _validateInfo: ValidateAdapterFoundInfo = null // If nothing is found from ValidateInfo, attach same value as _val.
+  var _validateInfoVal: PartitionUniqueRecordValue = null
 }
 
 // Input Adapter
@@ -80,7 +74,7 @@ trait ExecContext {
   val curPartitionKey: PartitionUniqueRecordKey
   val callerCtxt: InputAdapterCallerContext
 
-  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit
 }
 
 trait ExecContextObj {

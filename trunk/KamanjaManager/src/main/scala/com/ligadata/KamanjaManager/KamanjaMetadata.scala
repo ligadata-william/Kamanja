@@ -547,7 +547,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, containerNames, true, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Containers
+        envCtxt.AddNewMessageOrContainers(KamanjaConfiguration.dataDataStoreInfo, containerNames, true, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Containers
       }
     }
 
@@ -556,7 +556,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, topMessageNames, false, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Messages
+        envCtxt.AddNewMessageOrContainers(KamanjaConfiguration.dataDataStoreInfo, topMessageNames, false, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Messages
       }
     }
 

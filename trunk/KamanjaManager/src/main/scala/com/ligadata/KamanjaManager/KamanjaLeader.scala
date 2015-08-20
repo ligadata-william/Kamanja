@@ -2,7 +2,7 @@
 package com.ligadata.KamanjaManager
 
 import com.ligadata.KamanjaBase._
-import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo, ValidateAdapterFoundInfo }
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo }
 import com.ligadata.kamanja.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
@@ -23,6 +23,7 @@ import org.json4s.jackson.JsonMethods._
 import org.apache.curator.utils.ZKPaths
 import scala.actors.threadpool.{ Executors, ExecutorService }
 import com.ligadata.Exceptions.StackTrace
+import scala.collection.JavaConversions._
 
 case class AdapMaxPartitions(Adap: String, MaxParts: Int)
 case class NodeDistMap(Adap: String, Parts: List[String])
@@ -101,6 +102,78 @@ object KamanjaLeader {
     canRedistribute = redistFlag
   }
 
+  private def SendUnSentInfoToOutputAdapters: Unit = lock.synchronized {
+    // LOG.info("SendUnSentInfoToOutputAdapters -- envCtxt:" + envCtxt + ", outputAdapters:" + outputAdapters)
+    if (envCtxt != null && outputAdapters != null) {
+      // Information found in Committing list
+      val committingInfo = envCtxt.getAllIntermediateCommittingInfo // Array[(String, (Long, String, List[(String, String)]))]
+
+      LOG.info("Information found in Committing Info. table:" + committingInfo.map(info => (info._1, (info._2._1, info._2._2, info._2._3.mkString(";")))).mkString(","))
+
+      if (committingInfo != null && committingInfo.size > 0) {
+        // For current key, we need to hold the values of Committing, What ever we have in main table, Validate Adapter Info
+        val currentValues = scala.collection.mutable.Map[String, ((Long, String, List[(String, String)]), (Long, String), (String, Int, Int, Long))]()
+
+        committingInfo.foreach(ci => {
+          currentValues(ci._1.toLowerCase) = (ci._2, null, null)
+        })
+
+        val keys = committingInfo.map(info => { info._1 })
+
+        // Get AdapterUniqKvDataInfo 
+        val allAdapterUniqKvDataInfo = envCtxt.getAllAdapterUniqKvDataInfo(keys)
+
+        if (allAdapterUniqKvDataInfo != null) {
+          LOG.debug("Information found in data table:" + allAdapterUniqKvDataInfo.mkString(","))
+          allAdapterUniqKvDataInfo.foreach(ai => {
+            val key = ai._1.toLowerCase
+            val fndVal = currentValues.getOrElse(key, null)
+            if (fndVal != null) {
+              currentValues(key) = (fndVal._1, ai._2, null)
+            }
+          })
+        }
+
+        // Get recent information from output validators
+        val validateFndKeysAndVals = getValidateAdaptersInfo
+        if (validateFndKeysAndVals != null) {
+          LOG.debug("Information found in Validate Adapters:" + validateFndKeysAndVals.mkString(","))
+          validateFndKeysAndVals.foreach(validatekv => {
+            val key = validatekv._1.toLowerCase
+            val fndVal = currentValues.getOrElse(key, null)
+            if (fndVal != null) {
+              currentValues(key) = (fndVal._1, fndVal._2, validatekv._2)
+            }
+          })
+        }
+
+        // Now find which one we need to resend
+        // BUGBUG:: Not yet handling M/N Sub Messages for a Message
+        var tmpCntr = 0
+        currentValues.foreach(possibleKeyToSend => {
+          // We should not have possibleKeyToSend._2._1._1 < possibleKeyToSend._2._2._1 and if it is possibleKeyToSend._2._1._1 > possibleKeyToSend._2._2._1, the data is not yet committed to main table.
+          if (possibleKeyToSend._2._1 != null && possibleKeyToSend._2._2 != null && possibleKeyToSend._2._1._1 == possibleKeyToSend._2._2._1) { // This is just committing record and is written in main table.
+            if (possibleKeyToSend._2._3 == null || possibleKeyToSend._2._1._1 != possibleKeyToSend._2._3._4) { // Not yet written in. possibleKeyToSend._2._1._1 < possibleKeyToSend._2._3._4 should not happen and possibleKeyToSend._2._1._1 == possibleKeyToSend._2._3._4 is already written.
+              val outputResults = possibleKeyToSend._2._1._3
+              if (outputResults != null && outputAdapters != null) {
+                // Not yet checking for Adapter Name matches
+                outputResults.foreach(adapteroutput => {
+                  outputAdapters.foreach(o => {
+                    o.send(adapteroutput._2, tmpCntr.toString)
+                    tmpCntr += 1
+                  })
+                })
+                LOG.debug("All %d results sent to each output queues of %d".format(outputResults.size, outputAdapters.size))
+              }
+            }
+          }
+        })
+        // Remove after sending again 
+        envCtxt.removeCommittedKeys(keys)
+      }
+    }
+  }
+
   private def UpdatePartitionsNodeData(eventType: String, eventPath: String, eventPathData: Array[Byte]): Unit = lock.synchronized {
     try {
       val evntPthData = if (eventPathData != null) (new String(eventPathData)) else "{}"
@@ -119,6 +192,8 @@ object KamanjaLeader {
             if (expectedNodesAction.compareToIgnoreCase(action) == 0) {
               nodesStatus += extractedNode
               if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
+                // Send the data to output queues in case if anything not sent before
+                SendUnSentInfoToOutputAdapters
                 envCtxt.PersistRemainingStateEntriesOnLeader
                 nodesStatus.clear
                 expectedNodesAction = "distributed"
@@ -172,6 +247,103 @@ object KamanjaLeader {
     }
   }
 
+  private def getAllPartitionsToValidate: (Array[(String, String)], scala.collection.immutable.Map[String, Set[String]]) = lock.synchronized {
+    val allPartitionUniqueRecordKeys = ArrayBuffer[(String, String)]()
+    val allPartsToValidate = scala.collection.mutable.Map[String, Set[String]]()
+
+    // Get all PartitionUniqueRecordKey for all Input Adapters
+    inputAdapters.foreach(ia => {
+      val uk = ia.GetAllPartitionUniqueRecordKey
+      val name = ia.UniqueName
+      val ukCnt = if (uk != null) uk.size else 0
+      adapterMaxPartitions(name) = ukCnt
+      if (ukCnt > 0) {
+        val serUK = uk.map(k => {
+          val kstr = k.Serialize
+          LOG.debug("Unique Key in %s => %s".format(name, kstr))
+          (name, kstr)
+        })
+        allPartitionUniqueRecordKeys ++= serUK
+        allPartsToValidate(name) = serUK.map(k => k._2).toSet
+      } else {
+        allPartsToValidate(name) = Set[String]()
+      }
+    })
+    return (allPartitionUniqueRecordKeys.toArray, allPartsToValidate.toMap)
+  }
+
+  private def getValidateAdaptersInfo: scala.collection.immutable.Map[String, (String, Int, Int, Long)] = lock.synchronized {
+    val savedValidatedAdaptInfo = envCtxt.GetValidateAdapterInformation
+    val map = scala.collection.mutable.Map[String, String]()
+
+    LOG.debug("savedValidatedAdaptInfo: " + savedValidatedAdaptInfo.mkString(","))
+
+    savedValidatedAdaptInfo.foreach(kv => {
+      map(kv._1.toLowerCase) = kv._2
+    })
+
+    CollectKeyValsFromValidation.clear
+    validateInputAdapters.foreach(via => {
+      // Get all Begin values for Unique Keys
+      val begVals = via.getAllPartitionBeginValues
+      val finalVals = new ArrayBuffer[StartProcPartInfo](begVals.size)
+
+      // Replace the newly found ones
+      val nParts = begVals.size
+      for (i <- 0 until nParts) {
+        val key = begVals(i)._1.Serialize.toLowerCase
+        val foundVal = map.getOrElse(key, null)
+
+        val info = new StartProcPartInfo
+
+        if (foundVal != null) {
+          val desVal = via.DeserializeValue(foundVal)
+          info._validateInfoVal = desVal
+          info._key = begVals(i)._1
+          info._val = desVal
+        } else {
+          info._validateInfoVal = begVals(i)._2
+          info._key = begVals(i)._1
+          info._val = begVals(i)._2
+        }
+
+        finalVals += info
+      }
+      LOG.debug("Trying to read data from ValidatedAdapter: " + via.UniqueName)
+      via.StartProcessing(finalVals.toArray, false)
+    })
+
+    var stillWait = true
+    while (stillWait) {
+      try {
+        Thread.sleep(1000) // sleep 1000 ms and then check
+      } catch {
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("StackTrace:" + stackTrace)
+        }
+      }
+      if ((System.nanoTime - CollectKeyValsFromValidation.getLastUpdateTime) < 1000 * 1000000) // 1000ms
+        stillWait = true
+      else
+        stillWait = false
+    }
+
+    // Stopping the Adapters
+    validateInputAdapters.foreach(via => {
+      via.StopProcessing
+    })
+
+    if (distributionExecutor.isShutdown) {
+      LOG.debug("Distribution Executor is shutting down")
+      return scala.collection.immutable.Map[String, (String, Int, Int, Long)]()
+    } else {
+      val validateFndKeysAndVals = CollectKeyValsFromValidation.get
+      LOG.debug("foundKeysAndValuesInValidation: " + validateFndKeysAndVals.map(v => { (v._1.toString, v._2.toString) }).mkString(","))
+      return validateFndKeysAndVals
+    }
+  }
+
   private def UpdatePartitionsIfNeededOnLeader: Unit = lock.synchronized {
     val cs = GetClusterStatus
     if (cs.isLeader == false || cs.leader != cs.nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
@@ -196,101 +368,14 @@ object KamanjaLeader {
             tmpDistMap += ((p, scala.collection.mutable.Map[String, ArrayBuffer[String]]()))
           })
 
-          val allPartitionUniqueRecordKeys = ArrayBuffer[(String, String)]()
+          val (allPartitionUniqueRecordKeys, allPartsToValidate) = getAllPartitionsToValidate
+          val validateFndKeysAndVals = getValidateAdaptersInfo
 
-          // Get all PartitionUniqueRecordKey for all Input Adapters
-          inputAdapters.foreach(ia => {
-            val uk = ia.GetAllPartitionUniqueRecordKey
-            val name = ia.UniqueName
-            val ukCnt = if (uk != null) uk.size else 0
-            adapterMaxPartitions(name) = ukCnt
-            if (ukCnt > 0) {
-              val serUK = uk.map(k => {
-                val kstr = k.Serialize
-                LOG.debug("Unique Key in %s => %s".format(name, kstr))
-                (name, kstr)
-              })
-              allPartitionUniqueRecordKeys ++= serUK
-              AddPartitionsToValidate(name, serUK.map(k => k._2).toSet)
-            } else {
-              AddPartitionsToValidate(name, Set[String]())
-            }
+          allPartsToValidate.foreach(kv => {
+            AddPartitionsToValidate(kv._1, kv._2)
           })
 
-          val savedValidatedAdaptInfo = envCtxt.GetValidateAdapterInformation
-          val map = scala.collection.mutable.Map[String, String]()
-
-          LOG.debug("savedValidatedAdaptInfo: " + savedValidatedAdaptInfo.mkString(","))
-
-          savedValidatedAdaptInfo.foreach(kv => {
-            map(kv._1.toLowerCase) = kv._2
-          })
-
-          CollectKeyValsFromValidation.clear
-          validateInputAdapters.foreach(via => {
-            // Get all Begin values for Unique Keys
-            val begVals = via.getAllPartitionBeginValues
-            val finalVals = new ArrayBuffer[StartProcPartInfo](begVals.size)
-
-            // Replace the newly found ones
-            val nParts = begVals.size
-            for (i <- 0 until nParts) {
-              val key = begVals(i)._1.Serialize.toLowerCase
-              val foundVal = map.getOrElse(key, null)
-
-              val valAdapInfo = new ValidateAdapterFoundInfo
-              valAdapInfo._transformProcessingMsgIdx = 0
-              valAdapInfo._transformTotalMsgIdx = 0
-
-              val info = new StartProcPartInfo
-
-              if (foundVal != null) {
-                val desVal = via.DeserializeValue(foundVal)
-                valAdapInfo._val = desVal
-                info._key = begVals(i)._1
-                info._val = desVal
-              } else {
-                valAdapInfo._val = begVals(i)._2
-                info._key = begVals(i)._1
-                info._val = begVals(i)._2
-              }
-
-              info._validateInfo = valAdapInfo
-              finalVals += info
-            }
-            LOG.debug("Trying to read data from ValidatedAdapter: " + via.UniqueName)
-            via.StartProcessing(finalVals.toArray, false)
-          })
-
-          var stillWait = true
-          while (stillWait) {
-            try {
-              Thread.sleep(1000) // sleep 1000 ms and then check
-            } catch {
-              case e: Exception => {
-                val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.debug("StackTrace:"+stackTrace)
-              }
-            }
-            if ((System.nanoTime - CollectKeyValsFromValidation.getLastUpdateTime) < 1000 * 1000000) // 1000ms
-              stillWait = true
-            else
-              stillWait = false
-          }
-
-          if (distributionExecutor.isShutdown) {
-            LOG.debug("Distribution Executor is shutting down")
-            break
-          }
-
-          // Stopping the Adapters
-          validateInputAdapters.foreach(via => {
-            via.StopProcessing
-          })
-
-          // Expecting keys are lower case here
-          foundKeysInValidation = CollectKeyValsFromValidation.get
-          LOG.debug("foundKeysInValidation: " + foundKeysInValidation.map(v => { (v._1.toString, v._2.toString) }).mkString(","))
+          foundKeysInValidation = validateFndKeysAndVals
 
           // Update New partitions for all nodes and Set the text
           val totalParticipents: Int = cs.participants.size
@@ -325,7 +410,7 @@ object KamanjaLeader {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:" + stackTrace)
       }
     }
   }
@@ -385,7 +470,7 @@ object KamanjaLeader {
     LOG.debug("EventChangeCallback => Exit")
   }
 
-  private def GetUniqueKeyValue(uk: String): (String, Int, Int) = {
+  private def GetUniqueKeyValue(uk: String): (Long, String, List[(String, String)]) = {
     envCtxt.getAdapterUniqueKeyValue(0, uk)
   }
 
@@ -399,11 +484,6 @@ object KamanjaLeader {
         val uAK = nodeKeysMap.getOrElse(name, null)
         if (uAK != null) {
           val uKV = uAK.map(uk => { GetUniqueKeyValue(uk) })
-          val tmpProcessingKVs = envCtxt.getIntermediateStatusInfo(uAK.map(uk => uk).toArray) // Get all Status information from intermediate table.
-          val processingKVs = scala.collection.mutable.Map[String, (String, Int, Int)]()
-          tmpProcessingKVs.foreach(kv => {
-            processingKVs(kv._1.toLowerCase) = kv._2
-          })
           val maxParts = adapMaxPartsMap.getOrElse(name, 0)
           LOG.info("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
 
@@ -411,71 +491,29 @@ object KamanjaLeader {
           val keys = uAK.map(k => ia.DeserializeKey(k))
 
           LOG.debug("Deserializing Values")
-          val vals = uKV.map(v => ia.DeserializeValue(if (v != null) v._1 else null))
+          val vals = uKV.map(v => ia.DeserializeValue(if (v != null) v._2 else null))
 
-          var indx = 0
-          LOG.debug("Deserializing Processing Values")
-          val processingvals = uAK.map(uk => {
-            val keyVal = uk.toLowerCase
-            val ptmpV = processingKVs.getOrElse(keyVal, null)
-            var pV: PartitionUniqueRecordValue = null
-            var processingMsg = 0
-            var totalMsgs = 0
-            if (ptmpV != null) {
-              val doneVal = uKV(indx)
-              if (doneVal != null && doneVal._1.compareTo(ptmpV._1) == 0) {
-                // Already written what ever we were processing. Just take this in the ignored list
-                pV = vals(indx)
-                // LOG.debug("====================================> Key:%s found in process(ed) keys, Value is :%s. ProcessedVal: %s".format(uk._1, pV.Serialize, vals(indx).Serialize))
-              } else {
-                // Processing some other record than what we persisted.
-                val sentOutAdap = foundKeysInVald.getOrElse(keyVal, null)
-                if (sentOutAdap != null) {
-                  // Found in Sent into Output Adapter
-                  processingMsg = sentOutAdap._2
-                  totalMsgs = sentOutAdap._3
-                  pV = ia.DeserializeValue(sentOutAdap._1)
-                  // LOG.debug("====================================> Key:%s found in process(ing) keys, found in Sent to Output Adap, Value is :%s (%d, %d). ProcessedVal: %s".format(uk._1, sentOutAdap._1, sentOutAdap._2, sentOutAdap._3, vals(indx).Serialize))
-                } else {
-                  // If the key is not there in the above adapter, just take same vals object (pV = vals(indx)), otherwise deserialize the current one and ignore till that point. For now we are treating ignore send output unitl we fix reading from OuputAdapter
-                  processingMsg = 0 // Need to update it
-                  totalMsgs = 0 // Need to update it
-                  pV = ia.DeserializeValue(ptmpV._1)
-                  // LOG.debug("====================================> Key:%s found in process(ing) keys, not found in Sent to Output Adap, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
-                }
-              }
-            } else { // May not be processed at all before. just take the vals(indx) 
-              pV = vals(indx)
-              // LOG.debug("====================================> Key:%s found in processing keys, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
-            }
-            indx += 1
-            (pV, processingMsg, totalMsgs)
-          })
           LOG.debug("Deserializing Keys & Values done")
 
           val quads = new ArrayBuffer[StartProcPartInfo](keys.size)
 
           for (i <- 0 until keys.size) {
             val key = keys(i)
-            val valAdapInfo = new ValidateAdapterFoundInfo
-            valAdapInfo._val = processingvals(i)._1
-            valAdapInfo._transformProcessingMsgIdx = processingvals(i)._2
-            valAdapInfo._transformTotalMsgIdx = processingvals(i)._3
 
             val info = new StartProcPartInfo
             info._key = key
             info._val = vals(i)
-            info._validateInfo = valAdapInfo
+            info._validateInfoVal = vals(i)
             quads += info
           }
 
-          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._key.Serialize, q._val.Serialize, (q._validateInfo._val.Serialize, q._validateInfo._transformProcessingMsgIdx, q._validateInfo._transformTotalMsgIdx)) }).mkString(","))
+          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._key.Serialize, q._val.Serialize, q._validateInfoVal.Serialize) }).mkString(","))
           ia.StartProcessing(quads.toArray, true)
         }
       } catch {
         case e: Exception => {
           LOG.error("Failed to print final Unique Keys. JsonString:%s, Reason:%s, Message:%s".format(receivedJsonStr, e.getCause, e.getMessage))
-          
+
         }
       }
     })
@@ -554,7 +592,7 @@ object KamanjaLeader {
                 case e: Exception => {
                   // Not doing anything
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.debug("\nStackTrace:"+stackTrace)
+                  LOG.debug("\nStackTrace:" + stackTrace)
                 }
               }
 
@@ -572,7 +610,8 @@ object KamanjaLeader {
             }
           } catch {
             case e: Exception => {
-              LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+              LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+            }
           }
         }
         case "distribute" => {
@@ -716,7 +755,7 @@ object KamanjaLeader {
                     case e: Exception => {
                       logger.error("Failed to reload keys for container:" + contName)
                     }
-                    case t: Throwable => { 
+                    case t: Throwable => {
                       logger.error("Failed to reload keys for container:" + contName)
                     }
                   }
@@ -784,8 +823,9 @@ object KamanjaLeader {
           })
         }
       } catch {
-        case e: Exception => { 
-          LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+        case e: Exception => {
+          LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        }
       }
     }
   }
@@ -801,7 +841,8 @@ object KamanjaLeader {
         })
       } catch {
         case e: Exception => {
-          LOG.error("Failed to get Validate Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+          LOG.error("Failed to get Validate Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        }
       }
     }
 
@@ -843,7 +884,7 @@ object KamanjaLeader {
           case e: Exception => {
             // Not doing anything
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.debug("StackTrace:"+stackTrace)
+            LOG.debug("StackTrace:" + stackTrace)
           }
         }
 
@@ -930,6 +971,39 @@ object KamanjaLeader {
     setDataLockObj.synchronized {
       if (zkcForSetData != null)
         zkcForSetData.setData().forPath(zkNodePath, data)
+    }
+  }
+
+  def GetDataFromZkc(zkNodePath: String): Array[Byte] = {
+    setDataLockObj.synchronized {
+      if (zkcForSetData != null)
+        return zkcForSetData.getData().forPath(zkNodePath);
+      else
+        return Array[Byte]()
+    }
+  }
+
+  def GetChildrenFromZkc(zkNodePath: String): List[String] = {
+    setDataLockObj.synchronized {
+      if (zkcForSetData != null)
+        return zkcForSetData.getChildren().forPath(zkNodePath).toList
+      else
+        return List[String]()
+    }
+  }
+
+  def GetChildrenDataFromZkc(zkNodePath: String): List[(String, Array[Byte])] = {
+    setDataLockObj.synchronized {
+      if (zkcForSetData != null) {
+        val childs = zkcForSetData.getChildren().forPath(zkNodePath)
+        return childs.map(child => {
+          val path = zkNodePath + "/" + child
+          val chldData = zkcForSetData.getData().forPath(path);
+          (child, chldData)
+        }).toList
+      } else {
+        return List[(String, Array[Byte])]()
+      }
     }
   }
 

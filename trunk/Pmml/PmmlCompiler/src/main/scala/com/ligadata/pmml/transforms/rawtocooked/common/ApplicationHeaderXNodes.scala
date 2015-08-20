@@ -70,8 +70,28 @@ class ApplicationPmmlExecNodeGenerator(val ctx : PmmlContext) extends PmmlExecNo
 				null
 			}
 		val node : Option[PmmlExecNode] = if (headerNode != null) {
+		  
+			/** split the namespace given in the application name attribute (if any) from the name... when no 
+			 *  namespace prefix, default to "System" */		  
+			val (nmspc, name) : (String, String) = if (headerNode.name != null && headerNode.name.size > 0) {
+				val buffer : StringBuilder = new StringBuilder
+				val nmNodes : Array[String] = headerNode.name.split('.').map(_.trim)
+				if (nmNodes.size > 1) {
+					val nmPart : String = nmNodes.last
+					val nmspcPart : String = nmNodes.takeWhile(_ != nmPart).addString(buffer, ".").toString
+					buffer.clear
+					(nmspcPart,nmPart)	
+				} else {
+					("System", headerNode.name)
+				}
+			} else {
+				PmmlError.logError(ctx, s"Incredibly the PmmlApplication name attribute is not specified!")
+				("","")
+			}
+		  
 			/** Collect the Application name and the version if it is present */
-			ctx.pmmlTerms("ApplicationName") = Some(headerNode.name)
+			ctx.pmmlTerms("ModelNamespace") = Some(nmspc)
+			ctx.pmmlTerms("ApplicationName") = Some(name)
 			ctx.pmmlTerms("Version") = Some(MdMgr.FormatVersion(if (headerNode.version == null || headerNode.version.trim.isEmpty) "1.1" else headerNode.version))
 
 			/** update the header parent node with the application name and version, don't create node*/
@@ -80,7 +100,8 @@ class ApplicationPmmlExecNodeGenerator(val ctx : PmmlContext) extends PmmlExecNo
 			top match {
 			  case Some(top) => {
 				  var header : xHeader = top.asInstanceOf[xHeader]
-				  header.ApplicationNameVersion(headerNode.name, headerNode.version)
+				  header.ApplicationNameVersion(name, headerNode.version)
+				  header.ModelNamespace(nmspc)
 			  }
 			  case _ => None
 			}

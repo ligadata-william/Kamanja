@@ -55,7 +55,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
   }
 
-  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit = {
 
     if (format.equalsIgnoreCase("json")) {
       //if (data.charAt(0).toString.equals("{")) {
@@ -108,15 +108,10 @@ class KamanjaMonitor {
 
         //  Initialize and start the adapter that is going to read the output queues here.
         val inputMeta = t_adapterMeta.map(partMeta => {
-          val valAdapInfo = new ValidateAdapterFoundInfo
-          valAdapInfo._val = partMeta._2
-          valAdapInfo._transformProcessingMsgIdx = 0
-          valAdapInfo._transformTotalMsgIdx = 0
-
           val info = new StartProcPartInfo
           info._key = partMeta._1
           info._val = partMeta._2
-          info._validateInfo = valAdapInfo
+          info._validateInfoVal = partMeta._2
           info
         }).toArray
         t_adapter.StartProcessing(inputMeta, false)
@@ -133,15 +128,11 @@ class KamanjaMonitor {
           SampleAggregator.setTT(partMeta._2.asInstanceOf[KafkaPartitionUniqueRecordValue].Offset)
           sub = true
         }
-        val valAdapInfo = new ValidateAdapterFoundInfo
-        valAdapInfo._val = partMeta._2
-        valAdapInfo._transformProcessingMsgIdx = 0
-        valAdapInfo._transformTotalMsgIdx = 0
 
         val info = new StartProcPartInfo
         info._key = partMeta._1
         info._val = partMeta._2
-        info._validateInfo = valAdapInfo
+        info._validateInfoVal = partMeta._2
         info
       }).toArray
       s_adapter.StartProcessing(s_inputMeta, false)

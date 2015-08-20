@@ -4,7 +4,7 @@ import java.util.Date
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.KamanjaBase.{ InputData, DelimitedData, JsonData, XmlData }
 import java.io.{ DataInputStream, DataOutputStream }
-import com.ligadata.KamanjaBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange, JavaRDDObject }
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange, JavaRDDObject, MessageContainerBase }
 
 object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerObj {
   type T = CustAlertHistory
@@ -60,6 +60,10 @@ class CustAlertHistory(var transactionId: Long, other: CustAlertHistory) extends
   var alertType: String = ""
   var numDaysWithLessBalance: Int = 0
 
+  def Clone(): MessageContainerBase = {
+    CustAlertHistory.build(this)
+  }
+  
   def withAlertDtTmInMs(curDtTmInMs: Long): CustAlertHistory = { this }
   def withAlertType(alertType: String): CustAlertHistory = { this }
   def withNumDays(daysWithLessBalance: Int): CustAlertHistory = { this }
@@ -137,6 +141,10 @@ class CustPreferences(var transactionId: Long, other: CustPreferences) extends B
   def withOverdraftlimit(alertType: String): CustPreferences = { this }
   def withMultiDayMinBalanceAlertOptout(daysWithLessBalance: Int): CustPreferences = { this }
 
+  def Clone(): MessageContainerBase = {
+    CustPreferences.build(this)
+  }
+  
   var custid: Long = 0;
   var branchid: Int = 0;
   var accno: Long = 0;
@@ -215,6 +223,10 @@ class CustTransaction(var transactionId: Long, other: CustTransaction) extends B
   override def Name: String = CustTransaction.Name
   override def Version: String = CustTransaction.Version
 
+  def Clone(): MessageContainerBase = {
+    CustTransaction.build(this)
+  }
+  
   var custid: Long = 0;
   var branchid: Int = 0;
   var accno: Long = 0;
@@ -294,6 +306,10 @@ class GlobalPreferences(var transactionId: Long, other: GlobalPreferences) exten
   override def Name: String = GlobalPreferences.Name
   override def Version: String = GlobalPreferences.Version
 
+  def Clone(): MessageContainerBase = {
+    GlobalPreferences.build(this)
+  }
+  
   var overDraftLimit: Double = 0.0;
   var minAlertBalance: Double = 0.0
   var minAlertDurationInHrs: Int = 48;

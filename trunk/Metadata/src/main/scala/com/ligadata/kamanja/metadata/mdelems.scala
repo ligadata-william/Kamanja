@@ -221,13 +221,10 @@ trait TypeDefInfo {
 
 trait TypeImplementation[T] {
   def Input(value: String): T // Converts String to Type T
-  def Serialize(value: T): Array[Byte] // Convert Type T to Array[Byte]
-  def Deserialize(value: Array[Byte]): T // Convert Array[Byte] to Type T
   def SerializeIntoDataOutputStream(dos: DataOutputStream, value: T): Unit
   def DeserializeFromDataInputStream(dis: DataInputStream): T
-
   def toString(value: T): String // Convert Type T to String
-  def toJsonString(value: T): String // Convert Type T to Json String
+  def Clone(value: T): T // Clone and return same type
 }
 
 abstract class BaseTypeDef extends BaseElemDef with TypeDefInfo {
@@ -725,6 +722,7 @@ class ClusterCfgInfo {
    * This object captures the information related to a clusterConfiguration
    */
   var clusterId: String = _
+  var usrConfigs: scala.collection.mutable.HashMap[String, String] = _
   var cfgMap: scala.collection.mutable.HashMap[String, String] = _
   var modifiedTime: Date = _
   var createdTime: Date = _
@@ -733,6 +731,7 @@ class ClusterCfgInfo {
   def CfgMap: scala.collection.mutable.HashMap[String, String] = cfgMap
   def ModifiedTime: Date = modifiedTime
   def CreatedTime: Date = createdTime
+  def getUsrConfigs: scala.collection.mutable.HashMap[String, String] = usrConfigs
 }
 
 class AdapterInfo {
@@ -760,6 +759,14 @@ class AdapterInfo {
   def InputAdapterToVerify: String = inputAdapterToVerify
   def DelimiterString: String = delimiterString
   def AssociatedMessage: String = associatedMsg
+}
+
+class UserPropertiesInfo {
+   var clusterId: String = _
+   var props: scala.collection.mutable.HashMap[String, String] = _
+   
+   def ClusterId: String = clusterId
+   def Props: scala.collection.mutable.HashMap[String, String] = props  
 }
 
 class OutputMsgDef extends BaseElemDef {

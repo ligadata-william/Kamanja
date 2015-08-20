@@ -10,7 +10,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.kamanja.metadata.ObjType._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadataload.MetadataLoad
-import com.ligadata.MetadataAPI._
+import com.ligadata.MetadataAPI.MetadataAPIImpl
 import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
@@ -88,7 +88,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         configFile = cfgfile.asInstanceOf[String]
       }
 
-      val (loadConfigs, failStr) = Utils.loadConfiguration(configFile.toString, true)
+      val (loadConfigs, failStr) = com.ligadata.Utils.Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
         logger.error(failStr)
         Shutdown(1)
@@ -103,7 +103,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
       APIInit.SetConfigFile(configFile.toString)
 
       // Read properties file and Open db connection
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile, true)
       // APIInit deals with shutdown activity and it needs to know
       // that database connections were successfully made
       APIInit.SetDbOpen

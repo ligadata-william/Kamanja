@@ -236,11 +236,15 @@ class xConstant(lineNumber : Int, columnNumber : Int, val dataType : String, val
 class xHeader(lineNumber : Int, columnNumber : Int, val copyright : String, val description : String) 
 			extends PmmlExecNode("Header", lineNumber, columnNumber) {
 
+	var namespace : String = "System"
 	var applicationName : String = "Some App"
 	var version : String = "Some Version"
 	def ApplicationNameVersion(appName : String, ver : String) {
 		applicationName = appName
 		version = ver
+	}
+	def ModelNamespace(namespc : String) {
+		namespace = namespc
 	}
 	override def asString(ctx : PmmlContext) : String =  {
 			val header1 = s"/** Copyright : $copyright Application : $applicationName Version : $version\n"

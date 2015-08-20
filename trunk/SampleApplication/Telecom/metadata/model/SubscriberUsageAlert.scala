@@ -31,6 +31,7 @@ import org.apache.log4j.Logger
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 import java.util.Locale
+import java.io._
 
 object SubscriberUsageAlert extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[SubscriberUsage]
@@ -110,7 +111,7 @@ class SubscriberUsageAlertResult extends ModelResultBase {
 
 
 class AccountUsageAlertResult extends ModelResultBase {
-  var actNo: Long = 0;
+  var actNo: String = ""
   var curUsage: Long = 0
   var alertType: String = ""
   var triggerTime: Long = 0
@@ -118,7 +119,7 @@ class AccountUsageAlertResult extends ModelResultBase {
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
-  def withAct(aId: Long): AccountUsageAlertResult = {
+  def withAct(aId: String): AccountUsageAlertResult = {
     actNo = aId
     this
   }
@@ -192,15 +193,15 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
     jdt.monthOfYear().get()
   }
 
-  override def execute(emitAllResults: Boolean): ModelResultBase = {
-    var subMonthlyUsage:Long = 0
-    var actMonthlyUsage:Long = 0
+  private def dumpAppLog(logStr: String) = {
+    val fw = new FileWriter("SubscriberUsageAlertAppLog.txt", true)
+    try {
+      fw.write(logStr + "\n")
+    }
+    finally fw.close()
+  }
 
-    // Get the current subscriber, account info and global preferences
-    val gPref = SubscriberGlobalPreferences.getRecentOrNew(Array("Type1"))
-    val subInfo = SubscriberInfo.getRecentOrNew
-    val actInfo = AccountInfo.getRecentOrNew(Array(subInfo.actno))
-    val planInfo  = SubscriberPlans.getRecentOrNew(Array(subInfo.planname))
+  override def execute(emitAllResults: Boolean): ModelResultBase = {
 
     // Make sure current transaction has some data
     val rcntTxn = SubscriberUsage.getRecent
@@ -208,40 +209,54 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
       return null
     }
 
+    // Get the current subscriber, account info and global preferences
+    val gPref = SubscriberGlobalPreferences.getRecentOrNew(Array("Type1"))
+    val subInfo = SubscriberInfo.getRecentOrNew(Array(rcntTxn.get.msisdn.toString))
+    val actInfo = AccountInfo.getRecentOrNew(Array(subInfo.actno))
+    val planInfo  = SubscriberPlans.getRecentOrNew(Array(subInfo.planname))
+
+    var logTag = "SubscriberUsageAlertApp(" + subInfo.msisdn + "," +  actInfo.actno + "): "
+
     // Get current values of aggregatedUsage
-    val subAggrUsage = SubscriberAggregatedUsage.getRecentOrNew
-    val actAggrUsage = AccountAggregatedUsage.getRecentOrNew
+    val subAggrUsage = SubscriberAggregatedUsage.getRecentOrNew(Array(subInfo.msisdn.toString))
+    val actAggrUsage = AccountAggregatedUsage.getRecentOrNew(Array(actInfo.actno))
+
+    //dumpAppLog(logTag + "Before: Subscriber current month usage => " + subAggrUsage.thismonthusage + ",Account current month usage => " + actAggrUsage.thismonthusage)
 
     // Get current month
     val curDtTmInMs = RddDate.currentGmtDateTime
     val txnMonth = getMonth(rcntTxn.get.date.toString)
     val currentMonth = getCurrentMonth
 
-    logger.info("this month usage => " + subAggrUsage.thismonthusage)
-    logger.info("current usage  => " + rcntTxn.get.usage)
-    logger.info("plan name => " + subInfo.planname)
-    logger.info("plan type => " + planInfo.plantype)
-
-    // if the usage doesn't belong to this month, we ignore it
-    if( txnMonth != currentMonth ){
-      logger.info("The month value is either old or incorrect,transaction ignored " + txnMonth)
-      return null
-    }
-
-    // aggregate the usage 
-    // aggregate individual subscriber usage
-    subMonthlyUsage = subAggrUsage.thismonthusage + rcntTxn.get.usage
-    SubscriberAggregatedUsage.build.withthismonthusage(subMonthlyUsage).Save
-    // aggregate account usage
-    actMonthlyUsage = actAggrUsage.thismonthusage + rcntTxn.get.usage
-    AccountAggregatedUsage.build.withthismonthusage(actMonthlyUsage).Save
-    logger.info("subscriber monthly usage => " + subMonthlyUsage + ",account monthly usage => " + actMonthlyUsage)
-
     // planLimit values are supplied as GB. But SubscriberUsage record contains the usage as MB
     // So convert planLimit to MB
     val planLimit = planInfo.planlimit * 1000
     val indLimit  = planInfo.individuallimit * 1000
-    logger.info("plan limit => " + planLimit + ",individual limit => " + indLimit)
+
+
+    //dumpAppLog(logTag + "Subscriber plan name => " + subInfo.planname + ",plan type => " + planInfo.plantype + ",plan limit => " + planLimit + ",individual limit => " + indLimit)
+    dumpAppLog(logTag + "Subscriber usage in the current transaction  => " + rcntTxn.get.usage)
+
+    // if the usage doesn't belong to this month, we ignore it
+    if( txnMonth != currentMonth ){
+      //dumpAppLog(logTag + "The month value " + txnMonth + " is either older than current month " + currentMonth + " or incorrect,transaction ignored " + txnMonth)
+      return null
+    }
+
+    // aggregate account usage
+    val actMonthlyUsage = actAggrUsage.thismonthusage + rcntTxn.get.usage
+    //AccountAggregatedUsage.build.withthismonthusage(actMonthlyUsage).Save
+    actAggrUsage.withthismonthusage(actMonthlyUsage).Save
+
+    // aggregate the usage 
+    // aggregate individual subscriber usage
+    val subMonthlyUsage = subAggrUsage.thismonthusage + rcntTxn.get.usage
+    //SubscriberAggregatedUsage.build.withthismonthusage(subMonthlyUsage).Save
+    subAggrUsage.withthismonthusage(subMonthlyUsage).Save
+
+
+    //dumpAppLog(logTag + "After: Subscriber current month usage => " + subMonthlyUsage + ",Account current month usage => " + actMonthlyUsage)
+
 
     val curTmInMs = curDtTmInMs.getDateTimeInMs
     
@@ -251,15 +266,9 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
 	// exceeded plan limit
 	if ( actMonthlyUsage > planLimit ){
 	  if (actInfo.thresholdalertoptout == false) {
-	    logger.info("Creating Model Result for account " + actInfo.actno)
+	    dumpAppLog(logTag + "Creating Alert for a shared plan account " + actInfo.actno)
+	    dumpAppLog(logTag + "---------------------------")
 	    return new AccountUsageAlertResult().withAct(actInfo.actno).withCurusage(actMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
-	  }
-	}
-	// shared plan, but an individual limit may have been exceeded
-	if ( subMonthlyUsage > indLimit ){
-	  if (subInfo.thresholdalertoptout == false) {
-	    logger.info("Creating Model Result for subscriber " + rcntTxn.get.msisdn)
-	    return new SubscriberUsageAlertResult().withMsisdn(rcntTxn.get.msisdn).withCurusage(subMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
 	  }
 	}
       }
@@ -267,14 +276,15 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
 	// individual plan,  individual limit may have been exceeded
 	if ( subMonthlyUsage > indLimit ){
 	  if (subInfo.thresholdalertoptout == false) {
-	    logger.info("Creating Model Result for subscriber " + rcntTxn.get.msisdn)
+	    dumpAppLog(logTag + "Creating alert for individual subscriber account " + rcntTxn.get.msisdn)
+	    dumpAppLog(logTag + "---------------------------")
 	    return new SubscriberUsageAlertResult().withMsisdn(rcntTxn.get.msisdn).withCurusage(subMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
 	  }
 	}
       }
       case _ => {
 	// unsupported plan type
-	logger.info("Unknown planType => " + planInfo.plantype)
+	//dumpAppLog("Unknown planType => " + planInfo.plantype)
       }
     }
     return null

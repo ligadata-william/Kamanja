@@ -102,10 +102,7 @@ class IterableFcnPrinter(val fcnName : String
 	 *  e.g., "coll.map(_itm =>"
 	 */
 	private def iterablePrint : String = {
-		var scalaFcnName : String = PmmlTypes.scalaNameForIterableFcnName(fcnName)
-		if (scalaFcnName == null) {
-			scalaFcnName = node.function
-		}
+		val scalaFcnName : String = iterableFcnNameToPrint(fcnName)
 		val iterArgBuffer : StringBuilder = new StringBuilder
 		val iterChild : PmmlExecNode = node.Children.head
 		
@@ -118,7 +115,7 @@ class IterableFcnPrinter(val fcnName : String
 	/**
 	 * 	Print the member function that uses the member variable.  For example a "Between" function:
 	 *  
-	 *  		{ Pmml.Between(itm.intfield, 2012, 2014, true) }
+	 *  		{ Pmml.Between(_each.intfield, 2012, 2014, true) }
 	 *  
 	 *  It is also possible that there is no member function, only field references or constant expressions
 	 *  This is common with the 'map' function when a simple projection is done on one or more fields.
@@ -135,7 +132,7 @@ class IterableFcnPrinter(val fcnName : String
 		if (hasMbrFcn) {
 			if (isIterableFcn) {
 				val iterableName : String = fcnTypeInfo.mbrFcn.name
-				val scalaName : String = PmmlTypes.scalaNameForIterableFcnName(iterableName)
+				val scalaName : String = iterableFcnNameToPrint(iterableName)			
 				mbrFcnBuffer.append(s"${ctx.applyElementName}.$scalaName( ${ctx.applyElementName} => { (")
 			} else {
 				mbrFcnBuffer.append(s"${fcnTypeInfo.mbrFcn.physicalName}(")
@@ -196,6 +193,38 @@ class IterableFcnPrinter(val fcnName : String
 		castStr
 	}
 		
+	/** 
+	 *  Answer the appropriate function name to print for this iterable function.  There are several possible outcomes:
+	 *  
+	 *  """
+	 *  	a. if the function is an iterable (e.g., ContainerMap, ContainerFilter, et al, the map, filter name is substituted.
+	 *   	b. if the function is namespace alias qualified, the namespace from the global context search map is substituted for the alias.
+	 *  """
+	 *  @param fcnName the name to consider 
+	 *  @return the function string to print 
+	 */
+	private def iterableFcnNameToPrint(fcnName : String) : String = {
+		var scalaFcnName : String = PmmlTypes.scalaNameForIterableFcnName(fcnName)
+		if (scalaFcnName == null) {
+			scalaFcnName = if (node.function.contains(".")) { /** NOTE: builtin case above cannot match this predicate... by definition */
+				/** substitute the alias present with the corresponding namespace (i.e., full pkg) name */
+				val alias : String = node.function.split('.').head.trim
+				val fnName : String = node.function.split('.').last.trim
+				val nmspc : String = if (ctx.NamespaceSearchMap.contains(alias)) {
+					ctx.NamespaceSearchMap(alias).trim
+				} else {
+					PmmlError.logError(ctx, s"Function ${node.function}'s namespace alias could not produce a namespace from the map... logic/coding error in ctx!")
+					alias
+				}
+				s"$nmspc.$fnName"
+			} else {
+				scalaFcnName
+			}
+			
+		}
+		scalaFcnName
+	}
+	
 
 }
 
