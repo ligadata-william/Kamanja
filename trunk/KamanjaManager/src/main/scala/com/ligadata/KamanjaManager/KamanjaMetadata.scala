@@ -755,7 +755,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     if (removedValues > 0) {
       reent_lock.writeLock().lock();
       try {
-        KamanjaConfiguration.metadataLoader = new KamanjaLoaderInfo(KamanjaConfiguration.metadataLoader, true)
+        KamanjaConfiguration.metadataLoader = new KamanjaLoaderInfo(KamanjaConfiguration.metadataLoader, true, true)
         envCtxt.SetClassLoader(KamanjaConfiguration.metadataLoader.loader)
       } catch {
         case e: Exception => {
