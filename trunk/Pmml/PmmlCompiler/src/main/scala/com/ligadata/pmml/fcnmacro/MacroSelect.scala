@@ -270,6 +270,7 @@ class MacroSelect(val ctx : PmmlContext
   			val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = argTypes(idx)
 	  		generator.generate(Some(child), fcnBuffer, CodeFragment.FUNCCALL)
 	  		val argPrint : String = fcnBuffer.toString
+	  		val illegalsEx = "[.]".r
 	  		/** Note: to support multiple level containers ... e.g., container.container.field... recursion needs to be introduced here */
 	  		if (isContainer && child.asInstanceOf[xFieldRef].field.contains('.')) {
 	  			val container : ContainerTypeDef = argElem.asInstanceOf[ContainerTypeDef]
@@ -282,8 +283,10 @@ class MacroSelect(val ctx : PmmlContext
 	  			idx += 1
 	  			val (fldArgType, isFldAContainer, fldElem) : (String,Boolean,BaseTypeDef) = argTypes(idx)
    				val (buildsfieldName,doesFieldName) : (String,String) = if (nmSet.contains(fieldName)) (fieldName,(fieldName + ctx.Counter().toString)) else { nmSet += fieldName; (fieldName,fieldName) }
+   				/** alias qualified names have their '.' replaced with '_' via following stmt */
+	  			val buildsfieldName_scrubbed : String = if (buildsfieldName.contains(".")) { illegalsEx.replaceAllIn(buildsfieldName, "_") } else buildsfieldName
    				val actualfieldName : String = fieldName
-	  			fcnArgValues += Tuple3((buildsfieldName,doesFieldName),fieldName,false)
+	  			fcnArgValues += Tuple3((buildsfieldName_scrubbed,doesFieldName),fieldName,false)
 	  			fcnArgTypes += fldArgType
 	  		} else {
 	  			val (argNams,argTyp) : ((String,String),String) = if (child.isInstanceOf[xConstant]) {
@@ -314,7 +317,11 @@ class MacroSelect(val ctx : PmmlContext
 					  			    }
 					  			}
 				  			}
-	  			fcnArgValues += Tuple3(argNams,argPrint,false)
+	  			/** alias qualified names have their '.' replaced with '_' via ff statements */
+	  			val (bldName,exprName) : (String,String) = argNams
+  				val bldName_scrubbed : String = if (bldName.contains(".")) { illegalsEx.replaceAllIn(bldName, "_") } else bldName
+	  			
+	  			fcnArgValues += Tuple3((bldName_scrubbed, exprName),argPrint,false)
 	  			fcnArgTypes += argTyp
 	  		}
   			idx += 1

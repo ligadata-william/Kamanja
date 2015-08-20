@@ -25,8 +25,8 @@ import com.ligadata.Exceptions.StackTrace
 
 
 /**
-	MethodExtract accepts an fully qualifed scala object name 
-	and a namespace that its methods will have in the metadata manager.
+	MethodExtract accepts an fully qualifed scala object name.  The object's package
+	path will server as the the kamanja namespace for its methods in the metadata manager.
 	The method metadata for the methods in this object are extracted and 
 	MetadataManager FunctionDef catalog method invocations are 
 	formed.
@@ -55,8 +55,6 @@ import com.ligadata.Exceptions.StackTrace
 
  */
 
-
-
 trait LogTrait {
     val loggerName = this.getClass.getName()
     val logger = Logger.getLogger(loggerName)
@@ -64,10 +62,6 @@ trait LogTrait {
 
 
 object MethodExtract extends App with LogTrait{
-
-	def companion[T](name : String)(implicit man: Manifest[T]) : T = {
-		Class.forName(name + "$").getField("MODULE$").get(man.runtimeClass).asInstanceOf[T]
-	}
 
 	override def main (args : Array[String]) {
 
@@ -84,8 +78,6 @@ object MethodExtract extends App with LogTrait{
 		    						nextOption(map ++ Map('object -> value), tail)
 		    	case "--cp" :: value :: tail =>
 		    						nextOption(map ++ Map('cp -> value), tail)
-		    	case "--namespace" :: value :: tail =>
-		    						nextOption(map ++ Map('namespace -> value), tail)
 		    	case "--exclude" :: value :: tail =>
 		    						nextOption(map ++ Map('excludeList -> value), tail)
 		    	case "--versionNumber" :: value :: tail =>
@@ -109,7 +101,15 @@ object MethodExtract extends App with LogTrait{
 		val options = nextOption(Map(),arglist)
 		val clsName = if (options.contains('object)) options.apply('object) else null
 		val classPath = if (options.contains('cp)) options.apply('cp) else null
-		val namespace = if (options.contains('namespace)) options.apply('namespace) else null
+		val namespace : String = if (clsName != null && clsName.contains('.')) {
+			val clsnameNodes : Array[String] = clsName.split('.')
+			val takeFirstN : Int = clsnameNodes.size
+			/** actually we are taking all of them ... object name included */
+			val firstN : Array[String] = clsnameNodes.map(_.trim).take(takeFirstN)
+			firstN.addString(new StringBuilder, ".").toString
+		} else {
+			null
+		}
 		val excludeListStr = if (options.contains('excludeList)) options.apply('excludeList) else null
 		var excludeList : Array[String] = null
 		val versionNumberStr = if (options.contains('versionNumber)) options.apply('versionNumber) else null
@@ -128,7 +128,12 @@ object MethodExtract extends App with LogTrait{
 
 		if (clsName == null || classPath == null || namespace == null || depsIn == null || typedefPath == null || fcndefPath == null) {
 			val usageStr = usage
-			logger.error("Missing arguments...")
+			val errMsg : String = if (clsName != null && classPath != null && namespace == null && depsIn != null && typedefPath != null && fcndefPath != null) {
+				"...Namespace-less udf object is not supported... the object must be package qualifed... the full package name is to be used as the namespace."
+			} else {
+				"...Missing arguments"
+			}
+			logger.error(errMsg)
 			logger.error(usageStr)
 			sys.exit(1)
 		}
@@ -279,14 +284,13 @@ object MethodExtract extends App with LogTrait{
 	def usage : String = {
 """
 Collect the function definitions from the supplied object that is found in the supplied class path.  The classpath contains
-the object and any supporting libraries it might require.  The supplied namespace and version number will be used for the namespace 
-and version values respectively for all function definitions produced.  The deps string contains the same jars as the classpath argument
+the object and any supporting libraries it might require.  The supplied version number will be used for the  
+version value for all function definitions produced.  The deps string contains the same jars as the classpath argument
 but without paths.  These are used to create the deps values for the function definitions.  The results for the types and function
 definitions are written to the supplied typeDefsPath and fcnDefsPath respectively.
 	  
 Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed scala object name> 
 													--cp <classpath>
-                                                    --namespace <the kamanja namespace> 
                                                     --exclude <a list of functions to ignore>
                                                     --versionNumber <N>
                                                     --deps <jar dependencies comma delimited list>
@@ -306,7 +310,8 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 				
 	  
        NOTE: The jar containing this scala object and jars upon which it depends should be on the class path.  Except for
-	   the exclusion list, all arguments are mandatory.
+	   the exclusion list, all arguments are mandatory.  
+	   NOTE: The full package name of the object containing the udfs will become the namespace for the udfs to be cataloged.
 
 """
 	}

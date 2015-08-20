@@ -106,6 +106,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 * By design, these full package qualified object names must be specified as enumerated values in the data dictionary
 	 * element named "UDFSearchPath".
 	 *
+	 * @deprecated "UdfSearchPath is being replaced with NamespaceSearchPath" "r1.06"
 	 */
 	def udfSearchPath : Array[String] = {
 		val pathDataField : xDataField = if (dDict.contains("UDFSearchPath")) dDict("UDFSearchPath") else null
@@ -141,9 +142,28 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	val fcnTypeInfoStack : Stack[FcnTypeInfo] = Stack[FcnTypeInfo]()
 	
 	/** 
+	 *  Known namespaces at compile time 
+	 */
+	var knownNamespacesAtCompileTime : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+	def KnownNamespacesAtCompileTime : scala.collection.immutable.Set[String] = knownNamespacesAtCompileTime.toSet
+	
+	/** If the knownNamespacesAtCompileTime is empty, fetch them from the MetadataMgr */
+	def CollectNamespaceSet : Unit = {
+		if (knownNamespacesAtCompileTime.size == 0) {
+			val allModels : scala.collection.immutable.Set[String] = mgr.ActiveModels.map(modelDef => modelDef.NameSpace)
+			knownNamespacesAtCompileTime = scala.collection.mutable.Set[String]()
+			allModels.foreach(nmspc => knownNamespacesAtCompileTime += nmspc)
+		}
+	}
+	
+	/** 
 	 *  By default, these two namespaces are always present:  System, Pmml
 	 */
 	val namespaceSearchPathDefault : Array[(String,String)] = Array[(String,String)]((MdMgr.sysNS,MdMgr.sysNS), ("Pmml","Pmml"))
+
+	/** Prevent the defaults from generating import statements */
+	val excludeFromImportConsideration : Array[String] = Array[String](MdMgr.sysNS,"Pmml")
+	def ExcludeFromImportConsideration : Array[String] = excludeFromImportConsideration
 	
 	
 	def NameSpaceSearchPathDefaultAsStr : String = {
@@ -194,15 +214,19 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		    	val legitSz : Int = aliasSpcPair.filter(each => each.split(',').size == 2).size /** insist on only 2 items in each commma-delimited string */
 		    	if (pathLen == legitSz) {
 		    		val userSupplied : Array[(String,String)] = aliasSpcPair.map(each => {
-		    			val pair : Array[String] = each.split('.')
-		    			namespaceSearchMap(pair(0).trim) = pair(1).trim
-		    			(pair(0).trim,pair(1).trim)
+		    			val (alias, nmspc) : (String,String) = (each.split(',').head.trim, each.split(',').last.trim) 
+		    			/** build up the map so namespaces can be found by their alias */
+		    			namespaceSearchMap(alias) = nmspc
+		    			/** add the cleaned up alias and path pairs to the userSupplied array that will be considered first before the defaults */
+		    			(alias,nmspc)
 		    		})
-		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1)=pair._2)
-		    		(Array[(String,String)]() ++ namespaceSearchPathDefault) ++ userSupplied
+		    		/** Add the default alias/namespace into the namespaceSearchMap so defaults also can be found by alias */
+		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1) = pair._2)
+		    		/** Create the nameSpcSearchPath... user supplied namespaces are considered before the defaults */
+		    		(Array[(String,String)]() ++ userSupplied ++ namespaceSearchPathDefault)
 		    	} else {
 		    		PmmlError.logError(this, s"Namespace specification is invalid ... either omit the NamespaceSearchPath DataField or provide one or more ${'"'}namespace alias , full.pkg.name.space${'"'} strings as NamespaceSearchPath's enumerated values")
-		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1)=pair._2)
+		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1) = pair._2)
 		    		Array[(String,String)]() ++ namespaceSearchPathDefault
 		    	}
 		  	} else {
@@ -214,6 +238,34 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	  	nmSpcs
 	}
 
+	/** 
+	 *  Answer the namespaces in the search path that are not contained in the default search path (i.e., not system or pmml).
+	 *  Note that it is possible to find the system and pmml in the explicit search path in a model when the author wants to 
+	 *  change the ordering of udfs or types in some application specific way.  That is, the system and pmml don't always have
+	 *  to be last in the search path. 
+	 *  @return Array[(String,String)] with the specified paths.
+	 *  
+	 */
+	def namespaceSearchPathSansDefaults : Array[(String,String)] = {
+		namespaceSearchPath.diff(namespaceSearchPathDefault)
+	}
+	
+	/** 
+	 *  Answer the paths of the namespace search path pairs that are not in the default search path.
+	 *  @return array of search paths
+	 */
+	def namespaceSearchPathSansDefaultsPathsOnly : Array[String] = {
+		val nmspcSansDefaults : Array[(String,String)] = namespaceSearchPathSansDefaults
+		nmspcSansDefaults.map(pair => pair._2)
+	}
+	
+	/** 
+	 *  Answer the paths of the namespace search path pairs that are not in the default search path.
+	 *  @return array of search path aliases
+	 */
+	def namespaceSearchPathSansDefaultsAliasesOnly : Array[String] = {
+		namespaceSearchPathSansDefaults.map(pair => pair._1)
+	}
 	
 	/** 
 	 *  When expandCompoundFieldTypes is specified, any container.subcontainer.field... reference has the type 
@@ -248,7 +300,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  Get the container's typedef associated with the supplied namespace and name. 
 	 */
 	def getContainerType(nmSpc : String, container : String) : ContainerTypeDef = {
-		val baseTypeDef : BaseTypeDef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, container))
+		val (typeStr,baseTypeDef) : (String,BaseTypeDef) = MetadataHelper.getType(container)
 		val containerTypeDef = baseTypeDef match {
 		  case c : ContainerTypeDef => baseTypeDef.asInstanceOf[ContainerTypeDef]
 		  case _ => {
@@ -281,12 +333,14 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *      
 	 *  These will be used if present:
 	 *   	Version (string version from the Header)
+	 *    	ModelNamespace (from application name in the Header)
 	 *    	ApplicationName (from the Header)
 	 *    	Copyright (from the Header)
 	 *      Description (from the Header)
 	 *      ModelName (from the RulesetModel ... and other model types we are to support)
-	 *      ClassName (the derived class name based upon the ApplicationName and Version)
+	 *      ClassName (the derived class name based upon the ApplicationName)
 	 *      VersionNumber  (a numeric version number... only dec digits extracted
+	 *      ModelPackageName (the package name used for the generated scala source file)
 	 */
 	var pmmlTerms : HashMap[String,Option[String]] = HashMap[String,Option[String]]() 
 	
@@ -316,11 +370,18 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  The triple consists of the field name, field's type namespace, and the field type */
 	var modelOutputs : Map[String, (String, String, String)] = Map[String, (String, String, String)]()
 	
+	/** collected by RegisterMessages & collectContainers, grist for import statement generation */
+	val importStmtInfo : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+	def ImportStmtInfo : scala.collection.mutable.Set[String] = importStmtInfo
+	
 	/** 
 	 *  Register any messages that will appear in the constructor of the generated model class.  Register the
 	 *  the gCtx so it can be added to the constructor even though it is used only in "Get" functions in the 
 	 *  use of it in the derived fields.  Allow ContainerDefs as well as MessageDefs there as well as there is 
 	 *  little to distinguish them from each other save their names.
+	 *  
+	 *  As a side effect collect the physical names of the messages and containers found. These contain the 
+	 *  appropriate version number suffixes needed for the generation of the import statements.
 	 *  
 	 *  NOTE: Containers are encountered during semantic analysis as types are examined on each DataField
 	 *  and DerivedField.  These are added to the containersInScope map as well.  
@@ -334,36 +395,47 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 				val msgFldName : String =  value._1 
 				val msgFld : xDataField = if (dDict.contains(msgFldName)) dDict.apply(msgFldName) else null
 				val tuple = if (msgFld != null) {
-					val msgDef : MessageDef = mgr.ActiveMessage(MdMgr.SysNS, msgFld.dataType)
-					if (msgDef == null) {
-						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
-						if (containerDef == null) {
-							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
+					val (msgTypeStr, msgDef) : (String,MessageDef) = MetadataHelper.getMsg(msgFld.dataType)
+					if (msgDef != null) {
+						val (containerTypeName, msgDefType) : (String, BaseTypeDef) = MetadataHelper.getType(msgFld.dataType)
+						if (msgDefType == null) {
+							PmmlError.logError(this, "The supplied message has no corresponding message type.  Please add metadata for this message.")
 						} else {
-							if (containerDef.isInstanceOf[ContainerTypeDef]) {
-								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
+							if (msgDefType.isInstanceOf[ContainerTypeDef]) {
+								if (MetadataHelper.isContainerWithFieldOrKeyNames(msgDefType)) {
+									importStmtInfo += msgDefType.PhysicalName /** collect import info */
+								}
+								containersInScope += Tuple4(msgFldName,true,msgDefType,msgFldName)
 							} else {
-								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
+								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${msgDef.typeString}")
 							}
 							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
-							val implJar : String  = containerDef.JarName
-							val depJars : Array[String] = containerDef.DependencyJarNames
+							val implJar : String  = msgDef.JarName
+							val depJars : Array[String] = msgDef.DependencyJarNames
 							collectClassPathJars(implJar, depJars)
 						}
 					} else { /** a container ... not a message ... this is a bit crazy so far... we have not accepted these in the constructor */
-						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
+						val (containerTypeName, containerDef) : (String,ContainerDef) = MetadataHelper.getContainer(msgFld.dataType)
 						if (containerDef == null) {
 							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
 						} else {
-							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
-							val implJar : String  = containerDef.JarName
-							val depJars : Array[String] = containerDef.DependencyJarNames
-							collectClassPathJars(implJar, depJars)
-						  
-							if (containerDef.isInstanceOf[ContainerTypeDef]) {
-								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
+							val (containerTypeName, containerTypeDef) : (String, BaseTypeDef) = MetadataHelper.getType(msgFld.dataType)
+							if (containerTypeDef == null) {
+								PmmlError.logError(this, "The supplied container has no corresponding container type.  Please add metadata for this container.")
 							} else {
-								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
+								/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
+								val implJar : String  = containerDef.JarName
+								val depJars : Array[String] = containerDef.DependencyJarNames
+								collectClassPathJars(implJar, depJars)
+							  
+								if (containerTypeDef.isInstanceOf[ContainerTypeDef]) {
+									if (MetadataHelper.isContainerWithFieldOrKeyNames(containerTypeDef)) {
+										importStmtInfo += containerTypeDef.PhysicalName /** collect import info */
+									}
+									containersInScope += Tuple4(msgFldName,true,containerTypeDef,msgFldName)
+								} else {
+									PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerTypeDef.typeString}")
+								}
 							}
 						}
 					}
@@ -412,7 +484,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  mentioned in the parameters data field used to prepare the main model constructor.
 	 */
 	def RegisterContainerAsNecessary(name : String, dataType : String) : Boolean = {
-		val elem : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, dataType)
+		val (typeStr,elem) : (String,BaseTypeDef) = MetadataHelper.getType(dataType)
 		val registered : Boolean = if (elem != null) {
 			/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
 			val implJar : String  = elem.JarName
@@ -421,6 +493,14 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			
 			elem match {
 			  case con : ContainerTypeDef => { 
+				  			if (MetadataHelper.isContainerWithFieldOrKeyNames(elem)) {
+				  				importStmtInfo += elem.PhysicalName /** collect import info */
+				  			} else {
+				  				val memberContainersWithFieldOrKeyNames : Array[BaseTypeDef] = MetadataHelper.collectMemberContainerTypes(elem)
+				  				if (memberContainersWithFieldOrKeyNames != null && memberContainersWithFieldOrKeyNames.size > 0) {
+				  					memberContainersWithFieldOrKeyNames.foreach( typ => importStmtInfo += typ.PhysicalName )
+				  				}
+				  			}
 				  			containersInScope += Tuple4(name,false,elem.asInstanceOf[ContainerTypeDef], "n/a")
 				  			true
 				  		}
@@ -434,6 +514,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		
 		registered
 	}
+	
 	
 	/** these get queued for further processing */
 	val topLevelContainers : List[String] = List[String]("Header", "DataDictionary", "TransformationDictionary", "RuleSetModel")
