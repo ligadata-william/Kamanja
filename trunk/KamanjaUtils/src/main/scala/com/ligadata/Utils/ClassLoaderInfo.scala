@@ -7,8 +7,10 @@ import java.io.{ File }
 import java.net.{ URL, URLClassLoader }
 import java.util.jar.{ JarInputStream, JarFile, JarEntry }
 import java.io.{ ByteArrayOutputStream, InputStream }
+import org.apache.log4j.Logger
 
 class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+  private val LOG = Logger.getLogger(getClass)
   private var loadedClasses = Map[String, Class[_]]()
 
   private def ReadAllData(is: InputStream, length: Int): Array[Byte] = {
@@ -43,7 +45,7 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
   }
 
   private def LoadClassesFromURL(jarName: String): Unit = this.synchronized {
-    println("Trying to load classes from Jar:" + jarName)
+    LOG.info("Trying to load classes from Jar:" + jarName)
     val taillen = ".class".length()
     var jar: JarFile = null
     try {
@@ -55,11 +57,15 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
         if (entry != null && entry.getName().endsWith(".class") && !entry.isDirectory()) {
           val tmpclsnm: String = entry.getName().replaceAll("/", ".").trim // Replace / with .
           val className = tmpclsnm.substring(0, tmpclsnm.length() - taillen)
-          val is = jar.getInputStream(entry)
-          val data = ReadClassData(entry, is)
-          if (data != null && data.length > 0) {
-            val cls = defineClass(className, data, 0, data.length, null)
-            loadedClasses(className) = cls
+          if (loadedClasses.contains(className) == false) {
+            val is = jar.getInputStream(entry)
+            val data = ReadClassData(entry, is)
+            if (data != null && data.length > 0) {
+              val cls = defineClass(className, data, 0, data.length, null)
+              loadedClasses(className) = cls
+            }
+          } else {
+            LOG.info(className + " already Loaded")
           }
         }
       }
@@ -83,7 +89,7 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
   }
 
   protected override def loadClass(className: String, resolve: Boolean): Class[_] = this.synchronized {
-    println("Trying to load Class:" + className)
+    LOG.info("Trying to load Class:" + className)
     try {
       val cls = loadedClasses.getOrElse(className, null)
       if (cls != null) {
