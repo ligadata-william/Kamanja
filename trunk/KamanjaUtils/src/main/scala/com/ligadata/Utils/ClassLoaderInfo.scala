@@ -12,6 +12,7 @@ import scala.collection.mutable.ArrayBuffer
 
 class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   private val LOG = Logger.getLogger(getClass)
+  private var loadedRawClasses = Map[String, Array[Byte]]()
   private var loadedClasses = Map[String, Class[_]]()
   private var loadedJars = ArrayBuffer[URL]()
 
@@ -60,28 +61,14 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
           val tmpclsnm = entry.getName().replaceAll("/", ".").trim // Replace / with .
           val className = tmpclsnm.substring(0, tmpclsnm.length() - taillen)
           LOG.info("JvmClass:" + entry.getName() + ", Class:" + className)
-          if (loadedClasses.contains(className) == false) {
+          if (loadedRawClasses.contains(className) == false) {
             val is = jar.getInputStream(entry)
             val data = ReadClassData(entry, is)
             if (data != null && data.length > 0) {
-              try {
-                val cls = defineClass(className, data, 0, data.length, null)
-                // resolveClass(cls)
-                loadedClasses(className) = cls
-              } catch {
-                case e: LinkageError => {
-                  LOG.error("LinkageError => Reason:" + e.getCause + ". Message:" + e.getMessage())
-                }
-                case e: Exception => {
-                  LOG.error("Exception => Reason:" + e.getCause + ". Message:" + e.getMessage())
-                }
-                case e: Throwable => {
-                  LOG.error("Throwable => Reason:" + e.getCause + ". Message:" + e.getMessage())
-                }
-              }
+              loadedRawClasses(className) = data
             }
           } else {
-            LOG.info(className + " already Loaded")
+            LOG.info(className + " already Loaded raw data")
           }
         }
       }
@@ -108,10 +95,18 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
   protected override def loadClass(className: String, resolve: Boolean): Class[_] = this.synchronized {
     LOG.info("Trying to load Class:" + className)
     try {
+      // Find in Loaded Classes
       val cls = loadedClasses.getOrElse(className, null)
       if (cls != null) {
-        val fndClass = cls
-        return fndClass
+        return cls
+      }
+      // If not find in Loaded Classes, find in Raw data Loaded Classes
+      val rawClsData = loadedRawClasses.getOrElse(className, null)
+      if (rawClsData != null && rawClsData.length > 0) {
+        val cls = defineClass(className, rawClsData, 0, rawClsData.length, null)
+        if (resolve) resolveClass(cls)
+        loadedClasses(className) = cls
+        return cls
       }
       return super.loadClass(className, resolve)
     } catch {
