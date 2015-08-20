@@ -8,10 +8,12 @@ import java.net.{ URL, URLClassLoader }
 import java.util.jar.{ JarInputStream, JarFile, JarEntry }
 import java.io.{ ByteArrayOutputStream, InputStream }
 import org.apache.log4j.Logger
+import scala.collection.mutable.ArrayBuffer
 
 class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   private val LOG = Logger.getLogger(getClass)
   private var loadedClasses = Map[String, Class[_]]()
+  private var loadedJars = ArrayBuffer[URL]()
 
   private def ReadAllData(is: InputStream, length: Int): Array[Byte] = {
     val retVal = new Array[Byte](length)
@@ -81,7 +83,8 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
 
   override def addURL(url: URL) {
     LoadClassesFromURL(url.getPath)
-    super.addURL(url) // If we are going to maintain our own classes in this, no need to call this addURL. Which is duplicate
+    loadedJars += url
+    // super.addURL(url) // If we are going to maintain our own classes in this, no need to call this addURL. Which is duplicate
   }
 
   override def findClass(name: String): Class[_] = {
