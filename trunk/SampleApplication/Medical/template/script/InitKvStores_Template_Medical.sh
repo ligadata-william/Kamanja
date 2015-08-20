@@ -1,5 +1,7 @@
-java -jar {InstallDirectory}/bin/KVInit-1.0 --kvname System.SputumCodes        --config {InstallDirectory}/config/Engine1Config.properties --csvpath {InstallDirectory}/input/SampleApplications/data/sputumCodes_Medical.csv       --keyfieldname icd9Code
-java -jar {InstallDirectory}/bin/KVInit-1.0 --kvname System.SmokeCodes         --config {InstallDirectory}/config/Engine1Config.properties --csvpath {InstallDirectory}/input/SampleApplications/data/smokingCodes_Medical.csv      --keyfieldname icd9Code
-java -jar {InstallDirectory}/bin/KVInit-1.0 --kvname System.EnvCodes           --config {InstallDirectory}/config/Engine1Config.properties --csvpath {InstallDirectory}/input/SampleApplications/data/envExposureCodes_Medical.csv  --keyfieldname icd9Code
-java -jar {InstallDirectory}/bin/KVInit-1.0 --kvname System.CoughCodes         --config {InstallDirectory}/config/Engine1Config.properties --csvpath {InstallDirectory}/input/SampleApplications/data/coughCodes_Medical.csv        --keyfieldname icd9Code
-java -jar {InstallDirectory}/bin/KVInit-1.0 --kvname System.DyspnoeaCodes      --config {InstallDirectory}/config/Engine1Config.properties --csvpath {InstallDirectory}/input/SampleApplications/data/dyspnoea_Medical.csv          --keyfieldname icd9Code
+KAMANJA_BASEPATH=`cat /tmp/kamanja.location`
+
+java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.SputumCodes        --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/sputumCodes_Medical.csv       --keyfieldname icd9Code
+java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.SmokeCodes         --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/smokingCodes_Medical.csv      --keyfieldname icd9Code
+java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.EnvCodes           --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/envExposureCodes_Medical.csv  --keyfieldname icd9Code
+java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.CoughCodes         --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/coughCodes_Medical.csv        --keyfieldname icd9Code
+java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.DyspnoeaCodes      --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/dyspnoea_Medical.csv          --keyfieldname icd9Code
