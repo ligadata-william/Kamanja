@@ -1,5 +1,16 @@
-  #!/usr/bin/env bash
-KAMANJA_BASEPATH=/Cellar/kamanja/1.1.0
+#!/usr/bin/env bash
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+KAMANJA_BASEPATH="$(dirname "$SCRIPT_DIR")"
+echo $KAMANJA_BASEPATH
+
 jar_full_path=$(which jar)
 INPUT=$@
 if [ "$?" != "0" ]; then
@@ -26,24 +37,24 @@ echo JAVA_HOME=$JAVA_HOME >> ~/MetadataAPIConfig.properties
 echo NOTIFY_ENGINE=YES >> ~/MetadataAPIConfig.properties
 echo MetadataSchemaName=metadata >> ~/MetadataAPIConfig.properties
 echo MetadataStoreType=hashmap >> ~/MetadataAPIConfig.properties
-echo MetadataLocation=$(brew --prefix)$KAMANJA_BASEPATH/storage >> ~/MetadataAPIConfig.properties
-echo ROOT_DIR=$(brew --prefix)$KAMANJA_BASEPATH/ >> ~/MetadataAPIConfig.properties
-echo JAR_TARGET_DIR=$(brew --prefix)$KAMANJA_BASEPATH/lib/application >> ~/MetadataAPIConfig.properties
-echo MANIFEST_PATH=$(brew --prefix)$KAMANJA_BASEPATH/config/manifest.mf >> ~/MetadataAPIConfig.properties
-echo CLASSPATH=$(brew --prefix)$KAMANJA_BASEPATH/lib/system/kamanjamanager_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/guava-18.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/metadata_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/kamanjabase_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/basefunctions_2.10-0.1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/messagedef_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/methodextractor_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/pmmlcompiler_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/bootstrap_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/joda-time-2.3.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/joda-convert-1.6.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/basetypes_2.10-0.1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/pmmludfs_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/pmmlruntime_2.10-1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/json4s-native_2.10-3.2.9.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/json4s-ast_2.10-3.2.9.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/jackson-databind-2.3.1.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/jackson-annotations-2.3.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/jackson-core-2.3.1.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/log4j-1.2.17.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/json4s-jackson_2.10-3.2.9.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/jsondatagen_2.10-0.1.0.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/jsontools-core-1.7-sources.jar:jsontools-core-1.7.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/spray-json_2.10-1.2.5.jar:$(brew --prefix)$KAMANJA_BASEPATH/lib/system/exceptions_2.10-1.0.jar >> ~/MetadataAPIConfig.properties
-echo COMPILER_WORK_DIR=$(brew --prefix)$KAMANJA_BASEPATH/workingdir >> ~/MetadataAPIConfig.properties
-echo MODEL_FILES_DIR=$(brew --prefix)$KAMANJA_BASEPATH/input/SampleApplications/metadata/model/ >> ~/MetadataAPIConfig.properties
-echo TYPE_FILES_DIR=$(brew --prefix)$KAMANJA_BASEPATH/input/SampleApplications/metadata/type/ >> ~/MetadataAPIConfig.properties
-echo FUNCTION_FILES_DIR=$(brew --prefix)$KAMANJA_BASEPATH/input/SampleApplications/metadata/function/>> ~/MetadataAPIConfig.properties
-echo CONCEPT_FILES_DIR=$(brew --prefix)$KAMANJA_BASEPATH/input/SampleApplications/metadata/concept/ >> ~/MetadataAPIConfig.properties
-echo MESSAGE_FILES_DIR=$(brew --prefix)$KAMANJA_BASEPATH/input/SampleApplications/metadata/message/ >> ~/MetadataAPIConfig.properties
-echo CONTAINER_FILES_DIR=$(brew --prefix)$KAMANJA_BASEPATH/input/SampleApplications/metadata/container/ >> ~/MetadataAPIConfig.properties
-echo CONFIG_FILES_DIR=$(brew --prefix)$KAMANJA_BASEPATH/input/SampleApplications/metadata/config/ >> ~/MetadataAPIConfig.properties
+echo MetadataLocation=$KAMANJA_BASEPATH/storage >> ~/MetadataAPIConfig.properties
+echo ROOT_DIR=$KAMANJA_BASEPATH/ >> ~/MetadataAPIConfig.properties
+echo JAR_TARGET_DIR=$KAMANJA_BASEPATH/lib/application >> ~/MetadataAPIConfig.properties
+echo MANIFEST_PATH=$KAMANJA_BASEPATH/config/manifest.mf >> ~/MetadataAPIConfig.properties
+echo CLASSPATH=$KAMANJA_BASEPATH/lib/system/kamanjamanager_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/guava-18.0.jar:$KAMANJA_BASEPATH/lib/system/metadata_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/kamanjabase_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$KAMANJA_BASEPATH/lib/system/basefunctions_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/messagedef_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/methodextractor_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmlcompiler_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/bootstrap_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/joda-time-2.3.jar:$KAMANJA_BASEPATH/lib/system/joda-convert-1.6.jar:$KAMANJA_BASEPATH/lib/system/basetypes_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmludfs_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmlruntime_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/json4s-native_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/json4s-ast_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/jackson-databind-2.3.1.jar:$KAMANJA_BASEPATH/lib/system/jackson-annotations-2.3.0.jar:$KAMANJA_BASEPATH/lib/system/jackson-core-2.3.1.jar:$KAMANJA_BASEPATH/lib/system/log4j-1.2.17.jar:$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/json4s-jackson_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/jsondatagen_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/jsontools-core-1.7-sources.jar:jsontools-core-1.7.jar:$KAMANJA_BASEPATH/lib/system/spray-json_2.10-1.2.5.jar:$KAMANJA_BASEPATH/lib/system/exceptions_2.10-1.0.jar >> ~/MetadataAPIConfig.properties
+echo COMPILER_WORK_DIR=$KAMANJA_BASEPATH/workingdir >> ~/MetadataAPIConfig.properties
+echo MODEL_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/model/ >> ~/MetadataAPIConfig.properties
+echo TYPE_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/type/ >> ~/MetadataAPIConfig.properties
+echo FUNCTION_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/function/>> ~/MetadataAPIConfig.properties
+echo CONCEPT_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/concept/ >> ~/MetadataAPIConfig.properties
+echo MESSAGE_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/message/ >> ~/MetadataAPIConfig.properties
+echo CONTAINER_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/container/ >> ~/MetadataAPIConfig.properties
+echo CONFIG_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/config/ >> ~/MetadataAPIConfig.properties
 echo MODEL_EXEC_LOG=true >> ~/MetadataAPIConfig.properties
-echo JarPaths=$(brew --prefix)$KAMANJA_BASEPATH/lib/system,$(brew --prefix)$KAMANJA_BASEPATH/lib/application >> ~/MetadataAPIConfig.properties
-echo SECURITY_IMPL_JAR=$(brew --prefix)$KAMANJA_BASEPATH/lib/system/simpleapacheshiroadapter_2.10-1.0.jar  >> ~/MetadataAPIConfig.properties
+echo JarPaths=$KAMANJA_BASEPATH/lib/system,$KAMANJA_BASEPATH/lib/application >> ~/MetadataAPIConfig.properties
+echo SECURITY_IMPL_JAR=$KAMANJA_BASEPATH/lib/system/simpleapacheshiroadapter_2.10-1.0.jar  >> ~/MetadataAPIConfig.properties
 echo SECURITY_IMPL_CLASS=com.ligadata.Security.SimpleApacheShiroAdapter  >> ~/MetadataAPIConfig.properties
-echo AUDIT_IMPL_JAR=$(brew --prefix)$KAMANJA_BASEPATH/lib/system/auditadapters_2.10-1.0.jar  >> ~/MetadataAPIConfig.properties
+echo AUDIT_IMPL_JAR=$KAMANJA_BASEPATH/lib/system/auditadapters_2.10-1.0.jar  >> ~/MetadataAPIConfig.properties
 echo ZNODE_PATH=/ligadata >> ~/MetadataAPIConfig.properties
 echo API_LEADER_SELECTION_ZK_NODE=/ligadata >> ~/MetadataAPIConfig.properties
 echo ZOOKEEPER_CONNECT_STRING=localhost:2181 >> ~/MetadataAPIConfig.properties
@@ -77,26 +88,26 @@ fi
 
 if [ "$INPUT" = "start webservice" ]; then
 echo "Starting web service . . . ."
-java -jar /usr/local/bin/MetadataAPIService-1.0
+java -jar $KAMANJA_BASEPATH/bin/MetadataAPIService-1.0
 elif [ "$INPUT" = "start -v" ]; then
-  sudo /usr/local/bin/StartEngine.sh
+  sudo $KAMANJA_BASEPATH/bin/StartEngine.sh
 elif [ "$INPUT" = "start" ]; then
   if [ -f /tmp/kamanjastart.log ]; then
     rm /tmp/kamanjastart.log
     touch /tmp/kamanjastart.log
   fi
-  sudo nohup /usr/local/bin/StartEngine.sh >> /tmp/kamanjastart.log &
+  sudo nohup $KAMANJA_BASEPATH/StartEngine.sh >> /tmp/kamanjastart.log &
 elif [ "$INPUT" = "stop" ]; then
     ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
     sudo kill -9 $ID
 elif [ "$INPUT" = "create queues" ]; then
-  /usr/local/bin/CreateQueues.sh
+  $KAMANJA_BASEPATH/bin/CreateQueues.sh
 elif [ "$INPUT" = "watch status queue" ]; then
-  /usr/local/bin/WatchStatusQueue.sh
+  $KAMANJA_BASEPATH/bin/WatchStatusQueue.sh
 elif [ "$INPUT" = "watch input queue" ]; then
-  /usr/local/bin/WatchInputQueue.sh
+  $KAMANJA_BASEPATH/bin/WatchInputQueue.sh
   elif [ "$INPUT" = "push data" ]; then
-    /usr/local/bin/PushSampleDataToKafka.sh $INPUT
+    $KAMANJA_BASEPATH/bin/PushSampleDataToKafka.sh $INPUT
 else
-java -jar /usr/local/bin/MetadataAPI-1.0 $@
+java -jar $KAMANJA_BASEPATH/bin/MetadataAPI-1.0 $@
 fi
