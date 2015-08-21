@@ -1,7 +1,7 @@
 package com.ligadata.kamanja.financial;
 
 import com.ligadata.KamanjaBase.*;
-import com.ligadata.messagescontainers.System.*;
+import System.*;
 
 import java.io.*;
 

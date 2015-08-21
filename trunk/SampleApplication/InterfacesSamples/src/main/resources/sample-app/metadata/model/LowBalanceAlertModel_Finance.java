@@ -3,7 +3,7 @@ package com.ligadata.kamanja.financial;
 import scala.Option;
 
 import com.ligadata.KamanjaBase.*;
-import com.ligadata.messagescontainers.System.*;
+import System.*;
 
 public class LowBalanceAlertModel extends ModelBase {
 	static LowBalanceAlertModelObj objSingleton = new LowBalanceAlertModelObj();

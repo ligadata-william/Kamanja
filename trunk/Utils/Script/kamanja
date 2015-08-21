@@ -9,8 +9,8 @@ done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 KAMANJA_BASEPATH="$(dirname "$SCRIPT_DIR")"
-echo $KAMANJA_BASEPATH
-
+echo $KAMANJA_BASEPATH > /tmp/kamanja.location
+export KAMANJA_BASEPATH
 jar_full_path=$(which jar)
 INPUT=$@
 if [ "$?" != "0" ]; then
@@ -37,11 +37,12 @@ echo JAVA_HOME=$JAVA_HOME >> ~/MetadataAPIConfig.properties
 echo NOTIFY_ENGINE=YES >> ~/MetadataAPIConfig.properties
 echo MetadataSchemaName=metadata >> ~/MetadataAPIConfig.properties
 echo MetadataStoreType=hashmap >> ~/MetadataAPIConfig.properties
+
 echo MetadataLocation=$KAMANJA_BASEPATH/storage >> ~/MetadataAPIConfig.properties
 echo ROOT_DIR=$KAMANJA_BASEPATH/ >> ~/MetadataAPIConfig.properties
 echo JAR_TARGET_DIR=$KAMANJA_BASEPATH/lib/application >> ~/MetadataAPIConfig.properties
 echo MANIFEST_PATH=$KAMANJA_BASEPATH/config/manifest.mf >> ~/MetadataAPIConfig.properties
-echo CLASSPATH=$KAMANJA_BASEPATH/lib/system/kamanjamanager_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/guava-18.0.jar:$KAMANJA_BASEPATH/lib/system/metadata_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/kamanjabase_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$KAMANJA_BASEPATH/lib/system/basefunctions_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/messagedef_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/methodextractor_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmlcompiler_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/bootstrap_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/joda-time-2.3.jar:$KAMANJA_BASEPATH/lib/system/joda-convert-1.6.jar:$KAMANJA_BASEPATH/lib/system/basetypes_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmludfs_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmlruntime_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/json4s-native_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/json4s-ast_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/jackson-databind-2.3.1.jar:$KAMANJA_BASEPATH/lib/system/jackson-annotations-2.3.0.jar:$KAMANJA_BASEPATH/lib/system/jackson-core-2.3.1.jar:$KAMANJA_BASEPATH/lib/system/log4j-1.2.17.jar:$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/json4s-jackson_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/jsondatagen_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/jsontools-core-1.7-sources.jar:jsontools-core-1.7.jar:$KAMANJA_BASEPATH/lib/system/spray-json_2.10-1.2.5.jar:$KAMANJA_BASEPATH/lib/system/exceptions_2.10-1.0.jar >> ~/MetadataAPIConfig.properties
+echo CLASSPATH=$KAMANJA_BASEPATH/lib/system/kamanjamanager_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/guava-18.0.jar:$KAMANJA_BASEPATH/lib/system/metadata_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/kamanjabase_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$KAMANJA_BASEPATH/lib/system/basefunctions_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/messagedef_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/methodextractor_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmlcompiler_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/bootstrap_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/joda-time-2.8.2.jar:$KAMANJA_BASEPATH/lib/system/joda-convert-1.6.jar:$KAMANJA_BASEPATH/lib/system/basetypes_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmludfs_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/pmmlruntime_2.10-1.0.jar:$KAMANJA_BASEPATH/lib/system/json4s-native_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/json4s-ast_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/jackson-databind-2.3.1.jar:$KAMANJA_BASEPATH/lib/system/jackson-annotations-2.3.0.jar:$KAMANJA_BASEPATH/lib/system/jackson-core-2.3.1.jar:$KAMANJA_BASEPATH/lib/system/log4j-1.2.17.jar:$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/json4s-jackson_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/scala-library-2.10.4.jar:$KAMANJA_BASEPATH/lib/system/json4s-core_2.10-3.2.9.jar:$KAMANJA_BASEPATH/lib/system/jsondatagen_2.10-0.1.0.jar:$KAMANJA_BASEPATH/lib/system/jsontools-core-1.7-sources.jar:jsontools-core-1.7.jar:$KAMANJA_BASEPATH/lib/system/spray-json_2.10-1.2.5.jar:$KAMANJA_BASEPATH/lib/system/exceptions_2.10-1.0.jar >> ~/MetadataAPIConfig.properties
 echo COMPILER_WORK_DIR=$KAMANJA_BASEPATH/workingdir >> ~/MetadataAPIConfig.properties
 echo MODEL_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/model/ >> ~/MetadataAPIConfig.properties
 echo TYPE_FILES_DIR=$KAMANJA_BASEPATH/input/SampleApplications/metadata/type/ >> ~/MetadataAPIConfig.properties
@@ -55,6 +56,7 @@ echo JarPaths=$KAMANJA_BASEPATH/lib/system,$KAMANJA_BASEPATH/lib/application >> 
 echo SECURITY_IMPL_JAR=$KAMANJA_BASEPATH/lib/system/simpleapacheshiroadapter_2.10-1.0.jar  >> ~/MetadataAPIConfig.properties
 echo SECURITY_IMPL_CLASS=com.ligadata.Security.SimpleApacheShiroAdapter  >> ~/MetadataAPIConfig.properties
 echo AUDIT_IMPL_JAR=$KAMANJA_BASEPATH/lib/system/auditadapters_2.10-1.0.jar  >> ~/MetadataAPIConfig.properties
+
 echo ZNODE_PATH=/ligadata >> ~/MetadataAPIConfig.properties
 echo API_LEADER_SELECTION_ZK_NODE=/ligadata >> ~/MetadataAPIConfig.properties
 echo ZOOKEEPER_CONNECT_STRING=localhost:2181 >> ~/MetadataAPIConfig.properties
@@ -88,9 +90,11 @@ fi
 
 if [ "$INPUT" = "start webservice" ]; then
 echo "Starting web service . . . ."
+
 java -jar $KAMANJA_BASEPATH/bin/MetadataAPIService-1.0
 elif [ "$INPUT" = "start -v" ]; then
-  sudo $KAMANJA_BASEPATH/bin/StartEngine.sh
+   $KAMANJA_BASEPATH/bin/StartEngine.sh
+
 elif [ "$INPUT" = "start" ]; then
   if [ -f /tmp/kamanjastart.log ]; then
     rm /tmp/kamanjastart.log
@@ -100,8 +104,8 @@ elif [ "$INPUT" = "start" ]; then
  nohup $KAMANJA_BASEPATH/StartEngine.sh >> $HOME/kamanjastart.log &
  echo "Kamanja engine started in background. Please check the engine log at /tmp/kamanjastart.log"
 elif [ "$INPUT" = "stop" ]; then
-  ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
-  sudo kill -9 $ID
+    ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
+    kill -9 $ID
 elif [ "$INPUT" = "create queues" ]; then
   $KAMANJA_BASEPATH/bin/CreateQueues.sh
 elif [ "$INPUT" = "watch status queue" ]; then
@@ -111,7 +115,24 @@ elif [ "$INPUT" = "watch input queue" ]; then
   elif [ "$INPUT" = "watch output queue" ]; then
   $KAMANJA_BASEPATH/bin/WatchOutputQueue.sh
 elif [ "$INPUT" = "push data" ]; then
-  $KAMANJA_BASEPATH/bin/PushSampleDataToKafka.sh $INPUT
+    $KAMANJA_BASEPATH/bin/PushSampleDataToKafka.sh $INPUT
+elif [ "$INPUT" = "kvinit" ]; then
+count=0
+FILEDIR=$KAMANJA_BASEPATH/input/SampleApplications/bin
+for entry in "$FILEDIR"/*
+do
+echo $entry | grep -i InitKvStores >> /dev/null
+if [ $? = 0 ]; then
+count=$((count+1))
+  echo "$count: $entry"
+  LISTOFFILES[count-1]=$entry
+fi
+done
+read -p "Please select from the above options: " useroption
+OPTION=useroption-1
+INPUTFILE=${LISTOFFILES[OPTION]}
+echo "User selected: $INPUTFILE"
+$INPUTFILE
 else
-  java -jar $KAMANJA_BASEPATH/bin/MetadataAPI-1.0 $@
+java -jar $KAMANJA_BASEPATH/bin/MetadataAPI-1.0 $@
 fi

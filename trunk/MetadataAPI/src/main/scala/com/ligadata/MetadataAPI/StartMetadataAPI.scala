@@ -23,7 +23,7 @@ object StartMetadataAPI {
     val arglist = args.toList
     if (args.length == 0) {
       config = defaultConfig
-      MetadataAPIImpl.InitMdMgrFromBootStrap(config)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
       TestMetadataAPI.StartTest
     }
     else if (args(0) == "config") {
@@ -43,7 +43,7 @@ object StartMetadataAPI {
       //add configuration
       if (config == "")
         config = defaultConfig
-      MetadataAPIImpl.InitMdMgrFromBootStrap(config)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
       action.trim
       response = route(Action.withName(action), location)
     }
@@ -114,7 +114,7 @@ object StartMetadataAPI {
         case Action.DUMPALLCLUSTERCFGS=>response =DumpService.dumpAllClusterCfgs
         case Action.DUMPALLADAPTERS=>response =DumpService.dumpAllAdapters
         case _ => {
-          "Unexpected action!"
+          println("Unexpected action!")
           sys.exit(1)
         }
       }

@@ -2,7 +2,7 @@ package com.ligadata.kamanja.financial;
 
 import com.google.common.base.Optional;
 import com.ligadata.KamanjaBase.*;
-import com.ligadata.messagescontainers.System.*;
+import System.*;
 
 public class HelloWorldModel extends ModelBase {
 	static HelloWorldModelObj objSingleton = new HelloWorldModelObj();
