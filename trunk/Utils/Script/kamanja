@@ -102,16 +102,18 @@ elif [ "$INPUT" = "start" ]; then
   fi
 
  nohup $KAMANJA_BASEPATH/StartEngine.sh >> $HOME/kamanjastart.log &
+ echo "Kamanja engine started in background. Please check the engine log at /tmp/kamanjastart.log"
 elif [ "$INPUT" = "stop" ]; then
     ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
     kill -9 $ID
 elif [ "$INPUT" = "create queues" ]; then
-
   $KAMANJA_BASEPATH/bin/CreateQueues.sh
 elif [ "$INPUT" = "watch status queue" ]; then
   $KAMANJA_BASEPATH/bin/WatchStatusQueue.sh
 elif [ "$INPUT" = "watch input queue" ]; then
   $KAMANJA_BASEPATH/bin/WatchInputQueue.sh
+  elif [ "$INPUT" = "watch output queue" ]; then
+  $KAMANJA_BASEPATH/bin/WatchOutputQueue.sh
 elif [ "$INPUT" = "push data" ]; then
     $KAMANJA_BASEPATH/bin/PushSampleDataToKafka.sh $INPUT
 elif [ "$INPUT" = "kvinit" ]; then
