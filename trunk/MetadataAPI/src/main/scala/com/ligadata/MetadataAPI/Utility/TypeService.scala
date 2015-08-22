@@ -96,7 +96,7 @@ object TypeService {
     }
     response
   }
-  def getAllTypes: String ={
+  def getAllTypes: String = {
     MetadataAPIImpl.GetAllTypes("JSON", userid)
   }
 

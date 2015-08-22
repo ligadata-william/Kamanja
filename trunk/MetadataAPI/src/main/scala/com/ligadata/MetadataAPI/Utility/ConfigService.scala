@@ -14,47 +14,48 @@ object ConfigService {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
-  def uploadEngineConfig(input: String): String ={
-    var response = ""
-    var configFileDir: String = ""
-    //val gitMsgFile = "https://raw.githubusercontent.com/ligadata-dhaval/Kamanja/master/HelloWorld_Msg_Def.json"
-    if (input == "") {
-      configFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
-      if (configFileDir == null) {
-        response = "CONFIG_FILES_DIR property missing in the metadata API configuration"
-      } else {
-        //verify the directory where messages can be present
-        IsValidDir(configFileDir) match {
-          case true => {
-            //get all files with json extension
-            val types: Array[File] = new java.io.File(configFileDir).listFiles.filter(_.getName.endsWith(".json"))
-            types.length match {
-              case 0 => {
-                println("Configs not found at " + configFileDir)
-                response="Configs not found at " + configFileDir
-              }
-              case option => {
-                val configDefs = getUserInputFromMainMenu(types)
-                for (configDef <- configDefs) {
-                  response += MetadataAPIImpl.UploadConfig(configDef.toString, userid, "configuration")
-                }
-              }
-            }
-          }
-          case false => {
-            //println("Message directory is invalid.")
-            response = "Config directory is invalid."
-          }
-        }
-      }
-    } else {
-      //input provided
-      var message = new File(input.toString)
-      val configDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.UploadConfig(configDef.toString, userid, "configuration")
-    }
-    response
-  }
+ def uploadEngineConfig(input: String): String ={
+   var response = ""
+   var configFileDir: String = ""
+   //val gitMsgFile = "https://raw.githubusercontent.com/ligadata-dhaval/Kamanja/master/HelloWorld_Msg_Def.json"
+   if (input == "") {
+     configFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
+     if (configFileDir == null) {
+       response = "CONFIG_FILES_DIR property missing in the metadata API configuration"
+     } else {
+       //verify the directory where messages can be present
+       IsValidDir(configFileDir) match {
+         case true => {
+           //get all files with json extension
+           val types: Array[File] = new java.io.File(configFileDir).listFiles.filter(_.getName.endsWith(".json"))
+           types.length match {
+             case 0 => {
+               println("Configs not found at " + configFileDir)
+               response="Configs not found at " + configFileDir
+             }
+             case option => {
+               val configDefs = getUserInputFromMainMenu(types)
+               for (configDef <- configDefs) {
+                 response += MetadataAPIImpl.UploadConfig(configDef.toString, userid, "configuration")
+               }
+             }
+           }
+         }
+         case false => {
+           //println("Message directory is invalid.")
+           response = "Config directory is invalid."
+         }
+       }
+     }
+   } else {
+     //input provided
+     var message = new File(input.toString)
+     val configDef = Source.fromFile(message).mkString
+     response = MetadataAPIImpl.UploadConfig(configDef.toString, userid, "configuration")
+   }
+   response
+ }
+
   def uploadCompileConfig(input: String): String ={
     var response = ""
     var configFileDir: String = ""

@@ -114,6 +114,24 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/config/EngineConfig_Template.properties > $install_dir/config/Engine1Config.properties
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/config/EngineConfig_Cassandra_Template.properties > $install_dir/config/Engine1Config_Cassandra.properties
 
+<<<<<<< HEAD
+=======
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Medical/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/Medical/metadata/config/MetadataAPIConfig.properties
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Medical/template/config/MetadataAPIConfig_Cassandra_Template.properties > $install_dir/input/Medical/metadata/config/MetadataAPIConfig_Cassandra.properties
+
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/Telecom/metadata/config/MetadataAPIConfig.properties
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/config/MetadataAPIConfig_Cassandra_Template.properties > $install_dir/input/Telecom/metadata/config/MetadataAPIConfig_Cassandra.properties
+
+#Finance
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Finance/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/Finance/metadata/config/MetadataAPIConfig.properties
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Finance/template/config/MetadataAPIConfig_Cassandra_Template.properties > $install_dir/input/Finance/metadata/config/MetadataAPIConfig_Cassandra.properties
+#Finance
+
+# HelloWorld
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/config/MetadataAPIConfig_Template_HelloWorld.properties > $install_dir/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties
+# HelloWorld
+
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 # Expecting 1st Parameter as Kafka Install directory
 if [ "$#" -ne 1 ] || ! [ -d "$KafkaRootDir" ]; then
 	echo "WARN: Not given/found Kafka install directory. Not going to create CreateQueues.sh, WatchOutputQueue.sh, WatchStatusQueue.sh and WatchInputQueue.sh"

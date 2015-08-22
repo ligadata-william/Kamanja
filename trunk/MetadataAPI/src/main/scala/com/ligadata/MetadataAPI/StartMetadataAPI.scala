@@ -43,7 +43,9 @@ object StartMetadataAPI {
       //add configuration
       if (config == "")
         config = defaultConfig
+
       MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
+
       action.trim
       response = route(Action.withName(action), location)
     }

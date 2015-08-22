@@ -57,6 +57,12 @@ mkdir -p $installPath/template
 mkdir -p $installPath/template/config
 mkdir -p $installPath/template/script
 mkdir -p $installPath/input
+<<<<<<< HEAD
+=======
+
+
+#new one
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 mkdir -p $installPath/input/SampleApplications
 mkdir -p $installPath/input/SampleApplications/bin
 mkdir -p $installPath/input/SampleApplications/data
@@ -69,6 +75,10 @@ mkdir -p $installPath/input/SampleApplications/metadata/model
 mkdir -p $installPath/input/SampleApplications/metadata/script
 mkdir -p $installPath/input/SampleApplications/metadata/type
 mkdir -p $installPath/input/SampleApplications/template
+<<<<<<< HEAD
+=======
+#new one
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 
 bin=$installPath/bin
 systemlib=$installPath/lib/system
@@ -170,6 +180,10 @@ cp $ivyPath/cache/com.sdicons.jsontools/jsontools-core/jars/jsontools-core-1.7.j
 cp $srcPath/Utils/Controller/target/scala-2.10/controller_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/junit/junit/jars/junit-3.8.1.jar $systemlib
 cp $ivyPath/cache/com.typesafe/config/bundles/config-1.2.0.jar $systemlib
+<<<<<<< HEAD
+=======
+cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.8.2-javadoc.jar $systemlib
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 cp $srcPath/ApiImpl/target/scala-2.10/apiimpl_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/dhbcore.jar $systemlib
 cp $ivyPath/cache/com.google.guava/guava/bundles/guava-18.0.jar $systemlib
@@ -339,6 +353,7 @@ cp $ivyPath/cache/com.codahale.metrics/metrics-core/bundles/metrics-core-3.0.2.j
 cp $ivyPath/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-testkit/jars/spray-testkit-1.3.1.jar $systemlib
 
+<<<<<<< HEAD
 cp $srcPath/Storage/Cassandra/target/scala-2.10/*.jar $systemlib
 cp $srcPath/Storage/HashMap/target/scala-2.10/*.jar $systemlib
 cp $srcPath/Storage/HBase/target/scala-2.10/*.jar $systemlib
@@ -351,6 +366,8 @@ cp $srcPath/InputOutputAdapters/InputOutputAdapterBase/target/scala-2.10/*.jar $
 cp $srcPath/KamanjaUtils/target/scala-2.10/kamanjautils_2.10-1.0.jar $systemlib
 cp $srcPath/SecurityAdapters/SecurityAdapterBase/target/scala-2.10/*.jar $systemlib
 
+=======
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 # an extra copy to make sure ?
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/*.jar $systemlib
 
@@ -364,6 +381,10 @@ cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 
 #copy kamanja to bin directory
 cp $srcPath/Utils/Script/kamanja $bin
+<<<<<<< HEAD
+=======
+
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 
 # *******************************
 # COPD messages data prep
@@ -372,6 +393,11 @@ cp $srcPath/Utils/Script/kamanja $bin
 # Prepare test messages and copy them into place
 
 echo "Prepare test messages and copy them into place..."
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 # *******************************
 # Copy documentation files
 # *******************************
@@ -388,6 +414,7 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 # cd $srcPath/SampleApplication/Medical/Configs
 # cp * $installPath/input/Medical/metadata/config
 
+<<<<<<< HEAD
 #HelloWorld
 
 cd $srcPath/SampleApplication/HelloWorld/data
@@ -405,6 +432,80 @@ cp * $installPath/input/SampleApplications/metadata/model
 cd $srcPath/SampleApplication/HelloWorld/template
 cp -rf * $installPath/input/SampleApplications/template
 
+
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#HelloWorld
+
+#Medical
+
+cd $srcPath/Utils/KVInit/src/main/resources
+cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/Medical/SampleData
+cp *.csv $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/Medical/Functions
+cp * $installPath/input/SampleApplications/metadata/function
+
+cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/Medical/Models
+cp *.* $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/Medical/Types
+cp * $installPath/input/SampleApplications/metadata/type
+
+cd $srcPath/SampleApplication/Medical/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/Medical/Configs
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#Medical
+
+#Telecom
+
+cd $srcPath/SampleApplication/Telecom/data
+cp * $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/Telecom/metadata/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/Telecom/metadata/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/Telecom/metadata/model
+cp *.* $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/Telecom/metadata/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/Telecom/metadata/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#Telecom
+=======
+
+#new one
+#HelloWorld
+
+cd $srcPath/SampleApplication/HelloWorld/data
+cp * $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/HelloWorld/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/HelloWorld/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/HelloWorld/model
+cp * $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/HelloWorld/template
+cp -rf * $installPath/input/SampleApplications/template
 
 cd $srcPath/SampleApplication/HelloWorld/config
 cp -rf * $installPath/input/SampleApplications/metadata/config
@@ -485,8 +586,42 @@ cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/me
 cp -rf * $installPath/input/SampleApplications/metadata/config
 #Finance
 
+#new one
+
+
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
+
+#Finance
+
+<<<<<<< HEAD
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
+cp * $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/model
+cp *.* $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/type
+cp * $installPath/input/SampleApplications/metadata/type
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#Finance
+
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
+=======
+
+
+>>>>>>> 44fc11ba7559dd5d484f569ad365ca2c5f9078af
 
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
