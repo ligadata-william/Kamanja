@@ -1,4 +1,4 @@
-package main.scala.com.ligadata.MetadataAPI.Utility
+package com.ligadata.MetadataAPI.Utility
 
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import org.apache.log4j._

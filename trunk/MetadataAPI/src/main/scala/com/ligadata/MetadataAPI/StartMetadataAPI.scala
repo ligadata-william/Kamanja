@@ -3,7 +3,7 @@ package scala.com.ligadata.MetadataAPI
 import java.util.logging.Logger
 
 import com.ligadata.MetadataAPI.{TestMetadataAPI, MetadataAPIImpl}
-import main.scala.com.ligadata.MetadataAPI.Utility._
+import com.ligadata.MetadataAPI.Utility._
 
 
 /**
@@ -11,6 +11,7 @@ import main.scala.com.ligadata.MetadataAPI.Utility._
  */
 
 object StartMetadataAPI {
+
   var response = ""
   val defaultConfig = sys.env("HOME") + "/MetadataAPIConfig.properties"
   val loggerName = this.getClass.getName
@@ -20,38 +21,47 @@ object StartMetadataAPI {
   var config = ""
 
   def main(args: Array[String]) {
-    val arglist = args.toList
-    if (args.length == 0) {
-      config = defaultConfig
-      MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-      TestMetadataAPI.StartTest
-    }
-    else if (args(0) == "config") {
-      config = defaultConfig
-    }
-    else {
-      for (arg <- arglist) {
-        if (arg.endsWith(".json") || arg.endsWith(".xml")  || arg.endsWith(".scala")  || arg.endsWith(".java")) {
-          location = arg
-        } else if (arg.endsWith(".properties")) {
-          config = arg
-        } else {
-          action += arg
-        }
-      }
-
-      //add configuration
-      if (config == "")
+    try {
+      val arglist = args.toList
+      if (args.length == 0) {
         config = defaultConfig
+        MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
+        TestMetadataAPI.StartTest
+      }
+      else if (args(0) == "config") {
+        config = defaultConfig
+      }
+      else {
+        for (arg <- arglist) {
+          if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
+            location = arg
+          } else if (arg.endsWith(".properties")) {
+            config = arg
+          } else {
+            action += arg
+          }
+        }
 
-      MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
+        //add configuration
+        if (config == "")
+          config = defaultConfig
 
-      action.trim
-      response = route(Action.withName(action), location)
+        MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
+
+        action.trim
+        response = route(Action.withName(action), location)
+      }
+      println("Result: " + response)
+      response
     }
-    println("Result: " + response)
-    response
+    catch {
+      case e: Throwable => e.getStackTrace.toString
+
+    } finally {
+      MetadataAPIImpl.shutdown
+    }
   }
+
 
   def route(action: Action.Value, input: String): String = {
     var response = ""
