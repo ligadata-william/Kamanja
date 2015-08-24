@@ -38,15 +38,15 @@ case class ModelDefinition(Model: ModelInfo)
 case class ParameterMap(RootDir: String, GitRootDir: String, Database: String, DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZooKeeperConnectString: String)
 case class MetadataApiConfig(ApiConfigParameters: ParameterMap)
 
-case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
-case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification], transactionId: Option[String])
+case class ZooKeeperNotification(ObjectType: String, Operation: String, NameSpace: String, Name: String, Version: String, PhysicalName: String, JarName: String, DependantJars: List[String])
+case class ZooKeeperTransaction(Notifications: List[ZooKeeperNotification], transactionId: Option[String])
 
-case class JDataStore(StoreType: String,SchemaName:String,Location:String, AdapterSpecificConfig: Option[String])
-case class JZKInfo(ZooKeeperNodeBasePath:String, ZooKeeperConnectString:String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
-case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],Scala_home: String, Java_home: String, Classpath: String, Roles: Option[List[String]])
+case class JDataStore(StoreType: String, SchemaName: String, Location: String, AdapterSpecificConfig: Option[String])
+case class JZKInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
+case class JNodeInfo(NodeId: String, NodePort: Int, NodeIpAddr: String, JarPaths: List[String], Scala_home: String, Java_home: String, Classpath: String, Roles: Option[List[String]])
 case class JClusterCfg(DataStore: String, StatusInfo: String, ZooKeeperInfo: String, EnvironmentContext: String)
-case class JClusterInfo(ClusterId:String,Config: JClusterCfg, Nodes: List[JNodeInfo])
-case class JAdapterInfo(Name:String,TypeString:String,DataFormat:Option[String],InputAdapterToVerify: Option[String],ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String], DelimiterString: Option[String], AssociatedMessage: Option[String])
+case class JClusterInfo(ClusterId: String, Config: JClusterCfg, Nodes: List[JNodeInfo])
+case class JAdapterInfo(Name: String, TypeString: String, DataFormat: Option[String], InputAdapterToVerify: Option[String], ClassName: String, JarName: String, DependencyJars: Option[List[String]], AdapterSpecificCfg: Option[String], DelimiterString: Option[String], AssociatedMessage: Option[String])
 case class EngineConfig(Clusters: Option[List[JClusterInfo]], Adapters: Option[List[JAdapterInfo]])
 case class JEnvCtxtJsonStr(classname: String, jarname: String, dependencyjars: Option[List[String]])
 case class MetadataApiArg(ObjectType: String, NameSpace: String, Name: String, Version: String, FormatType: String)
@@ -73,27 +73,27 @@ object JsonSerializer {
       val funcList = json.extract[FunctionList]
       var funcDefList: ArrayBuffer[FunctionDef] = ArrayBuffer[FunctionDef]()
 
-      funcList.Functions.map( fn => {
-	try{
-	  val argList = fn.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
-	  var featureSet : scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]() 
-	  if (fn.Features != null) {
-		  fn.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
-	  } 
-	  val func = MdMgr.GetMdMgr.MakeFunc(fn.NameSpace,fn.Name,fn.PhysicalName,
-					   (fn.ReturnTypeNameSpace,fn.ReturnTypeName),
-					   argList,featureSet,
-					   fn.Version.toLong,
-					   fn.JarName,
-					   fn.DependantJars.toArray)
-	  funcDefList += func
-	} catch {
-	  case e:AlreadyExistsException => {
-	    val funcDef = List(fn.NameSpace,fn.Name,fn.Version)
-	    val funcName = funcDef.mkString(",")
-	    logger.error("Failed to add the func: " + funcName  + ": " + e.getMessage())
-	  }
-	}
+      funcList.Functions.map(fn => {
+        try {
+          val argList = fn.Arguments.map(arg => (arg.ArgName, arg.ArgTypeNameSpace, arg.ArgTypeName))
+          var featureSet: scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]()
+          if (fn.Features != null) {
+            fn.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
+          }
+          val func = MdMgr.GetMdMgr.MakeFunc(fn.NameSpace, fn.Name, fn.PhysicalName,
+            (fn.ReturnTypeNameSpace, fn.ReturnTypeName),
+            argList, featureSet,
+            fn.Version.toLong,
+            fn.JarName,
+            fn.DependantJars.toArray)
+          funcDefList += func
+        } catch {
+          case e: AlreadyExistsException => {
+            val funcDef = List(fn.NameSpace, fn.Name, fn.Version)
+            val funcName = funcDef.mkString(",")
+            logger.error("Failed to add the func: " + funcName + ": " + e.getMessage())
+          }
+        }
       })
       funcDefList.toArray
     } catch {
@@ -182,18 +182,18 @@ object JsonSerializer {
         }
       }
       typeDef
-    }catch {
-      case e:AlreadyExistsException => {
-	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	val typeName = keyValues.mkString(",")
-	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	throw new AlreadyExistsException(e.getMessage())
+    } catch {
+      case e: AlreadyExistsException => {
+        val keyValues = List(typ.NameSpace, typ.Name, typ.Version)
+        val typeName = keyValues.mkString(",")
+        logger.error("Failed to add the type: " + typeName + ": " + e.getMessage())
+        throw new AlreadyExistsException(e.getMessage())
       }
-      case e:Exception => {
-	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	val typeName = keyValues.mkString(",")
-	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	throw new TypeDefProcessingException(e.getMessage())
+      case e: Exception => {
+        val keyValues = List(typ.NameSpace, typ.Name, typ.Version)
+        val typeName = keyValues.mkString(",")
+        logger.error("Failed to add the type: " + typeName + ": " + e.getMessage())
+        throw new TypeDefProcessingException(e.getMessage())
       }
     }
   }
@@ -212,21 +212,21 @@ object JsonSerializer {
       var typeDefList: ArrayBuffer[BaseTypeDef] = ArrayBuffer[BaseTypeDef]()
 
       typeList.Types.map(typ => {
-	try{
-	  val typeDefObj:BaseTypeDef = processTypeDef(typ)
-	  typeDefList += typeDefObj
-	}catch {
-	  case e:AlreadyExistsException => {
-	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	    val typeName = keyValues.mkString(",")
-	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	  }
-	  case e:TypeDefProcessingException => {
-	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	    val typeName = keyValues.mkString(",")
-	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	  }
-	}
+        try {
+          val typeDefObj: BaseTypeDef = processTypeDef(typ)
+          typeDefList += typeDefObj
+        } catch {
+          case e: AlreadyExistsException => {
+            val keyValues = List(typ.NameSpace, typ.Name, typ.Version)
+            val typeName = keyValues.mkString(",")
+            logger.error("Failed to add the type: " + typeName + ": " + e.getMessage())
+          }
+          case e: TypeDefProcessingException => {
+            val keyValues = List(typ.NameSpace, typ.Name, typ.Version)
+            val typeName = keyValues.mkString(",")
+            logger.error("Failed to add the type: " + typeName + ": " + e.getMessage())
+          }
+        }
       })
       typeDefList.toArray
     } catch {
@@ -253,24 +253,24 @@ object JsonSerializer {
       val attrDefList = new Array[BaseAttributeDef](conceptList.Concepts.length)
       var i = 0;
       conceptList.Concepts.map(o => {
-	try{
-	  //logger.debug("Create Concept for " + o.NameSpace + "." + o.Name)
-	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace,
-						o.Name,
-						o.TypeNameSpace,
-						o.TypeName,
-						o.Version.toLong,
-						false)
-	  logger.debug("Created AttributeDef for " + o.NameSpace + "." + o.Name)
-	  attrDefList(i) =  attr
-	  i = i + 1
-	} catch {
-	  case e:AlreadyExistsException => {
-	    val keyValues = List(o.NameSpace,o.Name,o.Version)
-	    val fullName  = keyValues.mkString(",")
-	    logger.error("Failed to add the Concept: " + fullName  + ": " + e.getMessage())
-	  }
-	}
+        try {
+          //logger.debug("Create Concept for " + o.NameSpace + "." + o.Name)
+          val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace,
+            o.Name,
+            o.TypeNameSpace,
+            o.TypeName,
+            o.Version.toLong,
+            false)
+          logger.debug("Created AttributeDef for " + o.NameSpace + "." + o.Name)
+          attrDefList(i) = attr
+          i = i + 1
+        } catch {
+          case e: AlreadyExistsException => {
+            val keyValues = List(o.NameSpace, o.Name, o.Version)
+            val fullName = keyValues.mkString(",")
+            logger.error("Failed to add the Concept: " + fullName + ": " + e.getMessage())
+          }
+        }
       })
       //logger.debug("Found " + attrDefList.length + " concepts ")
       attrDefList
@@ -336,9 +336,9 @@ object JsonSerializer {
         concept.FunctionDefinition.DependantJars.toArray)
 
       //val derivedConcept = MdMgr.GetMdMgr.MakeDerivedAttr(func,attrList)
-    }catch {
-      case e:AlreadyExistsException => {
-	logger.error("Failed to add the DerivedConcept: : " + e.getMessage())
+    } catch {
+      case e: AlreadyExistsException => {
+        logger.error("Failed to add the DerivedConcept: : " + e.getMessage())
       }
       case e: MappingException => {
         e.printStackTrace()
@@ -398,9 +398,9 @@ object JsonSerializer {
         e.printStackTrace()
         throw Json4sParsingException(e.getMessage())
       }
-      case e:AlreadyExistsException => {
-	logger.error("Failed to add the type, json => " + typeJson  + "\nError => " + e.getMessage())
-	throw new AlreadyExistsException(e.getMessage())
+      case e: AlreadyExistsException => {
+        logger.error("Failed to add the type, json => " + typeJson + "\nError => " + e.getMessage())
+        throw new AlreadyExistsException(e.getMessage())
       }
       case e: Exception => {
         e.printStackTrace()
@@ -682,26 +682,26 @@ object JsonSerializer {
             ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
-        case o:FunctionDef => {
-          val json = (("ObjectType"      -> "FunctionDef") ~
-                      ("Operation"       -> operation) ~
-                      ("NameSpace"       -> o.nameSpace) ~
-                      ("Name"            -> o.name) ~
-                      ("Version"         -> o.ver) ~
-                      ("PhysicalName"    -> o.physicalName) ~
-                      ("JarName"         -> o.jarName) ~
-                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+        case o: FunctionDef => {
+          val json = (("ObjectType" -> "FunctionDef") ~
+            ("Operation" -> operation) ~
+            ("NameSpace" -> o.nameSpace) ~
+            ("Name" -> o.name) ~
+            ("Version" -> o.ver) ~
+            ("PhysicalName" -> o.physicalName) ~
+            ("JarName" -> o.jarName) ~
+            ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
-        case o:ArrayTypeDef => {
-          val json = (("ObjectType"      -> "ArrayTypeDef") ~
-                      ("Operation"       -> operation) ~
-                      ("NameSpace"       -> o.nameSpace) ~
-                      ("Name"            -> o.name) ~
-                      ("Version"         -> o.ver) ~
-                      ("PhysicalName"    -> o.physicalName) ~
-                      ("JarName"         -> o.jarName) ~
-                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+        case o: ArrayTypeDef => {
+          val json = (("ObjectType" -> "ArrayTypeDef") ~
+            ("Operation" -> operation) ~
+            ("NameSpace" -> o.nameSpace) ~
+            ("Name" -> o.name) ~
+            ("Version" -> o.ver) ~
+            ("PhysicalName" -> o.physicalName) ~
+            ("JarName" -> o.jarName) ~
+            ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
         case o: ArrayBufTypeDef => {
@@ -748,26 +748,26 @@ object JsonSerializer {
             ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
-        case o:HashMapTypeDef => {
-          val json = (("ObjectType"      -> "HashMapTypeDef") ~
-                      ("Operation"       -> operation) ~
-                      ("NameSpace"       -> o.nameSpace) ~
-                      ("Name"            -> o.name) ~
-                      ("Version"         -> o.ver) ~
-                      ("PhysicalName"    -> o.physicalName) ~
-                      ("JarName"         -> o.jarName) ~
-                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+        case o: HashMapTypeDef => {
+          val json = (("ObjectType" -> "HashMapTypeDef") ~
+            ("Operation" -> operation) ~
+            ("NameSpace" -> o.nameSpace) ~
+            ("Name" -> o.name) ~
+            ("Version" -> o.ver) ~
+            ("PhysicalName" -> o.physicalName) ~
+            ("JarName" -> o.jarName) ~
+            ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
-        case o:SetTypeDef => {
-          val json = (("ObjectType"      -> "SetTypeDef") ~
-                      ("Operation"       -> operation) ~
-                      ("NameSpace"       -> o.nameSpace) ~
-                      ("Name"            -> o.name) ~
-                      ("Version"         -> o.ver) ~
-                      ("PhysicalName"    -> o.physicalName) ~
-                      ("JarName"         -> o.jarName) ~
-                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+        case o: SetTypeDef => {
+          val json = (("ObjectType" -> "SetTypeDef") ~
+            ("Operation" -> operation) ~
+            ("NameSpace" -> o.nameSpace) ~
+            ("Name" -> o.name) ~
+            ("Version" -> o.ver) ~
+            ("PhysicalName" -> o.physicalName) ~
+            ("JarName" -> o.jarName) ~
+            ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
         case o: ImmutableSetTypeDef => {
@@ -848,30 +848,30 @@ object JsonSerializer {
           ("CfgMap" -> o.cfgMap))
         pretty(render(json))
       }
-      case o:NodeInfo => {
-	val json = (("NodeId"  -> o.nodeId) ~
-		    ("NodePort"       -> o.nodePort) ~
-		    ("NodeIpAddr"       -> o.nodeIpAddr) ~
-		    ("JarPaths"     -> o.jarPaths.toList) ~
-		    ("Scala_home"     -> o.scala_home) ~
-		    ("Java_home"     -> o.java_home) ~
-		    ("Roles"     -> o.roles.toList) ~
-		    ("Classpath"     -> o.classpath) ~
-		    ("ClusterId"     -> o.clusterId))
-	pretty(render(json))
+      case o: NodeInfo => {
+        val json = (("NodeId" -> o.nodeId) ~
+          ("NodePort" -> o.nodePort) ~
+          ("NodeIpAddr" -> o.nodeIpAddr) ~
+          ("JarPaths" -> o.jarPaths.toList) ~
+          ("Scala_home" -> o.scala_home) ~
+          ("Java_home" -> o.java_home) ~
+          ("Roles" -> o.roles.toList) ~
+          ("Classpath" -> o.classpath) ~
+          ("ClusterId" -> o.clusterId))
+        pretty(render(json))
       }
-      case o:AdapterInfo => {
-	val json = (("Name"           -> o.name) ~
-		    ("TypeString"     -> o.typeString) ~
-		    ("DataFormat"     -> o.dataFormat) ~
-		    ("InputAdapterToVerify"     -> o.inputAdapterToVerify) ~
-		    ("ClassName"      -> o.className) ~
-		    ("JarName"        -> o.jarName) ~
-		    ("DependencyJars" -> o.dependencyJars.toList) ~
-		    ("AdapterSpecificCfg"  -> o.adapterSpecificCfg) ~
-		    ("DelimiterString"  -> o.delimiterString) ~
-		    ("AssociatedMessage"  -> o.associatedMsg))
-	pretty(render(json))
+      case o: AdapterInfo => {
+        val json = (("Name" -> o.name) ~
+          ("TypeString" -> o.typeString) ~
+          ("DataFormat" -> o.dataFormat) ~
+          ("InputAdapterToVerify" -> o.inputAdapterToVerify) ~
+          ("ClassName" -> o.className) ~
+          ("JarName" -> o.jarName) ~
+          ("DependencyJars" -> o.dependencyJars.toList) ~
+          ("AdapterSpecificCfg" -> o.adapterSpecificCfg) ~
+          ("DelimiterString" -> o.delimiterString) ~
+          ("AssociatedMessage" -> o.associatedMsg))
+        pretty(render(json))
       }
       case _ => {
         throw new UnsupportedObjectException("SerializeCfgObjectToJson doesn't support the " +
@@ -905,18 +905,25 @@ object JsonSerializer {
 
       case o: MessageDef => {
         // Assume o.containerType is checked for not being null
+        var paritionKeys: Array[String] = Array[String]()
+        var Keys: Array[RelationKeyBase] = Array[RelationKeyBase]()
+        if (o.containerType.partitionKey != null)
+          paritionKeys = o.containerType.partitionKey
+        if (o.containerType.Keys != null) {
+          Keys = o.containerType.Keys
+        }
         val json = ("Message" ->
           ("NameSpace" -> o.nameSpace) ~
           ("Name" -> o.name) ~
           ("FullName" -> o.FullName) ~
           ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
           ("Persist" -> o.containerType.persist) ~
-          ("PartitionKey" -> o.containerType.partitionKey.toList) ~
-          ("Keys" -> o.containerType.Keys.toList.map { keys => 
+          ("PartitionKey" -> paritionKeys.toList) ~
+          ("Keys" -> Keys.toList.map { keys =>
             (
-                ("ConstraintName" -> keys.constraintName) ~
-                ("Key" -> keys.key.toList)               
-            )}) ~
+              ("ConstraintName" -> keys.constraintName) ~
+              ("Key" -> keys.key.toList))
+          }) ~
           ("CaseSensitive" -> o.containerType.caseSensitive) ~
           ("JarName" -> o.jarName) ~
           ("PhysicalName" -> o.typeString) ~
@@ -949,18 +956,25 @@ object JsonSerializer {
       }
 
       case o: ContainerDef => {
+        var paritionKeys: Array[String] = Array[String]()
+        if (o.containerType.partitionKey != null)
+          paritionKeys = o.containerType.partitionKey
+        var Keys: Array[RelationKeyBase] = Array[RelationKeyBase]()
+        if (o.containerType.Keys != null) {
+          Keys = o.containerType.Keys
+        }
         val json = ("Container" ->
           ("NameSpace" -> o.nameSpace) ~
           ("Name" -> o.name) ~
           ("FullName" -> o.FullName) ~
           ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
           ("Persist" -> o.containerType.persist) ~
-          ("PartitionKey" -> o.containerType.partitionKey.toList) ~
-          ("Keys" -> o.containerType.Keys.toList.map { keys => 
+          ("PartitionKey" -> paritionKeys.toList) ~
+          ("Keys" -> Keys.toList.map { keys =>
             (
-                ("ConstraintName" -> keys.constraintName) ~
-                ("Key" -> keys.key.toList)               
-            )}) ~
+              ("ConstraintName" -> keys.constraintName) ~
+              ("Key" -> keys.key.toList))
+          }) ~
           ("CaseSensitive" -> o.containerType.caseSensitive) ~
           ("JarName" -> o.jarName) ~
           ("PhysicalName" -> o.typeString) ~
@@ -1367,15 +1381,15 @@ object JsonSerializer {
     json
   }
 
-  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operations: Array[String]) : String = {    
+  def zkSerializeObjectListToJson[T <: BaseElemDef](objType: String, objList: Array[T], operations: Array[String]): String = {
     // Insert the highest Transaction ID into the JSON Notification message.
     var max: Long = 0
-    objList.foreach(obj => {max = scala.math.max(obj.TranId, max)}) 
-    
-    var json = "{\n"+"\"transactionId\":\""+max+"\",\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operations) + "\n}" 
-    
+    objList.foreach(obj => { max = scala.math.max(obj.TranId, max) })
+
+    var json = "{\n" + "\"transactionId\":\"" + max + "\",\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList, operations) + "\n}"
+
     println(json)
-    json 
+    json
   }
 
   def SerializeApiArgListToJson(o: MetadataApiArgList): String = {
