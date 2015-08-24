@@ -157,8 +157,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
       return returnOutput.toArray
     } catch {
       case e: Exception => {
-        LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("Failed to create and run message. Reason:%s Message:%s\nStackTrace:%s".format(e.getCause, e.getMessage, stackTrace))
       }
     }
     return Array[(String, String)]()

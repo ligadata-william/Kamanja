@@ -339,7 +339,8 @@ class KamanjaManager {
 
     } catch {
       case e: Exception => {
-        LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("Failed to initialize. Reason:%s Message:%s\nStackTrace:%s".format(e.getCause, e.getMessage, stackTrace))
         // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
         retval = false
       }

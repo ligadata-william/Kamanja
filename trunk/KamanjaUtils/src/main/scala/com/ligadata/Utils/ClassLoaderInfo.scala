@@ -10,7 +10,7 @@ import java.io.{ ByteArrayOutputStream, InputStream }
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 
-class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader, val parentLast: Boolean = false) extends URLClassLoader(urls, parent) {
+class KamanjaClassLoader(val systemClassLoader: URLClassLoader, parent: ClassLoader, val parentLast: Boolean = false) extends URLClassLoader(if (systemClassLoader != null) systemClassLoader.getURLs() else Array[URL](), parent) {
   private val LOG = Logger.getLogger(getClass)
   private var loadedRawClasses = Map[String, Array[Byte]]()
   private var loadedClasses = Map[String, Class[_]]()
@@ -49,7 +49,7 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader, val parentLast: 
   }
 
   private def LoadClassesFromURL(jarName: String): Unit = this.synchronized {
-    LOG.debug("Trying to load classes from Jar:" + jarName)
+    LOG.info("Trying to load classes from Jar:" + jarName)
     val taillen = ".class".length()
     var jar: JarFile = null
     try {
@@ -65,10 +65,11 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader, val parentLast: 
             val is = jar.getInputStream(entry)
             val data = ReadClassData(entry, is)
             if (data != null && data.length > 0) {
+              LOG.info("Loading Raw class:" + className)
               loadedRawClasses(className) = data
             }
           } else {
-            LOG.debug(className + " raw data already loaded")
+            LOG.info(className + " raw data already loaded")
           }
         }
       }
@@ -86,23 +87,51 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader, val parentLast: 
     if (parentLast) {
       // First resolve in the class in local loader, that's why we load raw data  
       LoadClassesFromURL(url.getPath)
+      LOG.debug("Adding URL:" + url.getPath + " locally")
       loadedJars += url
     } else {
-      // Passing it to super classes, so that we can use default Parent First
+      // Passing it to super classes
+      LOG.debug("Adding URL:" + url.getPath + " to default class loader")
       super.addURL(url)
     }
   }
 
   override def findClass(name: String): Class[_] = {
-    throw new ClassNotFoundException()
+    // Checking the System Class Loader 
+    if (systemClassLoader != null) {
+      val sysCls = super.findClass(name)
+      if (sysCls != null)
+        return sysCls
+    }
+
+    if (parentLast) {
+      LOG.debug("findClass -- Not found from local loader :" + name)
+      throw new ClassNotFoundException()
+    } else {
+      val cls = super.findClass(name)
+      LOG.debug("findClass -- asking super class to find the class :" + name + ", cls:" + cls)
+      return cls
+    }
   }
 
   protected override def loadClass(className: String, resolve: Boolean): Class[_] = this.synchronized {
+    LOG.debug("Trying to load class:" + className + ", resolve:" + resolve)
     try {
+      // Checking the System Class Loader 
+      if (systemClassLoader != null) {
+        val sysCls = super.loadClass(className, resolve)
+        if (sysCls != null) {
+          LOG.debug("Found class:" + className + " in System Class Loader")
+          return sysCls
+        }
+      }
+
       // Find in Loaded Classes
       val cls = loadedClasses.getOrElse(className, null)
-      if (cls != null)
+      if (cls != null) {
+        LOG.debug("Found class:" + className + " in Local Class Loader")
         return cls
+      }
       // If not find in Loaded Classes, find in Raw data Loaded Classes
       val rawClsData = loadedRawClasses.getOrElse(className, null)
       if (rawClsData != null && rawClsData.length > 0) {
@@ -110,9 +139,13 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader, val parentLast: 
         if (resolve) resolveClass(cls)
         loadedClasses(className) = cls
         loadedRawClasses.remove(className) // Removing RawClass data once we resolve class
+        LOG.debug("Found class:" + className + " in Raw data of Local Class Loader")
         return cls
       }
-      return super.loadClass(className, resolve)
+
+      val cls2 = super.loadClass(className, resolve)
+      LOG.debug("Loading class from Super class:" + className + ", resolve:" + resolve + ", cls2:" + cls2)
+      return cls2
     } catch {
       case e: ClassNotFoundException => {
         return super.loadClass(className, resolve)
@@ -126,7 +159,7 @@ class KamanjaLoaderInfo(val parent: KamanjaLoaderInfo = null, val useParentloade
   val parentLoader: ClassLoader = if (parent != null) parent.loader else getClass().getClassLoader();
 
   // Class Loader
-  val loader = new KamanjaClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), parentLoader, parentLast)
+  val loader = new KamanjaClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader], parentLoader, parentLast)
 
   // Loaded jars
   val loadedJars: TreeSet[String] = if (useParentloadedJars && parent != null) parent.loadedJars else new TreeSet[String]
