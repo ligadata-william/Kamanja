@@ -834,7 +834,7 @@ class CompilerProxy{
           logger.warn("Unknown dependency "+dep)
         else {
           depElems += elem
-          logger.info("Resolved dependency "+dep+ " to "+ elem.jarName)
+          logger.info("Resolved dependency "+ dep +" to "+ elem.jarName)
           msgContDepSet = msgContDepSet + elem.jarName
         }
       })
