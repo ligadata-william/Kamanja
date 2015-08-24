@@ -2633,7 +2633,7 @@ println("Getting Messages")
     filterParameters(1) = "20150323000000"
     MetadataAPIImpl.getAuditRec(filterParameters)
   }
-
+/*
   def main(args: Array[String]) {
     try {
       var myConfigFile: String = null
@@ -2660,5 +2660,5 @@ println("Getting Messages")
     } finally {
       MetadataAPIImpl.shutdown
     }
-  }
+  } */
 }
