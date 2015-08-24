@@ -6,6 +6,7 @@
         "Description": "HL7",
         "Fixed": "true",
         "Persist": "true",
+		"IsCaseSensitive":"false",
         "Fields": [
             {
                 "Name": "Desynpuf_Id",

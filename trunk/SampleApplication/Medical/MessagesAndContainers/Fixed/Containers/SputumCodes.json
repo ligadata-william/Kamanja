@@ -5,6 +5,7 @@
    		"Version":"00.01.00",
    		"Description":"Container for Chronic Sputum Codes",
    		"Fixed":"true",
+		"IsCaseSensitive":"false",
    		"Elements" : [
    		   {
    		   "Field" : {

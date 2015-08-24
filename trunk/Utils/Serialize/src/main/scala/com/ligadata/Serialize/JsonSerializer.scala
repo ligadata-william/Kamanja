@@ -911,6 +911,13 @@ object JsonSerializer {
           ("FullName" -> o.FullName) ~
           ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
           ("Persist" -> o.containerType.persist) ~
+          ("PartitionKey" -> o.containerType.partitionKey.toList) ~
+          ("Keys" -> o.containerType.Keys.toList.map { keys => 
+            (
+                ("ConstraintName" -> keys.constraintName) ~
+                ("Key" -> keys.key.toList)               
+            )}) ~
+          ("CaseSensitive" -> o.containerType.caseSensitive) ~
           ("JarName" -> o.jarName) ~
           ("PhysicalName" -> o.typeString) ~
           ("ObjectDefinition" -> o.objectDefinition) ~
@@ -948,6 +955,13 @@ object JsonSerializer {
           ("FullName" -> o.FullName) ~
           ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
           ("Persist" -> o.containerType.persist) ~
+          ("PartitionKey" -> o.containerType.partitionKey.toList) ~
+          ("Keys" -> o.containerType.Keys.toList.map { keys => 
+            (
+                ("ConstraintName" -> keys.constraintName) ~
+                ("Key" -> keys.key.toList)               
+            )}) ~
+          ("CaseSensitive" -> o.containerType.caseSensitive) ~
           ("JarName" -> o.jarName) ~
           ("PhysicalName" -> o.typeString) ~
           ("ObjectDefinition" -> o.objectDefinition) ~

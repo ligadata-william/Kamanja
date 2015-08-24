@@ -6,6 +6,7 @@
     "Description": "Beneficiary Data",
     "Fixed": "true",
     "Persist": "true",
+	"IsCaseSensitive":"false",
     "Elements": [
       {
         "Field": {

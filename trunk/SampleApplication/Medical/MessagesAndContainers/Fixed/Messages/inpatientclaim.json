@@ -5,6 +5,7 @@
         "Version": "00.01.00",
         "Description": "Inpatient Claim",
         "Fixed": "true",
+		"IsCaseSensitive":"false",
         "Persist": "true",
         "Fields": [
             {
