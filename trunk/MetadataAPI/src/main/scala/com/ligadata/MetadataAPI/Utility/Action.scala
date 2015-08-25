@@ -1,6 +1,6 @@
-package main.scala.com.ligadata.MetadataAPI.Utility
+package com.ligadata.MetadataAPI.Utility
 
-import main.scala.com.ligadata.MetadataAPI.Utility.Action.Value
+import com.ligadata.MetadataAPI.Utility.Action.Value
 
 
 
