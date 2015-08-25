@@ -87,16 +87,19 @@ class KamanjaClassLoader(val systemClassLoader: URLClassLoader, parent: ClassLoa
     if (parentLast) {
       // First resolve in the class in local loader, that's why we load raw data  
       LoadClassesFromURL(url.getPath)
-      LOG.debug("Adding URL:" + url.getPath + " locally")
+      LOG.info("Adding URL:" + url.getPath + " locally")
       loadedJars += url
     } else {
       // Passing it to super classes
-      LOG.debug("Adding URL:" + url.getPath + " to default class loader")
+      LOG.info("Adding URL:" + url.getPath + " to default class loader")
       super.addURL(url)
     }
   }
 
   override def findClass(name: String): Class[_] = {
+    throw new ClassNotFoundException()
+
+    /*
     // Checking the System Class Loader 
     if (systemClassLoader != null) {
       val sysCls = super.findClass(name)
@@ -105,50 +108,73 @@ class KamanjaClassLoader(val systemClassLoader: URLClassLoader, parent: ClassLoa
     }
 
     if (parentLast) {
-      LOG.debug("findClass -- Not found from local loader :" + name)
+      LOG.info("findClass -- Not found from local loader :" + name)
       throw new ClassNotFoundException()
     } else {
       val cls = super.findClass(name)
-      LOG.debug("findClass -- asking super class to find the class :" + name + ", cls:" + cls)
+      LOG.info("findClass -- asking super class to find the class :" + name + ", cls:" + cls)
       return cls
     }
+*/
   }
 
   protected override def loadClass(className: String, resolve: Boolean): Class[_] = this.synchronized {
-    LOG.debug("Trying to load class:" + className + ", resolve:" + resolve)
+    var triedSuper = false
+    LOG.info("Trying to load class:" + className + ", resolve:" + resolve)
     try {
       // Checking the System Class Loader 
       if (systemClassLoader != null) {
-        val sysCls = super.loadClass(className, resolve)
-        if (sysCls != null) {
-          LOG.debug("Found class:" + className + " in System Class Loader")
-          return sysCls
+        try {
+          LOG.info("Trying to find class:" + className + " in System Class Loader")
+          val sysCls = systemClassLoader.loadClass(className)
+          if (sysCls != null) {
+            LOG.info("Found class:" + className + " in System Class Loader")
+            return sysCls
+          }
+        } catch {
+          case e: Exception => {}
         }
       }
 
-      // Find in Loaded Classes
-      val cls = loadedClasses.getOrElse(className, null)
-      if (cls != null) {
-        LOG.debug("Found class:" + className + " in Local Class Loader")
-        return cls
-      }
-      // If not find in Loaded Classes, find in Raw data Loaded Classes
-      val rawClsData = loadedRawClasses.getOrElse(className, null)
-      if (rawClsData != null && rawClsData.length > 0) {
-        val cls = defineClass(className, rawClsData, 0, rawClsData.length, null)
-        if (resolve) resolveClass(cls)
-        loadedClasses(className) = cls
-        loadedRawClasses.remove(className) // Removing RawClass data once we resolve class
-        LOG.debug("Found class:" + className + " in Raw data of Local Class Loader")
-        return cls
+      try {
+        // Find in Loaded Classes
+        LOG.info("Trying to find class:" + className + " in resolved classes")
+        val cls = loadedClasses.getOrElse(className, null)
+        if (cls != null) {
+          LOG.info("Found class:" + className + " in Local Class Loader")
+          return cls
+        }
+      } catch {
+        case e: Exception => {}
       }
 
+      // If not find in Loaded Classes, find in Raw data Loaded Classes
+      try {
+        LOG.info("Trying to find class:" + className + " in raw loaded classes")
+        val rawClsData = loadedRawClasses.getOrElse(className, null)
+        if (rawClsData != null && rawClsData.length > 0) {
+          val cls = defineClass(className, rawClsData, 0, rawClsData.length, null)
+          if (resolve) resolveClass(cls)
+          loadedClasses(className) = cls
+          loadedRawClasses.remove(className) // Removing RawClass data once we resolve class
+          LOG.info("Found class:" + className + " in Raw data of Local Class Loader")
+          return cls
+        }
+      } catch {
+        case e: Exception => {}
+      }
+
+      LOG.info("Trying to find class:" + className + " in super class")
+      triedSuper = true
       val cls2 = super.loadClass(className, resolve)
-      LOG.debug("Loading class from Super class:" + className + ", resolve:" + resolve + ", cls2:" + cls2)
+      LOG.info("Loading class from Super class:" + className + ", resolve:" + resolve + ", cls2:" + cls2)
       return cls2
     } catch {
       case e: ClassNotFoundException => {
-        return super.loadClass(className, resolve)
+        if (triedSuper == false)
+          return super.loadClass(className, resolve)
+        else
+          throw e
       }
     }
   }
