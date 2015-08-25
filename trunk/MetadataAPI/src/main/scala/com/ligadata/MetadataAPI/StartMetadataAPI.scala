@@ -1,9 +1,12 @@
 package scala.com.ligadata.MetadataAPI
 
+import java.io.File
 import java.util.logging.Logger
 
-import com.ligadata.MetadataAPI.{TestMetadataAPI, MetadataAPIImpl}
+import com.ligadata.MetadataAPI.MetadataAPIImpl
 import com.ligadata.MetadataAPI.Utility._
+import scala.io.Source
+
 
 
 /**
@@ -23,10 +26,20 @@ object StartMetadataAPI {
   def main(args: Array[String]) {
     try {
       val arglist = args.toList
-      if (args.length == 0) {
-        config = defaultConfig
-        MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-        TestMetadataAPI.StartTest
+      if (args.length == 0 ) {
+        //config = defaultConfig
+        //MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
+        //TestMetadataAPI.StartTest
+       /* println("In no input")
+        var uri=Source.getClass.getResource("/HelpMenu.txt").toURI
+          val source: java.io.File=new java.io.File(uri).get
+
+       //val source=Source.fromURI(uri)
+        val lines = try source.mkString finally source.close()
+
+        println("In print"+lines)*/
+        response = "Please provide input"
+        //response*/
       }
       else if (args(0) == "config") {
         config = defaultConfig
@@ -55,6 +68,10 @@ object StartMetadataAPI {
       response
     }
     catch {
+      case nosuchelement: NoSuchElementException => {
+        println("Invalid Command Syntax!")
+        response = "Invalid Command Syntax!"
+      }
       case e: Throwable => e.getStackTrace.toString
 
     } finally {

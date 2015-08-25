@@ -66,6 +66,11 @@ echo NODE_ID=2 >> ~/MetadataAPIConfig.properties
 fi
 
 IFS=' ' read -a array <<< $@
+if [ "$#" -eq 0  ]; then
+    cat $KAMANJA_BASEPATH/input/HelpMenu.txt
+    echo ""
+    exit 0
+fi
 #if config provided, update or add to the config file
 if [ "${array[0] }" = "edit" ]; then
   #check if key present in file. If not add to the file. Else update it.
@@ -114,23 +119,23 @@ elif [ "$INPUT" = "watch input queue" ]; then
   $KAMANJA_BASEPATH/bin/WatchOutputQueue.sh
 elif [ "$INPUT" = "push data" ]; then
     $KAMANJA_BASEPATH/bin/PushSampleDataToKafka.sh $INPUT
-elif [ "$INPUT" = "kvinit" ]; then
-count=0
-FILEDIR=$KAMANJA_BASEPATH/input/SampleApplications/bin
-for entry in "$FILEDIR"/*
-do
-echo $entry | grep -i InitKvStores >> /dev/null
-if [ $? = 0 ]; then
-count=$((count+1))
-  echo "$count: $entry"
-  LISTOFFILES[count-1]=$entry
-fi
-done
-read -p "Please select from the above options: " useroption
-OPTION=useroption-1
-INPUTFILE=${LISTOFFILES[OPTION]}
-echo "User selected: $INPUTFILE"
-$INPUTFILE
+#elif [ "$INPUT" = "kvinit" ]; then
+#count=0
+#FILEDIR=$KAMANJA_BASEPATH/input/SampleApplications/bin
+#for entry in "$FILEDIR"/*
+#do
+#echo $entry | grep -i InitKvStores >> /dev/null
+#if [ $? = 0 ]; then
+#count=$((count+1))
+#  echo "$count: $entry"
+#  LISTOFFILES[count-1]=$entry
+#fi
+#done
+#read -p "Please select from the above options: " useroption
+#OPTION=useroption-1
+#INPUTFILE=${LISTOFFILES[OPTION]}
+#echo "User selected: $INPUTFILE"
+#$INPUTFILE
 else
 java -jar $KAMANJA_BASEPATH/bin/MetadataAPI-1.0 $@
 fi
