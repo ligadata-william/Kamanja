@@ -22,41 +22,30 @@ object StartMetadataAPI {
 
   def main(args: Array[String]) {
     try {
-      val arglist = args.toList
-      if (args.length == 0) {
-        config = defaultConfig
-        MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-        TestMetadataAPI.StartTest
-      }
-      else if (args(0) == "config") {
-        config = defaultConfig
-      }
-      else {
-        for (arg <- arglist) {
-          if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
-            location = arg
-          } else if (arg.endsWith(".properties")) {
-            config = arg
-          } else {
-            action += arg
-          }
+      args.foreach( arg => {
+        if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
+          location = arg
+        } else if (arg.endsWith(".properties")) {
+          config = arg
+        } else {
+          action += arg
         }
+      })
 
-        //add configuration
-        if (config == "")
-          config = defaultConfig
-
-        MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-
-        action.trim
-        response = route(Action.withName(action), location)
+      //add configuration
+      if (config == "") {
+        println("Using default configuration " + defaultConfig)
+        config = defaultConfig
       }
+
+      MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
+      if (action == "")
+        TestMetadataAPI.StartTest
+      response = route(Action.withName(action.trim), location)
       println("Result: " + response)
-      response
     }
     catch {
       case e: Throwable => e.getStackTrace.toString
-
     } finally {
       MetadataAPIImpl.shutdown
     }
