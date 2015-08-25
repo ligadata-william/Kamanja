@@ -45,8 +45,10 @@ object StartMetadataAPI {
       MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
       if (action == "")
         TestMetadataAPI.StartTest
-      response = route(Action.withName(action.trim), location)
-      println("Result: " + response)
+      else {
+        response = route(Action.withName(action.trim), location)
+        println("Result: " + response)
+      }
     }
     catch {
       case nosuchelement: NoSuchElementException => {
