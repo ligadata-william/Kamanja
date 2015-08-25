@@ -115,8 +115,11 @@ elif [ "$INPUT" = "watch status queue" ]; then
   $KAMANJA_BASEPATH/bin/WatchStatusQueue.sh
 elif [ "$INPUT" = "watch input queue" ]; then
   $KAMANJA_BASEPATH/bin/WatchInputQueue.sh
-  elif [ "$INPUT" = "watch output queue" ]; then
+elif [ "$INPUT" = "watch output queue" ]; then
   $KAMANJA_BASEPATH/bin/WatchOutputQueue.sh
+elif [ "$INPUT" = "help" ]; then
+cat $KAMANJA_BASEPATH/input/HelpMenu.txt
+    echo ""
 elif [ "$INPUT" = "push data" ]; then
     $KAMANJA_BASEPATH/bin/PushSampleDataToKafka.sh $INPUT
 #elif [ "$INPUT" = "kvinit" ]; then

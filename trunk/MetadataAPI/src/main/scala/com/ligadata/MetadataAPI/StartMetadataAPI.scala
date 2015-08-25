@@ -52,8 +52,8 @@ object StartMetadataAPI {
     }
     catch {
       case nosuchelement: NoSuchElementException => {
-        println("Invalid Command Syntax!")
-        response = "Invalid Command Syntax!"
+        println(action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json")
+        //response = action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json"
       }
       case e: Throwable => e.getStackTrace.toString
     } finally {
