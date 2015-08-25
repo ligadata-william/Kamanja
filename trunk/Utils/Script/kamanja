@@ -108,7 +108,7 @@ elif [ "$INPUT" = "start" ]; then
  echo "Kamanja engine started in background. Please check the engine log at /tmp/kamanjastart.log"
 elif [ "$INPUT" = "stop" ]; then
     ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
-    kill -9 $ID
+    kill $ID
 elif [ "$INPUT" = "create queues" ]; then
   $KAMANJA_BASEPATH/bin/CreateQueues.sh
 elif [ "$INPUT" = "watch status queue" ]; then
