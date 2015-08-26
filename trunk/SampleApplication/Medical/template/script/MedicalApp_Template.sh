@@ -25,5 +25,3 @@ $KAMANJA_BASEPATH/bin/kamanja upload compile config $KAMANJA_BASEPATH/input/Samp
 $KAMANJA_BASEPATH/bin/kamanja add model java $KAMANJA_BASEPATH/input/SampleApplications/metadata/model/COPDRiskAssessment.java
 
 $KAMANJA_BASEPATH/bin/kamanja upload engine config $KAMANJA_BASEPATH/config/ClusterConfig.json
-
-$KAMANJA_BASEPATH/bin/kamanja kvinit $KAMANJA_BASEPATH/input/SampleApplications/bin/InitKvStores_Medical.sh
