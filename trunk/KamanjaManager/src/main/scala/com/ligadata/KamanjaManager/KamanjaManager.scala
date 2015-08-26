@@ -352,7 +352,6 @@ class KamanjaManager extends Observer {
     return retval
   }
 
-
   def execCmd(ln: String): Boolean = {
     if (ln.length() > 0) {
       val trmln = ln.trim
@@ -552,8 +551,8 @@ object OleService {
   private val LOG = Logger.getLogger(getClass);
   def main(args: Array[String]): Unit = {
     val mgr = new KamanjaManager
-    Runtime.getRuntime.addShutdownHook(new Thread() {
-      override def run() {
+    scala.sys.addShutdownHook({
+      if (KamanjaConfiguration.shutdown == false) {
         LOG.warn("Got Shutdown request")
         KamanjaConfiguration.shutdown = true // Setting the global shutdown
       }
