@@ -393,8 +393,8 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 cd $srcPath/SampleApplication/HelloWorld/data
 cp * $installPath/input/SampleApplications/data
 
-cd $srcPath/SampleApplication/HelloWorld/container
-cp * $installPath/input/SampleApplications/metadata/container
+#cd $srcPath/SampleApplication/HelloWorld/container
+#cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/HelloWorld/message
 cp * $installPath/input/SampleApplications/metadata/message
