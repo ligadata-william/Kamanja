@@ -492,6 +492,6 @@ cp SetPaths.sh $installPath/bin/
 
 bash $installPath/bin/SetPaths.sh $KafkaRootDir
 
-chmod 0700 $installPath/input/SampleApplications/bin/*sh
+#chmod 0700 $installPath/input/SampleApplications/bin/*sh
 
 echo "Kamanja install complete..."
