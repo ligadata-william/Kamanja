@@ -159,7 +159,7 @@ object ModelService {
     response
   }
 
-  def addModelScala(input: String): String = {
+  def addModelScala(input: String, dep: String = ""): String = {
     var modelDefs= Array[String]()
     var modelConfig=""
     var modelDef=""
@@ -182,7 +182,6 @@ object ModelService {
                 response = errorMsg
               }
               case option => {
-
                 modelDefs=getUserInputFromMainMenu(models)
               }
             }
@@ -200,46 +199,51 @@ object ModelService {
     }
     if(modelDefs.nonEmpty) {
       for (modelDef <- modelDefs){
-        println("Adding the next model in the queue.")
-        //before adding a model, add its config file.
-        var configKeys = MetadataAPIImpl.getModelConfigNames
-        if(configKeys.isEmpty){
-          response="No model configuration loaded in the metadata!"
-        }else{
-          var srNo = 0
-          println("\nPick a Model Definition file(s) from below choices\n")
-          for (configkey <- configKeys) {
-            srNo += 1
-            println("[" + srNo + "]" + configkey)
-          }
-          print("\nEnter your choice: \n")
-          var userOption = Console.readInt()
-
-          userOption match {
-            case x if ((1 to srNo).contains(userOption)) => {
-              //find the file location corresponding to the config file
-              modelConfig=configKeys(userOption.toInt - 1)
-              println("Model config selected is "+modelConfig)
+        println("Adding the next model in the queue.")   
+        if (dep.length > 0) {
+          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", dep, userid)
+        } else { 
+          //before adding a model, add its config file.
+          var configKeys = MetadataAPIImpl.getModelConfigNames
+          if(configKeys.isEmpty){
+            response="No model configuration loaded in the metadata!"
+          }else{
+            var srNo = 0
+            println("\nPick a Model Definition file(s) from below choices\n")
+            for (configkey <- configKeys) {
+              srNo += 1
+              println("[" + srNo + "]" + configkey)
             }
-            case _ => {
-              val errorMsg = "Incorrect input " + userOption + ". Please enter the correct option."
-              println(errorMsg)
-              errorMsg
+            print("\nEnter your choice: \n")
+            var userOption = Console.readInt()
+ 
+            userOption match {
+              case x if ((1 to srNo).contains(userOption)) => {
+                //find the file location corresponding to the config file
+                modelConfig=configKeys(userOption.toInt - 1)
+                println("Model config selected is "+modelConfig)
+              }
+              case _ => {
+                val errorMsg = "Incorrect input " + userOption + ". Please enter the correct option."
+                println(errorMsg)
+                errorMsg
+              }
             }
+            response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", modelConfig, userid)
           }
-          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", modelConfig, userid)
         }
       }
     }
     response
   }
 
-  def addModelJava(input: String): String = {
+  def addModelJava(input: String, dep: String = ""): String = {
     var modelDefs= Array[String]()
     var modelConfig=""
     var modelDef=""
     var response: String = ""
     var modelFileDir: String = ""
+
     if (input == "") {
       //get the messages location from the config file. If error get the location from github
       modelFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
@@ -275,33 +279,38 @@ object ModelService {
     }
     if(modelDefs.nonEmpty) {
       for (modelDef <- modelDefs){
-        //before adding a model, add its config file.
-        var configKeys = MetadataAPIImpl.getModelConfigNames
-        if(configKeys.isEmpty){
-          response="No model configuration loaded in the metadata!"
-        }else{
-          var srNo = 0
-          println("\nPick a Model Definition file(s) from below choices\n")
-          for (configkey <- configKeys) {
-            srNo += 1
-            println("[" + srNo + "]" + configkey)
-          }
-          print("\nEnter your choice: \n")
-          var userOption = Console.readInt()
+        println("Adding the next model in the queue.")
+        if (dep.length > 0) {
+          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", dep, userid)
+        } else {
+          var configKeys = MetadataAPIImpl.getModelConfigNames
+          println("--> got these many back "+configKeys.size)
+          if(configKeys.isEmpty){
+            response="No model configuration loaded in the metadata!"
+          }else{
+            var srNo = 0
+            println("\nPick a Model Definition file(s) from below choices\n")
+            for (configkey <- configKeys) {
+              srNo += 1
+              println("[" + srNo + "]" + configkey)
+            }
+            print("\nEnter your choice: \n")
+            var userOption = Console.readInt()
 
-          userOption match {
-            case x if ((1 to srNo).contains(userOption)) => {
-              //find the file location corresponding to the config file
-              modelConfig=configKeys(userOption.toInt - 1)
-              println("Model config selected is "+modelConfig)
+            userOption match {
+              case x if ((1 to srNo).contains(userOption)) => {
+                //find the file location corresponding to the config file
+                modelConfig=configKeys(userOption.toInt - 1)
+                println("Model config selected is "+modelConfig)
+              }
+              case _ => {
+                val errorMsg = "Incorrect input " + userOption + ". Please enter the correct option."
+                println(errorMsg)
+                errorMsg
+              }
             }
-            case _ => {
-              val errorMsg = "Incorrect input " + userOption + ". Please enter the correct option."
-              println(errorMsg)
-              errorMsg
-            }
-          }
-          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "java", modelConfig, userid)
+            response+= MetadataAPIImpl.AddModelFromSource(modelDef, "java", modelConfig, userid)
+          } 
         }
       }
     }

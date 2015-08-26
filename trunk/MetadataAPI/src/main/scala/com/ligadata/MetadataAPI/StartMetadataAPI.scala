@@ -22,18 +22,28 @@ object StartMetadataAPI {
   var action = ""
   var location = ""
   var config = ""
+  val WITHDEP = "withdep"
+  var expectDep = false
+  var depName: String = ""
 
   def main(args: Array[String]) {
     try {
-
       args.foreach( arg => {
         if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
           config = arg
         } else {
-          action += arg
-        }
+          if (arg.equalsIgnoreCase(WITHDEP)) {
+            expectDep = true
+          }
+          else if (expectDep) {
+            depName = arg
+            expectDep = false
+          } else {
+            action += arg
+          }
+        }       
       })
 
       //add configuration
@@ -46,7 +56,7 @@ object StartMetadataAPI {
       if (action == "")
         TestMetadataAPI.StartTest
       else {
-        response = route(Action.withName(action.trim), location)
+        response = route(Action.withName(action.trim), location, depName)
         println("Result: " + response)
       }
     }
@@ -62,7 +72,7 @@ object StartMetadataAPI {
   }
 
 
-  def route(action: Action.Value, input: String): String = {
+  def route(action: Action.Value, input: String, param: String = ""): String = {
     var response = ""
     try {
       action match {
@@ -78,8 +88,20 @@ object StartMetadataAPI {
         case Action.GETALLOUTPUTMESSAGES => response =MessageService.getAllOutputMessages
         //model management
         case Action.ADDMODELPMMML => response = ModelService.addModelPmml(input)
-        case Action.ADDMODELSCALA => response = ModelService.addModelScala(input)
-        case Action.ADDMODELJAVA => response = ModelService.addModelJava(input)
+        
+        case Action.ADDMODELSCALA => {
+          if (param.length == 0)
+            response = ModelService.addModelScala(input)
+          else
+            response = ModelService.addModelScala(input, param)
+        }
+        case Action.ADDMODELJAVA => {
+          if (param.length == 0)
+            response = ModelService.addModelJava(input)
+          else
+            response = ModelService.addModelJava(input, param)
+        }
+        
         case Action.REMOVEMODEL => response = ModelService.removeModel
         case Action.ACTIVATEMODEL => response = ModelService.activateModel
         case Action.DEACTIVATEMODEL => response = ModelService.deactivateModel
