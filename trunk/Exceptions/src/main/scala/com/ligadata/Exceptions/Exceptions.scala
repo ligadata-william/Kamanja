@@ -1,5 +1,7 @@
 package com.ligadata.Exceptions
 
+class KamanjaException(e: String) extends Exception(e)
+
 case class UnsupportedObjectException(e: String) extends Exception(e)
 case class Json4sParsingException(e: String) extends Exception(e)
 case class FunctionListParsingException(e: String) extends Exception(e)
@@ -46,6 +48,8 @@ case class ConnectionFailedException(e: String) extends Exception(e)
 
 case class SerializerManagerException(message: String) extends Exception(message)
 case class ProtoBufSerializationException(e: String) extends Throwable(e)
+
+case class KamanjaInvalidOptionsException(message: String) extends KamanjaException(message)
 
 
 
