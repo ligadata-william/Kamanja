@@ -352,6 +352,7 @@ class KamanjaManager extends Observer {
     return retval
   }
 
+
   def execCmd(ln: String): Boolean = {
     if (ln.length() > 0) {
       val trmln = ln.trim
