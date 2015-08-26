@@ -65,6 +65,7 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 
 #Medical
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/InitKvStores_Template_Medical.sh > $install_dir/SampleApplications/bin/InitKvStores_Medical.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/MedicalApp_Template.sh > $install_dir/input/SampleApplications/bin/MedicalApp.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Template_Medical.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_Medical.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Cassandra_Template_Medical.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_Cassandra_Medical.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartRestService_Template_Medical.sh > $install_dir/input/SampleApplications/bin/RestService_Medical.sh
