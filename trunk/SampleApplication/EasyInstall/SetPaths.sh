@@ -64,6 +64,7 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 #HelloWorld
 
 #Medical
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/PushSampleDataToKafka_Template_Medical.sh > $install_dir/input/SampleApplications/bin/PushSampleDataToKafka_Medical.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/InitKvStores_Template_Medical.sh > $install_dir/input/SampleApplications/bin/InitKvStores_Medical.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/MedicalApp_Template.sh > $install_dir/input/SampleApplications/bin/MedicalApp.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Template_Medical.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_Medical.sh
