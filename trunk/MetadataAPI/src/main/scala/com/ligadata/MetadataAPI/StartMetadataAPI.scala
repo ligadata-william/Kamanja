@@ -16,7 +16,8 @@ import scala.io.Source
 object StartMetadataAPI {
 
   var response = ""
-  val defaultConfig = sys.env("HOME") + "/MetadataAPIConfig.properties"
+  //get default config
+  val defaultConfig = sys.env("KAMANJA_BASEPATH") + "/config/ClusterCfgMetadataAPIConfig.properties"
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var action = ""
