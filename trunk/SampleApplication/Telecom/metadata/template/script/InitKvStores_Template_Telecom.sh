@@ -1,4 +1,5 @@
-KAMANJA_BASEPATH=`cat /tmp/kamanja.location`
+KAMANJA_BASEPATH={InstallDirectory}
+
 java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.AccountAggregatedUsage          --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/AccountAggregatedUsage_Telecom.dat           --keyfieldname actNo
 java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.AccountInfo                     --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/AccountInfo_Telecom.dat                      --keyfieldname actNo
 java -jar $KAMANJA_BASEPATH/bin/KVInit-1.0 --kvname System.SubscriberAggregatedUsage       --config $KAMANJA_BASEPATH/config/Engine1Config.properties --csvpath $KAMANJA_BASEPATH/input/SampleApplications/data/SubscriberAggregatedUsage_Telecom.dat        --keyfieldname msisdn
