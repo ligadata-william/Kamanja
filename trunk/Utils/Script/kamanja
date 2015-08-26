@@ -104,11 +104,19 @@ elif [ "$INPUT" = "start" ]; then
     touch /tmp/kamanjastart.log
   fi
 
- nohup $KAMANJA_BASEPATH/StartEngine.sh >> $HOME/kamanjastart.log &
+ nohup $KAMANJA_BASEPATH/bin/StartEngine.sh >> $HOME/kamanjastart.log &
  echo "Kamanja engine started in background. Please check the engine log at /tmp/kamanjastart.log"
 elif [ "$INPUT" = "stop" ]; then
     ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
-    kill -9 $ID
+    echo "Stopping Kamanja with process id: $ID"
+    kill $ID
+    sleep 2
+    ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
+    if [ "$ID" != "" ]; then
+        echo "Failed to stop Kamanja. Found process $ID"
+    else
+        echo "Kamanja successfully stopped"
+    fi
 elif [ "$INPUT" = "create queues" ]; then
   $KAMANJA_BASEPATH/bin/CreateQueues.sh
 elif [ "$INPUT" = "watch status queue" ]; then
