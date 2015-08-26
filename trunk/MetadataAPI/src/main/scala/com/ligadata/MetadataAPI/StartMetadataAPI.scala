@@ -17,7 +17,7 @@ object StartMetadataAPI {
 
   var response = ""
   //get default config
-  val defaultConfig = sys.env("KAMANJA_BASEPATH") + "/config/ClusterCfgMetadataAPIConfig.properties"
+  val defaultConfig = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var action = ""

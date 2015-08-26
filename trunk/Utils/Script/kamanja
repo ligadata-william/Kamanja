@@ -8,9 +8,9 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-KAMANJA_BASEPATH="$(dirname "$SCRIPT_DIR")"
-echo $KAMANJA_BASEPATH > /tmp/kamanja.location
-export KAMANJA_BASEPATH=$KAMANJA_BASEPATH
+KAMANJA_HOME="$(dirname "$SCRIPT_DIR")"
+echo $KAMANJA_HOME > /tmp/kamanja.location
+export KAMANJA_HOME=$KAMANJA_HOME
 jar_full_path=$(which jar)
 INPUT=$@
 if [ "$?" != "0" ]; then
@@ -34,7 +34,7 @@ SCALA_HOME=$(dirname $(dirname $scala_full_path))
 
 IFS=' ' read -a array <<< $@
 if [ "$#" -eq 0  ]; then
-    cat $KAMANJA_BASEPATH/input/HelpMenu.txt
+    cat $KAMANJA_HOME/input/HelpMenu.txt
     echo ""
     exit 0
 fi
@@ -61,9 +61,9 @@ fi
 if [ "$INPUT" = "start webservice" ]; then
 echo "Starting web service . . . ."
 
-java -jar $KAMANJA_BASEPATH/bin/MetadataAPIService-1.0
+java -jar $KAMANJA_HOME/bin/MetadataAPIService-1.0
 elif [ "$INPUT" = "start -v" ]; then
-   $KAMANJA_BASEPATH/bin/StartEngine.sh
+   $KAMANJA_HOME/bin/StartEngine.sh
 
 elif [ "$INPUT" = "start" ]; then
   if [ -f /tmp/kamanjastart.log ]; then
@@ -71,7 +71,7 @@ elif [ "$INPUT" = "start" ]; then
     touch /tmp/kamanjastart.log
   fi
 
- nohup $KAMANJA_BASEPATH/bin/StartEngine.sh >> $HOME/kamanjastart.log &
+ nohup $KAMANJA_HOME/bin/StartEngine.sh >> $HOME/kamanjastart.log &
  echo "Kamanja engine started in background. Please check the engine log at /tmp/kamanjastart.log"
 elif [ "$INPUT" = "stop" ]; then
     ID=`ps -ef | grep -i java | grep -i KamanjaManager-1.0 | tr -s " " | cut -d" " -f3`
@@ -85,21 +85,21 @@ elif [ "$INPUT" = "stop" ]; then
         echo "Kamanja successfully stopped"
     fi
 elif [ "$INPUT" = "create queues" ]; then
-  $KAMANJA_BASEPATH/bin/CreateQueues.sh
+  $KAMANJA_HOME/bin/CreateQueues.sh
 elif [ "$INPUT" = "watch status queue" ]; then
-  $KAMANJA_BASEPATH/bin/WatchStatusQueue.sh
+  $KAMANJA_HOME/bin/WatchStatusQueue.sh
 elif [ "$INPUT" = "watch input queue" ]; then
-  $KAMANJA_BASEPATH/bin/WatchInputQueue.sh
+  $KAMANJA_HOME/bin/WatchInputQueue.sh
 elif [ "$INPUT" = "watch output queue" ]; then
-  $KAMANJA_BASEPATH/bin/WatchOutputQueue.sh
+  $KAMANJA_HOME/bin/WatchOutputQueue.sh
 elif [ "$INPUT" = "help" ]; then
-cat $KAMANJA_BASEPATH/input/HelpMenu.txt
+cat $KAMANJA_HOME/input/HelpMenu.txt
     echo ""
 elif [ "$INPUT" = "push data" ]; then
-    $KAMANJA_BASEPATH/bin/PushSampleDataToKafka.sh $INPUT
+    $KAMANJA_HOME/bin/PushSampleDataToKafka.sh $INPUT
 #elif [ "$INPUT" = "kvinit" ]; then
 #count=0
-#FILEDIR=$KAMANJA_BASEPATH/input/SampleApplications/bin
+#FILEDIR=$KAMANJA_HOME/input/SampleApplications/bin
 #for entry in "$FILEDIR"/*
 #do
 #echo $entry | grep -i InitKvStores >> /dev/null
@@ -115,5 +115,5 @@ elif [ "$INPUT" = "push data" ]; then
 #echo "User selected: $INPUTFILE"
 #$INPUTFILE
 else
-java -jar $KAMANJA_BASEPATH/bin/MetadataAPI-1.0 $INPUT
+java -jar $KAMANJA_HOME/bin/MetadataAPI-1.0 $INPUT
 fi
