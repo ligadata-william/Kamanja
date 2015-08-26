@@ -2,6 +2,8 @@
 
 KAMANJA_HOME={InstallDirectory}
 
+$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties upload engine config $KAMANJA_HOME/config/ClusterConfig.json
+
 $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add container $KAMANJA_HOME/input/SampleApplications/metadata/container/CoughCodes_Medical.json
 
 $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add container $KAMANJA_HOME/input/SampleApplications/metadata/container/DyspnoeaCodes_Medical.json
@@ -23,5 +25,3 @@ $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config
 $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties upload compile config $KAMANJA_HOME/input/SampleApplications/metadata/config/Java_ModelConfig_Medical.json
 
 $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add model java $KAMANJA_HOME/input/SampleApplications/metadata/model/COPDRiskAssessment.java
-
-$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties upload engine config $KAMANJA_HOME/config/ClusterConfig.json

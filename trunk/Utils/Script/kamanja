@@ -29,8 +29,6 @@ pwdnm=$(pwd -P)
 JAVA_HOME=$(dirname $(dirname $jar_full_path))
 SCALA_HOME=$(dirname $(dirname $scala_full_path))
 
-
-
 IFS=' ' read -a array <<< $@
 if [ "$#" -eq 0  ]; then
     cat $KAMANJA_HOME/input/HelpMenu.txt
