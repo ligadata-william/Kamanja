@@ -2,6 +2,8 @@
 
 KAMANJA_BASEPATH={InstallDirectory}
 
+$KAMANJA_BASEPATH/bin/kamanja $KAMANJA_BASEPATH/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties upload engine config $KAMANJA_BASEPATH/config/ClusterConfig.json
+
 $KAMANJA_BASEPATH/bin/kamanja $KAMANJA_BASEPATH/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add container $KAMANJA_BASEPATH/input/SampleApplications/metadata/container/CoughCodes_Medical.json
 
 $KAMANJA_BASEPATH/bin/kamanja $KAMANJA_BASEPATH/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add container $KAMANJA_BASEPATH/input/SampleApplications/metadata/container/DyspnoeaCodes_Medical.json
@@ -24,4 +26,3 @@ $KAMANJA_BASEPATH/bin/kamanja $KAMANJA_BASEPATH/input/SampleApplications/metadat
 
 $KAMANJA_BASEPATH/bin/kamanja $KAMANJA_BASEPATH/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add model java $KAMANJA_BASEPATH/input/SampleApplications/metadata/model/COPDRiskAssessment.java
 
-$KAMANJA_BASEPATH/bin/kamanja $KAMANJA_BASEPATH/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties upload engine config $KAMANJA_BASEPATH/config/ClusterConfig.json
