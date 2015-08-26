@@ -362,9 +362,10 @@ class KamanjaManager extends Observer {
   }
 
   def update(o: Observable, arg: AnyRef): Unit = {
-    LOG.debug("Received signal: " + arg)
-    if (arg.toString.compareToIgnoreCase("SIGUSR1") == 0 || arg.toString.compareToIgnoreCase("SIGSIGUSR1") == 0) {
-      LOG.warn("Got SIGUSR1 signal. Shutting down the process")
+    val sig = arg.toString
+    LOG.debug("Received signal: " + sig)
+    if (sig.compareToIgnoreCase("SIGTERM") == 0 || sig.compareToIgnoreCase("SIGINT") == 0 || sig.compareToIgnoreCase("SIGABRT") == 0) {
+      LOG.warn("Got " + sig + " signal. Shutting down the process")
       KamanjaConfiguration.shutdown = true
     }
   }
@@ -460,14 +461,16 @@ class KamanjaManager extends Observer {
     try {
       sh = new SignalHandler()
       sh.addObserver(this)
-      sh.handleSignal("SIGUSR1")
+      sh.handleSignal("TERM")
+      sh.handleSignal("INT")
+      sh.handleSignal("ABRT")
     } catch {
       case e: Throwable => {
         LOG.error("Failed to add signal handler.\nStacktrace:" + StackTrace.ThrowableTraceString(e))
       }
     }
 
-    LOG.info("KamanjaManager is running now. Waiting for user to terminate with CTRL + C\n")
+    LOG.warn("KamanjaManager is running now. Waiting for user to terminate with SIGTERM, SIGINT or SIGABRT signals")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
       cntr = cntr + 1
       if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {
