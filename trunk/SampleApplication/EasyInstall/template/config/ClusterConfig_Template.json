@@ -2,7 +2,7 @@
   "Clusters": [
     {
       "ClusterId": "ligadata1",
-      "DataStore": "{\"StoreType\": \"hashmap\",\"SchemaName\": \"testdata\",\"Location\": \"{InstallDirectory}/storage\"}",
+      "DataStore": {"StoreType": "hashmap","SchemaName": "testdata","Location": "{InstallDirectory}/storage"},
       "StatusInfo": {
         "ClassName": "com.ligadata.keyvaluestore.KeyValueHashMap$",
         "JarName": "hashmap_2.10-0.1.0.jar",
