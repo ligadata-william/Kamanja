@@ -201,7 +201,8 @@ object ModelService {
       for (modelDef <- modelDefs){
         println("Adding the next model in the queue.")   
         if (dep.length > 0) {
-          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", dep, userid)
+          println("***"+userid.get+"."+dep)
+          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", userid.get+"."+dep, userid)
         } else { 
           //before adding a model, add its config file.
           var configKeys = MetadataAPIImpl.getModelConfigNames
@@ -281,7 +282,9 @@ object ModelService {
       for (modelDef <- modelDefs){
         println("Adding the next model in the queue.")
         if (dep.length > 0) {
-          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", dep, userid)
+          
+          println("***"+userid.get+"."+dep)
+          response+= MetadataAPIImpl.AddModelFromSource(modelDef, "scala", userid.get+"."+dep, userid)
         } else {
           var configKeys = MetadataAPIImpl.getModelConfigNames
           println("--> got these many back "+configKeys.size)
