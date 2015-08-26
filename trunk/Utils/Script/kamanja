@@ -9,7 +9,6 @@ done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 KAMANJA_HOME="$(dirname "$SCRIPT_DIR")"
-echo $KAMANJA_HOME > /tmp/kamanja.location
 export KAMANJA_HOME=$KAMANJA_HOME
 jar_full_path=$(which jar)
 INPUT=$@
