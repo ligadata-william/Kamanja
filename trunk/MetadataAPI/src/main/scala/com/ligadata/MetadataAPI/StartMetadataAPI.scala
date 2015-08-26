@@ -22,7 +22,7 @@ object StartMetadataAPI {
   var action = ""
   var location = ""
   var config = ""
-  val WITHDEP = "withdep"
+  val WITHDEP = "dependOn"
   var expectDep = false
   var depName: String = ""
 
