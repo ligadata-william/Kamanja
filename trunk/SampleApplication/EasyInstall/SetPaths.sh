@@ -58,6 +58,7 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 
 #new one
 #HelloWorld
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/HelloWorldApp_Template.sh > $install_dir/input/SampleApplications/bin/HelloWorldApp.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Template_HelloWorld.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_HelloWorld.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/PushSampleDataToKafka_Template_HelloWorld.sh > $install_dir/input/SampleApplications/bin/PushSampleDataToKafka_HelloWorld.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/config/MetadataAPIConfig_Template_HelloWorld.properties > $install_dir/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties
@@ -77,6 +78,7 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 #Medical
 
 #Telecom
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/SubscriberUsageApp_Template.sh > $install_dir/input/SampleApplications/bin/SubscriberUsageApp.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/InitKvStores_Template_Telecom.sh > $install_dir/input/SampleApplications/bin/InitKvStores_Telecom.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Template_Telecom.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_Telecom.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Cassandra_Template_Telecom.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_Cassandra_Telecom.sh
@@ -88,6 +90,7 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 #Telecom
 
 #Finance
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/LowBalanceAlertApp_Template.sh > $install_dir/input/SampleApplications/bin/LowBalanceAlertApp.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/InitKvStores_Template_Finance.sh > $install_dir/input/SampleApplications/bin/InitKvStores_Finance.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Template_Finance.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_Finance.sh
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Cassandra_Template_Finance.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_Cassandra_Finance.sh
