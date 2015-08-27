@@ -317,10 +317,20 @@ object ModelService {
     response
   }
 
-  def removeModel: String ={
+  def removeModel(parm: String = ""): String ={
     var response=""
     try {
       //  logger.setLevel(Level.TRACE); //check again
+      if (parm.length > 0) {
+         val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(parm)
+         println (ns+".."+name+".."+ver)
+         try {
+           val apiResult = MetadataAPIImpl.RemoveModel(ns, name, ver.toInt, userid).toString
+           return apiResult
+         } catch {
+           case e: Exception => e.printStackTrace()
+         }
+      }
 
       val modelKeys = MetadataAPIImpl.GetAllModelsFromCache(true, None)
 
@@ -344,12 +354,14 @@ object ModelService {
           //println(errormsg)
           response=errormsg
         }
+ 
         val modelKey = modelKeys(choice - 1)
-        val modelKeyTokens = modelKey.split("\\.")
-        val modelNameSpace = modelKeyTokens(0)
-        val modelName = modelKeyTokens(1)
-        val modelVersion = modelKeyTokens(2)
-        val apiResult = MetadataAPIImpl.RemoveModel(modelNameSpace, modelName, modelVersion.toLong, userid).toString
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modelKey)
+       // val modelKeyTokens = modelKey.split("\\.")
+       // val modelNameSpace = modelKeyTokens(0)
+       // val modelName = modelKeyTokens(1)
+       // val modelVersion = modelKeyTokens(2)
+        val apiResult = MetadataAPIImpl.RemoveModel(ns, name, ver.toInt, userid).toString
         response=apiResult
       }
 

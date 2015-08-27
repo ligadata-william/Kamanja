@@ -23,12 +23,17 @@ object StartMetadataAPI {
   var location = ""
   var config = ""
   val WITHDEP = "dependsOn"
+  val REMOVE = "remove"
   var expectDep = false
+  var expectRemoveParm = false
   var depName: String = ""
+  var parmName: String = ""
 
   def main(args: Array[String]) {
     try {
+      var argsUntilParm = 2
       args.foreach( arg => {
+        println("arg = " + arg)
         if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
@@ -41,7 +46,20 @@ object StartMetadataAPI {
             depName = arg
             expectDep = false
           } else {
-            action += arg
+            if (arg.equalsIgnoreCase(REMOVE)) {
+              expectRemoveParm = true
+            } 
+            
+            if (expectRemoveParm) {
+              argsUntilParm = argsUntilParm - 1
+            }
+            
+            println("counter ->" + argsUntilParm)
+            
+            if (argsUntilParm < 0)
+              depName = arg
+            else
+              action += arg
           }
         }       
       })
@@ -102,7 +120,13 @@ object StartMetadataAPI {
             response = ModelService.addModelJava(input, param)
         }
         
-        case Action.REMOVEMODEL => response = ModelService.removeModel
+        case Action.REMOVEMODEL => {
+          if (param.length == 0)
+            response = ModelService.removeModel()
+          else 
+            response = ModelService.removeModel(param)
+        }
+        
         case Action.ACTIVATEMODEL => response = ModelService.activateModel
         case Action.DEACTIVATEMODEL => response = ModelService.deactivateModel
         case Action.UPDATEMODEL => response = ModelService.updateModel(input)
