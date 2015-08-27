@@ -323,7 +323,6 @@ object ModelService {
       //  logger.setLevel(Level.TRACE); //check again
       if (parm.length > 0) {
          val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(parm)
-         println (ns+".."+name+".."+ver)
          try {
            val apiResult = MetadataAPIImpl.RemoveModel(ns, name, ver.toInt, userid).toString
            return apiResult
@@ -336,7 +335,6 @@ object ModelService {
 
       if (modelKeys.length == 0) {
         val errorMsg="Sorry, No models available, in the Metadata, to delete!"
-        //println(errorMsg)
         response=errorMsg
       }
       else{
@@ -351,16 +349,11 @@ object ModelService {
 
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
-          //println(errormsg)
           response=errormsg
         }
  
         val modelKey = modelKeys(choice - 1)
         val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modelKey)
-       // val modelKeyTokens = modelKey.split("\\.")
-       // val modelNameSpace = modelKeyTokens(0)
-       // val modelName = modelKeyTokens(1)
-       // val modelVersion = modelKeyTokens(2)
         val apiResult = MetadataAPIImpl.RemoveModel(ns, name, ver.toInt, userid).toString
         response=apiResult
       }

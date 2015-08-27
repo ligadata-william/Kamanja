@@ -33,8 +33,7 @@ object StartMetadataAPI {
     try {
       var argsUntilParm = 2
       args.foreach( arg => {
-        println("arg = " + arg)
-        if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
+         if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
           config = arg
@@ -53,9 +52,7 @@ object StartMetadataAPI {
             if (expectRemoveParm) {
               argsUntilParm = argsUntilParm - 1
             }
-            
-            println("counter ->" + argsUntilParm)
-            
+              
             if (argsUntilParm < 0)
               depName = arg
             else
