@@ -160,8 +160,9 @@ object MessageService {
         }
 
         val msgKey = messageKeys(choice - 1)
-        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
-        val apiResult = MetadataAPIImpl.RemoveMessage(ns, name, ver.toLong, userid).toString
+        val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
+        val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace, msgName, msgVersion.toLong, userid).toString
+
         response = apiResult
       }
     } catch {

@@ -126,10 +126,7 @@ object TypeService {
           response=errormsg
         }
         val typeKey = typeKeys(choice - 1)
-        val typeKeyTokens = typeKey.split("\\.")
-        val typeNameSpace = typeKeyTokens(0)
-        val typeName = typeKeyTokens(1)
-        val typeVersion = typeKeyTokens(2)
+        val(typeNameSpace, typeName, typeVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(typeKey)
         response = MetadataAPIImpl.RemoveType(typeNameSpace, typeName, typeVersion.toLong, userid).toString
       }
 

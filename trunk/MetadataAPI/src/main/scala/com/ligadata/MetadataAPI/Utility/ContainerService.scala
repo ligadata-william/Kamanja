@@ -181,8 +181,8 @@ object ContainerService {
           return ("Invalid choice " + choice + ",start with main menu...")
         }else{
           val contKey = contKeys(choice - 1)
-          val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(contKey)
-          return MetadataAPIImpl.RemoveContainer(ns, name, ver.toInt, userid)
+          val(contNameSpace, contName, contVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(contKey)
+          return MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
         }
       }
     } catch {
