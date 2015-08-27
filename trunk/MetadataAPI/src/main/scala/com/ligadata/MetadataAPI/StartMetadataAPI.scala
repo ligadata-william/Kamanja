@@ -94,7 +94,15 @@ object StartMetadataAPI {
         //message management
         case Action.ADDMESSAGE => response = MessageService.addMessage(input)
         case Action.UPDATEMESSAGE => response = MessageService.updateMessage(input)
-        case Action.REMOVEMESSAGE => response = MessageService.removeMessage
+        
+        case Action.REMOVEMESSAGE => {
+          if (param.length == 0)
+            response = MessageService.removeMessage()
+          else 
+            response = MessageService.removeMessage(param)
+        }
+        
+        
         case Action.GETALLMESSAGES => response = MessageService.getAllMessages
         //output message management
         case Action.ADDOUTPUTMESSAGE => response = MessageService.addOutputMessage(input)
@@ -110,6 +118,7 @@ object StartMetadataAPI {
           else
             response = ModelService.addModelScala(input, param)
         }
+        
         case Action.ADDMODELJAVA => {
           if (param.length == 0)
             response = ModelService.addModelJava(input)
@@ -134,7 +143,13 @@ object StartMetadataAPI {
         case Action.UPDATECONTAINER => response = ContainerService.updateContainer(input)
         case Action.GETCONTAINER => response = ContainerService.getContainer
         case Action.GETALLCONTAINERS => response = ContainerService.getAllContainers
-        case Action.REMOVECONTAINER => response = ContainerService.removeContainer
+        
+        case Action.REMOVECONTAINER => {
+          if (param.length == 0)
+            response = ContainerService.removeContainer()
+          else
+            response = ContainerService.removeContainer(param)
+        }
         //Type management
         case Action.ADDTYPE => response = TypeService.addType(input)
         case Action.GETTYPE => response = TypeService.getType
