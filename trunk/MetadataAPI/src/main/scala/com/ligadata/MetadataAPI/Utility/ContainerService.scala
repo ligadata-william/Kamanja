@@ -171,10 +171,7 @@ object ContainerService {
           response=("Invalid choice " + choice + ",start with main menu...")
         }else{
           val contKey = contKeys(choice - 1)
-          val contKeyTokens = contKey.split("\\.")
-          val contNameSpace = contKeyTokens(0)
-          val contName = contKeyTokens(1)
-          val contVersion = contKeyTokens(2)
+          val(contNameSpace, contName, contVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(contKey)
           response = MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
         }
       }
