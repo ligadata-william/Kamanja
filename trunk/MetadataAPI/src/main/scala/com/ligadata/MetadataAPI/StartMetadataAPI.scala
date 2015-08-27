@@ -16,7 +16,8 @@ import scala.io.Source
 object StartMetadataAPI {
 
   var response = ""
-  val defaultConfig = sys.env("HOME") + "/MetadataAPIConfig.properties"
+  //get default config
+  val defaultConfig = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var action = ""
@@ -189,7 +190,7 @@ object StartMetadataAPI {
       }
     }
     catch {
-      case e: Exception => response = e.getStackTrace.toString
+      case e: Exception => response = e.getStackTraceString
     }
     response
   }
