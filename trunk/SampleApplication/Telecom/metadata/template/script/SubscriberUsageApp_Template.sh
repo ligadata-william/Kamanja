@@ -20,4 +20,4 @@ $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config
 
 $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties upload compile config $KAMANJA_HOME/input/SampleApplications/metadata/config/SubscriberUsageAlertCompileCfg_Telecom.json
 
-$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties add model java $KAMANJA_HOME/input/SampleApplications/metadata/model/SubscriberUsageAlert_Telecom.java
+$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties add model java $KAMANJA_HOME/input/SampleApplications/metadata/model/SubscriberUsageAlert_Telecom.java DEPENDSON subscriberusagealert

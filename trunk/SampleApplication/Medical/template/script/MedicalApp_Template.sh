@@ -24,4 +24,4 @@ $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config
 
 $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties upload compile config $KAMANJA_HOME/input/SampleApplications/metadata/config/Java_ModelConfig_Medical.json
 
-$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add model java $KAMANJA_HOME/input/SampleApplications/metadata/model/COPDRiskAssessment.java
+$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_Medical.properties add model java $KAMANJA_HOME/input/SampleApplications/metadata/model/COPDRiskAssessment.java DEPENDSON copdriskassessment
