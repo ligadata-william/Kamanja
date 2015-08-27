@@ -1,4 +1,4 @@
-package main.scala.com.ligadata.MetadataAPI.Utility
+package com.ligadata.MetadataAPI.Utility
 
 import java.io.File
 
@@ -52,8 +52,12 @@ object MessageService {
     } else {
       //input provided
       var message = new File(input.toString)
-      val messageDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.AddContainer(messageDef, "JSON", userid)
+      if(message.exists()){
+        val messageDef = Source.fromFile(message).mkString
+        response = MetadataAPIImpl.AddContainer(messageDef, "JSON", userid)
+      }else{
+        response="Message defintion file does not exist"
+      }
     }
     //Got the message. Now add them
     response

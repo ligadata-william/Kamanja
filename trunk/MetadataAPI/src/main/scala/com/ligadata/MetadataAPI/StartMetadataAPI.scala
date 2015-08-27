@@ -1,9 +1,12 @@
 package scala.com.ligadata.MetadataAPI
 
+import java.io.File
 import java.util.logging.Logger
 
 import com.ligadata.MetadataAPI.{TestMetadataAPI, MetadataAPIImpl}
-import main.scala.com.ligadata.MetadataAPI.Utility._
+import com.ligadata.MetadataAPI.Utility._
+import scala.io.Source
+
 
 
 /**
@@ -11,8 +14,10 @@ import main.scala.com.ligadata.MetadataAPI.Utility._
  */
 
 object StartMetadataAPI {
+
   var response = ""
-  val defaultConfig = sys.env("HOME") + "/MetadataAPIConfig.properties"
+  //get default config
+  val defaultConfig = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var action = ""
@@ -20,38 +25,43 @@ object StartMetadataAPI {
   var config = ""
 
   def main(args: Array[String]) {
-    val arglist = args.toList
-    if (args.length == 0) {
-      config = defaultConfig
-      MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-      TestMetadataAPI.StartTest
-    }
-    else if (args(0) == "config") {
-      config = defaultConfig
-    }
-    else {
-      for (arg <- arglist) {
-        if (arg.endsWith(".json") || arg.endsWith(".xml")  || arg.endsWith(".scala")  || arg.endsWith(".java")) {
+    try {
+
+      args.foreach( arg => {
+        if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
           config = arg
         } else {
           action += arg
         }
-      }
+      })
 
       //add configuration
-      if (config == "")
+      if (config == "") {
+        println("Using default configuration " + defaultConfig)
         config = defaultConfig
+      }
 
       MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-
-      action.trim
-      response = route(Action.withName(action), location)
+      if (action == "")
+        TestMetadataAPI.StartTest
+      else {
+        response = route(Action.withName(action.trim), location)
+        println("Result: " + response)
+      }
     }
-    println("Result: " + response)
-    response
+    catch {
+      case nosuchelement: NoSuchElementException => {
+        println(action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json")
+        //response = action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json"
+      }
+      case e: Throwable => e.getStackTrace.toString
+    } finally {
+      MetadataAPIImpl.shutdown
+    }
   }
+
 
   def route(action: Action.Value, input: String): String = {
     var response = ""
@@ -122,7 +132,7 @@ object StartMetadataAPI {
       }
     }
     catch {
-      case e: Exception => response = e.getStackTrace.toString
+      case e: Exception => response = e.getStackTraceString
     }
     response
   }

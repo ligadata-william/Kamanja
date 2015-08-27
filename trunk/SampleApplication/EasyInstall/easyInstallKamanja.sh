@@ -363,7 +363,8 @@ cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 
 #copy kamanja to bin directory
 cp $srcPath/Utils/Script/kamanja $bin
-
+#cp $srcPath/Utils/Script/MedicalApp.sh $bin
+cp $srcPath/MetadataAPI/target/scala-2.10/classes/HelpMenu.txt $installPath/input
 # *******************************
 # COPD messages data prep
 # *******************************
@@ -392,8 +393,8 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 cd $srcPath/SampleApplication/HelloWorld/data
 cp * $installPath/input/SampleApplications/data
 
-cd $srcPath/SampleApplication/HelloWorld/container
-cp * $installPath/input/SampleApplications/metadata/container
+#cd $srcPath/SampleApplication/HelloWorld/container
+#cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/HelloWorld/message
 cp * $installPath/input/SampleApplications/metadata/message

@@ -2,29 +2,7 @@
   "Clusters": [
     {
       "ClusterId": "ligadata1",
-      "DataStore": {
-        "ClassName": "com.ligadata.keyvaluestore.KeyValueHashMap$",
-        "JarName": "hashmap_2.10-0.1.0.jar",
-        "DependencyJars": [
-          "exceptions_2.10-1.0.jar",
-          "kamanjautils_2.10-1.0.jar",
-          "storagebase_2.10-1.0.jar",
-          "log4j-1.2.17.jar",
-          "json4s-native_2.10-3.2.9.jar",
-          "json4s-core_2.10-3.2.9.jar",
-          "json4s-ast_2.10-3.2.9.jar",
-          "paranamer-2.6.jar",
-          "scalap-2.10.0.jar",
-          "json4s-jackson_2.10-3.2.9.jar",
-          "jackson-databind-2.3.1.jar",
-          "jackson-annotations-2.3.0.jar",
-          "jackson-core-2.3.1.jar",
-          "guava-18.0.jar",
-          "mapdb-1.0.6.jar"
-        ],
-        "SchemaName": "testdata",
-        "Location": "localhost"
-      },
+      "DataStore": {"StoreType": "hashmap","SchemaName": "testdata","Location": "{InstallDirectory}/storage"},
       "StatusInfo": {
         "ClassName": "com.ligadata.keyvaluestore.KeyValueHashMap$",
         "JarName": "hashmap_2.10-0.1.0.jar",
