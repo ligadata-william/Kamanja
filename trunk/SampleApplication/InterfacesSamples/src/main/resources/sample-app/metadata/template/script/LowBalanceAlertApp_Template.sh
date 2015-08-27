@@ -16,4 +16,4 @@ $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config
 
 $KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties upload compile config $KAMANJA_HOME/input/SampleApplications/metadata/config/LBCompileCfg_Finance.json
 
-$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties add model scala $KAMANJA_HOME/input/SampleApplications/metadata/model/LowBalanceAlert_Finance.scala
+$KAMANJA_HOME/bin/kamanja $KAMANJA_HOME/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties add model scala $KAMANJA_HOME/input/SampleApplications/metadata/model/LowBalanceAlert_Finance.scala DEPENDSON lowbalancealert

@@ -129,9 +129,19 @@ object MessageService {
     response
   }
 
-  def removeMessage: String = {
+  def removeMessage(parm: String = ""): String = {
     var response = ""
     try {
+      
+      if (parm.length > 0) {
+         val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(parm)
+         try {
+           return MetadataAPIImpl.RemoveMessage(ns, name, ver.toInt, userid)
+         } catch {
+           case e: Exception => e.printStackTrace()
+         }
+      }
+      
       val messageKeys = MetadataAPIImpl.GetAllMessagesFromCache(true, None)
 
       if (messageKeys.length == 0) {
@@ -154,12 +164,9 @@ object MessageService {
         }
 
         val msgKey = messageKeys(choice - 1)
-
-        val msgKeyTokens = msgKey.split("\\.")
-        val msgNameSpace = msgKeyTokens(0)
-        val msgName = msgKeyTokens(1)
-        val msgVersion = msgKeyTokens(2)
+        val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
         val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace, msgName, msgVersion.toLong, userid).toString
+
         response = apiResult
       }
     } catch {
