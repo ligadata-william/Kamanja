@@ -5,22 +5,23 @@ import scala.reflect.runtime.{ universe => ru }
 import java.net.{ URL, URLClassLoader }
 import org.apache.log4j.Logger
 
-class KamanjaClassLoader(val systemClassLoader: URLClassLoader, val parent: KamanjaClassLoader, val currentClassClassLoader: ClassLoader, val parentLast: Boolean) extends URLClassLoader(if (systemClassLoader != null) systemClassLoader.getURLs() else Array[URL](), if (parentLast) currentClassClassLoader else parent) {
+/*
+ * Kamanja custom ClassLoader. We can use this as Parent first (default, which is default for java also) and Parent Last.
+ *   So, if same class loaded multiple times in the class loaders hierarchy, 
+ *     with parent first it gets the first loaded class.
+ *     with parent last it gets the most recent loaded class.
+ */
+class KamanjaClassLoader(val systemClassLoader: URLClassLoader, val parent: KamanjaClassLoader, val currentClassClassLoader: ClassLoader, val parentLast: Boolean)
+  extends URLClassLoader(if (systemClassLoader != null) systemClassLoader.getURLs() else Array[URL](), if (parentLast == false && parent != null) parent else currentClassClassLoader) {
   private val LOG = Logger.getLogger(getClass)
 
   override def addURL(url: URL) {
-    // Passing it to super classes
-    LOG.info("Adding URL:" + url.getPath + " to default class loader")
+    LOG.debug("Adding URL:" + url.getPath + " to default class loader")
     super.addURL(url)
   }
 
-  override def findClass(name: String): Class[_] = {
-    return super.findClass(name)
-    // throw new ClassNotFoundException()
-  }
-
   protected override def loadClass(className: String, resolve: Boolean): Class[_] = this.synchronized {
-    LOG.info("Trying to load class:" + className + ", resolve:" + resolve)
+    LOG.debug("Trying to load class:" + className + ", resolve:" + resolve)
 
     if (parentLast) {
       try {
@@ -39,6 +40,9 @@ class KamanjaClassLoader(val systemClassLoader: URLClassLoader, val parent: Kama
   }
 }
 
+/*
+ * KamanjaLoaderInfo is just wrapper for ClassLoader to maintain already loaded jars.
+ */
 class KamanjaLoaderInfo(val parent: KamanjaLoaderInfo = null, val useParentloadedJars: Boolean = false, val parentLast: Boolean = false) {
   // Parent class loader
   val parentKamanLoader: KamanjaClassLoader = if (parent != null) parent.loader else null
