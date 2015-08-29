@@ -1426,7 +1426,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (unloadMsgsContainers == null)
       return
     unloadMsgsContainers.foreach(mc => {
-      val msgCont = _messagesOrContainers.getOrElse(mc.toLowerCase, null)
+      val msgCont = _messagesOrContainers.getOrElse(mc.trim.toLowerCase, null)
       if (msgCont != null && msgCont.data != null) {
         msgCont.data.clear
       }
