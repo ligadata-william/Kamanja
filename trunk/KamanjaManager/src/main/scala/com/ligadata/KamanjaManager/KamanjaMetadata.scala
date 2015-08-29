@@ -728,7 +728,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
           }
         }
         case "ContainerDef" => {
-          // unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name) // Can we clear Container also?
+          unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name)
           zkMessage.Operation match {
             case "Add" => {
               try {
