@@ -64,6 +64,8 @@ libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.9"
 
 libraryDependencies += "org.rogach" %% "scallop" % "0.9.5"
 
+libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-actors" % _)
+
 libraryDependencies ++= Seq(
 "org.apache.commons" % "commons-collections4" % "4.0",
 "commons-configuration" % "commons-configuration" % "1.7",
