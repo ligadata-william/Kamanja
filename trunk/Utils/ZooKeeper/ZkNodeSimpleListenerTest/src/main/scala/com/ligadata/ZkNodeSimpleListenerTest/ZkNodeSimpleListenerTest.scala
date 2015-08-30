@@ -6,6 +6,7 @@ import scala.io._
 import scala.util.control.Breaks._
 import com.ligadata.ZooKeeper._
 import org.rogach.scallop._
+import com.ligadata.Utils.Utils
 
 object ZkNodeSimpleListenerTest {
   class Conf(arguments: Seq[String]) extends ScallopConf(arguments) {
@@ -26,7 +27,7 @@ object ZkNodeSimpleListenerTest {
     val inst = userContext.asInstanceOf[ListenerInfo]
     inst.obj.synchronized {
       val receivedStr = new String(data)
-      LOG.warn("SimpleListener => Context: %s, receivedStr:%s".format(userContext.toString, receivedStr))
+      LOG.warn("%s: SimpleListener => Context: %s, receivedStr:%s".format(Utils.GetCurDtTmStr, userContext.toString, receivedStr))
       if (inst.waitTm > 0)
         Thread.sleep(inst.waitTm)
     }
@@ -90,7 +91,7 @@ object ZkNodeSimpleListenerTest {
               zkSimpleListeners(i).zkc.setData().forPath(zkpath, dataVal.toString.getBytes)
             }
           }
-          LOG.warn("Idx:%s pushed %d values".format(curIdx + 1, dataVal))
+          LOG.warn("Idx:%s pushed %d values in %dms".format(curIdx + 1, dataVal, runtime))
         }
       })
     }
