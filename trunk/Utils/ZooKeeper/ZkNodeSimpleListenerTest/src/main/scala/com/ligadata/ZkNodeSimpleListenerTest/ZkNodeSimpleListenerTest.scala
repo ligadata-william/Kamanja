@@ -27,7 +27,7 @@ object ZkNodeSimpleListenerTest {
     val inst = userContext.asInstanceOf[ListenerInfo]
     inst.obj.synchronized {
       val receivedStr = new String(data)
-      LOG.warn("%s: SimpleListener => Context: %s, receivedStr:%s".format(Utils.GetCurDtTmStr, userContext.toString, receivedStr))
+      LOG.warn("%s: SimpleListener => SenderId: %d, receivedStr:%s".format(Utils.GetCurDtTmStr, inst.idx, receivedStr))
       if (inst.waitTm > 0)
         Thread.sleep(inst.waitTm)
     }
