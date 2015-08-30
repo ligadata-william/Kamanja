@@ -79,17 +79,15 @@ object ZkNodeSimpleListenerTest {
       distributionExecutor.execute(new Runnable() {
         override def run() = {
           val curIdx = i
-          var dataVal: Long = 1
+          var dataVal: Long = 0
           var canRun = true
           val startTime = System.currentTimeMillis
           while (distributionExecutor.isShutdown == false && canRun) {
             val curTime = System.currentTimeMillis
             canRun = (curTime - startTime) < runtime
-            if (canRun) {
-              if (distributionExecutor.isShutdown == false) {
-                zkSimpleListeners(i).zkc.setData().forPath(zkpath, dataVal.toString.getBytes)
-                dataVal = dataVal + 1
-              }
+            if (canRun && distributionExecutor.isShutdown == false) {
+              dataVal = dataVal + 1
+              zkSimpleListeners(i).zkc.setData().forPath(zkpath, dataVal.toString.getBytes)
             }
           }
           LOG.warn("Idx:%s pushed %d values".format(curIdx + 1, dataVal))
@@ -97,7 +95,8 @@ object ZkNodeSimpleListenerTest {
       })
     }
 
-    LOG.error("Sleeping for CTRL + C")
+    LOG.warn("Sleeping for 1 day or CTRL + C")
+    Thread.sleep(86400000)
     distributionExecutor.shutdown
     LOG.warn("Shutting down")
     Thread.sleep(5000) // Waiting another 5 secs to go down all other threads
