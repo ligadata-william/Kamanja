@@ -127,3 +127,6 @@ lazy val TransactionService = project.in(file("TransactionService")) dependsOn(E
 
 lazy val ZkNodeSimpleListenerTest = project.in(file("Utils/ZooKeeper/ZkNodeSimpleListenerTest")) dependsOn(ZooKeeperListener, KamanjaUtils, Exceptions)
 
+lazy val ZkNodeChildListenerTest = project.in(file("Utils/ZooKeeper/ZkNodeChildListenerTest")) dependsOn(ZooKeeperListener, KamanjaUtils, Exceptions)
+
+

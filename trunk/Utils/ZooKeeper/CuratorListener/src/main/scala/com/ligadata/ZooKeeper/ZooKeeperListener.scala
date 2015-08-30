@@ -75,7 +75,7 @@ class ZooKeeperListener {
   //  - Current Event Type as String
   //  - Current Event Path
   //  - All Childs Paths & Data.
-  def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, getAllChildsData: Boolean, ListenCallback: (String, String, Array[Byte], Array[(String, Array[Byte])]) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
+  def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, getAllChildsData: Boolean, ListenCallback: (String, String, Array[Byte], Array[(String, Array[Byte])], Any) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int, callerContext: Any) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       pathChildCache = new PathChildrenCache(zkc, znodePath, true);
@@ -87,7 +87,8 @@ class ZooKeeperListener {
             // val nodePath = ZKPaths.getNodeFromPath(path)
             val childsData = if (getAllChildsData) pathChildCache.getCurrentData.asScala.map(c => { (c.getPath, c.getData) }).toArray else null
             val eventData = event.getData
-            ListenCallback(event.getType.toString, eventData.getPath, eventData.getData, childsData)
+            if (ListenCallback != null)
+              ListenCallback(event.getType.toString, eventData.getPath, eventData.getData, childsData, callerContext)
 
           } catch {
             case e: Exception => {

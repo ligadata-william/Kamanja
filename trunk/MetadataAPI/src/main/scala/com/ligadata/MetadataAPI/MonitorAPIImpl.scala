@@ -32,7 +32,7 @@ object MonitorAPIImpl {
    *                       calling in here by themselves
    * 
    */
-  def updateHeartbeatInfo(eventType: String, eventPath: String, eventPathData: Array[Byte], children: Array[(String, Array[Byte])]): Unit = {
+  def updateHeartbeatInfo(eventType: String, eventPath: String, eventPathData: Array[Byte], children: Array[(String, Array[Byte])], callerContext: Any): Unit = {
     
     try {
       if (eventPathData == null) return

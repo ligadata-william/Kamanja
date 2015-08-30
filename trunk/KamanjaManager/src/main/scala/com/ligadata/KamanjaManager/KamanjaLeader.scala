@@ -780,7 +780,7 @@ object KamanjaLeader {
     ActionOnDataChngImpl(new String(data))
   }
 
-  private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, eventPathData: Array[Byte], childs: Array[(String, Array[Byte])]): Unit = {
+  private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, eventPathData: Array[Byte], childs: Array[(String, Array[Byte])], callerContext: Any): Unit = {
     // LOG.debug("ParticipentsAdaptersStatus => Enter, eventType:%s, eventPath:%s ".format(eventType, eventPath))
     if (IsLeaderNode == false) { // Not Leader node
       // LOG.debug("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
@@ -873,7 +873,7 @@ object KamanjaLeader {
         CreateClient.CreateNodeIfNotExists(zkConnectString, dataChangeZkNodePath) // Creating 
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkAdapterStatusNodeListener = new ZooKeeperListener
-        zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptersStatusPath, false, ParticipentsAdaptersStatus, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptersStatusPath, false, ParticipentsAdaptersStatus, zkSessionTimeoutMs, zkConnectionTimeoutMs, null)
         zkEngineDistributionNodeListener = new ZooKeeperListener
         zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, ActionOnAdaptersDistribution, zkSessionTimeoutMs, zkConnectionTimeoutMs, null)
         zkDataChangeNodeListener = new ZooKeeperListener
