@@ -680,8 +680,8 @@ object KamanjaLeader {
     LOG.debug("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
   }
 
-  private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = {
-    ActionOnAdaptersDistImpl(receivedJsonStr)
+  private def ActionOnAdaptersDistribution(data: Array[Byte], usrContext: Any): Unit = {
+    ActionOnAdaptersDistImpl(new String(data))
   }
 
   private def ActionOnDataChngImpl(receivedJsonStr: String): Unit = lock.synchronized {
@@ -776,8 +776,8 @@ object KamanjaLeader {
     LOG.debug("ActionOnDataChngImpl => Exit. receivedJsonStr: " + receivedJsonStr)
   }
 
-  private def ActionOnDataChange(receivedJsonStr: String): Unit = {
-    ActionOnDataChngImpl(receivedJsonStr)
+  private def ActionOnDataChange(data: Array[Byte], usrContext: Any): Unit = {
+    ActionOnDataChngImpl(new String(data))
   }
 
   private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, eventPathData: Array[Byte], childs: Array[(String, Array[Byte])]): Unit = {
@@ -875,9 +875,9 @@ object KamanjaLeader {
         zkAdapterStatusNodeListener = new ZooKeeperListener
         zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptersStatusPath, false, ParticipentsAdaptersStatus, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkEngineDistributionNodeListener = new ZooKeeperListener
-        zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, ActionOnAdaptersDistribution, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, ActionOnAdaptersDistribution, zkSessionTimeoutMs, zkConnectionTimeoutMs, null)
         zkDataChangeNodeListener = new ZooKeeperListener
-        zkDataChangeNodeListener.CreateListener(zkConnectString, dataChangeZkNodePath, ActionOnDataChange, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkDataChangeNodeListener.CreateListener(zkConnectString, dataChangeZkNodePath, ActionOnDataChange, zkSessionTimeoutMs, zkConnectionTimeoutMs, null)
         try {
           Thread.sleep(500)
         } catch {

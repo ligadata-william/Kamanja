@@ -28,24 +28,22 @@ class ZooKeeperListener {
   var nodeCache: NodeCache = _
   var pathChildCache: PathChildrenCache = _
 
-  private def ProcessData(newData: ChildData, ListenCallback: (String) => Unit) = {
+  private def ProcessData(newData: ChildData, ListenCallback: (Array[Byte], Any) => Unit, callerContext: Any) = {
     try {
       val data = newData.getData()
       if (data != null) {
-        val receivedJsonStr = new String(data)
-        logger.debug("New data received => " + receivedJsonStr)
         if (ListenCallback != null)
-          ListenCallback(receivedJsonStr)
+          ListenCallback(data, callerContext)
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:" + stackTrace)
       }
     }
   }
 
-  def CreateListener(zkcConnectString: String, znodePath: String, ListenCallback: (String) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
+  def CreateListener(zkcConnectString: String, znodePath: String, ListenCallback: (Array[Byte], Any) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int, callerContext: Any) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       nodeCache = new NodeCache(zkc, znodePath)
@@ -54,7 +52,7 @@ class ZooKeeperListener {
         def nodeChanged = {
           try {
             val dataFromZNode = nodeCache.getCurrentData
-            ProcessData(dataFromZNode, ListenCallback)
+            ProcessData(dataFromZNode, ListenCallback, callerContext)
           } catch {
             case ex: Exception => {
               logger.error("Exception while fetching properties from zookeeper ZNode, reason " + ex.getCause())
@@ -67,8 +65,8 @@ class ZooKeeperListener {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
-        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage()+"\nStackTrace:"+stackTrace)
+        logger.debug("StackTrace:" + stackTrace)
+        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -77,7 +75,7 @@ class ZooKeeperListener {
   //  - Current Event Type as String
   //  - Current Event Path
   //  - All Childs Paths & Data.
-  def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, getAllChildsData:Boolean, ListenCallback: (String, String,  Array[Byte], Array[(String, Array[Byte])]) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
+  def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, getAllChildsData: Boolean, ListenCallback: (String, String, Array[Byte], Array[(String, Array[Byte])]) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       pathChildCache = new PathChildrenCache(zkc, znodePath, true);
@@ -102,7 +100,7 @@ class ZooKeeperListener {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:" + stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + znodePath + "):" + e.getMessage())
       }
     }
@@ -153,13 +151,13 @@ object ZooKeeperListenerTest {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:" + stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + zNodePath + "):" + e.getMessage())
       }
     }
   }
 
- /* private def UpdateMetadata(receivedJsonStr: String): Unit = {
+  /* private def UpdateMetadata(receivedJsonStr: String): Unit = {
     val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
     MetadataAPIImpl.UpdateMdMgr(zkMessage)
   }*/
@@ -209,7 +207,7 @@ object ZooKeeperListenerTest {
     }
   }
 
-/*  def main(args: Array[String]) = {
+  /*  def main(args: Array[String]) = {
     var databaseOpen = false
     firstTime = true
     var configFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"

@@ -6722,7 +6722,7 @@ object MetadataAPIImpl extends MetadataAPI {
       try {
         CreateClient.CreateNodeIfNotExists(zkConnectString, znodePath)
         zkListener = new ZooKeeperListener
-        zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000)
+        zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000, null)
         zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathEngine, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
         zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathMetadata, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
       } catch {
@@ -6779,7 +6779,8 @@ object MetadataAPIImpl extends MetadataAPI {
    * UpdateMetadata - This is a callback function for the Zookeeper Listener.  It will get called when we detect Metadata being updated from
    *                  a different metadataImpl service.
    */
-  def UpdateMetadata(receivedJsonStr: String): Unit = {
+  def UpdateMetadata(data: Array[Byte], usrContext:Any): Unit = {
+    val receivedJsonStr = new String(data)
     logger.debug("Process ZooKeeper notification " + receivedJsonStr)
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || !isInitilized) {
       // nothing to do

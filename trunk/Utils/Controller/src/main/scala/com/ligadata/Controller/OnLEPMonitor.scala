@@ -93,7 +93,8 @@ class KamanjaMonitor {
    *                        this method is passed as a callback into a zookeeper listener implementation.
    * @param receivedString String
    */
-  private def ActionOnActionChange(receivedString: String): Unit = {
+  private def ActionOnActionChange(data: Array[Byte], usrContext: Any): Unit = {
+    val receivedString = new String(data)
     if (receivedString.size == 1 && receivedString.toInt == 1) {
       LOG.debug("Monitoring turned ON")
       if (isStarted) {
@@ -255,7 +256,7 @@ class KamanjaMonitor {
     // Establish a listener for the action field.  If that value changes, "ActinOnActionChange" callback function will be
     // called.
     val zkMonitorListener = new ZooKeeperListener
-    zkMonitorListener.CreateListener(zkConnectString, zkActionPath, ActionOnActionChange, 3000, 3000)
+    zkMonitorListener.CreateListener(zkConnectString, zkActionPath, ActionOnActionChange, 3000, 3000, null)
 
     // Loop until its time to externalize data.
     while (true) {
