@@ -14,6 +14,7 @@ object Action extends Enumeration {
   val UPDATEMESSAGE=Value("updatemessage")
   val GETALLMESSAGES=Value("getallmessages")
   val REMOVEMESSAGE=Value("removemessage")
+  val GETMESSAGE=Value("getmessage")
   //output message management
   val ADDOUTPUTMESSAGE=Value("addoutputmessage")
   val UPDATEOUTPUTMESSAGE=Value("updateoutputmessage")
@@ -68,4 +69,3 @@ object Action extends Enumeration {
   val DUMPALLCLUSTERCFGS=Value("dumpallclustercfgs")
   val DUMPALLADAPTERS=Value("dumpalladapters")
 }
-
