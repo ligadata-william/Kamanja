@@ -8,7 +8,7 @@ import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.KamanjaBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
+import com.ligadata.KamanjaBase.{ BaseMsg, ModelInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelFactory, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
 import org.apache.log4j._
 import scala.collection.mutable.ArrayBuffer
@@ -37,7 +37,7 @@ class KamanjaMetadata {
   // Metadata manager
   val messageObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   val containerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
-  val modelObjects = new HashMap[String, MdlInfo]
+  val modelObjects = new HashMap[String, ModelInfo]
 
   def ValidateAllRequiredJars(tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
     tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Boolean = {
@@ -329,10 +329,10 @@ class KamanjaMetadata {
         }
 
         // val objinst = obj.instance
-        if (objinst.isInstanceOf[ModelBaseObj]) {
-          val modelobj = objinst.asInstanceOf[ModelBaseObj]
+        if (objinst.isInstanceOf[ModelFactory]) {
+          val modelobj = objinst.asInstanceOf[ModelFactory]
           val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
-          modelObjects(mdlName) = new MdlInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
+          modelObjects(mdlName) = new ModelInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
           LOG.info("Created Model:" + mdlName)
           return true
         } else {
@@ -487,7 +487,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   private[this] var mirror: reflect.runtime.universe.Mirror = _
 
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
-  private[this] var modelObjects = new HashMap[String, MdlInfo]
+  private[this] var modelObjects = new HashMap[String, ModelInfo]
   private[this] var zkListener: ZooKeeperListener = _
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
@@ -495,7 +495,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   //LOG.setLevel(Level.TRACE)
 
   private def UpdateKamanjaMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
-    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
+    mdlObjects: HashMap[String, ModelInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
     removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
 
     var exp: Exception = null
@@ -516,7 +516,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   }
 
   private def localUpdateKamanjaMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
-    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
+    mdlObjects: HashMap[String, ModelInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
     removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
     //BUGBUG:: Assuming there is no issues if we remove the objects first and then add the new objects. We are not adding the object in the same order as it added in the transaction. 
 
@@ -907,9 +907,9 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     v
   }
 
-  def getModel(mdlName: String): MdlInfo = {
+  def getModel(mdlName: String): ModelInfo = {
     var exp: Exception = null
-    var v: MdlInfo = null
+    var v: ModelInfo = null
 
     reent_lock.readLock().lock();
     try {
@@ -987,24 +987,18 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     v
   }
 
-  def getAllModels: Map[String, MdlInfo] = {
-    var exp: Exception = null
-    var v: Map[String, MdlInfo] = null
-
-    reent_lock.readLock().lock();
+  def getAllModels: Map[String, ModelInfo] = {
+    reent_lock.readLock().lock()
     try {
-      v = localgetAllModels
+      localgetAllModels
     } catch {
-      case e: Exception => { 
+      case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug(s"StackTrace:$stackTrace")
+        throw e
     } finally {
-      reent_lock.readLock().unlock();
+      reent_lock.readLock().unlock()
     }
-    if (exp != null)
-      throw exp
-    v
   }
 
   def getAllContainers: Map[String, MsgContainerObjAndTransformInfo] = {
@@ -1035,7 +1029,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     return null
   }
 
-  private def localgetModel(mdlName: String): MdlInfo = {
+  private def localgetModel(mdlName: String): ModelInfo = {
     if (modelObjects == null) return null
     modelObjects.getOrElse(mdlName.toLowerCase, null)
   }
@@ -1063,7 +1057,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     }).toMap
   }
 
-  private def localgetAllModels: Map[String, MdlInfo] = {
+  private def localgetAllModels: Map[String, ModelInfo] = {
     if (modelObjects == null) return null
     modelObjects.toMap
   }

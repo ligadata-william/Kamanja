@@ -1,12 +1,10 @@
 package com.ligadata.kamanja.copd;
 
-import com.google.common.collect.Lists;
 import com.ligadata.KamanjaBase.*;
 import com.ligadata.KamanjaBase.api.java.function.Function1;
 import com.ligadata.messagescontainers.System.*;
 import org.joda.time.*;
 
-import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -28,28 +26,28 @@ public class COPDRiskAssessment extends ModelBase {
     }
 
     @Override
-    public ModelBaseObj factory() {
+    public ModelFactory modelBaseObject() {
         return objSingleton;
     }
 
-    public static class COPDRiskAssessmentObj implements ModelBaseObj {
-        public boolean IsValidMessage(MessageContainerBase msg) {
+    public static class COPDRiskAssessmentObj implements ModelFactory {
+        public boolean isValidMessage(MessageContainerBase msg) {
             return (msg instanceof Beneficiary);
         }
 
-        public ModelBase CreateNewModel(ModelContext mdlContext) {
+        public ModelBase createNewModel(ModelContext mdlContext) {
             return new COPDRiskAssessment(mdlContext);
         }
 
-        public String ModelName() {
+        public String modelName() {
             return "COPDRiskAssessment";
         }
 
-        public String Version() {
+        public String version() {
             return "0.0.3";
         }
 
-        public ModelResultBase CreateResultObject() {
+        public ModelResultBase createResultObject() {
             return new MappedModelResults();
         }
 
@@ -386,7 +384,7 @@ public class COPDRiskAssessment extends ModelBase {
         }
         System.out.println("******************************************************************************");
 
-        return ((MappedModelResults) new COPDRiskAssessmentObj().CreateResultObject()).withResults(results);
+        return ((MappedModelResults) new COPDRiskAssessmentObj().createResultObject()).withResults(results);
     }
 
     @Override

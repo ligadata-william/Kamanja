@@ -30,24 +30,24 @@ public class JavaTestMdl extends ModelBase {
 		super(mdlContext, objSignleton);
 	}
 
-	public static class JavaTestMdlObj implements ModelBaseObj {
-		public boolean IsValidMessage(MessageContainerBase msg) {
+	public static class JavaTestMdlObj implements ModelFactory {
+		public boolean isValidMessage(MessageContainerBase msg) {
 			return (msg instanceof CustAlertHistory);
 		}
 
-		public ModelBase CreateNewModel(ModelContext mdlContext) {
+		public ModelBase createNewModel(ModelContext mdlContext) {
 			return new JavaTestMdl(mdlContext);
 		}
 
-		public String ModelName() {
+		public String modelName() {
 			return "JavaTestMdl";
 		}
 
-		public String Version() {
+		public String version() {
 			return "0.0.1";
 		}
 
-		public ModelResultBase CreateResultObject() {
+		public ModelResultBase createResultObject() {
 			return new MappedModelResults();
 		}
 	}

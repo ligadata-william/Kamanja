@@ -26,37 +26,37 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
     if (finalTopMsgOrContainer != null) {
 
-      val models: Array[MdlInfo] = KamanjaMetadata.getAllModels.map(mdl => mdl._2).toArray
+      val models: Array[ModelInfo] = KamanjaMetadata.getAllModels.values.toArray
 
       val outputAlways: Boolean = false;
 
       // Execute all modes here
       models.foreach(md => {
         try {
-          if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
-            LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.mdl.ModelName))
+          if (md.model.isValidMessage(finalTopMsgOrContainer)) {
+            LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.model.modelName))
             // Checking whether this message has any fields/concepts to execute in this model
             val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer)
             ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
-            val curMd = md.mdl.CreateNewModel(mdlCtxt)
+            val curMd = md.model.createNewModel(mdlCtxt)
             if (curMd != null) {
               val res = curMd.execute(outputAlways)
               if (res != null) {
-                results += new SavedMdlResult().withMdlName(md.mdl.ModelName).withMdlVersion(md.mdl.Version).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
+                results += new SavedMdlResult().withMdlName(md.model.modelName).withMdlVersion(md.model.version).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
               } else {
                 // Nothing to output
               }
             } else {
-              LOG.error("Failed to create model " + md.mdl.ModelName())
+              LOG.error("Failed to create model " + md.model.modelName())
             }
           } else {
           }
         } catch {
           case e: Exception => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
+            LOG.error("Model Failed => " + md.model.modelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
           }
           case t: Throwable => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
+            LOG.error("Model Failed => " + md.model.modelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
           }
         } finally {
           ThreadLocalStorage.modelContextInfo.remove

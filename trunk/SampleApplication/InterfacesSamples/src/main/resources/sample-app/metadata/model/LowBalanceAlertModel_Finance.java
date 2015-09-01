@@ -1,7 +1,5 @@
 package com.ligadata.kamanja.financial;
 
-import scala.Option;
-
 import com.ligadata.KamanjaBase.*;
 import System.*;
 
@@ -16,7 +14,7 @@ public class LowBalanceAlertModel extends ModelBase {
 
 	
 	@Override
-	public ModelBaseObj factory() {
+	public ModelFactory modelBaseObject() {
 		// TODO Auto-generated method stub
 		return objSingleton;
 	}
@@ -84,24 +82,24 @@ public class LowBalanceAlertModel extends ModelBase {
     	return false;
     }
 	
-    public static class LowBalanceAlertModelObj implements ModelBaseObj {
-		public boolean IsValidMessage(MessageContainerBase msg) {
+    public static class LowBalanceAlertModelObj implements ModelFactory {
+		public boolean isValidMessage(MessageContainerBase msg) {
 			return (msg instanceof TransactionMsg);
 		}
 
-		public ModelBase CreateNewModel(ModelContext mdlContext) {
+		public ModelBase createNewModel(ModelContext mdlContext) {
 			return new LowBalanceAlertModel(mdlContext);
 		}
 
-		public String ModelName() {
+		public String modelName() {
 			return "LowBalanceAlert";
 		}
 
-		public String Version() {
+		public String version() {
 			return "0.0.1";
 		}
 		
-		public ModelResultBase CreateResultObject() {
+		public ModelResultBase createResultObject() {
 			return new MappedModelResults();
 		}
 	}

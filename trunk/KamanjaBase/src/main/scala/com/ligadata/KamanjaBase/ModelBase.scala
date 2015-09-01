@@ -25,7 +25,7 @@ object MinVarType extends Enumeration {
 
 import MinVarType._
 
-case class Result(val name: String, val result: Any)
+case class Result(name: String, result: Any)
 
 object ModelsResults {
   def ValueString(v: Any): String = {
@@ -278,31 +278,32 @@ trait EnvContext {
   /**
    *  Answer an empty instance of the message or container with the supplied fully qualified class name.  If the name is
    *  invalid, null is returned.
-   *  @param fqclassname : a full package qualifed class name
+   *  @param fqclassname : a full package qualified class name
    *  @return a MesssageContainerBase of that ilk
    */
   def NewMessageOrContainer(fqclassname: String): MessageContainerBase
 }
 
-abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseObj) {
-  final def EnvContext() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null // gCtx
-  final def ModelName() = factory.ModelName() // Model Name
-  final def Version() = factory.Version() // Model Version
-  final def TenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
-  final def TransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else null // transId
+abstract class ModelBase() {
+  def modelContext(): ModelContext
+  def modelName(): String
+  def version(): String
+  final def envContext() = if (modelContext != null && modelContext().txnContext != null) modelContext().txnContext.gCtx else null // gCtx
+  final def tenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
+  final def transId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else null // transId
 
   def execute(outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
 
-trait ModelBaseObj {
-  def IsValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def CreateNewModel(mdlCtxt: ModelContext): ModelBase // Creating same type of object with given values 
-  def ModelName(): String // Model Name
-  def Version(): String // Model Version
-  def CreateResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
+trait ModelFactory {
+  def isValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
+  def createNewModel(modelContext: ModelContext): ModelBase // Creating same type of object with given values
+  def modelName(): String // Model Name
+  def version(): String // Model Version
+  def createResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
 }
 
-class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
+class ModelInfo(val model: ModelFactory, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
 class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {

@@ -1,7 +1,7 @@
 package com.ligadata.models.samples.models
 
 import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase.{ TimeRange, ModelFactory, ModelBase, ModelResultBase, TransactionContext, ModelContext }
 import System._
 import RddUtils._
 import RddDate._
@@ -11,12 +11,12 @@ import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
 import org.apache.log4j.Logger
 
-object LowBalanceAlert extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
-  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
-  override def ModelName(): String = "System.LowBalanceAlert" // Model Name
-  override def Version(): String = "0.0.1" // Model Version
-  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult()
+object LowBalanceAlert extends ModelFactory {
+  override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
+  override def createNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
+  override def modelName(): String = "System.LowBalanceAlert" // Model Name
+  override def version(): String = "0.0.1" // Model Version
+  override def createResultObject(): ModelResultBase = new LowBalanceAlertResult()
 }
 
 class LowBalanceAlertResult extends ModelResultBase {

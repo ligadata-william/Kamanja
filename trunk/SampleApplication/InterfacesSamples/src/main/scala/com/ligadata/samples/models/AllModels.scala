@@ -1,7 +1,7 @@
 package com.ligadata.models.samples.models
 
 import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase.{ TimeRange, ModelFactory, ModelBase, ModelResultBase, TransactionContext, ModelContext }
 import com.ligadata.samples.messages.{ CustAlertHistory, GlobalPreferences, CustPreferences, CustTransaction }
 import RddUtils._
 import RddDate._
@@ -53,12 +53,12 @@ import java.io.{ DataInputStream, DataOutputStream }
 //   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
 //
 
-object LowBalanceAlert extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
-  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
-  override def ModelName(): String = "LowBalanceAlert" // Model Name
-  override def Version(): String = "0.0.1" // Model Version
-  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult()
+object LowBalanceAlert extends ModelFactory {
+  override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
+  override def createNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
+  override def modelName(): String = "LowBalanceAlert" // Model Name
+  override def version(): String = "0.0.1" // Model Version
+  override def createResultObject(): ModelResultBase = new LowBalanceAlertResult()
 }
 
 class LowBalanceAlertResult extends ModelResultBase {
@@ -167,7 +167,7 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withAlertDtTmInMs(curTmInMs).withAlertType("lowBalanceAlert").Save
     // results
-    LowBalanceAlert.CreateResultObject().asInstanceOf[LowBalanceAlertResult].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert").withTriggerTime(curTmInMs)
+    LowBalanceAlert.createResultObject().asInstanceOf[LowBalanceAlertResult].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert").withTriggerTime(curTmInMs)
   }
 }
 
@@ -192,12 +192,12 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
 //   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
 //
 
-object LowBalanceAlert2 extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
-  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert2(mdlCtxt)
-  override def ModelName(): String = "LowBalanceAlert2" // Model Name
-  override def Version(): String = "0.0.1" // Model Version
-  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult2()
+object LowBalanceAlert2 extends ModelFactory {
+  override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
+  override def createNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert2(mdlCtxt)
+  override def modelName(): String = "LowBalanceAlert2" // Model Name
+  override def version(): String = "0.0.1" // Model Version
+  override def createResultObject(): ModelResultBase = new LowBalanceAlertResult2()
 }
 
 class LowBalanceAlertResult2 extends ModelResultBase {
@@ -323,7 +323,7 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
     val curTmInMs = curDtTmInMs.getDateTimeInMs
 
     // results
-    LowBalanceAlert2.CreateResultObject().asInstanceOf[LowBalanceAlertResult2].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
+    LowBalanceAlert2.createResultObject().asInstanceOf[LowBalanceAlertResult2].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
   }
 }
 
