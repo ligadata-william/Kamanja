@@ -1,2 +1,2 @@
-Please find Kamanja documentation online at 
-https://github.com/ligaDATA/Kamanja/wiki
+Please find Kamanja documentation on line at
+kamanja.org
