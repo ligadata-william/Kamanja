@@ -6739,7 +6739,7 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   private def shutdownZkListener: Unit = {
     try {
-      CloseZKSession
+      CloseZKSession 
       if (zkListener != null) {
         zkListener.Shutdown
       }

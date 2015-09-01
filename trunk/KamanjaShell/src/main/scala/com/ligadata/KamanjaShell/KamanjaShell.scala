@@ -3,9 +3,12 @@ package com.ligadata.KamanjaShell
 import java.util.logging.Logger
 import java.net.Socket
 import java.io.File
+import java.util.Properties
 import java.io.InputStream
-import sys.process._
 import scala.actors.threadpool.{ Executors, ExecutorService }
+import com.ligadata.MetadataAPI.MetadataAPIImpl
+import sys.process._
+
 
 /**
  * The main entry point for the "kamanja" script to start up all the necessary processes required for 
@@ -15,110 +18,114 @@ import scala.actors.threadpool.{ Executors, ExecutorService }
  */
 object KamanjaShell {
  
+  // temp stuff - probably need to be removed or modified.
   val tmpZKPath = "/tmp/zookeeper-3.4.6"
   val tmpKPath = "/tmp/kafka_2.10-0.8.1.1"
   
+  // String constants.
   val EXIT: String = "exit"
   val PROMPT_FOR_NAME: String = "Enter the Kamanja Instance Name "
   val PROMPT_FOR_PATH: String = "Enter the Kamanja Instance Path "
   val PROMPT_FOR_PORT: String = "Enter the Kamanja Instance Port "
+  
+  // property names
+  val KAMANJA_HOME_PROP: String = "KAMANJA_HOME"
+  val JAVA_HOME_PROP: String = "JAVA_HOME"
+  val SCALA_HOME_PROP: String = "SCALA_HOME"
+  val JAR_PATHS_PROP: String = "JARPATHS"
+  val JAR_TARGET_DIR_PROP: String = "JAR_TARGET_DIR"
+  val COMPILER_WORK_DIR_PROP: String = "COMPILER_WORK_DIR"
+  val ZOOKEEPER_CONNECT_STRING_PROP: String = "ZOOKEEPER_CONNECT_STRING"
+  val ZNODE_PATH_PROP: String = "ZNODE_PATH"
+  val API_LEADER_SELECTION_ZK_NODE: String = "API_LEADER_SELECTION_ZK_NODE"
+  val NOTIFY_ENGINE_PROP: String = "NOTIFY_ENGINE"
+  val API_LEADER_SELECTION_ZK_NOD_PROP: String = "API_LEADER_SELECTION_ZK_NOD"
+  val MODEL_EXEC_LOG_PROP: String = "MODEL_EXEC_LOG"
+  val CLASSPATH_PROP: String = "CLASSPATH"
+  val SERVICE_HOST_PROP: String = "SERVICE_HOST"
+  val SERVICE_PORT_PROP: String = "SERVICE_PORT"
+  val MODEL_FILES_DIR_PROP: String = "MODEL_FILES_DIR"
+  val FUNCTION_FILES_DIR_PROP: String = "FUNCTION_FILES_DIR"
+  val MESSAGE_FILES_DIR_PROP: String = "MESSAGE_FILES_DIR"
+  val CONTAINER_FILES_DIR_PROP: String = "CONTAINER_FILES_DIR"
+  val TYPE_FILES_DIR_PROP: String = "TYPE_FILES_DIR"
+  val OUTPUTMESSAGE_FILES_DIR_PROP: String = "OUTPUTMESSAGE_FILES_DIR"
+  val CONFIG_FILES_DIR_PROP: String = "CONFIG_FILES_DIR"
+  val CONCEPT_FILES_DIR_PROP: String = "CONCEPT_FILES_DIR"
+  val NODE_ID_PROP: String = "NODE_ID"
+  
+  
+  
   // Logger stuff
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   
-  // some state info
+  // some execution state info
   var isRunning: Boolean = true
   var isNode: Boolean = true  
-  // Required parameters.
-  var iName: String = "???"
-  var iPath: String = _
-  var iPort: String = _
-  var iOptions: Array[String] = Array[String]()
-
-  var zkPort: String = ""
   
+  // Required parameters.
+  var tempName: String = "???"
+  var tempPath: String = _
+  var tempPort: String = _
+  var iOptions: Array[String] = Array[String]()
+  
+  // TO keep or not to keep.
   private[this] var _exec: ExecutorService = null
+  private var opts: InstanceContext = null
 
   /**
    * Main entry point
    * @param args Array[String]
    */
   def main(args: Array[String]) {
-   
-    try {
+    
+    var metadataParams = new Properties
+    var runtimeParams = new Properties
+    
+    try {  
       if (args.size == 0) {
         println("Either NODE or CLUSTER must be specified when starting Kamanja")
         return
       }
       // Starting the Kamanja Shell, initialize the shell and 
-      parseInput(args)
+      parseInitialInput(args)
+      // Get the options for this installations.
+      opts = InstanceContext.getOptions(iOptions)
+      opts.setIName(tempName)
+      opts.setIPath(tempPath)
+      opts.setIPort(tempPort)
+      var myConfigFile = setupMetadataParams(metadataParams, opts)
       
       // See if the directory already exists or not, if it needs to be created, create it along with the basic
       // configurations to be used.
-      if (new java.io.File(iPath).exists)
+      if (new java.io.File(opts.getIPath).exists)
         println("Node instance already exists")
       else {
         println("Create new node instance")  
         createNewNodeStructure
       }
-   
       
-      _exec = Executors.newFixedThreadPool(4)
-      
-      // Get the options for this installations.
-      var opts: InstanceOptions = InstanceOptions.getOptions(iOptions)
+      _exec = Executors.newFixedThreadPool(10)
       
       // Check to see if Zookeeper needs to start.
-      if (opts.needZk) {
-        opts.zkPort = getAvailablePort(opts.zkPort).toString
-  
-        // Setup the zookeeper config.
-        var zkProps = new java.util.Properties
-        zkProps.setProperty("tickTime", "2000")
-        zkProps.setProperty("dataDir", iPath + "/zookeeper/data")
-        zkProps.setProperty("clientPort", opts.zkPort)
-        savePropFile(zkProps, "zoo.cfg" ,iPath + "/zookeeper/conf")
-        
-        // Start Zookeeper
-        println("Auto-Starting Zookeeper at " + opts.zkLocation + ":" + opts.zkPort)
-        _exec.execute(new Runnable() {
-          override def run() = {
-            val result =  s"$tmpZKPath/bin/zkServer.sh start".!
-          }
-        })
-      }
-      
+      if (opts.needZk) 
+         ZookeeperCommands.startLocalZookeeper(opts,_exec)
+    
       // Check to see if Kafka is needed to be started
-      if (opts.needKafka) {
- 
-        opts.kafkaPort = getAvailablePort(opts.kafkaPort).toString
-        var kprops = new java.util.Properties
-        var kpFile: String = "/tmp/kafka_2.10-0.8.1.1/config/server.properties"       
-        try {
-          // Override the Kafka Configuration with our default parameters..
-          // and save it in the 
-          kprops.load(new java.io.FileInputStream(kpFile))
-          kprops.setProperty("log.dirs", iPath + "/kafka/logs")
-          kprops.setProperty("port", opts.kafkaPort.toString)
-          kprops.setProperty("zookeeper.connect", "localhost:" + opts.zkPort)       
-          savePropFile(kprops, "server.properties" ,iPath + "/kafka/conf")       
-        } catch { 
-          //TODO:  Handle this nicely.
-          case e: Exception => e.printStackTrace()
-        }  
-   
-        println("Auto-Starting Kafka at " + opts.kafkaLocation + ":" + opts.kafkaPort)  
-        _exec.execute(new Runnable() {
-          override def run() = {
-            
-           val buffer = new StringBuffer() 
-           val kafkaCommand = Seq("sh","-c",s"$tmpKPath/bin/kafka-server-start.sh $iPath/kafka/conf/server.properties  > /tmp/mylog")
-         //  val res: Int = Process(kafkaCommand).!
-         //  val cmd =  s"$tmpKPath/bin/kafka-server-start.sh $iPath/kafka/conf/server.properties"
-           val lines = kafkaCommand lines_! ProcessLogger(buffer append _)    
-          }
-        })
-      }         
+      if (opts.needKafka)  
+        KafkaCommands.startLocalKafka(opts, _exec)
+       
+      // Initialize and start the Metadata Service if the global port is not 0.
+      // else, just initialize a local metadataAPI object.
+      if (opts.getIPort.toInt > 0)
+        startMetadataService
+      else {
+        MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile, false)
+      }
+        
+        
+      // Process all the OPTIONAL PARAMETERS
       
       // Give porcesses time to start upl
       Thread.sleep(3000)
@@ -152,88 +159,265 @@ object KamanjaShell {
    * @param incmd String
    */
   private def exectuteShellCommand(incmd: String): Unit = {
-
     
+    var wasVerbSet = false
+    var wasSubjectSet = false
+    
+    var count = 1
+    var verb: String = ""
+    var subject: String = ""
+    var cmdParms: scala.collection.mutable.Map[String, String] = scala.collection.mutable.Map[String,String]()
+    
+
+    val shellCommand = incmd.split(" ").filter(x => x.length > 0 )
+    shellCommand.foreach (term => {
+      println(term) 
+      if (count == 1) {
+        verb = term
+        wasVerbSet = true
+      } 
+      
+      if (count == 2) {
+        subject = term
+        wasSubjectSet = true
+      }
+      
+      if (count > 2) {
+        var parms = term.split(":")
+        if (parms.size != 2) {println("Bad Command Parameters"); return}
+        cmdParms(parms(0)) = parms(1)
+      }
+           
+      count = count + 1
+    })
+    
+    if (!wasVerbSet || !wasSubjectSet) {
+      println("Bad Command")
+      return
+    }
+    
+    
+    KShellComandProcessor.processCommand(verb,subject,cmdParms,opts, _exec)
+    
+    return
   }
+  
+  /**
+   * set up all the configuration parameters.
+   */
+  private def startMetadataService: Unit = {
+   
+  }
+  
+  /**
+   * create metadata parameters.
+   */
+  private def setupMetadataParams(derivedParams: Properties, opts: InstanceContext): String = {
+     // This is a straightforward algorithm.  First, Find the KAMANJA_HOME.
+     // Once KamanjaHome is set, get the MetadataAPI.property file located in KAMANJA_HOME/config
+     // take any values that have been specified, and default to whatever hasn't been specified.
+     // if a value is required but cannot be determined, FAIL and BAIL.
+     var configDir: String = ""
+     var jarPathDir: String = ""
+     var jarTargetDir: String = ""
+     var compilerWorkDir: String = ""
+     var classPath: String = ""
+    
+     // Step 1. -  Get KamanjaHome.  It must be set
+     try {
+        val kamanjaHome = sys.env("KAMANJA_HOME")
+        opts.setKamanjaHome(kamanjaHome)
+        derivedParams.setProperty(KAMANJA_HOME_PROP, kamanjaHome)
+        configDir = kamanjaHome+"/config"
+        jarPathDir = kamanjaHome+"/lib/system," + kamanjaHome+"/lib/applications"
+        jarTargetDir = kamanjaHome+"/lib/applications"
+        compilerWorkDir = s"/tmp/Kamanja/lib/system/kamanjabase_2.10-1.0.jar:/tmp/Kamanja/lib/system/basefunctions_2.10-0.1.0.jar:/tmp/Kamanja/lib/system/metadata_2.10-1.0.jar:/tmp/Kamanja/lib/system/methodextractor_2.10-1.0.jar:/tmp/Kamanja/lib/system/pmmlcompiler_2.10-1.0.jar:/tmp/Kamanja/lib/system/bootstrap_2.10-1.0.jar:/tmp/Kamanja/lib/system/joda-time-2.3.jar:/tmp/Kamanja/lib/system/joda-convert-1.6.jar:/tmp/Kamanja/lib/system/basetypes_2.10-0.1.0.jar:/tmp/Kamanja/lib/system/pmmludfs_2.10-1.0.jar:/tmp/Kamanja/lib/system/pmmlruntime_2.10-1.0.jar:/tmp/Kamanja/lib/system/json4s-native_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/json4s-core_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/json4s-ast_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/jackson-databind-2.3.1.jar:/tmp/Kamanja/lib/system/jackson-annotations-2.3.0.jar:/tmp/Kamanja/lib/system/json4s-jackson_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/jackson-core-2.3.1.jar:/tmp/Kamanja/lib/system/log4j-1.2.17.jar:/tmp/Kamanja/lib/system/guava-18.0.jar:/tmp/Kamanja/lib/system/scala-library-2.10.4.jar:/tmp/Kamanja/lib/system/exceptions_2.10-1.0.jar:/tmp/Kamanja/lib/system/scala-reflect.jar"
+        println(kamanjaHome)
+     } catch {
+       case nsee: java.util.NoSuchElementException => {
+         logger.info("KAMANJA_HOME must be set.  Aborting")
+         throw nsee
+       }
+     }
+     
+     // Get the config file.
+     var mdProps = new java.util.Properties
+     var mdFile: String = configDir+"/mdConfig.properties"       
+     try {
+       mdProps.load(new java.io.FileInputStream(mdFile))
+     } catch {
+       case fnfe: java.io.FileNotFoundException => {
+         logger.info(s"Unable to find $mdFile in "+configDir)
+         throw fnfe
+       }
+     }
+     
+     // ---- START SETTING PROPERTIES
+     //
+     // 1. get JAVA_HOME - if defined in config, use it, else, check JAVA_HOME, if not there, use the JRE
+     try {
+        var javaHome = mdProps.getProperty(JAVA_HOME_PROP)
+        if(javaHome == null)
+          javaHome = sys.env("JAVA_HOME")
+        else
+          println("JAVA_HOME found in file")
+        derivedParams.setProperty(JAVA_HOME_PROP, javaHome)
+        println(javaHome)
+     } catch {
+       case nsee: java.util.NoSuchElementException => {
+         logger.info("JAVA_HOME is not set... attempting to resolve from system setting")
+         val jreHome = new File(System.getProperty("java.home"))
+         derivedParams.setProperty(JAVA_HOME_PROP, jreHome.toPath + "/bin")
+          println(jreHome.toPath + "/bin")
+         //throw nsee
+       }
+     }
+
+     // 2. get SCALA_HOME... if not set  default to system.
+     try {
+        var scalaHome = mdProps.getProperty(SCALA_HOME_PROP)
+        
+        if(scalaHome == null)
+          scalaHome = sys.env(SCALA_HOME_PROP)
+        else
+          println("JAVA_HOME found in file")
+          
+        scalaHome = sys.env(SCALA_HOME_PROP)
+        derivedParams.setProperty(SCALA_HOME_PROP, scalaHome)
+        println(scalaHome)
+     } catch {
+       case nsee: java.util.NoSuchElementException => {
+         logger.info("SCALA_HOME is not set... attempting to resolve from system setting")
+         //throw nsee
+       }
+     }
+     
+
+     
+     // 3. JAR_PATHS
+     if (mdProps.getProperty(JAR_PATHS_PROP) != null) 
+       derivedParams.setProperty(JAR_PATHS_PROP, mdProps.getProperty(JAR_PATHS_PROP)) 
+     else 
+       derivedParams.setProperty(JAR_PATHS_PROP, jarPathDir)
+       
+     // 4. COMPILER_WORKING_DIR   
+     if (mdProps.getProperty(COMPILER_WORK_DIR_PROP) != null)  
+       derivedParams.setProperty(COMPILER_WORK_DIR_PROP, mdProps.getProperty(COMPILER_WORK_DIR_PROP)) // jarPathDir = mdProps.getProperty(COMPILER_WORK_DIR_PROP)
+     else
+       derivedParams.setProperty(COMPILER_WORK_DIR_PROP, compilerWorkDir)
+       
+     // 5. JAR_TARGET_DIR  
+     if (mdProps.getProperty(JAR_TARGET_DIR_PROP) != null)  
+       derivedParams.setProperty(JAR_TARGET_DIR_PROP, mdProps.getProperty(JAR_TARGET_DIR_PROP)) 
+     else
+       derivedParams.setProperty(JAR_TARGET_DIR_PROP, jarTargetDir)
+       
+     // 6. ZOOKEEPER_CONNECT_STRING        
+     derivedParams.setProperty(ZOOKEEPER_CONNECT_STRING_PROP, opts.zkLocation+":"+opts.zkPort) 
+    
+     // 7 ZNODE_PATH  
+     if (mdProps.getProperty(ZNODE_PATH_PROP) != null) 
+       derivedParams.setProperty(ZNODE_PATH_PROP, mdProps.getProperty(ZNODE_PATH_PROP)) 
+     else
+       derivedParams.setProperty(ZNODE_PATH_PROP, "\\ligadata")  
  
+ 
+     // 7 NOTIFY_ENGINE  
+     if (mdProps.getProperty(NOTIFY_ENGINE_PROP) != null) 
+       derivedParams.setProperty(NOTIFY_ENGINE_PROP, mdProps.getProperty(NOTIFY_ENGINE_PROP)) 
+     else
+       derivedParams.setProperty(NOTIFY_ENGINE_PROP, "YES")       
+       
+     // 8 API_LEADER_SELECTION_ZK_NODE 
+     if (mdProps.getProperty(API_LEADER_SELECTION_ZK_NOD_PROP) != null) 
+       derivedParams.setProperty(API_LEADER_SELECTION_ZK_NOD_PROP, mdProps.getProperty(API_LEADER_SELECTION_ZK_NOD_PROP)) 
+     else
+       derivedParams.setProperty(API_LEADER_SELECTION_ZK_NOD_PROP, "\\ligadata")       
+       
+     // 9. MODEL_EXEC_LOG  
+     if (mdProps.getProperty(MODEL_EXEC_LOG_PROP) != null)       
+       derivedParams.setProperty(MODEL_EXEC_LOG_PROP, mdProps.getProperty(MODEL_EXEC_LOG_PROP)) 
+     else
+       derivedParams.setProperty(MODEL_EXEC_LOG_PROP, "true") 
+       
+     // 10. CLASSPATH  
+     if (mdProps.getProperty(CLASSPATH_PROP) != null)
+       derivedParams.setProperty(CLASSPATH_PROP, mdProps.getProperty(CLASSPATH_PROP)) 
+     else
+       derivedParams.setProperty(CLASSPATH_PROP, classPath) 
+       
+     if (opts.getIPort.toInt > 0) {
+        derivedParams.setProperty(SERVICE_HOST_PROP, "localhost") 
+        derivedParams.setProperty(SERVICE_PORT_PROP, opts.getIPort)    
+     }
+
+     // 11. APPLICATION SPECIFIC DIRECTORIES.. just compy them, we cant assume anything with them
+     if (mdProps.getProperty(MODEL_FILES_DIR_PROP) != null)  derivedParams.setProperty(MODEL_FILES_DIR_PROP, mdProps.getProperty(MODEL_FILES_DIR_PROP)) 
+     if (mdProps.getProperty(TYPE_FILES_DIR_PROP) != null)  derivedParams.setProperty(TYPE_FILES_DIR_PROP, mdProps.getProperty(TYPE_FILES_DIR_PROP)) 
+     if (mdProps.getProperty(FUNCTION_FILES_DIR_PROP) != null)  derivedParams.setProperty(FUNCTION_FILES_DIR_PROP, mdProps.getProperty(FUNCTION_FILES_DIR_PROP)) 
+     if (mdProps.getProperty(CONCEPT_FILES_DIR_PROP) != null)  derivedParams.setProperty(CONCEPT_FILES_DIR_PROP, mdProps.getProperty(CONCEPT_FILES_DIR_PROP)) 
+     if (mdProps.getProperty(MESSAGE_FILES_DIR_PROP) != null)  derivedParams.setProperty(MESSAGE_FILES_DIR_PROP, mdProps.getProperty(MESSAGE_FILES_DIR_PROP)) 
+     if (mdProps.getProperty(OUTPUTMESSAGE_FILES_DIR_PROP) != null)  derivedParams.setProperty(OUTPUTMESSAGE_FILES_DIR_PROP, mdProps.getProperty(OUTPUTMESSAGE_FILES_DIR_PROP)) 
+     if (mdProps.getProperty(CONTAINER_FILES_DIR_PROP) != null)  derivedParams.setProperty(CONTAINER_FILES_DIR_PROP, mdProps.getProperty(CONTAINER_FILES_DIR_PROP)) 
+     if (mdProps.getProperty(CONFIG_FILES_DIR_PROP) != null)  derivedParams.setProperty(CONFIG_FILES_DIR_PROP, mdProps.getProperty(CONFIG_FILES_DIR_PROP)) 
+     
+     // Set the node Id to default to the name fo the node.
+     derivedParams.setProperty(NODE_ID_PROP, opts.getIName) 
+     KShellUtils.savePropFile(derivedParams,"mdConfig_"+opts.getIName+".properties",configDir)
+     // Return..
+     configDir + "/mdConfig_"+opts.getIName+".properties"
+                                 
+  }
+    
+ 
+  /**
+   * Each node WILL have its "HOME" directory.  This directory will have
+   *  a ZOOKEEPER, KAFKA and CONFIG folgers.
+   *  
+   *  ZOOKEEPER will have /DATA and /CONF folders
+   *  KAFKA will have /LOGS and /CONF folders
+   */
   private def createNewNodeStructure: Unit = {
     // Create the Root Node Directory.
-    var topDir: File = new File(iPath)
+    var topDir: File = new File(opts.getIPath)
     var isSuccess = topDir.mkdir
 
     // Create zookeeper dir for this node
-    var zkDir = new File(iPath + "/zookeeper" )
+    var zkDir = new File(opts.getIPath + "/zookeeper" )
     isSuccess = zkDir.mkdir
-    var zkData = new File(iPath + "/zookeeper/data" )
+    var zkData = new File(opts.getIPath + "/zookeeper/data" )
     isSuccess = zkData.mkdir
-    var zkConfig = new File(iPath + "/zookeeper/conf" )
+    var zkConfig = new File(opts.getIPath + "/zookeeper/conf" )
     isSuccess = zkConfig.mkdir
     
     // Create kafka dir for this node
-    var kafkaDir = new File(iPath + "/kafka" )
+    var kafkaDir = new File(opts.getIPath + "/kafka" )
     isSuccess = kafkaDir.mkdir
-    var kData = new File(iPath + "/kafka/logs" )
+    var kData = new File(opts.getIPath + "/kafka/logs" )
     isSuccess = kData.mkdir
-    var kConfig = new File(iPath + "/kafka/conf" )
+    var kConfig = new File(opts.getIPath + "/kafka/conf" )
     isSuccess = kConfig.mkdir 
      
     // Create config dir
-    var configDir = new File(iPath + "/config" )
+    var configDir = new File(opts.getIPath + "/config" )
     isSuccess = configDir.mkdir
   }
   
-  /**
-   *  Scan the next 100 ports
-   */
-  private def getAvailablePort(port: String): Int = {
-    var finalPort = port.toInt
-    var stopSearch = false
-    var socket: java.net.Socket = null
-    
-    // Scan until you find the open port or you run out 100 ports.
-    while (!stopSearch && finalPort < port.toInt + 100) {
-      try {   
-        // A little weird, but if this does not cause an exception,
-        // that means that the port is open, and being used by someone.
-        socket = new java.net.Socket("localhost", finalPort)
-        socket.close
-        finalPort = finalPort + 1 
-      } catch {
-        case e: Exception => {
-          // Port is not opened.. Use it!
-          if (socket != null) socket.close
-          stopSearch = true
-        }
-      }           
-    }
-    if (stopSearch) return finalPort else return -1
-  }
-   
-  /**
-   * save a file to a given directory.  Used to create Zookeepr and Kafka  Configs to
-   * start internal processes.
-   */
-  private def savePropFile(props: java.util.Properties, fname:String, path: String) : Unit = {
-    var cfile: File = new File(path +"/"+fname)
-    var fileOut = new java.io.FileOutputStream(cfile)
-    props.store(fileOut, "Kamanja Generated Configuration file")
-    fileOut.close
-  }
-  
   
   /**
-   * 
+   *  This parses the initial, REQUIRED, input...  NAME, PATH and GLOBAL PORT numbers are mandatory
+   *  and can be provided all at once, or if not provided from the initial CLI, user will be prompted
    */
-  private def parseInput(args: Array[String]): Unit = {
+  private def parseInitialInput(args: Array[String]): Unit = {
     
     // Second element is ALWAYS a NAME if it is provided.
-    if (args.size < 2) iName = getUserInput(args, this.PROMPT_FOR_NAME)  else iName = args(1)
+    if (args.size < 2) tempName = getUserInput(args, this.PROMPT_FOR_NAME)  else tempName = args(1)
  
     // third element is ALWAYS a PATH to installation if it is provided.
-    if (args.size < 3) iPath = getUserInput(args, this.PROMPT_FOR_PATH)  else iPath = args(2)
+    if (args.size < 3) tempPath = getUserInput(args, this.PROMPT_FOR_PATH)  else tempPath = args(2)
     
     // fourth element is ALWAYS a Global Port if it is provided.
-    if (args.size < 4) iPort = getUserInput(args, this.PROMPT_FOR_PORT)  else iPort = args(3)
+    if (args.size < 4) tempPort = getUserInput(args, this.PROMPT_FOR_PORT)  else tempPort = args(3)
     
     // All the rest of the arguments are part of the OPTIONS and need will be processed later.
     if (args.size >= 4)
@@ -242,7 +426,7 @@ object KamanjaShell {
   }
   
   /**
-   * 
+   *  Prompt user for input.
    */
   private def getUserInput(args: Array[String], prompt: String): String = {
     var tval: String = ""
@@ -257,7 +441,7 @@ object KamanjaShell {
    */
   private def getLine(msg: String = ""): String = {
     if (msg.length > 0) println(msg)
-    print("Kamanja Instance: " + iName + ">")
+    print("Kamanja Instance: " + opts.getIName + ">")
     val t = readLine()
     t
   }
@@ -267,9 +451,9 @@ object KamanjaShell {
    */
   private def showInstanceParameters: Unit = {
     println("Kamanja " + {if (isNode) "Node" else "Cluster"} + " is running with the following parameters:")
-    println("Name -> " + iName)
-    println("Path -> " + iPath)
-    println("Port -> " + iPort)
+    println("Name -> " + tempName)
+    println("Path -> " + tempPath)
+    println("Port -> " + tempPort)
     if (iOptions.size > 0)
       println("Options -> "+ iOptions.mkString(" "))
     else 
@@ -280,15 +464,29 @@ object KamanjaShell {
    * Cleanup - stop the Zookeeper, Kafka, Kamanja Runtime, and Kamanja Metadata 
    */
   private def cleanup: Unit = {
-    println("Stopping ZooKeeper")
-    val stopZK =  s"$tmpZKPath/bin/zkServer.sh stop".! 
+    
+    println("Stopping Metadata Process")
+    try {
+      MetadataAPIImpl.shutdown
+      MetadataAPIImpl.CloseZKSession
+    } catch {
+      case e: Exception => e.printStackTrace()
+    }
+    println("...")
+    Thread.sleep(2000)
     
     println("Stoping KAFKA ")
     val cmd2 = Seq("sh","-c","ps ax | grep -i 'kafka\\.Kafka' | grep java | grep -v grep | awk '{print $1}' | xargs kill -SIGKILL")
     val mvCmdRc : Int = Process(cmd2).!
+ 
+    println("...")
+    Thread.sleep(5000)
     
-    if (_exec != null)
-      _exec.shutdown 
+    println("Stopping ZooKeeper")
+    val stopZK =  s"$tmpZKPath/bin/zkServer.sh stop".! 
+    
+   // if (_exec != null)
+   //   _exec.shutdown 
   }
   
 }
