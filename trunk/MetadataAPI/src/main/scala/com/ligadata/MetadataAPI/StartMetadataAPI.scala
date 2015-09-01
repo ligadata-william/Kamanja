@@ -48,18 +48,18 @@ object StartMetadataAPI {
           } else {
             if (arg.equalsIgnoreCase(REMOVE)) {
               expectRemoveParm = true
-            } 
-            
+            }
+
             if (expectRemoveParm) {
               argsUntilParm = argsUntilParm - 1
             }
-              
+
             if (argsUntilParm < 0)
               depName = arg
             else
               action += arg
           }
-        }       
+        }
       })
 
       //add configuration
@@ -95,16 +95,17 @@ object StartMetadataAPI {
         //message management
         case Action.ADDMESSAGE => response = MessageService.addMessage(input)
         case Action.UPDATEMESSAGE => response = MessageService.updateMessage(input)
-        
+
         case Action.REMOVEMESSAGE => {
           if (param.length == 0)
             response = MessageService.removeMessage()
-          else 
+          else
             response = MessageService.removeMessage(param)
         }
-        
-        
+
+
         case Action.GETALLMESSAGES => response = MessageService.getAllMessages
+        case Action.GETMESSAGE => response =MessageService.getMessage
         //output message management
         case Action.ADDOUTPUTMESSAGE => response = MessageService.addOutputMessage(input)
         case Action.UPDATEOUTPUTMESSAGE => response =MessageService.updateOutputMessage(input)
@@ -112,28 +113,28 @@ object StartMetadataAPI {
         case Action.GETALLOUTPUTMESSAGES => response =MessageService.getAllOutputMessages
         //model management
         case Action.ADDMODELPMMML => response = ModelService.addModelPmml(input)
-        
+
         case Action.ADDMODELSCALA => {
           if (param.length == 0)
             response = ModelService.addModelScala(input)
           else
             response = ModelService.addModelScala(input, param)
         }
-        
+
         case Action.ADDMODELJAVA => {
           if (param.length == 0)
             response = ModelService.addModelJava(input)
           else
             response = ModelService.addModelJava(input, param)
         }
-        
+
         case Action.REMOVEMODEL => {
           if (param.length == 0)
             response = ModelService.removeModel()
-          else 
+          else
             response = ModelService.removeModel(param)
         }
-        
+
         case Action.ACTIVATEMODEL => response = ModelService.activateModel
         case Action.DEACTIVATEMODEL => response = ModelService.deactivateModel
         case Action.UPDATEMODEL => response = ModelService.updateModel(input)
@@ -144,7 +145,7 @@ object StartMetadataAPI {
         case Action.UPDATECONTAINER => response = ContainerService.updateContainer(input)
         case Action.GETCONTAINER => response = ContainerService.getContainer
         case Action.GETALLCONTAINERS => response = ContainerService.getAllContainers
-        
+
         case Action.REMOVECONTAINER => {
           if (param.length == 0)
             response = ContainerService.removeContainer()
