@@ -1,8 +1,9 @@
+
+echo "Setting up paths"
 KafkaRootDir=$1
 if [ -d "$KafkaRootDir" ]; then
 	KafkaRootDir=$(echo $KafkaRootDir | sed 's/[\/]*$//')
 fi
-
 jar_full_path=$(which jar)
 if [ "$?" != "0" ]; then
 	jar_full_path=$JAVA_HOME/bin/jar
