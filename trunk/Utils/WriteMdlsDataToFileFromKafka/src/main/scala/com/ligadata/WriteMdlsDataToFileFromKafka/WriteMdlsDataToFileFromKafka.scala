@@ -448,6 +448,7 @@ object WriteMdlsDataToFileFromKafka extends Observer {
   def processMdlResult(msg: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue): Unit = {
     import org.json4s.JsonDSL._
     try {
+/*
       try {
         val k = uniqueKey.asInstanceOf[KafkaPartitionUniqueRecordKey]
         val v = uniqueVal.asInstanceOf[KafkaPartitionUniqueRecordValue]
@@ -465,7 +466,7 @@ object WriteMdlsDataToFileFromKafka extends Observer {
       } catch {
         case e: Exception => {}
       }
-
+*/
       implicit val jsonFormats = org.json4s.DefaultFormats
       val json = org.json4s.jackson.JsonMethods.parse(msg)
       if (json == null) {
