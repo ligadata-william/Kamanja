@@ -1,0 +1,8 @@
+// For CSV output we must need to have Fields
+// WriteHeader & FieldDelimiter are valid only for Delimited data
+// Output formats are only delimited & json for now
+// Input format are only json for now
+// The output same model can be outputted in different formats into different files
+// Same file for multiple outputs are not allowed. Each file need to be used exactly once.
+
+

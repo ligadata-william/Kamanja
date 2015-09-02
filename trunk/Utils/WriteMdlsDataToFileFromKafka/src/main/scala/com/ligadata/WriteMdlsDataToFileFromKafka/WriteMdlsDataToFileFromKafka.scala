@@ -35,7 +35,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
   def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit = {
     if (format.equalsIgnoreCase("json")) {
-      WriteMdlsDataToFileFromKafka.processMdlResult(new String(data))
+      WriteMdlsDataToFileFromKafka.processMdlResult(new String(data), uniqueKey, uniqueVal)
     } // else not handling at this moment
   }
 }
@@ -60,6 +60,7 @@ object WriteMdlsDataToFileFromKafka extends Observer {
     var RecordDelimiter: String = "\n"
     var Compression: String = null
     var FileName: String = null
+    var CanAppend: Boolean = false
   }
 
   class InputKafkaConfig {
@@ -77,6 +78,8 @@ object WriteMdlsDataToFileFromKafka extends Observer {
 
   private val outMdlsInfoMap = scala.collection.mutable.Map[String, ArrayBuffer[OutputMdlsInfo]]() // Model Name & List of different configs for same Model
   private val inputKafkaAdapters = ArrayBuffer[InputAdapter]()
+  private val ProcessedOffsets = scala.collection.mutable.Map[String, scala.collection.mutable.Map[Int, Long]]()
+  private val NameToKafkaAdapterInfo = scala.collection.mutable.Map[String, InputKafkaConfig]()
 
   private val LOG = Logger.getLogger(getClass);
 
@@ -115,7 +118,7 @@ object WriteMdlsDataToFileFromKafka extends Observer {
     val cfgs = kafkaCfgList.map(kafkaCfg => {
       val cfg = new InputKafkaConfig
 
-      val tmpmap = cfg.asInstanceOf[Map[String, Any]]
+      val tmpmap = kafkaCfg.asInstanceOf[Map[String, Any]]
 
       // Convert all keys to lower case to access the value by name
       val map = tmpmap.map { case (k, v) => (k.toLowerCase, v) }
@@ -160,7 +163,7 @@ object WriteMdlsDataToFileFromKafka extends Observer {
     val cfgs = mdlsCfgList.map(mdlCfg => {
       val cfg = new OutputModelConfig
 
-      val tmpmap = cfg.asInstanceOf[Map[String, Any]]
+      val tmpmap = mdlCfg.asInstanceOf[Map[String, Any]]
 
       // Convert all keys to lower case to access the value by name
       val map = tmpmap.map { case (k, v) => (k.toLowerCase, v) }
@@ -172,6 +175,7 @@ object WriteMdlsDataToFileFromKafka extends Observer {
       cfg.RecordDelimiter = map.getOrElse("recorddelimiter", "\n").toString
       cfg.Compression = map.getOrElse("compression", "").toString.trim.toLowerCase
       cfg.FileName = map.getOrElse("filename", "").toString.trim
+      cfg.CanAppend = map.getOrElse("append", "false").toString.trim.toBoolean
       val flds = map.getOrElse("fields", null)
       if (flds != null) {
         val fields = if (flds.isInstanceOf[List[Any]]) flds.asInstanceOf[List[String]].toArray else if (flds.isInstanceOf[Array[Any]]) flds.asInstanceOf[Array[String]] else Array[String]()
@@ -224,6 +228,8 @@ object WriteMdlsDataToFileFromKafka extends Observer {
       throw new Exception(msg)
     }
 
+    var files = scala.collection.mutable.TreeSet[String]()
+
     outputConfig.foreach(oc => {
       if (oc.ModelName == null || oc.ModelName.size == 0) {
         val msg = "%s:Not found ModelName for some of the Output configurations".format(Utils.GetCurDtTmStr)
@@ -242,6 +248,14 @@ object WriteMdlsDataToFileFromKafka extends Observer {
         LOG.error(msg)
         throw new Exception(msg)
       }
+
+      if (files(oc.FileName)) {
+        val msg = "%s:Output FileName:%s is used more than once".format(Utils.GetCurDtTmStr, oc.FileName)
+        LOG.error(msg)
+        throw new Exception(msg)
+      }
+
+      files += oc.FileName
 
       if (oc.Compression != null && oc.Compression.size > 0 && oc.Compression.compareToIgnoreCase("gz") != 0) {
         val msg = "%s:Not handling Compression other than gz. Ignore this value for non compression file".format(Utils.GetCurDtTmStr)
@@ -280,9 +294,9 @@ object WriteMdlsDataToFileFromKafka extends Observer {
       outInfo.cfg = oc
       try {
         if (oc.Compression == null || oc.Compression.size == 0) {
-          outInfo.os = new FileOutputStream(oc.FileName);
+          outInfo.os = new FileOutputStream(oc.FileName, oc.CanAppend);
         } else if (oc.Compression.compareToIgnoreCase("gz") == 0) {
-          outInfo.os = new GZIPOutputStream(new FileOutputStream(oc.FileName))
+          outInfo.os = new GZIPOutputStream(new FileOutputStream(oc.FileName, oc.CanAppend))
         }
       } catch {
         case e: Exception => {
@@ -331,7 +345,9 @@ object WriteMdlsDataToFileFromKafka extends Observer {
           writtenBefore = true
         })
         sb.append(oi.cfg.RecordDelimiter)
-        oi.os.write(sb.toString.getBytes("UTF8"))
+        oi.cfg.synchronized {
+          oi.os.write(sb.toString.getBytes("UTF8"))
+        }
       }
 
       mdlInfo += oi
@@ -376,6 +392,8 @@ object WriteMdlsDataToFileFromKafka extends Observer {
         val t_adapter = KafkaSimpleConsumer.CreateInputAdapter(conf, null, ExecContextObjImpl, SimpleStats)
         val t_adapterMeta: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = t_adapter.getAllPartitionBeginValues
 
+        val topicVals = scala.collection.mutable.Map[Int, Long]()
+
         //  Initialize and start the adapter that is going to read the output queues here.
         val inputMeta = t_adapterMeta.map(partMeta => {
           val info = new StartProcPartInfo
@@ -383,8 +401,14 @@ object WriteMdlsDataToFileFromKafka extends Observer {
           val off = getOffset(ic.PartitionStartOffsets, partMeta._1, partMeta._2)
           info._val = off
           info._validateInfoVal = off
+          val k = info._key.asInstanceOf[KafkaPartitionUniqueRecordKey]
+          val v = info._val.asInstanceOf[KafkaPartitionUniqueRecordValue]
+          topicVals(k.PartitionId) = v.Offset;
           info
         }).toArray
+        ProcessedOffsets(conf.Name) = topicVals
+        NameToKafkaAdapterInfo(conf.Name) = ic
+
         t_adapter.StartProcessing(inputMeta, false)
         inputKafkaAdapters += t_adapter
       }
@@ -392,19 +416,23 @@ object WriteMdlsDataToFileFromKafka extends Observer {
   }
 
   private def Shutdown: Unit = {
-    inputKafkaAdapters.foreach(ia => {
-      ia.Shutdown
-    })
-    inputKafkaAdapters.clear
-    val map = outMdlsInfoMap.toMap
-    outMdlsInfoMap.clear
-    map.foreach(f => {
-      f._2.foreach(mdl => {
-        if (mdl.os != null) {
-          mdl.os.close
-        }
+    try {
+      inputKafkaAdapters.foreach(ia => {
+        ia.Shutdown
       })
-    })
+      inputKafkaAdapters.clear
+      val map = outMdlsInfoMap.toMap
+      outMdlsInfoMap.clear
+      map.foreach(f => {
+        f._2.foreach(mdl => {
+          if (mdl.os != null) {
+            mdl.os.close
+          }
+        })
+      })
+    } catch {
+      case e: Exception => {}
+    }
   }
 
   def update(o: Observable, arg: AnyRef): Unit = {
@@ -417,9 +445,27 @@ object WriteMdlsDataToFileFromKafka extends Observer {
     }
   }
 
-  def processMdlResult(msg: String): Unit = {
+  def processMdlResult(msg: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue): Unit = {
     import org.json4s.JsonDSL._
     try {
+      try {
+        val k = uniqueKey.asInstanceOf[KafkaPartitionUniqueRecordKey]
+        val v = uniqueVal.asInstanceOf[KafkaPartitionUniqueRecordValue]
+        val tmpPartOffMap = ProcessedOffsets.getOrElse(k.Name, null)
+        val partOffMap =
+          if (tmpPartOffMap != null)
+            tmpPartOffMap
+          else
+            scala.collection.mutable.Map[Int, Long]()
+
+        ProcessedOffsets.synchronized {
+          partOffMap(k.PartitionId) = v.Offset
+          ProcessedOffsets(k.Name) = partOffMap
+        }
+      } catch {
+        case e: Exception => {}
+      }
+
       implicit val jsonFormats = org.json4s.DefaultFormats
       val json = org.json4s.jackson.JsonMethods.parse(msg)
       if (json == null) {
@@ -443,8 +489,9 @@ object WriteMdlsDataToFileFromKafka extends Observer {
               val outarr = if (output.isInstanceOf[List[Any]]) output.asInstanceOf[List[Any]].toArray else if (output.isInstanceOf[Array[Any]]) output.asInstanceOf[Array[Any]] else Array[Any]()
               val outmap = outarr.map(a => {
                 val amap = a.asInstanceOf[Map[String, Any]]
-                (amap.getOrElse("Name", "").toString, amap.getOrElse("Value", "").toString)
+                (amap.getOrElse("Name", "").toString.toLowerCase, amap.getOrElse("Value", "").toString)
               }).toMap
+
               mdlInfo.foreach(oi => {
                 sb.setLength(0)
                 if (oi.cfg.Format.compareToIgnoreCase("delimited") == 0) {
@@ -452,7 +499,8 @@ object WriteMdlsDataToFileFromKafka extends Observer {
                   oi.cfg.Fields.foreach(f => {
                     if (writtenBefore)
                       sb.append(oi.cfg.FieldDelimiter)
-                    sb.append(outmap.getOrElse(f, ""))
+                    val v = outmap.getOrElse(f, "")
+                    sb.append(v)
                     writtenBefore = true
                   })
                   sb.append(oi.cfg.RecordDelimiter)
@@ -475,8 +523,11 @@ object WriteMdlsDataToFileFromKafka extends Observer {
                     sb.append(oi.cfg.RecordDelimiter)
                   }
                 }
-                if (sb.length > 0)
-                  oi.os.write(sb.toString.getBytes("UTF8"))
+                if (sb.length > 0) {
+                  oi.cfg.synchronized {
+                    oi.os.write(sb.toString.getBytes("UTF8"))
+                  }
+                }
               })
             }
           }
@@ -497,7 +548,6 @@ object WriteMdlsDataToFileFromKafka extends Observer {
       System.exit(1)
     }
 
-    LOG.debug("%s:Parsing options".format(Utils.GetCurDtTmStr))
     val options = nextOption(Map(), args.toList)
     val cfgfile = options.getOrElse('config, "").toString.trim
     if (cfgfile.size == 0) {
@@ -567,12 +617,13 @@ object WriteMdlsDataToFileFromKafka extends Observer {
           LOG.error("Failed to add signal handler.\nStacktrace:" + StackTrace.ThrowableTraceString(e))
         }
       }
-
+      /*
       scala.sys.addShutdownHook({
         LOG.warn("Got Shutdown request")
         Shutdown
         sys.exit(0)
       })
+*/
 
       StartProcessingInput(inputConfig)
       println("Tool  is running now. Waiting for user to terminate with SIGTERM, SIGINT/Ctrl+C or SIGABRT signals")
