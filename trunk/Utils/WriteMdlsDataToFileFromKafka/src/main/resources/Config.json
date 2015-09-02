@@ -1,0 +1,63 @@
+{
+  "Input": [
+    {
+      "HostList": "localhost:9092",
+      "Topic": "testout_1",
+      "Format": "json",
+      "PartitionStartOffsets": [
+        {
+          "Partition": "1",
+          "Offset": "-1"
+        },
+        {
+          "Partition": "5",
+          "Offset": "-1"
+        }
+      ]
+    }
+  ],
+  "Output": [
+    {
+      "ModelName": "model1",
+      "Format": "delimited",
+      "Fields": [
+        "c1",
+        "c2",
+        "c10",
+        "c5"
+      ],
+      "WriteHeader": "true",
+      "FieldDelimiter": "\u0001",
+      "RecordDelimiter": "\n",
+      "Compression": "gz",
+      "FileName": "/tmp/model1.dat.gz"
+    },
+    {
+      "ModelName": "model2",
+      "Format": "delimited",
+      "Fields": [
+        "c1",
+        "c2",
+        "c3"
+      ],
+      "WriteHeader": "true",
+      "FieldDelimiter": "\u0001",
+      "RecordDelimiter": "\n",
+      "Compression": "gz",
+      "FileName": "/tmp/model2_1.dat.gz"
+    },
+    {
+      "ModelName": "model2",
+      "Format": "json",
+      "Fields": [
+        "c1",
+        "c5",
+        "c10"
+      ],
+      "RecordDelimiter": "\n",
+      "Compression": "gz",
+      "FileName": "/tmp/model2_2.dat.gz"
+    }
+  ]
+}
+
