@@ -103,7 +103,6 @@ object StartMetadataAPI {
             response = MessageService.removeMessage(param)
         }
 
-
         case Action.GETALLMESSAGES => response = MessageService.getAllMessages
         case Action.GETMESSAGE => response =MessageService.getMessage
         //output message management
@@ -111,6 +110,7 @@ object StartMetadataAPI {
         case Action.UPDATEOUTPUTMESSAGE => response =MessageService.updateOutputMessage(input)
         case Action.REMOVEOUTPUTMESSAGE => response =MessageService.removeOutputMessage
         case Action.GETALLOUTPUTMESSAGES => response =MessageService.getAllOutputMessages
+        case Action.GETOUTPUTMESSAGE => response =MessageService.getOutputMessage
         //model management
         case Action.ADDMODELPMMML => response = ModelService.addModelPmml(input)
 
