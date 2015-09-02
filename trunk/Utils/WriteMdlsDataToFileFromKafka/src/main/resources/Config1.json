@@ -1,0 +1,70 @@
+{
+  "Input": [
+    {
+      "HostList": "localhost:9092",
+      "Topic": "testin_1",
+      "Format": "json"
+    }
+  ],
+  "Output": [
+    {
+      "ModelName": "COPSPreProcessing",
+      "Format": "delimited",
+      "Fields": [
+         "EMP_NTWK_LGON_ID",
+         "CALENDAR_DT",
+        "DATA_SRC_TYP",
+        "EV_DT_TM_ACCESSED",
+        "IP_ADDR_NO",
+        "QRY_ID",
+        "SESSN_ID"
+      ],
+      "WriteHeader": "true",
+      "FieldDelimiter": ",",
+      "RecordDelimiter": "\n",
+      "FileName": "/mnt/VmShareDisk/1/bofa_20150901/tests/COPSPreProcessing.txt"
+    },
+    {
+      "ModelName": "COPSPreProcessing",
+      "Format": "delimited",
+      "Fields": [
+         "EMP_NTWK_LGON_ID",
+         "CALENDAR_DT",
+        "DATA_SRC_TYP",
+        "EV_DT_TM_ACCESSED"
+      ],
+      "Compression": "gz",
+      "FieldDelimiter": "~",
+      "RecordDelimiter": "\n",
+      "FileName": "/mnt/VmShareDisk/1/bofa_20150901/tests/COPSPreProcessing_1.txt.gz"
+    },
+    {
+      "ModelName": "COPSPreProcessing123",
+      "Format": "delimited",
+      "Fields": [
+         "EMP_NTWK_LGON_ID",
+         "CALENDAR_DT",
+        "DATA_SRC_TYP",
+        "EV_DT_TM_ACCESSED"
+      ],
+      "Append": "true",
+      "FieldDelimiter": "~~~",
+      "RecordDelimiter": "\n",
+      "FileName": "/mnt/VmShareDisk/1/bofa_20150901/tests/COPSPreProcessing123.txt"
+    },
+    {
+      "ModelName": "COPSPreProcessingAbc",
+      "Format": "delimited",
+      "Fields": [
+         "EMP_NTWK_LGON_ID",
+         "CALENDAR_DT",
+        "DATA_SRC_TYP",
+        "EV_DT_TM_ACCESSED"
+      ],
+      "FieldDelimiter": "~~~",
+      "RecordDelimiter": "\n",
+      "FileName": "/mnt/VmShareDisk/1/bofa_20150901/tests/COPSPreProcessingAbc.txt"
+    }
+  ]
+}
+
