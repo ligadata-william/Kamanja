@@ -34,7 +34,7 @@ object StartMetadataAPI {
     try {
       var argsUntilParm = 2
       args.foreach( arg => {
-         if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java")) {
+         if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java") || arg.endsWith(".jar")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
           config = arg
