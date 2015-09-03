@@ -191,6 +191,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     }
   }
 
+  createNamespace(keyspace)
   createTable(table)
 
   private def relogin: Unit = {
@@ -204,6 +205,29 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       }
     }
   }
+
+  def createNamespace(nameSpace: String): Unit = {
+    relogin
+    val admin = new HBaseAdmin(config);
+    try{
+      val nsd = admin.getNamespaceDescriptor(nameSpace)
+      return
+    } catch{
+      case e: Exception => {
+	logger.info("Namespace " + nameSpace + " doesn't exist, create it")
+      }
+    }
+    try{
+      admin.createNamespace(NamespaceDescriptor.create(nameSpace).build)
+    } catch{
+      case e: Exception => {
+      val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.debug("StackTrace:"+stackTrace)
+      throw new ConnectionFailedException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage())
+      }
+    }
+  }
+
 
   private def createTable(tableName: String): Unit = {
     relogin
