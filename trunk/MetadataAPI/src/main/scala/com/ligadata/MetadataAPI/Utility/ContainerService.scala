@@ -103,8 +103,16 @@ object ContainerService {
     response
   }
 
-  def getContainer: String ={
+  def getContainer(param: String = ""): String ={
     var response=""
+    if (param.length > 0) {
+      val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+      try {
+        return MetadataAPIImpl.GetContainerDefFromCache(ns, name,"JSON", ver, userid)
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
+    }
     val containerKeys = MetadataAPIImpl.GetAllContainersFromCache(true, None)
 
     if (containerKeys.length == 0) {
