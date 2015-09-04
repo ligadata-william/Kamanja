@@ -60,7 +60,7 @@ object ModelService {
     response
   }
 
-  def updateModel(input: String): String = {
+  def updateModelpmml(input: String): String = {
     var modelDef=""
     var response: String = ""
     var modelFileDir: String = ""
@@ -75,6 +75,95 @@ object ModelService {
           case true => {
             //get all files with json extension
             val models: Array[File] = new java.io.File(modelFileDir).listFiles.filter(_.getName.endsWith(".xml"))
+            models.length match {
+              case 0 => {
+                val errorMsg = "Models not found at " + modelFileDir
+                println(errorMsg)
+                response = errorMsg
+              }
+              case option => {
+                var  modelDefs=getUserInputFromMainMenu(models)
+                for (modelDef <- modelDefs)
+                  response = MetadataAPIImpl.UpdateModel(modelDef.toString, userid)
+              }
+            }
+          }
+          case false => {
+            //println("Message directory is invalid.")
+            response = "Model directory is invalid."
+          }
+        }
+      }
+    } else {
+      //   println("Path provided. Added msg")
+      //process message
+      var model = new File(input.toString)
+      modelDef= Source.fromFile(model).mkString
+      response = MetadataAPIImpl.UpdateModel(modelDef, userid)
+      //println("Response: " + response)
+    }
+    response
+  }
+
+  def updateModelscala(input: String): String = {
+    var modelDef=""
+    var response: String = ""
+    var modelFileDir: String = ""
+    if (input == "") {
+      //get the messages location from the config file. If error get the location from github
+      modelFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
+      if (modelFileDir == null) {
+        response = "MODEL_FILES_DIR property missing in the metadata API configuration"
+      } else {
+        //verify the directory where messages can be present
+        IsValidDir(modelFileDir) match {
+          case true => {
+            //get all files with json extension
+            val models: Array[File] = new java.io.File(modelFileDir).listFiles.filter(_.getName.endsWith(".scala"))
+            models.length match {
+              case 0 => {
+                val errorMsg = "Models not found at " + modelFileDir
+                println(errorMsg)
+                response = errorMsg
+              }
+              case option => {
+                var  modelDefs=getUserInputFromMainMenu(models)
+                for (modelDef <- modelDefs)
+                  response = MetadataAPIImpl.UpdateModel(modelDef.toString, userid)
+              }
+            }
+          }
+          case false => {
+            //println("Message directory is invalid.")
+            response = "Model directory is invalid."
+          }
+        }
+      }
+    } else {
+      //   println("Path provided. Added msg")
+      //process message
+      var model = new File(input.toString)
+      modelDef= Source.fromFile(model).mkString
+      response = MetadataAPIImpl.UpdateModel(modelDef, userid)
+      //println("Response: " + response)
+    }
+    response
+  }
+  def updateModeljava(input: String): String = {
+    var modelDef=""
+    var response: String = ""
+    var modelFileDir: String = ""
+    if (input == "") {
+      //get the messages location from the config file. If error get the location from github
+      modelFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
+      if (modelFileDir == null) {
+        response = "MODEL_FILES_DIR property missing in the metadata API configuration"
+      } else {
+        //verify the directory where messages can be present
+        IsValidDir(modelFileDir) match {
+          case true => {
+            //get all files with json extension
+            val models: Array[File] = new java.io.File(modelFileDir).listFiles.filter(_.getName.endsWith(".java"))
             models.length match {
               case 0 => {
                 val errorMsg = "Models not found at " + modelFileDir

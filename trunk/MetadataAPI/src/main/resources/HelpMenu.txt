@@ -12,7 +12,9 @@ kamanja add model scala input(optional)
 kamanja get model
 kamanja get all models
 kamanja remove model input(optional)
-kamanja update model input(optional)
+kamanja update model pmml input(optional)
+kamanja update model scala input(optional)
+kamanja update model java input(optional)
 kamanja deactivate model
 kamanja activate model
 III. Container operations
