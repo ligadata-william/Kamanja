@@ -137,7 +137,9 @@ object StartMetadataAPI {
 
         case Action.ACTIVATEMODEL => response = ModelService.activateModel
         case Action.DEACTIVATEMODEL => response = ModelService.deactivateModel
-        case Action.UPDATEMODEL => response = ModelService.updateModel(input)
+        case Action.UPDATEMODELPMML => response = ModelService.updateModelpmml(input)
+        case Action.UPDATEMODELSCALA => response = ModelService.updateModelscala(input)
+        case Action.UPDATEMODELJAVA => response = ModelService.updateModeljava(input)
         case Action.GETALLMODELS => response = ModelService.getAllModels
         case Action.GETMODEL => response = ModelService.getModel
         //container management

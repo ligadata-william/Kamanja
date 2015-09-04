@@ -27,7 +27,9 @@ object Action extends Enumeration {
   val REMOVEMODEL=Value("removemodel")
   val ACTIVATEMODEL=Value("activatemodel")
   val DEACTIVATEMODEL=Value("deactivatemodel")
-  val UPDATEMODEL=Value("updatemodel")
+  val UPDATEMODELPMML=Value("updatemodelpmml")
+  val UPDATEMODELSCALA=Value("updatemodelscala")
+  val UPDATEMODELJAVA=Value("updatemodeljava")
   val GETALLMODELS=Value("getallmodels")
   val GETMODEL=Value("getmodel")
   //container management
