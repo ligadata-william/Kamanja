@@ -219,23 +219,19 @@ object ModelService {
         }
         println("Enter your choice: ")
         val choice: Int = readInt()
-
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
           response=errormsg
         }
         val modelKey = modelKeys(choice - 1)
-        val modelKeyTokens = modelKey.split("\\.")
-        val modelNameSpace = modelKeyTokens(0)
-        val modelName = modelKeyTokens(1)
-        val modelVersion = modelKeyTokens(2)
-        val apiResult = MetadataAPIImpl.GetModelDefFromCache(modelNameSpace, modelName,"JSON",modelVersion, userid).toString
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modelKey)
+        val apiResult = MetadataAPIImpl.GetModelDefFromCache(ns, name,"JSON",ver, userid)
         response=apiResult
       }
 
     } catch {
       case e: Exception => {
-        response=e.getStackTrace.toString
+        response=e.getStackTraceString
       }
     }
     response
