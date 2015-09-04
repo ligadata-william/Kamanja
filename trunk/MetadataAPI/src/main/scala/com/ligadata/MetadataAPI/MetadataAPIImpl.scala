@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package com.ligadata.MetadataAPI
 
 import java.util.Properties
@@ -108,10 +109,10 @@ object MetadataAPIImpl extends MetadataAPI {
     "ZNODE_PATH", "ZOOKEEPER_CONNECT_STRING", "COMPILER_WORK_DIR", "SERVICE_PORT", "MODEL_FILES_DIR", "TYPE_FILES_DIR", "FUNCTION_FILES_DIR",
     "CONCEPT_FILES_DIR", "MESSAGE_FILES_DIR", "CONTAINER_FILES_DIR", "CONFIG_FILES_DIR", "MODEL_EXEC_LOG", "NODE_ID", "SSL_CERTIFICATE", "SSL_PASSWD", "DO_AUTH", "SECURITY_IMPL_CLASS",
     "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS", "AUDIT_IMPL_JAR", "DO_AUDIT", "AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG", "METADATA_DATASTORE")
-    
+
   // This is used to exclude all non-engine related configs from Uplodad Config method 
-  private val excludeList: Set[String] = Set[String]("ClusterId","StatusInfo","Nodes","Config","Adapters","DataStore","ZooKeeperInfo","EnvironmentContext") 
-  
+  private val excludeList: Set[String] = Set[String]("ClusterId","StatusInfo","Nodes","Config","Adapters","DataStore","ZooKeeperInfo","EnvironmentContext")
+
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -132,7 +133,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-  
+
   /**
    *  getHealthCheck - will return all the health-check information for the nodeId specified. 
    *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
@@ -142,7 +143,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
     apiResult.toString
   }
-  
+
   /**
    * clockNewActivity - update Metadata health info, showing its still alive.
    */
@@ -542,8 +543,8 @@ object MetadataAPIImpl extends MetadataAPI {
   private var configStore: DataStore = _
   private var outputmsgStore: DataStore = _
   private var modelConfigStore: DataStore = _
-  
-   def oStore = otherStore
+
+  def oStore = otherStore
 
   def GetFunctionStore: DataStore = functionStore
   def GetJarStore: DataStore = jarStore
@@ -568,10 +569,10 @@ object MetadataAPIImpl extends MetadataAPI {
 
         def Value = value
         def Construct(k: Key, v: Value) =
-          {
-            key = k;
-            value = v;
-          }
+        {
+          key = k;
+          value = v;
+        }
       }
 
       var k = key
@@ -642,18 +643,18 @@ object MetadataAPIImpl extends MetadataAPI {
     })
 
     /*
-    try {
-      store.putBatch(storeObjects)
-      store.commitTx(t)
-    } catch {
-      case e: Exception => {
-      
-        logger.error("Failed to insert/update object for : " + keyList.mkString(",") + ". Exception Message:" + e.getMessage + ". Reason:" + e.getCause)
-        store.endTx(t)
-        throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
+      try {
+        store.putBatch(storeObjects)
+        store.commitTx(t)
+      } catch {
+        case e: Exception => {
+        
+          logger.error("Failed to insert/update object for : " + keyList.mkString(",") + ". Exception Message:" + e.getMessage + ". Reason:" + e.getCause)
+          store.endTx(t)
+          throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
+        }
       }
-    }
-*/
+  */
 
   }
 
@@ -800,11 +801,11 @@ object MetadataAPIImpl extends MetadataAPI {
       }
 
       /*
-      val store = tableStoreMap(tableList(0))
-      val t = store.beginTx
-      store.putBatch(storeObjects)
-      store.commitTx(t)
-*/
+        val store = tableStoreMap(tableList(0))
+        val t = store.beginTx
+        store.putBatch(storeObjects)
+        store.commitTx(t)
+  */
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update object for : " + keyList.mkString(","))
@@ -850,8 +851,8 @@ object MetadataAPIImpl extends MetadataAPI {
         max = scala.math.max(max, obj.TranId)
       })
       if (currentTranLevel < max) currentTranLevel = max
-      
-     
+
+
 
       if (notifyEngine != "YES") {
         logger.warn("Not Notifying the engine about this operation because The property NOTIFY_ENGINE is not set to YES")
@@ -1452,7 +1453,7 @@ object MetadataAPIImpl extends MetadataAPI {
             case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
               logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "). Message:" + e.getMessage + " Reason:" + e.getCause)
-              
+
             }
           }
         })
@@ -1461,7 +1462,7 @@ object MetadataAPIImpl extends MetadataAPI {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "). Message:" + e.getMessage + " Reason:" + e.getCause)
-        
+
       }
     }
   }
@@ -1555,7 +1556,7 @@ object MetadataAPIImpl extends MetadataAPI {
     // Update the current transaction level with this object  ???? What if an exception occurs ????
     if (currentTranLevel < tid) currentTranLevel = tid
     try {
-       mdMgr.AddModelConfig(key, mdlConfig)        
+      mdMgr.AddModelConfig(key, mdlConfig)
     } catch {//Map[String, List[String]]
       case e: AlreadyExistsException => {
         logger.error("Failed to Cache the config object(" + key +  "): " + e.getMessage())
@@ -1565,7 +1566,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-  
+
   def AddObjectToCache(o: Object, mdMgr: MdMgr) {
     // If the object's Delete flag is set, this is a noop.
     val obj = o.asInstanceOf[BaseElemDef]
@@ -1787,7 +1788,7 @@ object MetadataAPIImpl extends MetadataAPI {
       jarStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "jar_store")
       transStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "transaction_id")
       modelConfigStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "model_config_objects")
-    
+
       modelStore = metadataStore
       messageStore = metadataStore
       containerStore = metadataStore
@@ -1882,7 +1883,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       logger.debug("Truncating Audit datastore")
       if(auditObj != null ){
-	auditObj.TruncateStore
+        auditObj.TruncateStore
       }
     } catch {
       case e: Exception => {
@@ -2463,9 +2464,9 @@ object MetadataAPIImpl extends MetadataAPI {
           if (typeDef != None) {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
-          
-          objectsToBeRemoved.foreach(typ => {  
-            typ.tranId = newTranId         
+
+          objectsToBeRemoved.foreach(typ => {
+            typ.tranId = newTranId
             RemoveType(typ.nameSpace, typ.name, typ.ver, None)
           })
 
@@ -2827,7 +2828,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-  
+
   def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
     try {
       var compProxy = new CompilerProxy
@@ -2836,31 +2837,31 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.info("Begin uploading dependent Jars, please wait.")
       UploadJarsToDB(modDef)
       logger.info("Finished uploading dependent Jars.")
-      val apiResult = AddModel(modDef)  
+      val apiResult = AddModel(modDef)
 
       // Add all the objects and NOTIFY the world
       var objectsAdded = new Array[BaseElemDef](0)
       objectsAdded = objectsAdded :+ modDef
       val operations = for (op <- objectsAdded) yield "Add"
       logger.debug("Notify engine via zookeeper")
-      NotifyEngine(objectsAdded, operations)  
+      NotifyEngine(objectsAdded, operations)
       apiResult
     } catch {
       case e: AlreadyExistsException => {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required)
-        apiResult.toString() 
+        apiResult.toString()
       }
       case e: MsgCompilationFailedException => {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Model_Compilation_Failed)
-        apiResult.toString()        
+        apiResult.toString()
       }
       case e: Exception => {
         logger.error("Unknown compilation error occured: "+ Throwables.getStackTraceAsString(e))
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
-      }   
+      }
     }
-  }    
+  }
 
   // Add Model (format XML)
   def AddModel(pmmlText: String, userid: Option[String]): String = {
@@ -2993,19 +2994,19 @@ object MetadataAPIImpl extends MetadataAPI {
       if (isValid && modDef != null) {
         logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, sourceCode, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
         val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
-	if( latestVersion != None ){
+        if( latestVersion != None ){
           RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
-	}
-	logger.info("Begin uploading dependent Jars, please wait.")
+        }
+        logger.info("Begin uploading dependent Jars, please wait.")
         UploadJarsToDB(modDef)
-	logger.info("Finished uploading dependent Jars.")
+        logger.info("Finished uploading dependent Jars.")
         val apiResult = AddModel(modDef)
         var objectsUpdated = new Array[BaseElemDef](0)
         var operations = new Array[String](0)
-	if( latestVersion != None ){
+        if( latestVersion != None ){
           objectsUpdated = objectsUpdated :+ latestVersion.get
           operations = operations :+ "Remove"
-	}
+        }
         objectsUpdated = objectsUpdated :+ modDef
         operations = operations :+ "Add"
         NotifyEngine(objectsUpdated, operations)
@@ -3051,20 +3052,20 @@ object MetadataAPIImpl extends MetadataAPI {
       if (isValid && modDef != null) {
         logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, pmmlText, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
         val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
-	
-	// when a version number changes, latestVersion  has different namespace making it unique
-	// latest version may not be found in the cache. So need to remove it
-	if( latestVersion != None ){
+
+        // when a version number changes, latestVersion  has different namespace making it unique
+        // latest version may not be found in the cache. So need to remove it
+        if( latestVersion != None ){
           RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
-	}
+        }
         UploadJarsToDB(modDef)
         val result = AddModel(modDef)
         var objectsUpdated = new Array[BaseElemDef](0)
         var operations = new Array[String](0)
-	if( latestVersion != None ){
+        if( latestVersion != None ){
           objectsUpdated = objectsUpdated :+ latestVersion.get
           operations = operations :+ "Remove"
-	}
+        }
         objectsUpdated = objectsUpdated :+ modDef
         operations = operations :+ "Add"
         NotifyEngine(objectsUpdated, operations)
@@ -3158,15 +3159,15 @@ object MetadataAPIImpl extends MetadataAPI {
               //Output vars don't determine dependant models at this time, comment out the following code
               // which is causing the Issue 355...
               /*
-              mod.outputVars.foreach(ovar => {
-                val baseTyp = getBaseType(ovar.asInstanceOf[AttributeDef].typeDef)
-                if (baseTyp.FullName.toLowerCase == msgObjName) {
-                  logger.debug("The model " + mod.FullName + "." + MdMgr.Pad0s2Version(mod.Version) + " is a dependent on the message " + msgObj)
-                  depModels = depModels :+ mod
-                  break
-                }
-              })
-	      */
+                mod.outputVars.foreach(ovar => {
+                  val baseTyp = getBaseType(ovar.asInstanceOf[AttributeDef].typeDef)
+                  if (baseTyp.FullName.toLowerCase == msgObjName) {
+                    logger.debug("The model " + mod.FullName + "." + MdMgr.Pad0s2Version(mod.Version) + " is a dependent on the message " + msgObj)
+                    depModels = depModels :+ mod
+                    break
+                  }
+                })
+  	      */
             }
           })
       }
@@ -3556,7 +3557,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var key = modDef.nameSpace + "." + modDef.name + "." + modDef.ver
       val dispkey = modDef.nameSpace + "." + modDef.name + "." + MdMgr.Pad0s2Version(modDef.ver)
       val o = MdMgr.GetMdMgr.Models(modDef.nameSpace.toLowerCase,
-				    modDef.name.toLowerCase,false,true)
+        modDef.name.toLowerCase,false,true)
       o match {
         case None =>
           None
@@ -3809,54 +3810,54 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       var keys = scala.collection.mutable.Set[String]()
       typeStore.getAllKeys({ (key: Key) =>
-        {
-          val strKey = KeyAsStr(key)
-           val i = strKey.indexOf(".")
-          val objType = strKey.substring(0, i)
-          val typeName = strKey.substring(i + 1)
-          objectType match {
-            case "TypeDef" => {
-              if (IsTypeObject(objType)) {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.TYPE, AuditConstants.SUCCESS, "", AuditConstants.TYPE)
+      {
+        val strKey = KeyAsStr(key)
+        val i = strKey.indexOf(".")
+        val objType = strKey.substring(0, i)
+        val typeName = strKey.substring(i + 1)
+        objectType match {
+          case "TypeDef" => {
+            if (IsTypeObject(objType)) {
+              keys.add(typeName)
             }
-            case "FunctionDef" => {
-              if (objType == "functiondef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.TYPE, AuditConstants.SUCCESS, "", AuditConstants.TYPE)
+          }
+          case "FunctionDef" => {
+            if (objType == "functiondef") {
+              keys.add(typeName)
             }
-            case "MessageDef" => {
-              if (objType == "messagedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
+          }
+          case "MessageDef" => {
+            if (objType == "messagedef") {
+              keys.add(typeName)
             }
-            case "ContainerDef" => {
-              if (objType == "containerdef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
+          }
+          case "ContainerDef" => {
+            if (objType == "containerdef") {
+              keys.add(typeName)
             }
-            case "Concept" => {
-              if (objType == "attributedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONCEPT, AuditConstants.SUCCESS, "", AuditConstants.CONCEPT)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
+          }
+          case "Concept" => {
+            if (objType == "attributedef") {
+              keys.add(typeName)
             }
-            case "ModelDef" => {
-              if (objType == "modeldef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONCEPT, AuditConstants.SUCCESS, "", AuditConstants.CONCEPT)
+          }
+          case "ModelDef" => {
+            if (objType == "modeldef") {
+              keys.add(typeName)
             }
-            case _ => {
-              logger.error("Unknown object type " + objectType + " in GetAllKeys function")
-              throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
-            }
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
+          }
+          case _ => {
+            logger.error("Unknown object type " + objectType + " in GetAllKeys function")
+            throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
           }
         }
+      }
       })
       keys.toArray
     } catch {
@@ -3938,7 +3939,7 @@ object MetadataAPIImpl extends MetadataAPI {
     })
     MdMgr.GetMdMgr.DumpModelConfigs
   }
-  
+
   def LoadAllObjectsIntoCache {
     try {
       val configAvailable = LoadAllConfigObjectsIntoCache
@@ -4175,7 +4176,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     zkMessage.ObjectType match {
       case "ConfigDef" => {
-         zkMessage.Operation match {
+        zkMessage.Operation match {
           case "Add" => {
             val inConfig = "{\""+ zkMessage.Name + "\":" + zkMessage.ConfigContnent.get + "}"
             AddConfigObjToCache(tranId, zkMessage.NameSpace+"."+zkMessage.Name, parse(inConfig).values.asInstanceOf[Map[String,List[String]]], MdMgr.GetMdMgr)
@@ -4316,17 +4317,17 @@ object MetadataAPIImpl extends MetadataAPI {
         }
       }
       case "OutputMsgDef" => {
-          zkMessage.Operation match {
-            case "Add" => {
-              LoadOutputMsgIntoCache(key)
-            }
-            case "Remove" | "Activate" | "Deactivate" => {
-              try {
-                MdMgr.GetMdMgr.ModifyOutputMsg(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-              } catch {
-                case e: ObjectNolongerExistsException => {
-                  val stackTrace = StackTrace.ThrowableTraceString(e)
-                  logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already"+"\nStacktrace:"+stackTrace)
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadOutputMsgIntoCache(key)
+          }
+          case "Remove" | "Activate" | "Deactivate" => {
+            try {
+              MdMgr.GetMdMgr.ModifyOutputMsg(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already"+"\nStacktrace:"+stackTrace)
               }
             }
           }
@@ -4359,7 +4360,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     // If we already processed this transaction, currTranLevel will be at least at the level of this notify.
     if (zkTransaction.transactionId.getOrElse("0").toLong <= currentTranLevel) return
-    
+
     try {
       zkTransaction.Notifications.foreach(zkMessage => {
         key = (zkMessage.Operation + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
@@ -4397,7 +4398,7 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        
+
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:"+stackTrace)
       }
@@ -4418,7 +4419,7 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        
+
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:"+stackTrace)
       }
@@ -4511,8 +4512,8 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // A single concept as a string using name and version as the key
-  def GetConceptDef(nameSpace: String, objectName: String, formatType: String, 
-		    version: String, userid: Option[String]): String = {
+  def GetConceptDef(nameSpace: String, objectName: String, formatType: String,
+                    version: String, userid: Option[String]): String = {
     ConceptUtils.GetConceptDef(nameSpace,objectName,formatType,version,userid)
   }
 
@@ -4559,10 +4560,10 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
-    jarPaths: List[String], scala_home: String,
-    java_home: String, classpath: String,
-    clusterId: String, power: Int,
-    roles: Array[String], description: String): String = {
+              jarPaths: List[String], scala_home: String,
+              java_home: String, classpath: String,
+              clusterId: String, power: Int,
+              roles: Array[String], description: String): String = {
     try {
       // save in memory
       val ni = MdMgr.GetMdMgr.MakeNode(nodeId, nodePort, nodeIpAddr, jarPaths, scala_home,
@@ -4585,10 +4586,10 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
-    jarPaths: List[String], scala_home: String,
-    java_home: String, classpath: String,
-    clusterId: String, power: Int,
-    roles: Array[String], description: String): String = {
+                 jarPaths: List[String], scala_home: String,
+                 java_home: String, classpath: String,
+                 clusterId: String, power: Int,
+                 roles: Array[String], description: String): String = {
     AddNode(nodeId, nodePort, nodeIpAddr, jarPaths, scala_home,
       java_home, classpath,
       clusterId, power, roles, description)
@@ -4610,8 +4611,8 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddAdapter(name: String, typeString: String, dataFormat: String, className: String,
-    jarName: String, dependencyJars: List[String],
-    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
+                 jarName: String, dependencyJars: List[String],
+                 adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
     try {
       // save in memory
       val ai = MdMgr.GetMdMgr.MakeAdapter(name, typeString, dataFormat, className, jarName,
@@ -4634,8 +4635,8 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateAdapter(name: String, typeString: String, dataFormat: String, className: String,
-    jarName: String, dependencyJars: List[String],
-    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
+                    jarName: String, dependencyJars: List[String],
+                    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
     AddAdapter(name, typeString, dataFormat, className, jarName, dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
   }
 
@@ -4699,7 +4700,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddClusterCfg(clusterCfgId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
-    modifiedTime: Date, createdTime: Date): String = {
+                    modifiedTime: Date, createdTime: Date): String = {
     try {
       // save in memory
       val ci = MdMgr.GetMdMgr.MakeClusterCfg(clusterCfgId, cfgMap, modifiedTime, createdTime)
@@ -4721,7 +4722,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateClusterCfg(clusterCfgId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
-    modifiedTime: Date, createdTime: Date): String = {
+                       modifiedTime: Date, createdTime: Date): String = {
     AddClusterCfg(clusterCfgId, cfgMap, modifiedTime, createdTime)
   }
 
@@ -4840,11 +4841,11 @@ object MetadataAPIImpl extends MetadataAPI {
     val tranId = GetNewTranId
     cfgmap = parse(cfgStr).values.asInstanceOf[Map[String, Any]]
     var i = 0
-   // var objectsAdded: scala.collection.mutable.MutableList[Map[String, List[String]]] = scala.collection.mutable.MutableList[Map[String, List[String]]]()
+    // var objectsAdded: scala.collection.mutable.MutableList[Map[String, List[String]]] = scala.collection.mutable.MutableList[Map[String, List[String]]]()
     var baseElems: Array[BaseElemDef] = new Array[BaseElemDef](cfgmap.keys.size)
     cfgmap.keys.foreach(key => {
       var mdl = cfgmap(key).asInstanceOf[Map[String, List[String]]]
-      
+
       // wrap the config objet in Element Def
       var confElem: ConfigDef = new ConfigDef
       confElem.tranId = tranId
@@ -4853,7 +4854,7 @@ object MetadataAPIImpl extends MetadataAPI {
       confElem.name = key
       baseElems(i) = confElem
       i = i + 1
-       
+
       // Prepare KEY/VALUE for persistent insertion
       var modelKey = userid.getOrElse("_") + "." + key
       var value = serializer.SerializeObjectToByteArray(mdl)
@@ -4868,12 +4869,12 @@ object MetadataAPIImpl extends MetadataAPI {
       val operations = for (op <- baseElems) yield "Add"
       NotifyEngine(baseElems, operations)
     }
-    
+
     // return reuslts
     var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", null, "Upload of model config successful")
     apiResult.toString()
   }
- 
+
 
   private def getStringFromJsonNode(v: Any): String = {
     if (v == null) return ""
@@ -4890,17 +4891,17 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   /*
-  private def getJsonNodeFromString(s: String): Any = {
-    if (s.size == 0) return s
+    private def getJsonNodeFromString(s: String): Any = {
+      if (s.size == 0) return s
 
-    val s1 = "[" + s + "]"
-    
-    implicit val jsonFormats: Formats = DefaultFormats
-    val list = Serialization.read[List[_]](s1)
+      val s1 = "[" + s + "]"
+      
+      implicit val jsonFormats: Formats = DefaultFormats
+      val list = Serialization.read[List[_]](s1)
 
-    return list(0)
-  }
-*/
+      return list(0)
+    }
+  */
 
   /**
    *
@@ -5058,7 +5059,7 @@ object MetadataAPIImpl extends MetadataAPI {
             } else {
               logger.debug("Found no adapater objects in the config file")
             }
-         
+
             // Now see if there are any other User Defined Properties in this cluster, if there are any, create a container
             // like we did for adapters and noteds, etc....
             var userDefinedProps: Map[String, Any]  = cluster.filter(x => {!excludeList.contains(x._1)} )
@@ -5066,13 +5067,13 @@ object MetadataAPIImpl extends MetadataAPI {
               val upProps: UserPropertiesInfo = MdMgr.GetMdMgr.MakeUPProps(ClusterId)
               userDefinedProps.keys.foreach(key => {
                 upProps.Props(key) = userDefinedProps(key).toString
-              })   
+              })
               MdMgr.GetMdMgr.AddUserProperty(upProps)
-              val upKey = "userProperties." + upProps.clusterId 
+              val upKey = "userProperties." + upProps.clusterId
               val upValue = serializer.SerializeObjectToByteArray(upProps)
               keyList = keyList :+ upKey.toLowerCase
-              valueList = valueList :+ upValue              
-              
+              valueList = valueList :+ upValue
+
             }
           })
 
@@ -5093,9 +5094,9 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-  
+
   def getUP (ci: String, key: String): String = {
-     MdMgr.GetMdMgr.GetUserProperty(ci,key)
+    MdMgr.GetMdMgr.GetUserProperty(ci,key)
   }
 
   def getNodeList1: Array[NodeInfo] = {MdMgr.GetMdMgr.Nodes.values.toArray}
@@ -5381,7 +5382,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
       // If JAR_TARGET_DIR is unset.. set it ot the first value of the the JAR_PATH.. whatever it is... ????? I think we should error on start up.. this seems like wrong
       // user behaviour not to set a variable vital to MODEL compilation.
-      if (metadataAPIConfig.getProperty("JAR_TARGET_DIR") == null || (metadataAPIConfig.getProperty("JAR_TARGET_DIR") != null && metadataAPIConfig.getProperty("JAR_TARGET_DIR").length == 0))    
+      if (metadataAPIConfig.getProperty("JAR_TARGET_DIR") == null || (metadataAPIConfig.getProperty("JAR_TARGET_DIR") != null && metadataAPIConfig.getProperty("JAR_TARGET_DIR").length == 0))
         metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
       logger.debug("Jar_target_dir Based on node(%s) => %s".format(nodeId,jarDir))
     }
@@ -5533,11 +5534,11 @@ object MetadataAPIImpl extends MetadataAPI {
       var databaseAdapterSpecificConfig = ""
       var metadataDataStore = ""
       /*
-      var tmpMdAdapSpecCfg = configMap.APIConfigParameters.MetadataAdapterSpecificConfig
-      if (tmpMdAdapSpecCfg != null && tmpMdAdapSpecCfg != None) {
-        databaseAdapterSpecificConfig = tmpMdAdapSpecCfg
-      }
-*/
+        var tmpMdAdapSpecCfg = configMap.APIConfigParameters.MetadataAdapterSpecificConfig
+        if (tmpMdAdapSpecCfg != null && tmpMdAdapSpecCfg != None) {
+          databaseAdapterSpecificConfig = tmpMdAdapSpecCfg
+        }
+  */
       logger.debug("DatabaseAdapterSpecificConfig => " + databaseAdapterSpecificConfig)
 
       var databaseSchema = "metadata"
@@ -5726,7 +5727,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def InitMdMgr(configFile: String, startHB: Boolean) {
-    
+
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
     mdLoader.initialize
@@ -5742,11 +5743,11 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.CloseDbStore
     MetadataAPIImpl.InitSecImpl
     if (startHB) InitHearbeat
-    initZkListeners   
+    initZkListeners
   }
 
   def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean) {
-        
+
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
     mdLoader.initialize
@@ -5770,7 +5771,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   private def InitHearbeat: Unit = {
     zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + metadataAPIConfig.getProperty("NODE_ID").toString
-    if (zkHeartBeatNodePath.size > 0) {  
+    if (zkHeartBeatNodePath.size > 0) {
       heartBeat = new HeartBeatUtil
       heartBeat.Init("Metadata", metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING"), zkHeartBeatNodePath,3000, 3000, 5000) // for every 5 secs
       heartBeat.SetMainData(metadataAPIConfig.getProperty("NODE_ID").toString)
@@ -5778,17 +5779,17 @@ object MetadataAPIImpl extends MetadataAPI {
     }
 
   }
-  
+
   /**
    * Create a listener to monitor Meatadata Cache
    */
   def initZkListeners: Unit = {
-     // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
+    // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
     var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH")
     var hbPathEngine = znodePath
     var hbPathMetadata = znodePath
     if (znodePath != null) {
-      znodePath = znodePath.trim + "/metadataupdate" 
+      znodePath = znodePath.trim + "/metadataupdate"
       hbPathEngine = hbPathEngine.trim + "/monitor/engine"
       hbPathMetadata = hbPathMetadata + "/monitor/metadata"
     } else return
@@ -5835,11 +5836,11 @@ object MetadataAPIImpl extends MetadataAPI {
         heartBeat.Shutdown
       heartBeat = null
     } catch {
-        case e: Exception => {
-          logger.error("Error trying to shutdown Hearbbeat. ")
-          throw e
-        }
-      }    
+      case e: Exception => {
+        logger.error("Error trying to shutdown Hearbbeat. ")
+        throw e
+      }
+    }
   }
 
   /**
