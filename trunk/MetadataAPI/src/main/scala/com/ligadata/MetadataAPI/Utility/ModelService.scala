@@ -194,9 +194,17 @@ object ModelService {
     response
   }
 
-  def getModel: String ={
+  def getModel(param: String = ""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.GetModelDefFromCache(ns, name,"JSON" ,ver, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val modelKeys = MetadataAPIImpl.GetAllModelsFromCache(true, None)
       if (modelKeys.length == 0) {
         val errorMsg="Sorry, No models available, in the Metadata, to display!"
@@ -456,9 +464,17 @@ object ModelService {
     response
   }
 
-  def activateModel: String ={
+  def activateModel(param: String = ""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.ActivateModel(ns, name, ver.toInt, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val modelKeys = MetadataAPIImpl.GetAllModelsFromCache(false, None)
       if (modelKeys.length == 0) {
         val errorMsg="Sorry, No models available, in the Metadata, to activate!"
@@ -495,9 +511,17 @@ object ModelService {
     response
   }
 
-  def deactivateModel:String={
+  def deactivateModel(param: String = ""):String={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.DeactivateModel(ns, name, ver.toInt, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val modelKeys = MetadataAPIImpl.GetAllModelsFromCache(true, None)
 
       if (modelKeys.length == 0) {
