@@ -55,9 +55,17 @@ object FunctionService {
     }
     response
   }
-  def getFunction: String ={
+  def getFunction(param: String = ""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.GetFunctionDef(ns, name,"JSON", userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val functionKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true, None)
       if (functionKeys.length == 0) {
         val errorMsg="Sorry, No functions available, in the Metadata, to display!"
@@ -92,9 +100,18 @@ object FunctionService {
     }
     response
   }
-  def removeFunction: String ={
+  def removeFunction(param: String = ""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.RemoveFunction(ns, name,ver.toInt, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
+
       val functionKeys =MetadataAPIImpl.GetAllFunctionsFromCache(true, None)
       if (functionKeys.length == 0) {
         val errorMsg="Sorry, No functions available, in the Metadata, to delete!"

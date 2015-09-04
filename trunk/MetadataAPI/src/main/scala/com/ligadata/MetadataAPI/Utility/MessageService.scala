@@ -132,7 +132,6 @@ object MessageService {
   def removeMessage(parm: String = ""): String = {
     var response = ""
     try {
-
       if (parm.length > 0) {
          val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(parm)
          try {
@@ -177,9 +176,18 @@ object MessageService {
     response
   }
 
-  def getMessage : String = {
+  def getMessage(param: String= "") : String = {
     try {
       var response=""
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.GetMessageDef(ns, name,"JSON", ver, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
+
       //    logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef", None)
@@ -348,9 +356,20 @@ object MessageService {
   }
 
 
-  def removeOutputMessage: String = {
+  def removeOutputMessage(param: String = ""): String = {
     var response = ""
+
     try {
+      if (param.length > 0) {
+
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIOutputMsg.RemoveOutputMsg(ns, name, ver.toLong, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
+
       val outputMessageKeys = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true, userid)
 
       if (outputMessageKeys.length == 0) {
@@ -411,8 +430,17 @@ object MessageService {
     response
   }
 
-  def getOutputMessage: String ={
+  def getOutputMessage(param: String = ""): String ={
     var response = ""
+
+    if (param.length > 0) {
+      val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+      try {
+        return MetadataAPIOutputMsg.GetOutputMessageDef(ns, name,"JSON" ,ver)
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
+    }
     val outputMessageKeys: Array[String] = MetadataAPIOutputMsg GetAllOutputMsgsFromCache(true,userid)
 
     if (outputMessageKeys.length == 0) {

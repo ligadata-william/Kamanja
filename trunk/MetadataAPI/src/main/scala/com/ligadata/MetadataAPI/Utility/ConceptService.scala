@@ -57,9 +57,16 @@ object ConceptService {
     }
     response
   }
-  def removeConcept: String ={
+  def removeConcept(param: String = ""): String ={
     var response = ""
     try {
+      if (param.length > 0) {
+        try {
+            return MetadataAPIImpl.RemoveConcept(param.asInstanceOf[AttributeDef])
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val conceptKeys = MetadataAPIImpl.GetAllConcepts("JSON", userid).toArray
 
       if (conceptKeys.length == 0) {
