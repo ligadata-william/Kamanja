@@ -407,7 +407,7 @@ cp -rf * $installPath/input/SampleApplications/template
 
 
 cd $srcPath/SampleApplication/HelloWorld/config
-cp -rf * $installPath/input/SampleApplications/metadata/config
+cp -rf * $installPath/config
 #HelloWorld
 
 #Medical
@@ -437,7 +437,7 @@ cd $srcPath/SampleApplication/Medical/template
 cp -rf * $installPath/input/SampleApplications/template
 
 cd $srcPath/SampleApplication/Medical/Configs
-cp -rf * $installPath/input/SampleApplications/metadata/config
+cp -rf * $installPath/config
 #Medical
 
 #Telecom
@@ -458,7 +458,7 @@ cd $srcPath/SampleApplication/Telecom/metadata/template
 cp -rf * $installPath/input/SampleApplications/template
 
 cd $srcPath/SampleApplication/Telecom/metadata/config
-cp -rf * $installPath/input/SampleApplications/metadata/config
+cp -rf * $installPath/config
 #Telecom
 
 #Finance
@@ -481,7 +481,7 @@ cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/me
 cp -rf * $installPath/input/SampleApplications/template
 
 cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/config
-cp -rf * $installPath/input/SampleApplications/metadata/config
+cp -rf * $installPath/config
 #Finance
 
 cd $srcPath/SampleApplication/EasyInstall/template
