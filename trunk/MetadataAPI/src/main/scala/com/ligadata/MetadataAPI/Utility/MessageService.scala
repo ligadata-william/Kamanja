@@ -436,7 +436,7 @@ object MessageService {
     if (param.length > 0) {
       val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
       try {
-        return MetadataAPIOutputMsg.GetOutputMessageDef(ns, name,"JSON" ,ver)
+        return MetadataAPIOutputMsg.GetOutputMessageDefFromCache(ns, name,"JSON" ,ver,userid)
       } catch {
         case e: Exception => e.printStackTrace()
       }
