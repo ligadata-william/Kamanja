@@ -88,7 +88,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
       }
       case "outputmsg" => {
         
-	      apiResult = MetadataAPIOutputMsg.GetOutputMessageDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIOutputMsg.GetOutputMessageDef(nameSpace,arg.Name,formatType,version, userid)
       }
     }
     apiResult
