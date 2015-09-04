@@ -430,8 +430,8 @@ object MessageService {
       }
       val outputMessageKey = outputMessageKeys(choice - 1)
       val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(outputMessageKey)
-      //val apiResult = MetadataAPIImpl.getOutputMessageDef(msgNameSpace, msgName, "JSON", msgVersion, userid)
-       val apiResult=MetadataAPIOutputMsg.GetOutputMessageDef(msgNameSpace, msgName, "JSON", msgVersion)
+      val apiResult = MetadataAPIOutputMsg.GetOutputMessageDefFromCache(msgNameSpace, msgName, "JSON", msgVersion, userid)
+     // val apiResult=MetadataAPIOutputMsg.GetOutputMessageDef(msgNameSpace, msgName, "JSON", msgVersion)
       response=apiResult
     }
       response
