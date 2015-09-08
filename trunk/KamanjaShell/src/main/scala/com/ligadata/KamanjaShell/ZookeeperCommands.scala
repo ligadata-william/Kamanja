@@ -21,7 +21,9 @@ object ZookeeperCommands {
       zkProps.setProperty("tickTime", "2000")
       zkProps.setProperty("dataDir", opts.getIPath + "/zookeeper/data")
       zkProps.setProperty("clientPort", opts.zkPort)
-      KShellUtils.savePropFile(zkProps, "zoo.cfg" ,opts.getIPath + "/zookeeper/conf")
+      KShellUtils.savePropFile(zkProps, "zoo.cfg" ,tmpZKPath + "/conf")
+      
+     // KShellUtils.savePropFile(zkProps, "zoo.cfg" ,opts.getIPath + "/zookeeper/conf")
         
       // Start Zookeeper
       println("Auto-Starting Zookeeper at " + opts.zkLocation + ":" + opts.zkPort)

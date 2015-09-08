@@ -71,6 +71,16 @@ class InstanceContext {
   
   // java home overwrite
   
+  // userid
+  var userid: String = ""
+  def getUserid: String = {userid}
+  def setUserid(id: String): Unit = {userid = id}
+  
+  // applicationPath
+  var appPath: String = ""
+  def getAppPath: String = {appPath}
+  def setAppPath(path: String): Unit = {appPath = path}
+  
   // set via the -fin option
   var inputFile = ""
   

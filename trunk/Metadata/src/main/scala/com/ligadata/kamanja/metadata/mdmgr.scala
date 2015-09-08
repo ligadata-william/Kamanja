@@ -483,7 +483,7 @@ class MdMgr {
   def Types(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[BaseTypeDef]] = { GetImmutableSet(Some(typeDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
 
   /** Get All Versions of Types for Key */
-  def Types(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[BaseTypeDef]] = { GetImmutableSet(typeDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) }
+  def Types(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[BaseTypeDef]] = {  GetImmutableSet(typeDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) }
   def Types(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[BaseTypeDef]] = Types(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
 
   /** Answer the BaseTypeDef with the supplied namespace and name  */
@@ -501,6 +501,7 @@ class MdMgr {
 
   /** Answer the BaseTypeDef with the supplied key  */
   def Type(key: String, ver: Long, onlyActive: Boolean): Option[BaseTypeDef] = GetReqValue(Types(key, onlyActive, false), ver)
+
 
   /** Answer the BaseTypeDef with the supplied key  */
   def ActiveType(key: String): BaseTypeDef = {
@@ -1987,7 +1988,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddScalar(st: ScalarTypeDef): Unit = {
-    if (Type(st.FullName, -1, false) != None) {
+    if (Type(st.FullName, st.Version, false) != None) {
       throw new AlreadyExistsException(s"Scalar ${st.FullName} already exists.")
     }
     typeDefs.addBinding(st.FullName, st)
@@ -2013,7 +2014,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddArray(at: ArrayTypeDef): Unit = {
-    if (Type(at.FullName, -1, false) != None) {
+    if (Type(at.FullName, at.Version, false) != None) {
       throw new AlreadyExistsException(s"Array ${at.FullName} already exists.")
     }
     typeDefs.addBinding(at.FullName, at)
@@ -2039,7 +2040,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddArrayBuffer(abt: ArrayBufTypeDef): Unit = {
-    if (Type(abt.FullName, -1, false) != None) {
+    if (Type(abt.FullName, abt.Version, false) != None) {
       throw new AlreadyExistsException(s"ArrayBuffer ${abt.FullName} already exists.")
     }
     typeDefs.addBinding(abt.FullName, abt)
@@ -2064,7 +2065,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddList(lst: ListTypeDef): Unit = {
-    if (Type(lst.FullName, -1, false) != None) {
+    if (Type(lst.FullName, lst.Version, false) != None) {
       throw new AlreadyExistsException(s"List ${lst.FullName} already exists.")
     }
     typeDefs.addBinding(lst.FullName, lst)
@@ -2114,7 +2115,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddSet(set: SetTypeDef): Unit = {
-    if (Type(set.FullName, -1, false) != None) {
+    if (Type(set.FullName, set.Version, false) != None) {
       throw new AlreadyExistsException(s"Set ${set.FullName} already exists.")
     }
     typeDefs.addBinding(set.FullName, set)
@@ -2164,7 +2165,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddTreeSet(tree: TreeSetTypeDef): Unit = {
-    if (Type(tree.FullName, -1, false) != None) {
+    if (Type(tree.FullName, tree.Version, false) != None) {
       throw new AlreadyExistsException(s"TreeSet ${tree.FullName} already exists.")
     }
     typeDefs.addBinding(tree.FullName, tree)
@@ -2189,7 +2190,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddSortedSet(set: SortedSetTypeDef): Unit = {
-    if (Type(set.FullName, -1, false) != None) {
+    if (Type(set.FullName, set.Version, false) != None) {
       throw new AlreadyExistsException(s"SortedSet ${set.FullName} cannot be created... a type by that name already exists.")
     }
     typeDefs.addBinding(set.FullName, set)
@@ -2214,7 +2215,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddMap(map: MapTypeDef): Unit = {
-    if (Type(map.FullName, -1, false) != None) {
+    if (Type(map.FullName, map.Version, false) != None) {
       throw new AlreadyExistsException(s"Map ${map.FullName} already exists.")
     }
     typeDefs.addBinding(map.FullName, map)
@@ -2239,7 +2240,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddImmutableMap(map: ImmutableMapTypeDef): Unit = {
-    if (Type(map.FullName, -1, false) != None) {
+    if (Type(map.FullName, map.Version, false) != None) {
       throw new AlreadyExistsException(s"Map ${map.FullName} already exists.")
     }
     typeDefs.addBinding(map.FullName, map)
@@ -2581,10 +2582,10 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def AddContainer(container: ContainerDef): Unit = {
-    if (Type(container.FullName, -1, false) != None) {
+    if (Type(container.FullName, container.ver, false) != None) {
       throw new AlreadyExistsException(s"Container type ${container.FullName} already exists.")
     }
-    if (Container(container.FullName, -1, false) != None) {
+    if (Container(container.FullName, container.ver, false) != None) {
       throw new AlreadyExistsException(s"Container ${container.FullName} already exists.")
     }
     if (container.containerType == null) {

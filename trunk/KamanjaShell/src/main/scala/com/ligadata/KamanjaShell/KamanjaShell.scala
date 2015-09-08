@@ -6,7 +6,6 @@ import java.io.File
 import java.util.Properties
 import java.io.InputStream
 import scala.actors.threadpool.{ Executors, ExecutorService }
-import com.ligadata.MetadataAPI.MetadataAPIImpl
 import sys.process._
 
 
@@ -53,8 +52,12 @@ object KamanjaShell {
   val CONFIG_FILES_DIR_PROP: String = "CONFIG_FILES_DIR"
   val CONCEPT_FILES_DIR_PROP: String = "CONCEPT_FILES_DIR"
   val NODE_ID_PROP: String = "NODE_ID"
-  
-  
+  val METADATASCHEMANAME_PROP: String = "MetadataSchemaName"
+  val METADATASTORETYPE_PROP: String = "MetadataStoreType"
+  val METADATALOCATION_PROP: String = "MetadataLocation"
+  val METADATADATASTORE_PROP: String = "MetadataDataStore"
+
+   
   
   // Logger stuff
   val loggerName = this.getClass.getName
@@ -93,9 +96,11 @@ object KamanjaShell {
       // Get the options for this installations.
       opts = InstanceContext.getOptions(iOptions)
       opts.setIName(tempName)
-      opts.setIPath(tempPath)
+      opts.setIPath(tempPath + "/node_" + tempName)
       opts.setIPort(tempPort)
+      opts.setUserid("shellLocal")
       var myConfigFile = setupMetadataParams(metadataParams, opts)
+      var myEngineFile = setupEngineParams(opts,runtimeParams,metadataParams)
       
       // See if the directory already exists or not, if it needs to be created, create it along with the basic
       // configurations to be used.
@@ -116,14 +121,9 @@ object KamanjaShell {
       if (opts.needKafka)  
         KafkaCommands.startLocalKafka(opts, _exec)
        
-      // Initialize and start the Metadata Service if the global port is not 0.
-      // else, just initialize a local metadataAPI object.
-      if (opts.getIPort.toInt > 0)
-        startMetadataService
-      else {
-        MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile, false)
-      }
-        
+      // Initialize MetadataAPI object
+      MetadataProxy.initMetadata(opts, myConfigFile)
+
         
       // Process all the OPTIONAL PARAMETERS
       
@@ -203,11 +203,20 @@ object KamanjaShell {
   }
   
   /**
-   * set up all the configuration parameters.
+   * 
    */
-  private def startMetadataService: Unit = {
-   
+  private def setupEngineParams(opts: InstanceContext, derivedParams: Properties, mdParams: Properties): String = {
+    
+    var configDir = opts.getKamanjaHome + "/config"
+    
+    // Set the node Id to default to the name fo the node.
+     derivedParams.setProperty(NODE_ID_PROP, opts.getIName) 
+     derivedParams.setProperty(METADATADATASTORE_PROP, mdParams.getProperty(METADATADATASTORE_PROP)) 
+     
+      KShellUtils.savePropFile(derivedParams,"engineConfig_"+opts.getIName+".properties",configDir)
+     configDir + "/mdConfig_"+opts.getIName+".properties"
   }
+  
   
   /**
    * create metadata parameters.
@@ -229,7 +238,7 @@ object KamanjaShell {
         opts.setKamanjaHome(kamanjaHome)
         derivedParams.setProperty(KAMANJA_HOME_PROP, kamanjaHome)
         configDir = kamanjaHome+"/config"
-        jarPathDir = kamanjaHome+"/lib/system," + kamanjaHome+"/lib/applications"
+        jarPathDir = kamanjaHome+"/lib/system," + kamanjaHome+"/lib/application"
         jarTargetDir = kamanjaHome+"/lib/applications"
         compilerWorkDir = s"/tmp/Kamanja/lib/system/kamanjabase_2.10-1.0.jar:/tmp/Kamanja/lib/system/basefunctions_2.10-0.1.0.jar:/tmp/Kamanja/lib/system/metadata_2.10-1.0.jar:/tmp/Kamanja/lib/system/methodextractor_2.10-1.0.jar:/tmp/Kamanja/lib/system/pmmlcompiler_2.10-1.0.jar:/tmp/Kamanja/lib/system/bootstrap_2.10-1.0.jar:/tmp/Kamanja/lib/system/joda-time-2.3.jar:/tmp/Kamanja/lib/system/joda-convert-1.6.jar:/tmp/Kamanja/lib/system/basetypes_2.10-0.1.0.jar:/tmp/Kamanja/lib/system/pmmludfs_2.10-1.0.jar:/tmp/Kamanja/lib/system/pmmlruntime_2.10-1.0.jar:/tmp/Kamanja/lib/system/json4s-native_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/json4s-core_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/json4s-ast_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/jackson-databind-2.3.1.jar:/tmp/Kamanja/lib/system/jackson-annotations-2.3.0.jar:/tmp/Kamanja/lib/system/json4s-jackson_2.10-3.2.9.jar:/tmp/Kamanja/lib/system/jackson-core-2.3.1.jar:/tmp/Kamanja/lib/system/log4j-1.2.17.jar:/tmp/Kamanja/lib/system/guava-18.0.jar:/tmp/Kamanja/lib/system/scala-library-2.10.4.jar:/tmp/Kamanja/lib/system/exceptions_2.10-1.0.jar:/tmp/Kamanja/lib/system/scala-reflect.jar"
         println(kamanjaHome)
@@ -242,7 +251,7 @@ object KamanjaShell {
      
      // Get the config file.
      var mdProps = new java.util.Properties
-     var mdFile: String = configDir+"/mdConfig.properties"       
+     var mdFile: String = configDir+"/kamanjaAPI.properties"       
      try {
        mdProps.load(new java.io.FileInputStream(mdFile))
      } catch {
@@ -280,9 +289,8 @@ object KamanjaShell {
         if(scalaHome == null)
           scalaHome = sys.env(SCALA_HOME_PROP)
         else
-          println("JAVA_HOME found in file")
+          println("SCALA found in file")
           
-        scalaHome = sys.env(SCALA_HOME_PROP)
         derivedParams.setProperty(SCALA_HOME_PROP, scalaHome)
         println(scalaHome)
      } catch {
@@ -360,6 +368,15 @@ object KamanjaShell {
      if (mdProps.getProperty(OUTPUTMESSAGE_FILES_DIR_PROP) != null)  derivedParams.setProperty(OUTPUTMESSAGE_FILES_DIR_PROP, mdProps.getProperty(OUTPUTMESSAGE_FILES_DIR_PROP)) 
      if (mdProps.getProperty(CONTAINER_FILES_DIR_PROP) != null)  derivedParams.setProperty(CONTAINER_FILES_DIR_PROP, mdProps.getProperty(CONTAINER_FILES_DIR_PROP)) 
      if (mdProps.getProperty(CONFIG_FILES_DIR_PROP) != null)  derivedParams.setProperty(CONFIG_FILES_DIR_PROP, mdProps.getProperty(CONFIG_FILES_DIR_PROP)) 
+      
+     // 10. STORAGE STUFF  
+     if (mdProps.getProperty(METADATADATASTORE_PROP) != null)
+       derivedParams.setProperty(METADATADATASTORE_PROP, mdProps.getProperty(METADATADATASTORE_PROP)) 
+     else
+       throw new Exception("Metadata Store information must be set.")
+       
+
+
      
      // Set the node Id to default to the name fo the node.
      derivedParams.setProperty(NODE_ID_PROP, opts.getIName) 
@@ -441,7 +458,7 @@ object KamanjaShell {
    */
   private def getLine(msg: String = ""): String = {
     if (msg.length > 0) println(msg)
-    print("Kamanja Instance: " + opts.getIName + ">")
+    print("Kamanja Instance: NODE_" + opts.getIName + ">")
     val t = readLine()
     t
   }
@@ -467,8 +484,7 @@ object KamanjaShell {
     
     println("Stopping Metadata Process")
     try {
-      MetadataAPIImpl.shutdown
-      MetadataAPIImpl.CloseZKSession
+      MetadataProxy.shutdown(opts)
     } catch {
       case e: Exception => e.printStackTrace()
     }
