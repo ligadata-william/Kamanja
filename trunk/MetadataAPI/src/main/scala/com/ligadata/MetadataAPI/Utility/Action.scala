@@ -53,7 +53,7 @@ object Action extends Enumeration {
   val LOADFUNCTIONSFROMAFILE= Value("loadfunctionsfromafile")
   val DUMPALLFUNCTIONSASJSON= Value("dumpallfunctions")
   //config
-  val UPLOADENGINECONFIG= Value("uploadengineconfig")
+  val UPLOADCLUSTERCONFIG= Value("uploadclusterconfig")
   val UPLOADCOMPILECONFIG= Value("uploadcompileconfig")
   val DUMPALLCFGOBJECTS= Value("dumpallcfgobjects")
   val REMOVEENGINECONFIG= Value("removeengineconfig")
