@@ -89,7 +89,7 @@ lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperCl
 
 lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata, Exceptions, SecurityAdapterBase)
 
-lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(StorageManager, Exceptions, AuditAdapterBase)
+lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(StorageManager, Exceptions, AuditAdapterBase,Serialize)
 
 lazy val KamanjaData = project.in(file("KamanjaData")) dependsOn(KamanjaBase, Exceptions)
 

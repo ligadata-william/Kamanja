@@ -1,0 +1,18 @@
+{
+	"Concepts" :  [
+			{
+			        "NameSpace":"Ligadata",
+				"Name":"ProviderId",
+				"TypeNameSpace":"System",
+				"TypeName" : "String",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"ProviderName",
+				"TypeNameSpace":"System",
+				"TypeName" : "String",
+				"Version"  : 100
+			}
+	]
+}

@@ -257,7 +257,7 @@ object TestMetadataAPI {
     lazy val logger = Logger.getLogger(loggerName)
 
     try {
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);
 
       val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true, None)
       if (fcnKeys.length == 0) {
@@ -300,7 +300,7 @@ object TestMetadataAPI {
     lazy val logger = Logger.getLogger(loggerName)
 
     try {
-      logger.setLevel(Level.TRACE)
+      //logger.setLevel(Level.TRACE)
 
       val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true, None)
       if (fcnKeys.length == 0) {
@@ -2329,9 +2329,9 @@ println("Getting Messages")
 	          }
 
 	          val outputmsgDefFile = outputmsgFiles(choice - 1).toString
-	          logger.setLevel(Level.TRACE);
+	          //logger.setLevel(Level.TRACE);
 	          val outputmsgStr = Source.fromFile(outputmsgDefFile).mkString
-	          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+	          //MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
 	          val res: String = MetadataAPIOutputMsg.AddOutputMessage(outputmsgStr, "JSON", userid)
 	          results += Tuple3(choice.toString, outputmsgDefFile, res)
 	        })

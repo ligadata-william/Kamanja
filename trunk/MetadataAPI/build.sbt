@@ -2,7 +2,11 @@ import AssemblyKeys._ // put this at the top of the file
 import sbt._
 import Keys._
 
+sbtPlugin := true
+
 shellPrompt := { state =>  "sbt (%s)> ".format(Project.extract(state).currentProject.id) }
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 assemblySettings
 
@@ -77,3 +81,7 @@ libraryDependencies ++= Seq(
 )
 
 scalacOptions += "-deprecation"
+
+retrieveManaged := true
+
+parallelExecution := false
