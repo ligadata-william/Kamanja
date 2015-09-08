@@ -38,7 +38,7 @@ kamanja update function input(optional)
 kamanja load functions from a file
 kamanja dump all functions
 VI. Congurations operations
-kamanja upload engine config input(optional)
+kamanja upload cluster config input(optional)
 kamanja upload compile config input(optional)
 kamanja dump all cfg objects
 kamanja remove engine config

@@ -252,7 +252,7 @@ object StartMetadataAPI {
         case Action.LOADFUNCTIONSFROMAFILE => response = FunctionService.loadFunctionsFromAFile
         case Action.DUMPALLFUNCTIONSASJSON => response = FunctionService.dumpAllFunctionsAsJson
         //config
-        case Action.UPLOADENGINECONFIG => response = ConfigService.uploadEngineConfig(input)
+        case Action.UPLOADCLUSTERCONFIG => response = ConfigService.uploadClusterConfig(input)
         case Action.UPLOADCOMPILECONFIG => response = ConfigService.uploadCompileConfig(input)
         case Action.DUMPALLCFGOBJECTS => response = ConfigService.dumpAllCfgObjects
         case Action.REMOVEENGINECONFIG => response = ConfigService.removeEngineConfig
