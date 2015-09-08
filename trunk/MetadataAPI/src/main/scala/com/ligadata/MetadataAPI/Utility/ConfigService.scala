@@ -14,7 +14,7 @@ object ConfigService {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
- def uploadEngineConfig(input: String): String ={
+ def uploadClusterConfig(input: String): String ={
    var response = ""
    var configFileDir: String = ""
    //val gitMsgFile = "https://raw.githubusercontent.com/ligadata-dhaval/Kamanja/master/HelloWorld_Msg_Def.json"
