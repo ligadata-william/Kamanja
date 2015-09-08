@@ -331,9 +331,7 @@ object MessageService {
 
         val msgKey = outputMessageKeys(choice - 1)
         val msgKeyTokens = msgKey.split("\\.")
-        val msgNameSpace = msgKeyTokens(0)
-        val msgName = msgKeyTokens(1)
-        val msgVersion = msgKeyTokens(2)
+        val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
         val apiResult = MetadataAPIOutputMsg.RemoveOutputMsg(msgNameSpace, msgName, msgVersion.toLong, userid).toString
         response = apiResult
       }
