@@ -518,10 +518,7 @@ class CompilerProxy{
       var (dummy1,dummy2, dummy3, pName) = getModelMetadataFromJar(jarFileName,elements)
 
       // Create the ModelDef object
-      // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name
-      //var modelNamespaceTemp = "System"
-      var modelNamespaceTemp = packageName
-      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
+      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespace, modelName,"","RuleSet",
                                                           getInputVarsFromElements(elements),
                                                           List[(String, String, String)]() ,
                                                           MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",

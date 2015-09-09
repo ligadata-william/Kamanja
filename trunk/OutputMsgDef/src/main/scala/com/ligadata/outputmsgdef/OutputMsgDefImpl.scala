@@ -41,13 +41,13 @@ object OutputMsgDefImpl {
       if (outputMessageDef == null)
         throw new Exception("output message definition info do not exists")
 
-      println("Name " + outputMessageDef.Name)
-      println("NameSpace " + outputMessageDef.NameSpace)
-      println("Version " + outputMessageDef.Version)
-      println("Queue" + outputMessageDef.Queue)
-      println("OutputFormat " + outputMessageDef.OutputFormat)
-      outputMessageDef.DataDeclaration.foreach(f => println("f " + f))
-      outputMessageDef.Defaults.foreach(f => println("f " + f))
+      log.debug("Name " + outputMessageDef.Name)
+      log.debug("NameSpace " + outputMessageDef.NameSpace)
+      log.debug("Version " + outputMessageDef.Version)
+      log.debug("Queue" + outputMessageDef.Queue)
+      log.debug("OutputFormat " + outputMessageDef.OutputFormat)
+      outputMessageDef.DataDeclaration.foreach(f =>  log.debug("f " + f))
+      outputMessageDef.Defaults.foreach(f =>  log.debug("f " + f))
 
       val outputQ = outputMessageDef.Queue.toLowerCase()
       val paritionKeys = outputMessageDef.PartitionKey
@@ -139,8 +139,6 @@ object OutputMsgDefImpl {
             valueVal += ((fldInfo, defaultValue))
             Fields((fullname, typeOf)) = (valueVal)
           }
-          //  value += ((fldInfo, defaultValue))
-          //   Fields ((fullname, typeOf)) = (value)
         })
       }
 
@@ -148,9 +146,8 @@ object OutputMsgDefImpl {
 
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: " + e.getMessage)
         throw e
-
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -183,10 +180,8 @@ object OutputMsgDefImpl {
       val partionKeyParts = fullpartionkey.split("\\.")
       if (partionKeyParts.size < 3)
         throw new Exception("Please provide the fiels in format of Namespace.Name.fieldname")
-      val namespace = partionKeyParts(0).toLowerCase()
-      val name = partionKeyParts(1).toLowerCase()
-      val field = partionKeyParts(2).toLowerCase()
-
+      
+      val(namespace, name, field) = com.ligadata.kamanja.metadata.Utils.parseNameToken(fullpartionkey)
       val (containerDef, messageDef, modelDef) = getModelMsgContainer(namespace, name)
       val (childs, typeOf) = getModelMsgContainerChilds(containerDef, messageDef, modelDef)
       typeof = typeOf
@@ -211,7 +206,7 @@ object OutputMsgDefImpl {
 
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: "+ e.getMessage)
         throw e
       }
       case e: Exception => {
@@ -237,7 +232,7 @@ object OutputMsgDefImpl {
       })
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: "+ e.getMessage)
         throw e
       }
       case e: Exception => {
@@ -286,7 +281,7 @@ object OutputMsgDefImpl {
       }
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: "+ e.getMessage)
         throw e
       }
       case e: Exception => {
@@ -303,6 +298,7 @@ object OutputMsgDefImpl {
     var modelObj: ModelDef = null
     var prevVerMsgObjstr: String = ""
     var childs: ArrayBuffer[(String, String)] = ArrayBuffer[(String, String)]()
+    
     if (namespace == null || namespace.trim() == "")
       throw new Exception("Proper Namespace do not exists in message/container definition")
     if (name == null || name.trim() == "")
@@ -418,7 +414,7 @@ object OutputMsgDefImpl {
 
     if (map.contains(outputKey)) {
       val outputmsg = map.get(outputKey).get.asInstanceOf[scala.collection.immutable.Map[String, Any]]
-      println("outputmsg 1 : " + outputmsg)
+      log.debug("outputmsg 1 : " + outputmsg)
 
       if (outputmsg != null) {
         if (outputmsg.getOrElse("NameSpace", null) == null)
