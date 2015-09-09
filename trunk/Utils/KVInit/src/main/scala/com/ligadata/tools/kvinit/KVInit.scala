@@ -825,7 +825,6 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
               ch = br.read()
 
               val possibleFullJsonStr = new String(buf.toArray, 0, buf.size)
-              println("=============>PossibleStr:" + possibleFullJsonStr)
               try {
                 implicit val jsonFormats: Formats = DefaultFormats
                 val validJson = parse(possibleFullJsonStr)
