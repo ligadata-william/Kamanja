@@ -190,8 +190,8 @@ object MessageService {
 
       //    logger.setLevel(Level.TRACE); //check again
 
-      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef", None)
-
+      //val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef", None)
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true, None)
       if (msgKeys.length == 0) {
         response="Sorry, No messages available in the Metadata"
       }else{
