@@ -114,7 +114,7 @@ Sample uses:
     var cfgfile = if (options.contains('config)) options.apply('config) else null
     var typename = if (options.contains('typename)) options.apply('typename) else if (options.contains('kvname)) options.apply('kvname) else null
     var tmpdatafiles = if (options.contains('datafiles)) options.apply('datafiles) else if (options.contains('csvpath)) options.apply('csvpath) else null
-    val tmpkeyfieldnames = (if (options.contains('keyfieldname)) options.apply('keyfieldname) else null)
+    val tmpkeyfieldnames = if (options.contains('keyfields)) options.apply('keyfields) else if (options.contains('keyfieldname)) options.apply('keyfieldname) else null
     val delimiterString = if (options.contains('delimiter)) options.apply('delimiter) else null
     var ignoreerrors = (if (options.contains('ignoreerrors)) options.apply('ignoreerrors) else "0").trim
     val format = (if (options.contains('format)) options.apply('format) else "delimited").trim.toLowerCase()
@@ -135,7 +135,7 @@ Sample uses:
       return
     }
 
-    val dataFiles = if (tmpdatafiles == null || tmpdatafiles.trim.size == 0) Array[String]() else tmpdatafiles.trim.split(",").map(_.trim.toLowerCase).filter(_.length() > 0)
+    val dataFiles = if (tmpdatafiles == null || tmpdatafiles.trim.size == 0) Array[String]() else tmpdatafiles.trim.split(",").map(_.trim).filter(_.length() > 0)
 
     var valid: Boolean = (cfgfile != null && dataFiles.size > 0 && typename != null)
 
@@ -461,7 +461,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
           logger.error("Invalid JSON data: " + inputStr)
           return null
         } else {
-          val parsed_json = json.values.asInstanceOf[Map[String, Any]]
+          val parsed_json = json.values.asInstanceOf[scala.collection.immutable.Map[String, Any]]
           val inputData = new JsonData(inputStr)
 
           inputData.root_json = Option(parsed_json)
@@ -503,6 +503,8 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     var errsCnt: Int = 0
     var transId: Long = 0
 
+    logger.debug("KeyFields:" + keyfieldnames.mkString(","))
+
     val kamanjaData = ArrayBuffer[KamanjaData]()
 
     dataFiles.foreach(fl => {
@@ -524,6 +526,8 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       for (i <- ignoreRecords until alldata.size) {
         val inputStr = alldata(i)
         if (inputStr.size > 0) {
+          logger.debug("Record:" + inputStr)
+
           /** if we can make one ... we add the data to the store. This will crash if the data is bad */
           val inputData = prepareInputData(inputStr)
 
@@ -557,11 +561,15 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                     var value = "" // Default in case of Exception or NULL value (Mainly for NULL value)
                     try {
                       val v = messageOrContainer.get(key.toLowerCase) //BUGBUG:: We need to remove this if we are going to handle case sensitive.
-                      if (v != null)
+                      if (v != null) {
                         value = v.toString
+                        logger.debug("Requested field:%s, got value:%s".format(key, value))
+                      } else {
+                        logger.debug("Requested field:%s, but got null back".format(key))
+                      }
                     } catch {
                       case e: Exception => {
-                        logger.error("Failed to get value for field:%s. For now we are taking empty string as value for this field".format(key))
+                        logger.error("Failed to get value for field:%s. Reason:%s, Message:%s\nStackTrace:%s".format(key, e.getCause, e.getMessage, StackTrace.ThrowableTraceString(e)))
                         //BUGBUG:: May be we can take empty string if we get any exception in get. which one is correct way?
                         throw e
                       }
@@ -578,7 +586,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                 var datarec: KamanjaData = null
 
                 val keyDataLst = keyData.toList
-                while (foundKey && i < kamanjaData.size) {
+                while (foundKey == false && i < kamanjaData.size) {
                   foundKey = IsSameKey(keyDataLst, kamanjaData(i).GetKey.toList)
                   if (foundKey)
                     datarec = kamanjaData(i)
@@ -654,7 +662,8 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     val savedKeys = kamanjaData.map(d => d.GetKey.toList)
 
-    logger.info("Inserted %d values in KVName %s".format(processedRows, typename))
+    logger.info("Processed %d records and Inserted %d keys for Type %s".format(processedRows, storeObjects.size, typename))
+    println("Processed %d records and Inserted %d keys for Type %s".format(processedRows, storeObjects.size, typename))
 
     if (zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
       logger.info("Notifying Engines after updating is done through Zookeeper.")
@@ -785,57 +794,61 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
           fileContentsArray += line
         }
       } else if (isJson) {
-        var sb = new StringBuilder()
+        var buf = new ArrayBuffer[Int]()
         var ch = br.read()
 
         while (ch != -1) {
-          sb.setLength(0) // Reset
+          buf.clear() // Reset
           // Finding start "{" char
           var foundOpen = false
           while (ch != -1 && foundOpen == false) {
             if (ch == '{')
               foundOpen = true;
             else {
-              sb.append(ch)
+              buf += ch
               ch = br.read()
             }
           }
 
-          if (sb.length > 0) {
-            logger.error("Found invalid string in JSON file, which is not json String:" + sb.toString)
+          if (buf.size > 0) {
+            val str = new String(buf.toArray, 0, buf.size)
+            if (str.trim.size > 0)
+              logger.error("Found invalid string in JSON file, which is not json String:" + str)
           }
 
-          sb.setLength(0) // Reset
+          buf.clear() // Reset
 
-          if (foundOpen) {
-            while (ch != -1) {
-              if (ch == '}') {
-                // Try the string now
-                sb.append(ch)
-                ch = br.read()
+          while (foundOpen && ch != -1) {
+            if (ch == '}') {
+              // Try the string now
+              buf += ch
+              ch = br.read()
 
-                val possibleFullJsonStr = sb.toString
-                try {
-                  implicit val jsonFormats: Formats = DefaultFormats
-                  val validJson = parse(possibleFullJsonStr)
-                  // If we find valid json, that means we will take this json
-                  if (validJson != null) {
-                    fileContentsArray += possibleFullJsonStr
-                    sb.setLength(0) // Reset
-                  } // else // Did not match the correct json even if we have one open brace. Tring for the next open one
-                } catch {
-                  case e: Exception => {} // Not yet valid json
-                }
-              } else {
-                sb.append(ch)
-                ch = br.read()
+              val possibleFullJsonStr = new String(buf.toArray, 0, buf.size)
+              println("=============>PossibleStr:" + possibleFullJsonStr)
+              try {
+                implicit val jsonFormats: Formats = DefaultFormats
+                val validJson = parse(possibleFullJsonStr)
+                // If we find valid json, that means we will take this json
+                if (validJson != null) {
+                  fileContentsArray += possibleFullJsonStr
+                  buf.clear() // Reset
+                  foundOpen = false
+                } // else // Did not match the correct json even if we have one open brace. Tring for the next open one
+              } catch {
+                case e: Exception => {} // Not yet valid json
               }
+            } else {
+              buf += ch
+              ch = br.read()
             }
           }
         }
 
-        if (sb.length > 0) {
-          logger.error("Found invalid string in JSON file, which is not json String:" + sb.toString)
+        if (buf.size > 0) {
+          val str = new String(buf.toArray, 0, buf.size)
+          if (str.trim.size > 0)
+            logger.error("Found invalid string in JSON file, which is not json String:" + str)
         }
       } else {
         // Un-handled format
