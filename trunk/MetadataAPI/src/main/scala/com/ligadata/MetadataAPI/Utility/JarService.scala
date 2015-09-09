@@ -15,28 +15,25 @@ object JarService {
   lazy val logger = Logger.getLogger(loggerName)
 def uploadJar(input: String): String ={
   var response = ""
-  var typeFileDir: String = ""
-  //val gitMsgFile = "https://raw.githubusercontent.com/ligadata-dhaval/Kamanja/master/HelloWorld_Msg_Def.json"
+  var jarFileDir: String = ""
+  
   if (input == "") {
-    typeFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
-    if (typeFileDir == null) {
+    jarFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
+    if (jarFileDir == null) {
       response = "JAR_TARGET_DIR property missing in the metadata API configuration"
     } else {
       //verify the directory where messages can be present
-      IsValidDir(typeFileDir) match {
+      IsValidDir(jarFileDir) match {
         case true => {
           //get all files with json extension
-          val types: Array[File] = new java.io.File(typeFileDir).listFiles.filter(_.getName.endsWith(".jar"))
-          types.length match {
+          val jars: Array[File] = new java.io.File(jarFileDir).listFiles.filter(_.getName.endsWith(".jar"))
+          jars.length match {
             case 0 => {
-              println("Jars not found at " + typeFileDir)
-              response="Jars not found at " + typeFileDir
+              println("Jars not found at " + jarFileDir)
+              response="Jars not found at " + jarFileDir
             }
             case option => {
-              val jarDefs = getUserInputFromMainMenu(types)
-              for (jarDef <- jarDefs) {
-                response += MetadataAPIImpl.UploadJar(jarDef.toString)
-              }
+              response = uploadJars(jars)
             }
           }
         }
@@ -47,14 +44,13 @@ def uploadJar(input: String): String ={
     }
   } else {
     //input provided
-    var message = new File(input.toString)
-    val jarDef = Source.fromFile(message).mkString
-    response =MetadataAPIImpl.UploadJar(jarDef.toString)
+    var jarFile = new File(input.toString)
+    response = MetadataAPIImpl.UploadJar(jarFile.getPath)
   }
   response
 }
 
-  //utility
+  //utility  ???? move this to a utility directory, Dhaval!
   def IsValidDir(dirName: String): Boolean = {
     val iFile = new File(dirName)
     if (!iFile.exists) {
@@ -67,31 +63,30 @@ def uploadJar(input: String): String ={
       true
   }
 
-  def   getUserInputFromMainMenu(messages: Array[File]): Array[String] = {
-    var listOfMsgDef: Array[String] = Array[String]()
+  def   uploadJars(files: Array[File]): String = {
     var srNo = 0
+    var results: String = ""
     println("\nPick a Jar Definition file(s) from below choices\n")
-    for (message <- messages) {
+    for (file <- files) {
       srNo += 1
-      println("[" + srNo + "]" + message)
+      println("[" + srNo + "]" + file)
     }
+    
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
     val userOptions: List[Int] = Console.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+    
     //check if user input valid. If not exit
-    for (userOption <- userOptions) {
-      userOption match {
-        case userOption if (1 to srNo).contains(userOption) => {
-          //find the file location corresponding to the message
-          var message = messages(userOption - 1)
-          //process message
-          val messageDef = Source.fromFile(message).mkString
-          listOfMsgDef = listOfMsgDef :+ messageDef
-        }
-        case _ => {
-          println("Unknown option: ")
-        }
-      }
-    }
-    listOfMsgDef
+    //for (userOption <- userOptions) {
+    userOptions.foreach(userOption =>  {
+      if ((1 to srNo).contains(userOption)) {
+         var file = files(userOption - 1)
+         println("Uploading "+file.getPath)
+         results = results + "\n" +MetadataAPIImpl.UploadJar(file.getPath)
+         
+      } else {
+         println("Unknown option: " + userOption)
+      }   
+    })
+    results 
   }
 }
