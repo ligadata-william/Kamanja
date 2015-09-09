@@ -3549,6 +3549,65 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def UpdateModel(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
+    try {
+      var compProxy = new CompilerProxy
+      compProxy.setSessionUserId(userid)
+      val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
+
+      val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
+      val isValid: Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
+
+      if (isValid && modDef != null) {
+        logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, sourceCode, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
+        val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
+	if( latestVersion != None ){
+          RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+	}
+	logger.info("Begin uploading dependent Jars, please wait.")
+        UploadJarsToDB(modDef)
+	logger.info("Finished uploading dependent Jars.")
+        val apiResult = AddModel(modDef)
+        var objectsUpdated = new Array[BaseElemDef](0)
+        var operations = new Array[String](0)
+	if( latestVersion != None ){
+          objectsUpdated = objectsUpdated :+ latestVersion.get
+          operations = operations :+ "Remove"
+	}
+        objectsUpdated = objectsUpdated :+ modDef
+        operations = operations :+ "Add"
+        NotifyEngine(objectsUpdated, operations)
+        apiResult
+      }
+      else{
+        val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
+        val modDefName: String = if (modDef != null) modDef.FullName else "(source compile failed)"
+        val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
+        apiResult.toString()
+      }
+    } catch {
+      case e: ModelCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+        apiResult.toString()
+      }
+      case e: AlreadyExistsException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+        apiResult.toString()
+      }
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+        apiResult.toString()
+      }
+    }
+  }
+
   def UpdateModel(pmmlText: String, userid: Option[String]): String = {
     try {
       var compProxy = new CompilerProxy
