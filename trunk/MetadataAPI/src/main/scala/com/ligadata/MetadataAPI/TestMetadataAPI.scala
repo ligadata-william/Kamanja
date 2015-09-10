@@ -1363,7 +1363,7 @@ println("Getting Messages")
     metaProps
   }
 
-  def AddModelSourceJava {
+  def AddModelSourceJava(op: String):Unit = {
     try {
       
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
@@ -1375,33 +1375,33 @@ println("Getting Messages")
       if (!IsValidDir(dirName))
         return
 
-      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".java"))
-      if (pmmlFiles.length == 0) {
+      val sourceFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".java"))
+      if (sourceFiles.length == 0) {
         logger.error("No model files in the directory " + dirName)
         return
       }
 
-      var pmmlFilePath = ""
-      println("Pick a Model Definition file(pmml) from below choices")
+      var sourceFilePath = ""
+      println("Pick a Model Definition file(source) from below choices")
 
       var seq = 0
-      pmmlFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+      sourceFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
       val choice: Int = readInt()
 
-      if (choice == pmmlFiles.length + 1) {
+      if (choice == sourceFiles.length + 1) {
         return
       }
-      if (choice < 1 || choice > pmmlFiles.length + 1) {
+      if (choice < 1 || choice > sourceFiles.length + 1) {
         logger.error("Invalid Choice : " + choice)
         return
       }
 
-      pmmlFilePath = pmmlFiles(choice - 1).toString
-      val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      sourceFilePath = sourceFiles(choice - 1).toString
+      val sourceStr = Source.fromFile(sourceFilePath).mkString
       // Save the model
       // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
 
@@ -1426,7 +1426,7 @@ println("Getting Messages")
       if (choice2 == configsKeys.length + 1) {
         return
       }
-    //  if (choice2 < 1 || choice2 > pmmlFiles.length + 1) {
+    //  if (choice2 < 1 || choice2 > sourceFiles.length + 1) {
     //    logger.error("Invalid Choice : " + choice)
     //    return
     //  }
@@ -1435,7 +1435,14 @@ println("Getting Messages")
       modelConfigName =  configToChoices(choice2 - 1)
       println("CHOSE " + (choice2-1) + "  "+modelConfigName)
       
-      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr, "java", modelConfigName, userid))
+      if( op.equalsIgnoreCase("add") ){
+	println("Results as json string => \n" + 
+		MetadataAPIImpl.AddModelFromSource(sourceStr, "java", modelConfigName, userid))
+      }
+      else{
+	println("Results as json string => \n" + 
+		MetadataAPIImpl.UpdateModel(sourceStr, "java", modelConfigName, userid))
+      }
     } catch {
       case e: AlreadyExistsException => {
         logger.error("Model Already in the metadata....")
@@ -1447,7 +1454,7 @@ println("Getting Messages")
     }
   }
 
-  def AddModelSourceScala {
+  def AddModelSourceScala(op: String): Unit = {
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
@@ -1457,34 +1464,34 @@ println("Getting Messages")
 
       if (!IsValidDir(dirName))
         return
-      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".scala"))
+      val sourceFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".scala"))
 
-      if (pmmlFiles.length == 0) {
+      if (sourceFiles.length == 0) {
         logger.error("No model files in the directory " + dirName)
         return
       }
 
-      var pmmlFilePath = ""
-      println("Pick a Model Definition file(pmml) from below choices")
+      var sourceFilePath = ""
+      println("Pick a Model Definition file(source) from below choices")
 
       var seq = 0
-      pmmlFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+      sourceFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
       val choice: Int = readInt()
 
-      if (choice == pmmlFiles.length + 1) {
+      if (choice == sourceFiles.length + 1) {
         return
       }
-      if (choice < 1 || choice > pmmlFiles.length + 1) {
+      if (choice < 1 || choice > sourceFiles.length + 1) {
         logger.error("Invalid Choice : " + choice)
         return
       }
 
-      pmmlFilePath = pmmlFiles(choice - 1).toString
-      val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      sourceFilePath = sourceFiles(choice - 1).toString
+      val sourceStr = Source.fromFile(sourceFilePath).mkString
       // Save the model
       // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
 
@@ -1518,8 +1525,15 @@ println("Getting Messages")
     
       println("CHOSE " + (choice2-1) + "  "+modelConfigName)
      
-
-      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr, "scala", modelConfigName, userid))
+      if( op.equalsIgnoreCase("add") ){
+	println("Results as json string => \n" +
+	      MetadataAPIImpl.AddModelFromSource(sourceStr, "scala", modelConfigName, userid))
+      }
+      else{
+	println("Results as json string => \n" +
+	      MetadataAPIImpl.UpdateModel(sourceStr, "scala", modelConfigName, userid))
+      }
+	
     } catch {
       case e: AlreadyExistsException => {
         logger.error("Model Already in the metadata....")
@@ -2511,8 +2525,10 @@ println("Getting Messages")
       val getAllOutputMsgs = () 		  => { GetAllOutputMsgsFromCache }
       val removeOutputMsg = () 			  => { RemoveOutputMsg }
       val updateOutputMsg = () 			  => { UpdateOutputMsg }
-      val addModelSourceJava = ()         => { AddModelSourceJava }
-      val addModelSourceScala = ()        => { AddModelSourceScala }
+      val addModelSourceJava = ()         => { AddModelSourceJava("add") }
+      val addModelSourceScala = ()        => { AddModelSourceScala("add") }
+      val updateModelSourceJava = ()         => { AddModelSourceJava("update") }
+      val updateModelSourceScala = ()        => { AddModelSourceScala("update") }
 
       val topLevelMenu = List(("Add Model",addModel),
             ("Add Model - Java", addModelSourceJava),
@@ -2524,6 +2540,8 @@ println("Getting Messages")
 			      ("Deactivate Model",deactivateModel),
 			      ("Activate Model",activateModel),
 			      ("Add Message",addMessage),
+            ("Update Model - Java", updateModelSourceJava),
+            ("Update Model - Scala", updateModelSourceScala),
             ("Update Message", updateMessage),
 			      ("Get Message",getMessage),
 			      ("Get All Messages",getAllMessages),

@@ -473,11 +473,11 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 	assert(objName != "unknownModel")
 
 	var version = "0000000000001000000"
-	res = MetadataAPIImpl.GetModelDef("system.v1000000",objName,"XML",version,None)
+	res = MetadataAPIImpl.GetModelDef("system",objName,"XML",version,None)
 	res should include regex ("\"Status Code\" : 0")
 
 	And("RemoveModel API for the model that was just added")
-	res = MetadataAPIImpl.RemoveModel("system.v1000000",objName,1000000,None)
+	res = MetadataAPIImpl.RemoveModel("system",objName,1000000,None)
 	res should include regex ("\"Status Code\" : 0")
 
 	And("AddModel again to add Model from " + file.getPath)
@@ -487,29 +487,29 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
 	And("GetModelDef API to fetch  the model that was just added")
 	//objName = f1.stripSuffix(".json").toLowerCase
-	res = MetadataAPIImpl.GetModelDef("system.v1000000",objName,"XML",version,None)
+	res = MetadataAPIImpl.GetModelDef("system",objName,"XML",version,None)
 	res should include regex ("\"Status Code\" : 0")
 
 	And("Get the model object from the cache")
-	var o = MdMgr.GetMdMgr.Model("system.v1000000",objName, version.toLong, true)
+	var o = MdMgr.GetMdMgr.Model("system",objName, version.toLong, true)
 	assert(o != None )
 
 	And("Deactivate model that was just added")
 	MetadataAPIImpl.DeactivateObject(o.get.asInstanceOf[BaseElemDef])
 
 	And("Get the active model object from the cache after deactivating")
-	o = MdMgr.GetMdMgr.Model("system.v1000000",objName, version.toLong, true)
+	o = MdMgr.GetMdMgr.Model("system",objName, version.toLong, true)
 	assert(o == None )
 
 	And("Make sure the model object from the cache nolonger active ")
-	o = MdMgr.GetMdMgr.Model("system.v1000000",objName, version.toLong, false)
+	o = MdMgr.GetMdMgr.Model("system",objName, version.toLong, false)
 	assert(o != None )
 
 	And("Activate model that was just deactivated")
 	MetadataAPIImpl.ActivateObject(o.get.asInstanceOf[BaseElemDef])
 
 	And("Make sure the model object from the cache is active")
-	o = MdMgr.GetMdMgr.Model("system.v1000000",objName, version.toLong, true)
+	o = MdMgr.GetMdMgr.Model("system",objName, version.toLong, true)
 	assert(o != None )
 
 	And("Clone the input json and update the version number to simulate a model for an update operation")
@@ -520,16 +520,16 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
 	And("GetModelDef API to fetch the model that was just updated")
 	newVersion = "0000000000001000001"
-	res = MetadataAPIImpl.GetModelDef("system.v1000001",objName,"XML",newVersion,None)
+	res = MetadataAPIImpl.GetModelDef("system",objName,"XML",newVersion,None)
 	res should include regex ("\"Status Code\" : 0")
 
 	And("Make sure new model object is active after updating")
-	o = MdMgr.GetMdMgr.Model("system.v1000001",objName, newVersion.toLong, true)
+	o = MdMgr.GetMdMgr.Model("system",objName, newVersion.toLong, true)
 	assert(o != None )
 
-	And("Make sure old(pre update version) model object also active after the update")
-	o = MdMgr.GetMdMgr.Model("system.v1000000",objName, version.toLong, true)
-	assert(o != None )
+	And("Make sure old(pre update version) model object not active after the update")
+	o = MdMgr.GetMdMgr.Model("system",objName, version.toLong, true)
+	assert(o == None )
       })
     }
 
