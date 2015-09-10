@@ -369,7 +369,7 @@ object KamanjaMdCfg {
       Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
     } catch {
       case e: Exception => {
-        LOG.error("Failed to load Output Adapter class %s with Reason:%s Message:%s".format(statusAdapterCfg.className, e.getCause, e.getMessage))
+        LOG.error("Failed to load Status/Output Adapter %s with class %s with Reason:%s Message:%s".format(statusAdapterCfg.Name, statusAdapterCfg.className, e.getCause, e.getMessage))
         return null
       }
     }
@@ -469,7 +469,7 @@ object KamanjaMdCfg {
       Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
     } catch {
       case e: Exception => {
-        LOG.error("Failed to load Input Adapter class %s with Reason:%s Message:%s".format(statusAdapterCfg.className, e.getCause, e.getMessage))
+        LOG.error("Failed to load Validate/Input Adapter %s with class %s with Reason:%s Message:%s".format(statusAdapterCfg.Name, statusAdapterCfg.className, e.getCause, e.getMessage))
         return null
       }
     }
