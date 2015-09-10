@@ -1,5 +1,4 @@
 package com.ligadata.automation.unittests.api
-import sbt.IO._
 
 import com.ligadata.automation.unittests.api.setup._
 import org.scalatest._

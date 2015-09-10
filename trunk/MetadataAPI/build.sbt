@@ -2,11 +2,7 @@ import AssemblyKeys._ // put this at the top of the file
 import sbt._
 import Keys._
 
-sbtPlugin := true
-
 shellPrompt := { state =>  "sbt (%s)> ".format(Project.extract(state).currentProject.id) }
-
-net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 assemblySettings
 
@@ -50,6 +46,8 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
   val excludes = Set("commons-beanutils-1.7.0.jar", "google-collections-1.0.jar", "commons-collections4-4.0.jar" )
   cp filter { jar => excludes(jar.data.getName) }
 }
+
+test in assembly := {}
 
 name := "MetadataAPI"
 

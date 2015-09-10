@@ -1,10 +1,9 @@
 package com.ligadata.automation.unittests.api.setup
-import sbt.IO._
 
 import scala.io._
 import java.util.Date
 import java.io._
-
+import java.nio.channels._
 import sys.process._
 import org.apache.log4j._
 
@@ -20,10 +19,33 @@ object ConfigDefaults {
   private val logger = Logger.getLogger(loggerName)
   logger.setLevel(Level.INFO)
 
-  private val RootDir = "./MetadataAPI/target/scala-2.10/sbt-0.13/test-classes"
+  private val RootDir = "./MetadataAPI/target/scala-2.10/test-classes"
   private val targetLibDir = RootDir + "/jars/lib/system"
   private val appLibDir = RootDir + "/jars/lib/application"
   private val workDir = RootDir + "/jars/lib/workingdir"
+
+  private def copyFile(sourceFile:File, destFile:File)  {
+    
+    if(!destFile.exists()) {
+        destFile.createNewFile();
+    }
+
+    var source:FileChannel = null;
+    var destination:FileChannel = null;
+
+    source = new FileInputStream(sourceFile).getChannel();
+    destination = new FileOutputStream(destFile).getChannel();
+    destination.transferFrom(source, 0, source.size());
+    source.close()
+    destination.close()
+  }
+
+  private def createDirectory(dirName:String){
+    var dir = new File(dirName)
+    if( ! dir.exists() ){
+      dir.mkdir()
+    }
+  }
 
   private def copy(path: File): Unit = {
     if(path.isDirectory ){
@@ -37,7 +59,7 @@ object ConfigDefaults {
         else if (f.getPath.endsWith(".jar")) {
           try {
 	    //logger.info("Copying " + f + "," + "(file size => " + f.length() + ") to " + targetLibDir + "/" + f.getName)
-            sbt.IO.copyFile(f, new File(targetLibDir + "/" + f.getName))
+	    copyFile(f,new File(targetLibDir + "/" + f.getName))
           }
           catch {
             case e: Exception => throw new Exception("Failed to copy file: " + f + " with exception:\n" + e)
@@ -47,11 +69,12 @@ object ConfigDefaults {
     }
   }
 
+  createDirectory(targetLibDir)
+  createDirectory(appLibDir)
+  createDirectory(workDir)
+
   copy(new File("lib_managed"))
   copy(new File("."))
-
-  sbt.IO.createDirectory(new File(appLibDir))
-  sbt.IO.createDirectory(new File(workDir))
 
   def jarResourceDir = getClass.getResource("/jars/lib/system").getPath
 
