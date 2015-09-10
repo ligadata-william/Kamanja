@@ -53,9 +53,13 @@ object ModelService {
     } else {
       //   println("Path provided. Added msg")
       //process message
-      var model = new File(input.toString)
-      modelDef= Source.fromFile(model).mkString
-      response = MetadataAPIImpl.AddModel(modelDef.toString, userid)
+        var model = new File(input.toString)
+      if(model.exists()){
+        modelDef= Source.fromFile(model).mkString
+        response = MetadataAPIImpl.AddModel(modelDef.toString, userid)
+      }else{
+        response="Model definition file does not exist"
+      }
     }
     response
   }
@@ -98,8 +102,12 @@ object ModelService {
       //   println("Path provided. Added msg")
       //process message
       var model = new File(input.toString)
-      modelDef= Source.fromFile(model).mkString
-      response = MetadataAPIImpl.UpdateModel(modelDef, userid)
+      if(model.exists()){
+        modelDef= Source.fromFile(model).mkString
+        response = MetadataAPIImpl.UpdateModel(modelDef, userid)
+      }else{
+        response="File does not exist"
+      }
       //println("Response: " + response)
     }
     response
@@ -143,9 +151,14 @@ object ModelService {
       //   println("Path provided. Added msg")
       //process message
       var model = new File(input.toString)
-      modelDef= Source.fromFile(model).mkString
-      response = MetadataAPIImpl.UpdateModel(modelDef, userid)
-      //println("Response: " + response)
+
+      if(model.exists()){
+        modelDef= Source.fromFile(model).mkString
+        response = MetadataAPIImpl.UpdateModel(modelDef, userid)
+      }else{
+        response="File does not exist"
+      }
+
     }
     response
   }
@@ -187,9 +200,12 @@ object ModelService {
       //   println("Path provided. Added msg")
       //process message
       var model = new File(input.toString)
-      modelDef= Source.fromFile(model).mkString
-      response = MetadataAPIImpl.UpdateModel(modelDef, userid)
-      //println("Response: " + response)
+      if(model.exists()){
+        modelDef= Source.fromFile(model).mkString
+        response = MetadataAPIImpl.UpdateModel(modelDef, userid)
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }
@@ -287,8 +303,12 @@ object ModelService {
       }
     } else {
       var model = new File(input.toString)
-      modelDef = Source.fromFile(model).mkString
-      modelDefs=modelDefs:+modelDef
+      if(model.exists()){
+        modelDef = Source.fromFile(model).mkString
+        modelDefs=modelDefs:+modelDef
+      }else{
+        response="File does not exist"
+      }
     }
     if(modelDefs.nonEmpty) {
       for (modelDef <- modelDefs){
@@ -367,8 +387,12 @@ object ModelService {
       }
     } else {
       var model = new File(input.toString)
-      modelDef = Source.fromFile(model).mkString
-      modelDefs=modelDefs:+modelDef
+      if(model.exists()){
+        modelDef = Source.fromFile(model).mkString
+        modelDefs=modelDefs:+modelDef
+      }else{
+        response="File does not exist"
+      }
     }
     if(modelDefs.nonEmpty) {
       for (modelDef <- modelDefs){
@@ -585,8 +609,13 @@ object ModelService {
           //find the file location corresponding to the message
 
           val model = models(userOption.toInt - 1)
+          var modelDef = ""
           //process message
-          val modelDef = Source.fromFile(model).mkString
+          if(model.exists()){
+             modelDef=Source.fromFile(model).mkString
+          }else{
+            println("File does not exist")
+          }
           //val response: String = MetadataAPIImpl.AddModel(modelDef, userid).toString
           listOfModelDef = listOfModelDef:+modelDef
         }
