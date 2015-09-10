@@ -8,6 +8,23 @@ public class JavaTestMdl extends ModelBase {
 
 	static JavaTestMdlObj objSignleton = new JavaTestMdlObj();
 
+	private final ModelContext modelContext;
+
+	@Override
+	public ModelContext modelContext() {
+		return modelContext;
+	}
+
+	@Override
+	public String modelName() {
+		return objSignleton.modelName();
+	}
+
+	@Override
+	public String version() {
+		return objSignleton.version();
+	}
+
 	public ModelResultBase execute(boolean emitAllResults) {
 		// Directly calling methods from Scala Singleton object. Not preferable
 		// to use direct scala.
@@ -26,8 +43,8 @@ public class JavaTestMdl extends ModelBase {
 		return null;
 	}
 
-	public JavaTestMdl(ModelContext mdlContext) {
-		super(mdlContext, objSignleton);
+	public JavaTestMdl(ModelContext modelContext) {
+		this.modelContext = modelContext;
 	}
 
 	public static class JavaTestMdlObj implements ModelFactory {

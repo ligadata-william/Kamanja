@@ -144,7 +144,7 @@ class LowBalanceAlertResult extends ModelResultBase {
   }
 }
 
-class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
+class LowBalanceAlert(val modelContext: ModelContext) extends ModelBase() {
   override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
@@ -169,6 +169,10 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
     // results
     LowBalanceAlert.createResultObject().asInstanceOf[LowBalanceAlertResult].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert").withTriggerTime(curTmInMs)
   }
+
+  override def modelName(): String = LowBalanceAlert.modelName()
+
+  override def version(): String = LowBalanceAlert.version()
 }
 
 // Model: LowBalanceAlert2
@@ -283,7 +287,7 @@ class LowBalanceAlertResult2 extends ModelResultBase {
   }
 }
 
-class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert2) {
+class LowBalanceAlert2(val modelContext: ModelContext) extends ModelBase {
   override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
@@ -325,6 +329,10 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
     // results
     LowBalanceAlert2.createResultObject().asInstanceOf[LowBalanceAlertResult2].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
   }
+
+  override def modelName(): String = LowBalanceAlert2.modelName()
+
+  override def version(): String = LowBalanceAlert2.version()
 }
 
 // Model: LocationAlert
