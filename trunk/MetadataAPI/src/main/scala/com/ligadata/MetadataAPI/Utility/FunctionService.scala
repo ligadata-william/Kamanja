@@ -190,7 +190,6 @@ object FunctionService {
       if(function.exists()){
         val functionDef = Source.fromFile(function).mkString
         response = MetadataAPIImpl.UpdateFunctions(functionDef.toString, "JSON", userid)
-
       }else{
         response="File does not exist"
       }
