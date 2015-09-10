@@ -238,27 +238,6 @@ class KamanjaManager extends Observer {
     val loadConfigs = KamanjaConfiguration.allConfigs
 
     try {
-      /*
-      KamanjaConfiguration.metadataDataStoreInfo = loadConfigs.getProperty("MetadataDataStore".toLowerCase, "")
-      KamanjaConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataStoreType.size == 0) {
-        LOG.error("Not found valid MetadataStoreType.")
-        return false
-      }
-
-      KamanjaConfiguration.metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataSchemaName.size == 0) {
-        LOG.error("Not found valid MetadataSchemaName.")
-        return false
-      }
-
-      KamanjaConfiguration.metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataLocation.size == 0) {
-        LOG.error("Not found valid MetadataLocation.")
-        return false
-      }
-*/
-
       KamanjaConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
       if (KamanjaConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")

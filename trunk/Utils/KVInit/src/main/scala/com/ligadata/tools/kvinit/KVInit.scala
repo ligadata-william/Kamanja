@@ -312,7 +312,6 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     if (isMsg == false) {
       // Checking for Message
       try {
-        // If required we need to enable this test
         // Convert class name into a class
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 

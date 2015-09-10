@@ -1276,6 +1276,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  					} else {	  					  
 		  					// LoadJarIfNeeded(mbrContainer, pmmlLoader.loadedJars, pmmlLoader.loader)
 		  					val useThisName = mbrContainer.typeString
+				              try {
+				                Class.forName(useThisName, true, pmmlLoader.loader)
+				              } catch {
+				                case e: Exception => {
+				                  logger.error("Failed to load class %s with Reason:%s Message:%s".format(useThisName, e.getCause, e.getMessage))
+				                  throw e // Rethrow
+				                }
+				              }
 					  		val clz = Class.forName(useThisName, true, pmmlLoader.loader)
 							// Convert class into class symbol
 							val clsSymbol = pmmlLoader.mirror.classSymbol(clz)
@@ -1294,6 +1302,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 								if (clssym == "scala.Any") {
 									(clssym, null, null)
 								} else {
+					                  try {
+					                    Class.forName(clssym, true, pmmlLoader.loader)
+					                  } catch {
+					                    case e: Exception => {
+					                      logger.error("Failed to load type class %s with Reason:%s Message:%s".format(clssym, e.getCause, e.getMessage))
+					                      throw e // Rethrow
+					                    }
+					                  }
 									val cls = Class.forName(clssym, true, pmmlLoader.loader)
 									val symbol = pmmlLoader.mirror.classSymbol(cls)
 									val typ = symbol.toType
@@ -1416,6 +1432,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		} else {
 	  			false
 	  		}
+              try {
+                Class.forName(useThisName, true, pmmlLoader.loader)
+              } catch {
+                case e: Exception => {
+                  logger.error("Failed to load class %s with Reason:%s Message:%s".format(useThisName, e.getCause, e.getMessage))
+                  throw e // Rethrow
+                }
+              }
 	  		val clz = Class.forName(useThisName, true, pmmlLoader.loader)
 			// Convert class into class symbol
 			val clsSymbol = pmmlLoader.mirror.classSymbol(clz)
@@ -1438,6 +1462,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 						/** NOTE: When notPromotable, there will be one of the following for each superclass */
 						(fqClassname, null, null)
 					} else {
+		                  try {
+		                    Class.forName(clssym, true, pmmlLoader.loader)
+		                  } catch {
+		                    case e: Exception => {
+		                      logger.error("Failed to load type class %s with Reason:%s Message:%s".format(clssym, e.getCause, e.getMessage))
+		                      throw e // Rethrow
+		                    }
+		                  }
 						val cls = Class.forName(clssym, true, pmmlLoader.loader)
 						val symbol = pmmlLoader.mirror.classSymbol(cls)
 						val typ = symbol.toType

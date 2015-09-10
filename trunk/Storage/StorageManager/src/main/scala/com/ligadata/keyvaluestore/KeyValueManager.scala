@@ -84,6 +84,15 @@ object KeyValueManager {
               throw new Exception("Failed to add Jars")
           }
 
+          try {
+            Class.forName(className, true, kvManagerLoader.loader)
+          } catch {
+            case e: Exception => {
+              logger.error("Failed to load Storage Adapter class %s with Reason:%s Message:%s".format(className, e.getCause, e.getMessage))
+              throw e // Rethrow
+            }
+          }
+
           // Convert class name into a class
           val clz = Class.forName(className, true, kvManagerLoader.loader)
 
