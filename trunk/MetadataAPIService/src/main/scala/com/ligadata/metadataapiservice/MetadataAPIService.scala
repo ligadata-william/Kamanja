@@ -94,10 +94,28 @@ trait MetadataAPIService extends HttpService {
                     }
                   }
                 } else if (toknRoute(0).equalsIgnoreCase("Activate") || toknRoute(0).equalsIgnoreCase("Deactivate")) {
-                  entity(as[String]) { reqBody => requestContext => processPutRequest(toknRoute(0), toknRoute(1).toLowerCase, toknRoute(2), requestContext, user, password, role) }
+                  entity(as[String]) { reqBody => requestContext => processPutRequest(toknRoute(0), toknRoute(1).toLowerCase, toknRoute(2), requestContext, user, password, role,modelname) }
                 } else {
                   entity(as[String]) { reqBody => {
-                    if (toknRoute.size == 1) { requestContext => processPutRequest(toknRoute(0), reqBody, requestContext, user, password, role) }
+                    if (toknRoute.size == 1) { requestContext => processPutRequest(toknRoute(0), reqBody, requestContext, user, password, role,modelname) }
+                      else if(toknRoute.size == 2 && toknRoute(0) == "model"){
+                      toknRoute(1).toString match {
+                        case ModelType.PMML => {
+                          val objectType = toknRoute(0) + toknRoute(1)
+                          entity(as[String]) { reqBody => { requestContext => processPutRequest(objectType, reqBody, requestContext, user, password, role,modelname) } }
+
+                        }
+                        case ModelType.JAVA => {
+                          val objectType = toknRoute(0) + toknRoute(1)
+                          entity(as[String]) { reqBody => { requestContext => processPutRequest(objectType, reqBody, requestContext, user, password, role,modelname) } }
+                        }
+
+                        case ModelType.SCALA => {
+                          val objectType = toknRoute(0) + toknRoute(1)
+                          entity(as[String]) { reqBody => { requestContext => processPutRequest(objectType, reqBody, requestContext, user, password, role,modelname) } }
+                        }
+                      }
+                    }
                     else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown PUT route")).toString) }
                   }
                   }
@@ -159,7 +177,7 @@ trait MetadataAPIService extends HttpService {
   /**
    * Modify Existing objects in the Metadata
    */
-  private def processPutRequest(objtype: String, body: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
+  private def processPutRequest(objtype: String, body: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String], modelname: Option[String]): Unit = {
     val action = "Update" + objtype
     val notes = "Invoked " + action + " API "
     if (objtype.equalsIgnoreCase("Container")) {
@@ -189,7 +207,34 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("OutputMsg")) {
       val updateOutputMsgDefService = actorRefFactory.actorOf(Props(new UpdateOutputMsgService(rContext, userid, password, role)))
       updateOutputMsgDefService ! UpdateOutputMsgService.Process(body, "JSON")
-    } else {
+    }else if (objtype.equalsIgnoreCase("UploadModelConfig")) {
+      //TODO
+      //call the UploadModelConfig in the MetadataAPIImpl
+      //UploadModelsConfig (cfgStr: String,userid:Option[String], objectList: String): String = {
+      logger.debug("In post request process of UploadModelConfig")
+      val addModelDefsService = actorRefFactory.actorOf(Props(new UploadModelConfigService(rContext, userid, password, role)))
+      addModelDefsService ! UploadModelConfigService.Process(body)
+    } else if (objtype.equalsIgnoreCase("modeljava")) {
+      //TODO
+      logger.debug("In post request process of model java")
+
+      val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
+      addSourceModelService ! UpdateSourceModelService.ProcessJava(body)
+
+    }
+    else if (objtype.equalsIgnoreCase("modelscala")) {
+      //TODO
+      logger.debug("In post request process of model scala")
+      // rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
+      val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
+      addSourceModelService ! UpdateSourceModelService.ProcessScala(body)
+
+    }
+    else if (objtype.equalsIgnoreCase("modelpmml")) {
+      val addModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateModelService(rContext, userid, password, role)))
+      addModelService ! UpdateModelService.Process(body)
+    }
+    else {
       rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown PUT route")).toString)
     }
   }
@@ -198,7 +243,7 @@ trait MetadataAPIService extends HttpService {
    * Modify Existing objects in the Metadata
    * Modify Existing objects in the Metadata
    */
-  private def processPutRequest(action: String, objtype: String, objKey: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
+  private def processPutRequest(action: String, objtype: String, objKey: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String],modelname: Option[String]): Unit = {
     var argParm: String = verifyInput(objKey, objtype, rContext)
     if (argParm == null) return
 

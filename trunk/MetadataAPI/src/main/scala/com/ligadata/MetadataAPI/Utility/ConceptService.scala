@@ -52,8 +52,12 @@ object ConceptService {
     } else {
       //input provided
       var message = new File(input.toString)
-      val conceptDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.AddConcepts(conceptDef.toString, "JSON", userid)
+      if(message.exists()){
+        val conceptDef = Source.fromFile(message).mkString
+        response = MetadataAPIImpl.AddConcepts(conceptDef.toString, "JSON", userid)
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }
@@ -136,8 +140,12 @@ object ConceptService {
     } else {
       //input provided
       var message = new File(input.toString)
-      val conceptDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.UpdateConcepts(conceptDef.toString, "JSON", userid)
+      if(message.exists()){
+        val conceptDef = Source.fromFile(message).mkString
+        response = MetadataAPIImpl.UpdateConcepts(conceptDef.toString, "JSON", userid)
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }
