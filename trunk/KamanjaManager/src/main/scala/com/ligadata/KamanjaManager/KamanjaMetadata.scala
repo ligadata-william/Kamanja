@@ -101,8 +101,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to get classname :" + clsName)
-        
+        LOG.debug("Failed to get classname :" + clsName)
         return false
       }
     }
@@ -207,8 +206,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to get classname :" + clsName)
-        
+        LOG.debug("Failed to get classname :" + clsName)
         return false
       }
     }
@@ -301,9 +299,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        
-        LOG.error("Failed to get classname :" + clsName)
-        
+        LOG.debug("Failed to get classname :" + clsName)
         return false
       }
     }

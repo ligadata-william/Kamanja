@@ -195,7 +195,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   if (isOk) {
     MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile, false)
 
-
     nodeInfo = mdMgr.Nodes.getOrElse(KvInitConfiguration.nodeId.toString, null)
     if (nodeInfo == null) {
       logger.error("Node %d not found in metadata".format(KvInitConfiguration.nodeId))
@@ -241,35 +240,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
     dataDataStoreInfo = dataStore
-
-    /*
-    if (isOk) {
-      dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
-      if (dataStoreType.size == 0) {
-        logger.error("Not found valid DataStoreType.")
-        isOk = false
-      }
-    }
-
-    if (isOk) {
-      dataSchemaName = dataStoreInfo.SchemaName.replace("\"", "").trim
-      if (dataSchemaName.size == 0) {
-        logger.error("Not found valid DataSchemaName.")
-        isOk = false
-      }
-    }
-
-    if (isOk) {
-      dataLocation = dataStoreInfo.Location.replace("\"", "").trim
-      if (dataLocation.size == 0) {
-        logger.error("Not found valid DataLocation.")
-        isOk = false
-      }
-    }
-
-    adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
-    
-*/
 
     if (isOk) {
       zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
@@ -326,7 +296,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     if (isMsg == false) {
       // Checking for Message
       try {
-        // If required we need to enable this test
         // Convert class name into a class
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
@@ -337,8 +306,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          logger.error("Failed to get classname:%s as message".format(clsName))
-          
+          logger.error("Failed to load message class %s with Reason:%s Message:%s".format(clsName, e.getCause, e.getMessage))
         }
       }
     }
@@ -357,8 +325,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          logger.error("Failed to get classname:%s as container".format(clsName))
-          
+          logger.error("Failed to load container class %s with Reason:%s Message:%s".format(clsName, e.getCause, e.getMessage))
         }
       }
     }
@@ -452,7 +419,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:"+stackTrace)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -534,7 +501,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
           } catch {
             case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
-              logger.debug("Failed to populate message/container."+"\nStackTrace:"+stackTrace)
+              logger.debug("Failed to populate message/container." + "\nStackTrace:" + stackTrace)
               errsCnt += 1
             }
           }
@@ -551,8 +518,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
           } catch {
             case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
-              logger.debug("Failed to serialize/write data."+"\nStackTrace:"+stackTrace)
-              
+              logger.debug("Failed to serialize/write data." + "\nStackTrace:" + stackTrace)
+
               errsCnt += 1
             }
           }
@@ -584,7 +551,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {
         case e: Exception => {
-          logger.error("Failed to send update notification to engine.")}
+          logger.error("Failed to send update notification to engine.")
+        }
       } finally {
         if (zkcForSetData != null)
           zkcForSetData.close
@@ -747,7 +715,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStacktrace:"+stackTrace)
+        logger.debug("\nStacktrace:" + stackTrace)
         return false
     }
 
