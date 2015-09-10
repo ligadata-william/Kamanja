@@ -1,0 +1,41 @@
+<PMML version="4.1" xmlns="http://www.dmg.org/PMML-4_1">
+    <Header copyright="LigaDATA. Copyright 2014" description="Hello World">
+        <Application name="HelloWord" version="00.01.00"/>
+    </Header>
+    <DataDictionary numberOfFields="3">
+        <DataField dataType="helloworld_msg_def" displayName="msg" name="msg" optype="categorical"/>
+        <DataField dataType="EnvContext" displayName="globalContext" name="gCtx" optype="categorical"/>
+        <DataField dataType="container" displayName="parameters" name="parameters">
+            <Value property="valid" value="gCtx"/>
+            <Value property="valid" value="msg"/>
+        </DataField>
+        <DataField dataType="string" displayName="name" name="name" optype="categorical"/>
+        <DataField dataType="integer" displayName="predictedField" name="predictedField" optype="categorical"/>
+    </DataDictionary>
+    <TransformationDictionary>
+        <DerivedField dataType="boolean" name="ScoreCheck" optype="categorical">
+            <Apply function="and">
+                <Apply function="Equal">
+                    <FieldRef field="msg.score"/>
+                    <Constant dataType="integer">1</Constant>
+                </Apply>
+                <Apply function="Put">
+                    <Constant dataType="string">name</Constant>
+                    <FieldRef field="msg.name"/>
+                </Apply>
+            </Apply>
+        </DerivedField>
+    </TransformationDictionary>
+    <RuleSetModel algorithmName="RuleSet" functionName="classification" modelName="HelloWorldModel">
+        <MiningSchema>
+            <MiningField name="name" usageType="supplementary"/>
+            <MiningField name="predictedField" usageType="predicted"/>
+        </MiningSchema>
+        <RuleSet defaultScore="0">
+            <RuleSelectionMethod criterion="firstHit"/>
+            <SimpleRule id="ScoreCheck" score="1b">
+                <SimplePredicate field="ScoreCheck" operator="equal" value="true"/>
+            </SimpleRule>
+        </RuleSet>
+    </RuleSetModel>
+</PMML>

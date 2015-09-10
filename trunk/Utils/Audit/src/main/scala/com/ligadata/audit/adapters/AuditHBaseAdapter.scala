@@ -250,7 +250,58 @@ class AuditHBaseAdapter extends AuditAdapter
     }
   }
   
-  
+  private def getAllKeys(handler: (Key) => Unit): Unit = {
+    var p = new Scan()
+
+    val tableHBase = connection.getTable(table);
+    try {
+      val iter = tableHBase.getScanner(p)
+
+      try {
+        var fContinue = true
+
+        do {
+          val row = iter.next()
+          if (row != null) {
+            val v = row.getRow()
+            val key = new Key
+            key ++= v
+
+            handler(key)
+          } else {
+            fContinue = false;
+          }
+        } while (fContinue)
+
+      } finally {
+        iter.close()
+      }
+    } catch {
+      case e: Exception => throw e
+    } finally {
+      if (tableHBase != null)
+        tableHBase.close
+    }
+  }
+
+  private def del(key: Key): Unit = {
+    val p = new Delete(key.toArray[Byte])
+
+    val tableHBase = connection.getTable(table);
+    try {
+      val result = tableHBase.delete(p)
+    } catch {
+      case e: Exception => throw e
+    } finally {
+      if (tableHBase != null)
+        tableHBase.close
+    }
+  }
+
+  override def TruncateStore(): Unit = {
+    getAllKeys({ (key: Key) => del(key) })
+  }
+
   private def initPropertiesFromFile(parmFile: String): Unit = {  
     try {
        scala.io.Source.fromFile(parmFile).getLines.foreach(line => {

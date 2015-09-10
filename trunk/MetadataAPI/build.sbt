@@ -47,6 +47,8 @@ excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
   cp filter { jar => excludes(jar.data.getName) }
 }
 
+test in assembly := {}
+
 name := "MetadataAPI"
 
 version := "1.0"
@@ -77,3 +79,7 @@ libraryDependencies ++= Seq(
 )
 
 scalacOptions += "-deprecation"
+
+retrieveManaged := true
+
+parallelExecution := false
