@@ -238,6 +238,16 @@ object KamanjaMdCfg {
         throw new Exception("Failed to add Jars")
     }
 
+    // Try for errors before we do real loading & processing
+    try {
+      Class.forName(className, true, loaderInfo.loader)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to load EnvironmentContext class %s with Reason:%s Message:%s".format(className, e.getCause, e.getMessage))
+        return null
+      }
+    }
+
     // Convert class name into a class
     val clz = Class.forName(className, true, loaderInfo.loader)
 
@@ -273,7 +283,7 @@ object KamanjaMdCfg {
       } catch {
         case e: Exception => {
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
-          
+
         }
       }
     } else {
@@ -354,6 +364,16 @@ object KamanjaMdCfg {
         throw new Exception("Failed to add Jars")
     }
 
+    // Try for errors before we do real loading & processing
+    try {
+      Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to load Status/Output Adapter %s with class %s with Reason:%s Message:%s".format(statusAdapterCfg.Name, statusAdapterCfg.className, e.getCause, e.getMessage))
+        return null
+      }
+    }
+
     // Convert class name into a class
     val clz = Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
 
@@ -382,7 +402,8 @@ object KamanjaMdCfg {
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)}
+          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+        }
       }
     } else {
       LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
@@ -417,10 +438,10 @@ object KamanjaMdCfg {
         if (adapter == null) return false
         outputAdapters += adapter
       } catch {
-        case e: Exception =>{
+        case e: Exception => {
           LOG.error("Failed to get output adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
           return false
-          }
+        }
       }
     })
     return true
@@ -441,6 +462,16 @@ object KamanjaMdCfg {
     if (allJars != null) {
       if (Utils.LoadJars(allJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
+    }
+
+    // Try for errors before we do real loading & processing
+    try {
+      Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to load Validate/Input Adapter %s with class %s with Reason:%s Message:%s".format(statusAdapterCfg.Name, statusAdapterCfg.className, e.getCause, e.getMessage))
+        return null
+      }
     }
 
     // Convert class name into a class
@@ -470,8 +501,9 @@ object KamanjaMdCfg {
           LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
         }
       } catch {
-        case e: Exception =>{ 
-          LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)}
+        case e: Exception => {
+          LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+        }
       }
     } else {
       LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
@@ -509,7 +541,7 @@ object KamanjaMdCfg {
         if (adapter == null) return false
         inputAdapters += adapter
       } catch {
-        case e: Exception =>{
+        case e: Exception => {
           LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
           return false
         }
