@@ -29,6 +29,7 @@ object StartMetadataAPI {
   val ACTIVATE="activate"
   val OUTPUT="output"
   val DEACTIVATE="deactivate"
+  val UPDATE="update"
   var expectDep = false
   var expectRemoveParm = false
   var depName: String = ""
@@ -38,7 +39,7 @@ object StartMetadataAPI {
     try {
       var argsUntilParm = 2
       args.foreach(arg =>
-        if(arg.equalsIgnoreCase(OUTPUT)){
+        if(arg.equalsIgnoreCase(OUTPUT) || (arg.equalsIgnoreCase(UPDATE))){
           argsUntilParm=3
         }
       )
@@ -56,7 +57,7 @@ object StartMetadataAPI {
             depName = arg
             expectDep = false
           } else {
-            if((arg.equalsIgnoreCase(REMOVE)) || (arg.equalsIgnoreCase(GET)) || (arg.equalsIgnoreCase(ACTIVATE)) || (arg.equalsIgnoreCase(DEACTIVATE))) {
+            if((arg.equalsIgnoreCase(REMOVE)) || (arg.equalsIgnoreCase(GET)) || (arg.equalsIgnoreCase(ACTIVATE)) || (arg.equalsIgnoreCase(DEACTIVATE)) || (arg.equalsIgnoreCase(UPDATE))) {
               expectRemoveParm = true
             }
 
@@ -179,8 +180,23 @@ object StartMetadataAPI {
             ModelService.deactivateModel(param)
         }
         case Action.UPDATEMODELPMML => response = ModelService.updateModelpmml(input)
-        case Action.UPDATEMODELSCALA => response = ModelService.updateModelscala(input)
-        case Action.UPDATEMODELJAVA => response = ModelService.updateModeljava(input)
+        //case Action.UPDATEMODELSCALA => response = ModelService.updateModelscala(input)
+        //case Action.UPDATEMODELJAVA => response = ModelService.updateModeljava(input)
+
+        case Action.UPDATEMODELSCALA => {
+          if (param.length == 0)
+            response = ModelService.updateModelscala(input)
+          else
+            response = ModelService.updateModelscala(input, param)
+        }
+
+        case Action.UPDATEMODELJAVA => {
+          if (param.length == 0)
+            response = ModelService.updateModeljava(input)
+          else
+            response = ModelService.updateModeljava(input, param)
+        }
+//
         case Action.GETALLMODELS => response = ModelService.getAllModels
         case Action.GETMODEL => response =
           {

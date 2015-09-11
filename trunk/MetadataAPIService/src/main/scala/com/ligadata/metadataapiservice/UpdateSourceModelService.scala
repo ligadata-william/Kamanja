@@ -34,16 +34,16 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
 
   def receive = {
     case ProcessJava(sourceCode) => {
-      process(sourceCode)
+      processJava(sourceCode)
       context.stop(self)
     }
     case ProcessScala(sourceCode) => {
-      process(sourceCode)
+      processScala(sourceCode)
       context.stop(self)
     }
   }
 
-  def process(pmmlStr:String) = {
+  def processScala(pmmlStr:String) = {
 
     log.debug("Requesting UpdateSourceModel {}",pmmlStr)
 
@@ -58,9 +58,30 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Failed to add model. No model configuration name supplied. Please specify in the header the model configuration name where the key is 'modelname' and the value is the name of the configuration.").toString )
     }
     else {
-      val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr,userid)
+      val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr,"scala",usersModelName,userid)
       requestContext.complete(apiResult)
     }
   }
+
+  def processJava(pmmlStr:String) = {
+
+    log.debug("Requesting UpdateSourceModel {}",pmmlStr)
+
+    logger.debug("Requesting AddSourceModel.")
+    val usersModelName=userid.getOrElse("")+"."+modelname.getOrElse("")
+    logger.debug("user model name is: "+usersModelName)
+
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","model"))) {
+      //  MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,pmmlStr,AuditConstants.FAIL,"",nameVal)
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
+    }else if((modelname.getOrElse(""))=="") {
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Failed to add model. No model configuration name supplied. Please specify in the header the model configuration name where the key is 'modelname' and the value is the name of the configuration.").toString )
+    }
+    else {
+      val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr,"java",usersModelName,userid)
+      requestContext.complete(apiResult)
+    }
+  }
+
 
 }

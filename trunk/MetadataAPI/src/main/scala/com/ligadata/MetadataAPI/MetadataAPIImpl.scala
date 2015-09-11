@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 package com.ligadata.MetadataAPI
 
 import java.util.Properties
