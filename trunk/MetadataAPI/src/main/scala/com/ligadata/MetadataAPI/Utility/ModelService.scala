@@ -226,7 +226,6 @@ object ModelService {
               }
               case option => {
                 modelDefs=getUserInputFromMainMenu(models)
-
               }
             }
           }
@@ -240,7 +239,6 @@ object ModelService {
       //   println("Path provided. Added msg")
       //process message
       var model = new File(input.toString)
-
       if (model.exists()) {
         modelDef = Source.fromFile(model).mkString
         modelDefs=modelDefs:+modelDef
@@ -285,7 +283,6 @@ object ModelService {
           }
         }
       }
-
     response
   }
 

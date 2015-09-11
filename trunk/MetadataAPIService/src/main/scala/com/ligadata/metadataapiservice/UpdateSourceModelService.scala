@@ -39,12 +39,11 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
     }
     case ProcessScala(sourceCode) => {
       processScala(sourceCode)
-      context.stop(self)
+   context.stop(self)
     }
   }
 
   def processScala(pmmlStr:String) = {
-
     log.debug("Requesting UpdateSourceModel {}",pmmlStr)
 
     logger.debug("Requesting AddSourceModel.")
@@ -58,6 +57,7 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Failed to add model. No model configuration name supplied. Please specify in the header the model configuration name where the key is 'modelname' and the value is the name of the configuration.").toString )
     }
     else {
+
       val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr,"scala",usersModelName,userid)
       requestContext.complete(apiResult)
     }
@@ -82,6 +82,4 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
       requestContext.complete(apiResult)
     }
   }
-
-
 }
