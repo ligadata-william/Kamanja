@@ -6,6 +6,7 @@ import com.ligadata.KamanjaBase.{ModelResultBase, TransactionContext, ModelConte
 import com.ligadata.SimpleEnvContextImpl.SimpleEnvContextImpl
 import com.ligadata.jpmml.concrete.JpmmlModelEvaluatorConcrete
 import com.ligadata.jpmml.message.JpmmlMessage
+import org.jpmml.evaluator.ClusterClassificationMap
 import org.scalatest.FlatSpec
 /**
  * Tests
