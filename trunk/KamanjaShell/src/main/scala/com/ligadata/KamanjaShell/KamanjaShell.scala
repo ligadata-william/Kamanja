@@ -51,7 +51,7 @@ object KamanjaShell {
   val OUTPUTMESSAGE_FILES_DIR_PROP: String = "OUTPUTMESSAGE_FILES_DIR"
   val CONFIG_FILES_DIR_PROP: String = "CONFIG_FILES_DIR"
   val CONCEPT_FILES_DIR_PROP: String = "CONCEPT_FILES_DIR"
-  val NODE_ID_PROP: String = "NODE_ID"
+  val NODE_ID_PROP: String = "nodeId"
   val METADATASCHEMANAME_PROP: String = "MetadataSchemaName"
   val METADATASTORETYPE_PROP: String = "MetadataStoreType"
   val METADATALOCATION_PROP: String = "MetadataLocation"
@@ -99,8 +99,6 @@ object KamanjaShell {
       opts.setIPath(tempPath + "/node_" + tempName)
       opts.setIPort(tempPort)
       opts.setUserid("shellLocal")
-      var myConfigFile = setupMetadataParams(metadataParams, opts)
-      var myEngineFile = setupEngineParams(opts,runtimeParams,metadataParams)
       
       // See if the directory already exists or not, if it needs to be created, create it along with the basic
       // configurations to be used.
@@ -110,6 +108,9 @@ object KamanjaShell {
         println("Create new node instance")  
         createNewNodeStructure
       }
+      
+      var myConfigFile = setupMetadataParams(metadataParams, opts)
+      var myEngineFile = setupEngineParams(opts,runtimeParams,metadataParams)      
       
       _exec = Executors.newFixedThreadPool(10)
       
@@ -207,14 +208,14 @@ object KamanjaShell {
    */
   private def setupEngineParams(opts: InstanceContext, derivedParams: Properties, mdParams: Properties): String = {
     
-    var configDir = opts.getKamanjaHome + "/config"
+    var nodeDir = opts.getIPath + "/config"
     
     // Set the node Id to default to the name fo the node.
      derivedParams.setProperty(NODE_ID_PROP, opts.getIName) 
      derivedParams.setProperty(METADATADATASTORE_PROP, mdParams.getProperty(METADATADATASTORE_PROP)) 
      
-      KShellUtils.savePropFile(derivedParams,"engineConfig_"+opts.getIName+".properties",configDir)
-     configDir + "/mdConfig_"+opts.getIName+".properties"
+      KShellUtils.savePropFile(derivedParams,"engineConfig_"+opts.getIName+".properties",nodeDir)
+     nodeDir + "/mdConfig_"+opts.getIName+".properties"
   }
   
   
@@ -231,6 +232,7 @@ object KamanjaShell {
      var jarTargetDir: String = ""
      var compilerWorkDir: String = ""
      var classPath: String = ""
+     var nodeDir: String = opts.getIPath + "/config"
     
      // Step 1. -  Get KamanjaHome.  It must be set
      try {
@@ -251,7 +253,7 @@ object KamanjaShell {
      
      // Get the config file.
      var mdProps = new java.util.Properties
-     var mdFile: String = configDir+"/kamanjaAPI.properties"       
+     var mdFile: String = configDir+"/kamanjaMetadata.properties"       
      try {
        mdProps.load(new java.io.FileInputStream(mdFile))
      } catch {
@@ -380,9 +382,9 @@ object KamanjaShell {
      
      // Set the node Id to default to the name fo the node.
      derivedParams.setProperty(NODE_ID_PROP, opts.getIName) 
-     KShellUtils.savePropFile(derivedParams,"mdConfig_"+opts.getIName+".properties",configDir)
+     KShellUtils.savePropFile(derivedParams,"mdConfig_"+opts.getIName+".properties",nodeDir)
      // Return..
-     configDir + "/mdConfig_"+opts.getIName+".properties"
+     nodeDir + "/mdConfig_"+opts.getIName+".properties"
                                  
   }
     
@@ -501,6 +503,12 @@ object KamanjaShell {
     println("Stopping ZooKeeper")
     val stopZK =  s"$tmpZKPath/bin/zkServer.sh stop".! 
     
+    println ("Cleaning up the shell sturctures")
+    if (_exec != null)
+      _exec.shutdown    
+    
+    
+    println("Completed KamanjaShell shutdown/cleanup.")
    // if (_exec != null)
    //   _exec.shutdown 
   }

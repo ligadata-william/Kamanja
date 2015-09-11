@@ -6669,7 +6669,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean) {
-        
+    
+    if(isInitilized) return
+    
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
     mdLoader.initialize

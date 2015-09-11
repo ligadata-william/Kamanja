@@ -115,7 +115,9 @@ object KafkaCommands {
         override def run() = {
           val buffer = new StringBuffer() 
           var tPath = opts.getIPath
-          val kafkaCommand = Seq("sh","-c",s"$tmpKPath/bin/kafka-server-start.sh $tPath/kafka/conf/server.properties  > /tmp/mylog")  
+          var cmd = s"$tmpKPath/bin/kafka-server-start.sh $tPath/kafka/conf/server.properties"
+          println(" STARTING KAFKA -> " + cmd)
+          val kafkaCommand = Seq("sh","-c", cmd)  
           val lines = kafkaCommand lines_! ProcessLogger(buffer append _)
         }
       })    

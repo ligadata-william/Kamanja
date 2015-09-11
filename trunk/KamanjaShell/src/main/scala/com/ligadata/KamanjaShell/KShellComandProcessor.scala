@@ -1,6 +1,7 @@
 package com.ligadata.KamanjaShell
 
 import scala.actors.threadpool.{ Executors, ExecutorService }
+import com.ligadata.KamanjaManager._
 
 
 /**
@@ -17,6 +18,7 @@ object KShellComandProcessor {
   val ADD_VERB: String = "add"
   val REMOVE_VERB: String = "remove"
   val GET_VERB: String = "get"
+  val UPDATE_VERB: String = "update"
   
   
   // Subjects
@@ -39,6 +41,8 @@ object KShellComandProcessor {
   val PATH: String = "path"
   val FILTER: String = "filter"
   val MODEL_CONFIG: String = "configName"
+  val ABSOLUTE_PATH: String = "isFullPath"
+  val KEY: String = "key"
   
   //other
   val JAVA: String = "java"
@@ -48,7 +52,9 @@ object KShellComandProcessor {
   // Process the command
   def processCommand (verb: String, subject: String, cOptions: scala.collection.mutable.Map[String,String], opts: InstanceContext, exec: ExecutorService) : String = {
     
-    // CREATE commands (Kafka-Topics,)
+    //******************************************
+    //*  CREATE commands (Kafka-Topics,)
+    //******************************************    
     if (verb.equalsIgnoreCase(CREATE_VERB)) {
       // KAFKA_TOPICS
       if (subject.equalsIgnoreCase(KAFKA_TOPICS))  {
@@ -70,7 +76,19 @@ object KShellComandProcessor {
       }
     }
     
-    // CONFIGURE commands
+    //******************************************
+    // START commands (engine)
+    //******************************************
+    if (verb.equalsIgnoreCase(START_VERB)) {
+      // Engine?
+      if (subject.equalsIgnoreCase(ENGINE)) {
+       EningeCommandProcessor.startEngineProcess(opts, exec)
+      }     
+    }
+    
+    //******************************************
+    //* CONFIGURE commands
+    //******************************************
     if (verb.equalsIgnoreCase(CONFIGURE_VERB)) {
       // Engine
       if(subject.equalsIgnoreCase(ENGINE)) {
@@ -79,7 +97,9 @@ object KShellComandProcessor {
       }
     }
     
-    // SET commands
+    //******************************************
+    //* SET commands
+    //******************************************
     if (verb.equalsIgnoreCase(SET_VERB)) {
       // Engine
       if(subject.equalsIgnoreCase(APP_PATH)) {
@@ -88,7 +108,9 @@ object KShellComandProcessor {
       }
     }
     
-    // PUSH commands (Data)
+    //***************************************
+    // * PUSH commands (Data)
+    //***************************************
     if (verb.equalsIgnoreCase(PUSH_VERB)) {
       // DATA
       if (subject.equalsIgnoreCase(DATA))  {
@@ -109,43 +131,109 @@ object KShellComandProcessor {
       }            
     }
     
+    //*****************************************
     // ADD Commands (container, message, model)
+    //*****************************************
     if (verb.equalsIgnoreCase(ADD_VERB)) {
       // -Add Model
       if (subject.equalsIgnoreCase(MODEL)) {
         var makeFilePath: String = ""
-        var containerPath = cOptions.getOrElse(PATH, "")
-        val tokenizedPath = containerPath.split(".")
+        var modelPath = constructPath(cOptions, opts, MODEL)
+        val tokenizedPath = modelPath.split('.')
         
         // is this a Java model
         if (tokenizedPath(tokenizedPath.size - 1).equalsIgnoreCase(JAVA)) {
            makeFilePath = cOptions.getOrElse(MODEL_CONFIG, "")
+           MetadataProxy.addNativeModel(opts, modelPath, makeFilePath,"java") 
         }
         // is this a scala Model
-        else if (tokenizedPath(tokenizedPath.size - 1).equalsIgnoreCase(SCALA)) {
+        else if (tokenizedPath(tokenizedPath.size - 1).equalsIgnoreCase(SCALA)) {       
            makeFilePath = cOptions.getOrElse(MODEL_CONFIG, "")
+           MetadataProxy.addNativeModel(opts, modelPath, makeFilePath, "scala") 
         }
         // nope, must be a PMML one...
         else {
-          
+          MetadataProxy.addPmmlModel(opts, modelPath)   
         }    
       }
       
       // -Add container
       if (subject.equalsIgnoreCase(CONTAINER)) {
-        var containerPath = cOptions.getOrElse(PATH, "")
-        MetadataProxy.addContainer(opts, containerPath, opts.getAppPath)
+        var containerPath = constructPath(cOptions, opts, CONTAINER)
+        MetadataProxy.addContainer(opts, containerPath)
       }
       
       // -Add message
       if (subject.equalsIgnoreCase(MESSAGE)) {
-        var messagePath = cOptions.getOrElse(PATH, "")
-        MetadataProxy.addContainer(opts, messagePath, opts.getAppPath)        
+        var messagePath =  constructPath(cOptions, opts, MESSAGE) 
+        MetadataProxy.addMessage(opts, messagePath)        
       } 
     }
     
+    //*****************************************
+    // Get Commands (container, message, model)
+    //   if KEY keyword is specified then only
+    //     a definition for that key is returned.
+    //   ELSE
+    //     keys for all definitions are returned..
+    //*****************************************
+    if (verb.equalsIgnoreCase(GET_VERB)) {
+      // -Get container(s)
+      if (subject.equalsIgnoreCase(CONTAINER)) {
+        var key = cOptions.getOrElse(KEY, "")
+        MetadataProxy.getContainer(opts, key)
+      } 
+      // -Get message(s)
+      if (subject.equalsIgnoreCase(MESSAGE)) {
+        var key = cOptions.getOrElse(KEY, "")
+        MetadataProxy.getMessage(opts, key)
+      } 
+      // -Get model(s)
+      if (subject.equalsIgnoreCase(MODEL)) {
+        var key = cOptions.getOrElse(KEY, "")
+        MetadataProxy.getModel(opts, key)
+      }             
+    }
+    
+    //*******************************************
+    // REMOVE Commands (container, message, model)
+    //*******************************************
+    if (verb.equalsIgnoreCase(REMOVE_VERB)) {
+      // - Remove container
+      if(subject.equalsIgnoreCase(CONTAINER)) {
+        var key =  cOptions.getOrElse(KEY, "")
+        MetadataProxy.removeContainer(opts, key)
+      }
+   
+      // - Remove message
+      if(subject.equalsIgnoreCase(CONTAINER)) {
+        var key =  cOptions.getOrElse(KEY, "")
+        MetadataProxy.removeMessage(opts, key)
+      }
+      
+    }
 
     
     return ""
+  }
+  
+  /**
+   * constructPath - this will construct a full path to the file where the metadata definition is specified.  If the SET APP command has been
+   *                 issued, then the path for this file will be created as following
+   *                 /<APP_PATH>/metadata/<TYPE(container, message, etc)>/<User parameter>  
+   *                 so for example:  
+   *                 if SET APP was set for /tmp/app1, and a container named myContainer.json is passed then the final path will be
+   *                 /tmp/app1/metadata/container/myContainer.json.
+   *                 
+   *                 NOTE:  A user can also specify a "isFullPath:yes".  In which case, the user is telling us to take the PATH option as is.  
+   */
+  private def constructPath(cOptions: scala.collection.mutable.Map[String,String],  opts: InstanceContext, metadataType: String): String = {
+    var pathOption = cOptions.getOrElse(PATH, "")
+    var abPath = cOptions.getOrElse(ABSOLUTE_PATH, "")
+    
+    if (!abPath.equalsIgnoreCase("yes") && opts.getAppPath.length > 0) {
+      pathOption = opts.getAppPath + "/metadata/" + metadataType  + "/" + pathOption
+    }   
+    return pathOption
   }
 }
