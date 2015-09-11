@@ -211,23 +211,29 @@ trait MetadataAPIService extends HttpService {
       //TODO
       //call the UploadModelConfig in the MetadataAPIImpl
       //UploadModelsConfig (cfgStr: String,userid:Option[String], objectList: String): String = {
-      logger.debug("In post request process of UploadModelConfig")
+      logger.debug("In put request process of UploadModelConfig")
       val addModelDefsService = actorRefFactory.actorOf(Props(new UploadModelConfigService(rContext, userid, password, role)))
       addModelDefsService ! UploadModelConfigService.Process(body)
     } else if (objtype.equalsIgnoreCase("modeljava")) {
       //TODO
-      logger.debug("In post request process of model java")
+      logger.debug("In put request process of model java")
 
-      val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
-      addSourceModelService ! UpdateSourceModelService.ProcessJava(body)
+      val updateSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
+      updateSourceModelService ! UpdateSourceModelService.ProcessJava(body)
 
     }
     else if (objtype.equalsIgnoreCase("modelscala")) {
       //TODO
-      logger.debug("In post request process of model scala")
-      // rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
-      val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
-      addSourceModelService ! UpdateSourceModelService.ProcessScala(body)
+      try{
+        logger.debug("In put request process of model scala")
+        // rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
+        val updateSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
+        updateSourceModelService ! UpdateSourceModelService.ProcessScala(body)
+      }catch {
+        case e : Exception => {
+          logger.debug("Exception updating scala model "+e.getStackTraceString)
+        }
+      }
 
     }
     else if (objtype.equalsIgnoreCase("modelpmml")) {
