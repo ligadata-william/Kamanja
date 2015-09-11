@@ -6,7 +6,6 @@ import com.ligadata.KamanjaBase.{ModelResultBase, TransactionContext, ModelConte
 import com.ligadata.SimpleEnvContextImpl.SimpleEnvContextImpl
 import com.ligadata.jpmml.concrete.JpmmlModelEvaluatorConcrete
 import com.ligadata.jpmml.message.JpmmlMessage
-import org.jpmml.evaluator.ClusterClassificationMap
 import org.scalatest.FlatSpec
 /**
  * Tests
@@ -35,28 +34,28 @@ class JpmmlModelEvaluatorFileReaderTest extends FlatSpec {
     val f = fixture
     val map = createArgsMap(5.1, 3.5, 1.4, 0.2)
     val result = executeInputAndAssertResults(map, f.decisionTreeIrisName)
-    assert(result.get("species") === Some("setosa"))
+    assert(result.get("species") === "setosa")
   }
 
   "Executing input against single iris dectree model " should " return the right class " in {
     val f = fixture
     val map = createArgsMap(5.1, 3.5, 1.4, 0.2)
     val result = executeInputAndAssertResults(map, f.singleIrisName)
-    assert(result.get("class") === Some("Iris-setosa"))
+    assert(result.get("class") === "Iris-setosa")
   }
 
   "Executing input against random forest iris model " should " return the right class " in {
     val f = fixture
     val map = createArgsMap(6.4, 2.7, 5.3, 1.9)
     val result = executeInputAndAssertResults(map, f.randomForestIrisName)
-    assert(result.get("class") === Some("Iris-virginica"))
+    assert(result.get("class") === "Iris-virginica")
   }
 
   "Executing input against k means iris model " should " return the right class " in {
     val f = fixture
     val map = createArgsMap(6.4, 2.7, 5.3, 1.9)
     val result = executeInputAndAssertResults(map, f.kMeansIrisName)
-    assert(result.get("empty").isInstanceOf[ClusterClassificationMap])
+    assert(result.get("_result") === "1")
   }
 
   private def executeInputAndAssertResults(argsMap: Map[String, Any], modelName: String): ModelResultBase = {

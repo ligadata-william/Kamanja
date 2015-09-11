@@ -20,7 +20,7 @@ trait JpmmlModelManagerMapImpl extends JpmmlModelManager {
 
   private case class ModelNameAndVersion(name: String, version: String)
 
-  private val evaluatorMap = TrieMap.empty[ModelNameAndVersion, List[ModelEvaluator[_]]]
+  private val evaluatorMap = TrieMap.empty[ModelNameAndVersion, ModelEvaluator[_]]
 
   override def deployModel(name: String, version: String, is: InputStream): Unit = {
     val reader = XMLReaderFactory.createXMLReader()
@@ -31,12 +31,12 @@ trait JpmmlModelManagerMapImpl extends JpmmlModelManager {
     unmarshaller.setEventHandler(SimpleValidationEventHandler)
 
     val pmml = unmarshaller.unmarshal(source).asInstanceOf[PMML]
-    val modelEvaluatorFactory = ModelEvaluatorFactory.getInstance()
-    val modelEvaluators = pmml.getModels.asScala.map(modelEvaluatorFactory.getModelManager(pmml, _)).toList
-    evaluatorMap.put(ModelNameAndVersion(name, version), modelEvaluators)
+    val modelEvaluatorFactory = ModelEvaluatorFactory.newInstance()
+    val modelEvaluator = modelEvaluatorFactory.newModelManager(pmml)
+    evaluatorMap.put(ModelNameAndVersion(name, version), modelEvaluator)
   }
 
-  override def retrieveModelEvaluators(name: String, version: String): Option[List[ModelEvaluator[_]]] =
+  override def retrieveModelEvaluator(name: String, version: String): Option[ModelEvaluator[_]] =
     evaluatorMap.get(ModelNameAndVersion(name, version))
 
   private object SimpleValidationEventHandler extends ValidationEventHandler {

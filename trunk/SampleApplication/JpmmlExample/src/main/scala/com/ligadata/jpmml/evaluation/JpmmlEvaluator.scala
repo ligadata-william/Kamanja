@@ -7,42 +7,32 @@ import org.dmg.pmml.{FieldName, OpType, DataType}
 import org.jpmml.evaluator._
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.{Map => MutMap}
 
 trait JpmmlEvaluator {
   self: JpmmlModelManager =>
+  val DEFAULT_NAME = FieldName.create("_result")
 
   class JpmmlModel(val modelContext: ModelContext, val modelName: String, val version: String) extends ModelBase {
     override def execute(outputDefault: Boolean): ModelResultBase = {
       val msg = modelContext.msg
-      val maybeModelEvaluators = retrieveModelEvaluators(modelName, version)
-      maybeModelEvaluators.fold(throw new RuntimeException(s"No evaluator found"))(modelEvaluators => {
-        evaluateModel(msg, modelEvaluators)
+      val maybeModelEvaluator = retrieveModelEvaluator(modelName, version)
+      maybeModelEvaluator.fold(throw new RuntimeException(s"No evaluator found"))(modelEvaluator => {
+        evaluateModel(msg, modelEvaluator)
       })
     }
 
-    private def evaluateModel(jm: MessageContainerBase, modelEvaluators: List[ModelEvaluator[_]]): ModelResultBase = {
-      //TODO: Only first evaluator used here
-      val modelEvaluator = modelEvaluators.head
+    private def evaluateModel(jm: MessageContainerBase, modelEvaluator: ModelEvaluator[_]): ModelResultBase = {
       val activeFields = modelEvaluator.getActiveFields
       val preparedFields = prepareFields(activeFields, jm, modelEvaluator)
-      val jEvalResults = modelEvaluator.evaluate(preparedFields.asJava)
-      val evalResults = jEvalResults.asScala
-      val maybeTargetFieldName = Option(modelEvaluator.getTargetField)
-      maybeTargetFieldName.fold({
-        val results = evalResults.map({
-          case (k, v) =>
-            val maybeK = Option(k)
-            maybeK.fold(Result("empty", v))(key => Result(key.getValue, v))
-        })
-        new MappedModelResults().withResults(results.toArray)
-      })(targetFieldName => {
-        val targetValue = evalResults.get(targetFieldName)
-        val simplePrediction = targetValue.flatMap({
-          case c: Computable => Option(c.getResult)
-          case _ => None
-        })
-        val results =  Array(Result(targetFieldName.getValue, simplePrediction))
-        new MappedModelResults().withResults(results)
+      val evalResults = replaceNull(modelEvaluator.evaluate(preparedFields.asJava).asScala)
+      val results = EvaluatorUtil.decode(evalResults.asJava).asScala
+      new MappedModelResults().withResults(results.toArray)
+    }
+
+    private def replaceNull[V](evalResults: MutMap[FieldName, V]): MutMap[FieldName, V] = {
+      evalResults.get(null.asInstanceOf[FieldName]).fold(evalResults)(v => {
+        evalResults - null.asInstanceOf[FieldName] + (DEFAULT_NAME -> v)
       })
     }
 
