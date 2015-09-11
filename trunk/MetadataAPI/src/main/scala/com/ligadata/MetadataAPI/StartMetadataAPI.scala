@@ -1,9 +1,12 @@
 package scala.com.ligadata.MetadataAPI
 
+import java.io.File
 import java.util.logging.Logger
 
 import com.ligadata.MetadataAPI.{TestMetadataAPI, MetadataAPIImpl}
-import main.scala.com.ligadata.MetadataAPI.Utility._
+import com.ligadata.MetadataAPI.Utility._
+import scala.io.Source
+
 
 
 /**
@@ -11,56 +14,96 @@ import main.scala.com.ligadata.MetadataAPI.Utility._
  */
 
 object StartMetadataAPI {
+
   var response = ""
-  val defaultConfig = sys.env("HOME") + "/MetadataAPIConfig.properties"
+  //get default config
+  val defaultConfig = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var action = ""
   var location = ""
   var config = ""
+  val WITHDEP = "dependsOn"
+  val REMOVE = "remove"
+  var expectDep = false
+  var expectRemoveParm = false
+  var depName: String = ""
+  var parmName: String = ""
 
   def main(args: Array[String]) {
-    val arglist = args.toList
-    if (args.length == 0) {
-      config = defaultConfig
-      MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-      TestMetadataAPI.StartTest
-    }
-    else if (args(0) == "config") {
-      config = defaultConfig
-    }
-    else {
-      for (arg <- arglist) {
-        if (arg.endsWith(".json") || arg.endsWith(".xml")  || arg.endsWith(".scala")  || arg.endsWith(".java")) {
+    try {
+      var argsUntilParm = 2
+      args.foreach( arg => {
+         if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java") || arg.endsWith(".jar")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
           config = arg
         } else {
-          action += arg
-        }
-      }
+          if (arg.equalsIgnoreCase(WITHDEP)) {
+            expectDep = true
+          }
+          else if (expectDep) {
+            depName = arg
+            expectDep = false
+          } else {
+            if (arg.equalsIgnoreCase(REMOVE)) {
+              expectRemoveParm = true
+            } 
+            
+            if (expectRemoveParm) {
+              argsUntilParm = argsUntilParm - 1
+            }
+              
+            if (argsUntilParm < 0)
+              depName = arg
+            else
+              action += arg
+          }
+        }       
+      })
 
       //add configuration
-      if (config == "")
+      if (config == "") {
+        println("Using default configuration " + defaultConfig)
         config = defaultConfig
+      }
 
       MetadataAPIImpl.InitMdMgrFromBootStrap(config, false)
-
-      action.trim
-      response = route(Action.withName(action), location)
+      if (action == "")
+        TestMetadataAPI.StartTest
+      else {
+        response = route(Action.withName(action.trim), location, depName)
+        println("Result: " + response)
+      }
     }
-    println("Result: " + response)
-    response
+    catch {
+      case nosuchelement: NoSuchElementException => {
+        println(action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json")
+        //response = action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json"
+      }
+      case e: Throwable => e.getStackTrace.toString
+    } finally {
+      MetadataAPIImpl.shutdown
+    }
   }
 
-  def route(action: Action.Value, input: String): String = {
+
+  def route(action: Action.Value, input: String, param: String = ""): String = {
     var response = ""
     try {
       action match {
         //message management
         case Action.ADDMESSAGE => response = MessageService.addMessage(input)
         case Action.UPDATEMESSAGE => response = MessageService.updateMessage(input)
-        case Action.REMOVEMESSAGE => response = MessageService.removeMessage
+        
+        case Action.REMOVEMESSAGE => {
+          if (param.length == 0)
+            response = MessageService.removeMessage()
+          else 
+            response = MessageService.removeMessage(param)
+        }
+        
+        
         case Action.GETALLMESSAGES => response = MessageService.getAllMessages
         //output message management
         case Action.ADDOUTPUTMESSAGE => response = MessageService.addOutputMessage(input)
@@ -69,9 +112,28 @@ object StartMetadataAPI {
         case Action.GETALLOUTPUTMESSAGES => response =MessageService.getAllOutputMessages
         //model management
         case Action.ADDMODELPMMML => response = ModelService.addModelPmml(input)
-        case Action.ADDMODELSCALA => response = ModelService.addModelScala(input)
-        case Action.ADDMODELJAVA => response = ModelService.addModelJava(input)
-        case Action.REMOVEMODEL => response = ModelService.removeModel
+        
+        case Action.ADDMODELSCALA => {
+          if (param.length == 0)
+            response = ModelService.addModelScala(input)
+          else
+            response = ModelService.addModelScala(input, param)
+        }
+        
+        case Action.ADDMODELJAVA => {
+          if (param.length == 0)
+            response = ModelService.addModelJava(input)
+          else
+            response = ModelService.addModelJava(input, param)
+        }
+        
+        case Action.REMOVEMODEL => {
+          if (param.length == 0)
+            response = ModelService.removeModel()
+          else 
+            response = ModelService.removeModel(param)
+        }
+        
         case Action.ACTIVATEMODEL => response = ModelService.activateModel
         case Action.DEACTIVATEMODEL => response = ModelService.deactivateModel
         case Action.UPDATEMODEL => response = ModelService.updateModel(input)
@@ -82,7 +144,13 @@ object StartMetadataAPI {
         case Action.UPDATECONTAINER => response = ContainerService.updateContainer(input)
         case Action.GETCONTAINER => response = ContainerService.getContainer
         case Action.GETALLCONTAINERS => response = ContainerService.getAllContainers
-        case Action.REMOVECONTAINER => response = ContainerService.removeContainer
+        
+        case Action.REMOVECONTAINER => {
+          if (param.length == 0)
+            response = ContainerService.removeContainer()
+          else
+            response = ContainerService.removeContainer(param)
+        }
         //Type management
         case Action.ADDTYPE => response = TypeService.addType(input)
         case Action.GETTYPE => response = TypeService.getType
@@ -122,7 +190,7 @@ object StartMetadataAPI {
       }
     }
     catch {
-      case e: Exception => response = e.getStackTrace.toString
+      case e: Exception => response = e.getStackTraceString
     }
     response
   }

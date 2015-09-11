@@ -88,7 +88,7 @@ object ExtractData extends MdBaseResolveInfo {
         } catch {
           case e: Exception => {
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
-            logger.error("Error:"+errMsg)
+            logger.error("Error:" + errMsg)
             throw new Exception(errMsg)
           }
         }
@@ -187,7 +187,15 @@ object ExtractData extends MdBaseResolveInfo {
     if (isMsg == false) {
       // Checking for Message
       try {
-        // If required we need to enable this test
+        try {
+          Class.forName(clsName, true, clsLoaderInfo.loader)
+        } catch {
+          case e: Exception => {
+            logger.error("Failed to load Message class %s with Reason:%s Message:%s".format(clsName, e.getCause, e.getMessage))
+            sys.exit(1)
+          }
+        }
+
         // Convert class name into a class
         var curClz = Class.forName(clsName, true, clsLoaderInfo.loader)
 
@@ -207,7 +215,15 @@ object ExtractData extends MdBaseResolveInfo {
     if (isContainer == false) {
       // Checking for container
       try {
-        // If required we need to enable this test
+        try {
+          Class.forName(clsName, true, clsLoaderInfo.loader)
+        } catch {
+          case e: Exception => {
+            logger.error("Failed to load Container class %s with Reason:%s Message:%s".format(clsName, e.getCause, e.getMessage))
+            sys.exit(1)
+          }
+        }
+
         // Convert class name into a class
         var curClz = Class.forName(clsName, true, clsLoaderInfo.loader)
 
@@ -261,7 +277,7 @@ object ExtractData extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:" + stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -282,7 +298,7 @@ object ExtractData extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("1. Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
+        logger.debug("1. Data not found for key:" + partKeyStr + "\nStackTrace:" + stackTrace)
       }
     }
     return objs(0)
@@ -360,7 +376,7 @@ object ExtractData extends MdBaseResolveInfo {
           os.close
         os = null
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:" + stackTrace)
         throw new Exception("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause))
       }
     }
@@ -408,7 +424,7 @@ object ExtractData extends MdBaseResolveInfo {
 
       val typName = loadConfigs.getProperty("TypeName".toLowerCase, "").replace("\"", "").trim.toLowerCase
 
-      MetadataAPIImpl.InitMdMgrFromBootStrap(cfgfile,false)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(cfgfile, false)
 
       val nodeInfo = mdMgr.Nodes.getOrElse(nodeId.toString, null)
       if (nodeInfo == null) {

@@ -1,4 +1,4 @@
-package main.scala.com.ligadata.MetadataAPI.Utility
+package com.ligadata.MetadataAPI.Utility
 
 import java.io.File
 

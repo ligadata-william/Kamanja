@@ -1,4 +1,4 @@
-package main.scala.com.ligadata.MetadataAPI.Utility
+package com.ligadata.MetadataAPI.Utility
 
 import java.io.File
 
@@ -117,10 +117,9 @@ object FunctionService {
           response=errormsg
         }
         val fcnKey = functionKeys(choice - 1)
-        val fcnKeyTokens = fcnKey.split("\\.")
-        val fcnNameSpace = fcnKeyTokens(0)
-        val fcnName = fcnKeyTokens(1)
-        val fcnVersion = fcnKeyTokens(2)
+
+        val(fcnNameSpace, fcnName, fcnVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(fcnKey)
+
         response=MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong, userid)
       }
     } catch {

@@ -1,4 +1,4 @@
-package main.scala.com.ligadata.MetadataAPI.Utility
+package com.ligadata.MetadataAPI.Utility
 
 import java.io.File
 
@@ -50,8 +50,12 @@ object ContainerService {
     } else {
       //input provided
       var container = new File(input.toString)
-      val containerDef = Source.fromFile(container).mkString
-      response = MetadataAPIImpl.AddContainer(containerDef, "JSON", userid)
+      if( container.exists()){
+        val containerDef = Source.fromFile(container).mkString
+        response = MetadataAPIImpl.AddContainer(containerDef, "JSON", userid)
+      }else{
+        response = "Input container file does not exist"
+      }
     }
     //Got the container.
     response
@@ -152,9 +156,19 @@ object ContainerService {
     response
   }
 
-  def removeContainer: String ={
+  def removeContainer(parm: String = ""): String ={
     var response = ""
     try{
+      
+       if (parm.length > 0) {
+         val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(parm)
+         try {
+           return MetadataAPIImpl.RemoveContainer(ns, name, ver.toInt, userid)
+         } catch {
+           case e: Exception => e.printStackTrace()
+         }
+      }
+       
       val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true, None)
 
       if (contKeys.length == 0) {
@@ -168,14 +182,11 @@ object ContainerService {
         val choice: Int = readInt()
 
         if (choice < 1 || choice > contKeys.length) {
-          response=("Invalid choice " + choice + ",start with main menu...")
+          return ("Invalid choice " + choice + ",start with main menu...")
         }else{
           val contKey = contKeys(choice - 1)
-          val contKeyTokens = contKey.split("\\.")
-          val contNameSpace = contKeyTokens(0)
-          val contName = contKeyTokens(1)
-          val contVersion = contKeyTokens(2)
-          response = MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
+          val(contNameSpace, contName, contVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(contKey)
+          return MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
         }
       }
     } catch {

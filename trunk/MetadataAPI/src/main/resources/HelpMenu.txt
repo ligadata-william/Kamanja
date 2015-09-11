@@ -1,0 +1,61 @@
+******************** Help Menu ****************************
+
+kamanja add message input(optional)
+kamanja update message input(optional)
+kamanja get message
+kamanja get all messages
+kamanja remove message
+
+kamanja add model pmml input(optional)
+kamanja add model java input(optional)
+kamanja add model scala input(optional)
+kamanja get model
+kamanja get all models
+kamanja remove model
+kamanja update model input(optional)
+kamanja deactivate model
+kamanja activate model
+
+kamanja add container input(optional)
+kamanja update container input(optional)
+kamanja get container
+kamanja get all containers
+kamanja remove container
+kamanja add type input(optional)
+kamanja get type
+kamanja get all types
+kamanja remove type
+kamanja load types from a file
+kamanja dump all types
+kamanja add function input(optional)
+kamanja get function
+kamanja remove function
+kamanja update function input(optional)
+kamanja load functions from a file
+kamanja dump all functions
+kamanja upload engine config input(optional)
+kamanja upload compile config input(optional)
+kamanja dump all cfg objects
+kamanja remove engine config
+
+kamanja add output message input(optional)
+kamanja get all output messages input(optional)
+kamanja remove output message
+kamanja update output message
+
+kamanja add concept input(optional)
+kamanja remove concept
+kamanja update concept input(optional)
+kamanja load concepts from a file
+kamanja dump all concepts
+kamanja upload jar
+kamanja dump metadata
+kamanja dump all nodes
+kamanja dump all clusters
+kamanja kamanja dump all cluster cfgs
+kamanja dump all adapters
+kamanja start
+kamanja start -v (for verbose)
+kamanja watch status queue
+kamanja push data
+kamanja create queues

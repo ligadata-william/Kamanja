@@ -11,7 +11,7 @@ import collection.mutable.{ MultiMap, Set }
 import java.io.{ PrintWriter, File, PrintStream, BufferedReader, InputStreamReader }
 import scala.util.Random
 import scala.Array.canBuildFrom
-import java.util.Properties
+import java.util.{ Properties, Observer, Observable }
 import java.sql.Connection
 import scala.collection.mutable.TreeSet
 import java.net.{ Socket, ServerSocket }
@@ -34,7 +34,8 @@ class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+        LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+      }
     } finally {
       if (serverSocket.isClosed() == false)
         serverSocket.close
@@ -65,7 +66,8 @@ class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable 
       }
     } catch {
       case e: Exception => {
-        LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+        LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage))
+      }
     } finally {
       socket.close;
     }
@@ -75,7 +77,7 @@ class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable 
 object KamanjaConfiguration {
   var configFile: String = _
   var allConfigs: Properties = _
-//  var metadataDataStoreInfo: String = _
+  //  var metadataDataStoreInfo: String = _
   var dataDataStoreInfo: String = _
   var statusDataStoreInfo: String = _
   var jarPaths: collection.immutable.Set[String] = _
@@ -101,7 +103,7 @@ object KamanjaConfiguration {
   def Reset: Unit = {
     configFile = null
     allConfigs = null
-//    metadataDataStoreInfo = null
+    //    metadataDataStoreInfo = null
     dataDataStoreInfo = null
     statusDataStoreInfo = null
     jarPaths = null
@@ -123,7 +125,7 @@ object KamanjaConfiguration {
   }
 }
 
-class KamanjaManager {
+class KamanjaManager extends Observer {
   private val LOG = Logger.getLogger(getClass);
 
   // metadata loader
@@ -236,27 +238,6 @@ class KamanjaManager {
     val loadConfigs = KamanjaConfiguration.allConfigs
 
     try {
-      /*
-      KamanjaConfiguration.metadataDataStoreInfo = loadConfigs.getProperty("MetadataDataStore".toLowerCase, "")
-      KamanjaConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataStoreType.size == 0) {
-        LOG.error("Not found valid MetadataStoreType.")
-        return false
-      }
-
-      KamanjaConfiguration.metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataSchemaName.size == 0) {
-        LOG.error("Not found valid MetadataSchemaName.")
-        return false
-      }
-
-      KamanjaConfiguration.metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataLocation.size == 0) {
-        LOG.error("Not found valid MetadataLocation.")
-        return false
-      }
-*/
-
       KamanjaConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
       if (KamanjaConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")
@@ -339,8 +320,8 @@ class KamanjaManager {
 
     } catch {
       case e: Exception => {
-        LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("Failed to initialize. Reason:%s Message:%s\nStackTrace:%s".format(e.getCause, e.getMessage, stackTrace))
         retval = false
       }
     } finally {
@@ -357,6 +338,15 @@ class KamanjaManager {
         return true
     }
     return false;
+  }
+
+  def update(o: Observable, arg: AnyRef): Unit = {
+    val sig = arg.toString
+    LOG.debug("Received signal: " + sig)
+    if (sig.compareToIgnoreCase("SIGTERM") == 0 || sig.compareToIgnoreCase("SIGINT") == 0 || sig.compareToIgnoreCase("SIGABRT") == 0) {
+      LOG.warn("Got " + sig + " signal. Shutting down the process")
+      KamanjaConfiguration.shutdown = true
+    }
   }
 
   def run(args: Array[String]): Int = {
@@ -446,7 +436,20 @@ class KamanjaManager {
 
     val nodeNameToSetZk = KamanjaConfiguration.nodeId.toString
 
-    print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C\n")
+    var sh: SignalHandler = null
+    try {
+      sh = new SignalHandler()
+      sh.addObserver(this)
+      sh.handleSignal("TERM")
+      sh.handleSignal("INT")
+      sh.handleSignal("ABRT")
+    } catch {
+      case e: Throwable => {
+        LOG.error("Failed to add signal handler.\nStacktrace:" + StackTrace.ThrowableTraceString(e))
+      }
+    }
+
+    LOG.warn("KamanjaManager is running now. Waiting for user to terminate with SIGTERM, SIGINT or SIGABRT signals")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
       cntr = cntr + 1
       if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {
@@ -499,7 +502,7 @@ class KamanjaManager {
       } catch {
         case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.debug("\nStackTrace:"+stackTrace)
+          LOG.debug("\nStackTrace:" + stackTrace)
         }
       }
       if (heartBeat != null && (cntr % 2 == 1)) {
@@ -508,14 +511,32 @@ class KamanjaManager {
     }
 
     scheduledThreadPool.shutdownNow()
+    sh = null
     return Shutdown(0)
   }
 
+  class SignalHandler extends Observable with sun.misc.SignalHandler {
+    def handleSignal(signalName: String) {
+      sun.misc.Signal.handle(new sun.misc.Signal(signalName), this)
+    }
+    def handle(signal: sun.misc.Signal) {
+      setChanged()
+      notifyObservers(signal)
+    }
+  }
 }
 
 object OleService {
+  private val LOG = Logger.getLogger(getClass);
   def main(args: Array[String]): Unit = {
     val mgr = new KamanjaManager
+    scala.sys.addShutdownHook({
+      if (KamanjaConfiguration.shutdown == false) {
+        LOG.warn("Got Shutdown request")
+        KamanjaConfiguration.shutdown = true // Setting the global shutdown
+      }
+    })
+
     sys.exit(mgr.run(args))
   }
 }

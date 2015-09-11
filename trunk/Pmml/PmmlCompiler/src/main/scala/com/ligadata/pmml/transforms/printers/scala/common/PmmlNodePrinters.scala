@@ -847,7 +847,8 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		  case _ => "0000001"
 		}
 		  
-		val modelPkg : String = s"${nmspc}.V${versionNo}"
+		// val modelPkg : String = s"${nmspc}.V${versionNo}"
+    val modelPkg : String = s"${nmspc}"
 		ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 		
 		commentBuffer.append(s"package $modelPkg\n\n")

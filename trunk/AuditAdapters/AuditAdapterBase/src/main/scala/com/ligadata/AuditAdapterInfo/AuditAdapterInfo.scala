@@ -50,6 +50,9 @@ trait AuditAdapter {
 
   // Set the desired properties for this adapter
   def init(parmFile: String): Unit
+
+  // truncate audit store
+  def TruncateStore(): Unit
 }
 
 object AuditConstants {

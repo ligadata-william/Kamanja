@@ -16,11 +16,7 @@ object EningeCommandProcessor {
         var args: Array[String] = new Array[String](2)
         args(0) = "--config"
         args(1) = opts.getIPath + "/config/engineConfig_"+ opts.getIName +".properties"
-        
-        println("--")
-                println("--")
-                        println("--")
-        args.foreach { x => println(x)}
+
         println("**** STARTING KAMANJA using "+ args(1))
         
         val mgr = new KamanjaManager

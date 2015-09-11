@@ -38,6 +38,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def setMdMgr(inMgr: MdMgr): Unit = { _mgr = inMgr }
 
   override def NewMessageOrContainer(fqclassname: String): MessageContainerBase = {
+    try {
+      Class.forName(fqclassname)
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to load Message/Container class %s with Reason:%s Message:%s".format(fqclassname, e.getCause, e.getMessage))
+        throw e // Rethrow
+      }
+    }
     val msgOrContainer: MessageContainerBase = Class.forName(fqclassname).newInstance().asInstanceOf[MessageContainerBase]
     msgOrContainer
   }
