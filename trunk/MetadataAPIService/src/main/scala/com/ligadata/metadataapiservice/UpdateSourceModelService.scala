@@ -3,7 +3,6 @@ package com.ligadata.metadataapiservice
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.io.IO
-import com.ligadata.metadataapiservice.AddSourceModelService.{ProcessScala, ProcessJava}
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
@@ -22,7 +21,7 @@ object UpdateSourceModelService {
 
 class UpdateSourceModelService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String], modelname: Option[String]) extends Actor {
 
-  import UpdateModelService._
+  import UpdateSourceModelService._
 
   implicit val system = context.system
   import system.dispatcher
@@ -34,10 +33,12 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
 
   def receive = {
     case ProcessJava(sourceCode) => {
+      log.debug("Updating java model")
       processJava(sourceCode)
       context.stop(self)
     }
     case ProcessScala(sourceCode) => {
+      log.debug("Updating scala model")
       processScala(sourceCode)
       context.stop(self)
     }
@@ -46,8 +47,6 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
   def processScala(pmmlStr:String) = {
 
     log.debug("Requesting UpdateSourceModel {}",pmmlStr)
-
-    logger.debug("Requesting AddSourceModel.")
     val usersModelName=userid.getOrElse("")+"."+modelname.getOrElse("")
     logger.debug("user model name is: "+usersModelName)
 
