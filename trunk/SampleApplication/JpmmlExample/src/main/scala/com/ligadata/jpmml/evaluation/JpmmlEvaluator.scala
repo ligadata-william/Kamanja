@@ -25,15 +25,25 @@ trait JpmmlEvaluator {
       val modelEvaluator = modelEvaluators.head
       val activeFields = modelEvaluator.getActiveFields
       val preparedFields = prepareFields(activeFields, jm, modelEvaluator)
-      val evalResults = modelEvaluator.evaluate(preparedFields.asJava).asScala
-      val targetFieldName = modelEvaluator.getTargetField
-      val targetValue = evalResults.get(targetFieldName)
-      val simplePrediction = targetValue.flatMap({
-        case c: Computable => Option(c.getResult)
-        case _ => None
+      val jEvalResults = modelEvaluator.evaluate(preparedFields.asJava)
+      val evalResults = jEvalResults.asScala
+      val maybeTargetFieldName = Option(modelEvaluator.getTargetField)
+      maybeTargetFieldName.fold({
+        val results = evalResults.map({
+          case (k, v) =>
+            val maybeK = Option(k)
+            maybeK.fold(Result("empty", v))(key => Result(key.getValue, v))
+        })
+        new MappedModelResults().withResults(results.toArray)
+      })(targetFieldName => {
+        val targetValue = evalResults.get(targetFieldName)
+        val simplePrediction = targetValue.flatMap({
+          case c: Computable => Option(c.getResult)
+          case _ => None
+        })
+        val results =  Array(Result(targetFieldName.getValue, simplePrediction))
+        new MappedModelResults().withResults(results)
       })
-      val results =  Array(Result(targetFieldName.getValue, simplePrediction))
-      new MappedModelResults().withResults(results)
     }
 
     private def prepareFields(activeFields: JList[FieldName], msg: MessageContainerBase, me: ModelEvaluator[_]): Map[FieldName, FieldValue] = {
