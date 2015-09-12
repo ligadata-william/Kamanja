@@ -1,9 +1,10 @@
 package com.ligadata.jpmml.evaluation
 
 import java.util.{List => JList}
+
 import com.ligadata.KamanjaBase._
 import com.ligadata.jpmml.deployment.JpmmlModelManager
-import org.dmg.pmml.{FieldName, OpType, DataType}
+import org.dmg.pmml.FieldName
 import org.jpmml.evaluator._
 
 import scala.collection.JavaConverters._
@@ -38,8 +39,13 @@ trait JpmmlEvaluator {
 
     private def prepareFields(activeFields: JList[FieldName], msg: MessageContainerBase, me: ModelEvaluator[_]): Map[FieldName, FieldValue] = {
       activeFields.asScala.foldLeft(Map.empty[FieldName, FieldValue])((map, activeField) => {
-        val fieldValue = EvaluatorUtil.prepare(me, activeField, msg.get(activeField.getValue))
-        map.updated(activeField, fieldValue)
+        val key = activeField.getValue
+        //TODO: What should be done if an active field is missing from map ? 
+        Option(msg.get(key)).fold(map)(value => {
+          val fieldValue = EvaluatorUtil.prepare(me, activeField, value)
+          map.updated(activeField, fieldValue)
+
+        })
       })
     }
   }
