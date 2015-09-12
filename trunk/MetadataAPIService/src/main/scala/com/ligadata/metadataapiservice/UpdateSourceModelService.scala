@@ -65,8 +65,6 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
   def processJava(pmmlStr:String) = {
 
     log.debug("Requesting UpdateSourceModel {}",pmmlStr)
-
-    logger.debug("Requesting AddSourceModel.")
     val usersModelName=userid.getOrElse("")+"."+modelname.getOrElse("")
     logger.debug("user model name is: "+usersModelName)
 
