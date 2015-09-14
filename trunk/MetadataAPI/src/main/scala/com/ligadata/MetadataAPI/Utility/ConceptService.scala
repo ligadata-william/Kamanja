@@ -52,14 +52,25 @@ object ConceptService {
     } else {
       //input provided
       var message = new File(input.toString)
-      val conceptDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.AddConcepts(conceptDef.toString, "JSON", userid)
+      if(message.exists()){
+        val conceptDef = Source.fromFile(message).mkString
+        response = MetadataAPIImpl.AddConcepts(conceptDef.toString, "JSON", userid)
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }
-  def removeConcept: String ={
+  def removeConcept(param: String = ""): String ={
     var response = ""
     try {
+      if (param.length > 0) {
+        try {
+            return MetadataAPIImpl.RemoveConcept(param.asInstanceOf[AttributeDef])
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val conceptKeys = MetadataAPIImpl.GetAllConcepts("JSON", userid).toArray
 
       if (conceptKeys.length == 0) {
@@ -129,8 +140,12 @@ object ConceptService {
     } else {
       //input provided
       var message = new File(input.toString)
-      val conceptDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.UpdateConcepts(conceptDef.toString, "JSON", userid)
+      if(message.exists()){
+        val conceptDef = Source.fromFile(message).mkString
+        response = MetadataAPIImpl.UpdateConcepts(conceptDef.toString, "JSON", userid)
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }

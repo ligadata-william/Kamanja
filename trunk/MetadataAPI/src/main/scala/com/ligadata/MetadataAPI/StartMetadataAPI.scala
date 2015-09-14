@@ -25,6 +25,11 @@ object StartMetadataAPI {
   var config = ""
   val WITHDEP = "dependsOn"
   val REMOVE = "remove"
+  val GET = "get"
+  val ACTIVATE="activate"
+  val OUTPUT="output"
+  val DEACTIVATE="deactivate"
+  val UPDATE="update"
   var expectDep = false
   var expectRemoveParm = false
   var depName: String = ""
@@ -33,7 +38,13 @@ object StartMetadataAPI {
   def main(args: Array[String]) {
     try {
       var argsUntilParm = 2
+      args.foreach(arg =>
+        if(arg.equalsIgnoreCase(OUTPUT) || (arg.equalsIgnoreCase(UPDATE))){
+          argsUntilParm=3
+        }
+      )
       args.foreach( arg => {
+
          if (arg.endsWith(".json") || arg.endsWith(".xml") || arg.endsWith(".scala") || arg.endsWith(".java") || arg.endsWith(".jar")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
@@ -46,22 +57,21 @@ object StartMetadataAPI {
             depName = arg
             expectDep = false
           } else {
-            if (arg.equalsIgnoreCase(REMOVE)) {
+            if((arg.equalsIgnoreCase(REMOVE)) || (arg.equalsIgnoreCase(GET)) || (arg.equalsIgnoreCase(ACTIVATE)) || (arg.equalsIgnoreCase(DEACTIVATE)) || (arg.equalsIgnoreCase(UPDATE))) {
               expectRemoveParm = true
-            } 
-            
+            }
+
             if (expectRemoveParm) {
               argsUntilParm = argsUntilParm - 1
             }
-              
+
             if (argsUntilParm < 0)
               depName = arg
             else
               action += arg
           }
-        }       
+        }
       })
-
       //add configuration
       if (config == "") {
         println("Using default configuration " + defaultConfig)
@@ -95,56 +105,120 @@ object StartMetadataAPI {
         //message management
         case Action.ADDMESSAGE => response = MessageService.addMessage(input)
         case Action.UPDATEMESSAGE => response = MessageService.updateMessage(input)
-        
+
         case Action.REMOVEMESSAGE => {
           if (param.length == 0)
             response = MessageService.removeMessage()
-          else 
+          else
             response = MessageService.removeMessage(param)
         }
-        
-        
+
         case Action.GETALLMESSAGES => response = MessageService.getAllMessages
+        case Action.GETMESSAGE => {
+          if(param.length == 0)
+            response = MessageService.getMessage()
+          else
+            response = MessageService.getMessage(param)
+        }
+
         //output message management
         case Action.ADDOUTPUTMESSAGE => response = MessageService.addOutputMessage(input)
         case Action.UPDATEOUTPUTMESSAGE => response =MessageService.updateOutputMessage(input)
-        case Action.REMOVEOUTPUTMESSAGE => response =MessageService.removeOutputMessage
+        case Action.REMOVEOUTPUTMESSAGE => response ={
+          if (param.length == 0)
+            MessageService.removeOutputMessage()
+          else
+            MessageService.removeOutputMessage(param)
+      }
+
         case Action.GETALLOUTPUTMESSAGES => response =MessageService.getAllOutputMessages
+        case Action.GETOUTPUTMESSAGE => response ={
+      if (param.length == 0)
+        MessageService.getOutputMessage()
+      else
+        MessageService.getOutputMessage(param)
+    }
+
         //model management
         case Action.ADDMODELPMMML => response = ModelService.addModelPmml(input)
-        
+
         case Action.ADDMODELSCALA => {
           if (param.length == 0)
             response = ModelService.addModelScala(input)
           else
             response = ModelService.addModelScala(input, param)
         }
-        
+
         case Action.ADDMODELJAVA => {
           if (param.length == 0)
             response = ModelService.addModelJava(input)
           else
             response = ModelService.addModelJava(input, param)
         }
-        
+
         case Action.REMOVEMODEL => {
           if (param.length == 0)
             response = ModelService.removeModel()
-          else 
+          else
             response = ModelService.removeModel(param)
         }
-        
-        case Action.ACTIVATEMODEL => response = ModelService.activateModel
-        case Action.DEACTIVATEMODEL => response = ModelService.deactivateModel
-        case Action.UPDATEMODEL => response = ModelService.updateModel(input)
+
+        case Action.ACTIVATEMODEL =>
+          response =
+            {
+              if (param.length == 0)
+                ModelService.activateModel()
+              else
+                ModelService.activateModel(param)
+            }
+
+
+        case Action.DEACTIVATEMODEL => response =  {
+          if (param.length == 0)
+            ModelService.deactivateModel()
+          else
+            ModelService.deactivateModel(param)
+        }
+        case Action.UPDATEMODELPMML => response = ModelService.updateModelpmml(input)
+        //case Action.UPDATEMODELSCALA => response = ModelService.updateModelscala(input)
+        //case Action.UPDATEMODELJAVA => response = ModelService.updateModeljava(input)
+
+        case Action.UPDATEMODELSCALA => {
+          if (param.length == 0)
+            response = ModelService.updateModelscala(input)
+          else
+            response = ModelService.updateModelscala(input, param)
+        }
+
+        case Action.UPDATEMODELJAVA => {
+          if (param.length == 0)
+            response = ModelService.updateModeljava(input)
+          else
+            response = ModelService.updateModeljava(input, param)
+        }
+//
+
         case Action.GETALLMODELS => response = ModelService.getAllModels
-        case Action.GETMODEL => response = ModelService.getModel
+        case Action.GETMODEL => response =
+          {
+            if (param.length == 0)
+              ModelService.getModel()
+            else
+              ModelService.getModel(param)
+          }
+
         //container management
         case Action.ADDCONTAINER => response = ContainerService.addContainer(input)
         case Action.UPDATECONTAINER => response = ContainerService.updateContainer(input)
-        case Action.GETCONTAINER => response = ContainerService.getContainer
+        case Action.GETCONTAINER => response = {
+          if (param.length == 0)
+            ContainerService.getContainer()
+          else
+            ContainerService.getContainer(param)
+        }
+
         case Action.GETALLCONTAINERS => response = ContainerService.getAllContainers
-        
+
         case Action.REMOVECONTAINER => {
           if (param.length == 0)
             response = ContainerService.removeContainer()
@@ -153,26 +227,63 @@ object StartMetadataAPI {
         }
         //Type management
         case Action.ADDTYPE => response = TypeService.addType(input)
-        case Action.GETTYPE => response = TypeService.getType
+        case Action.GETTYPE => response =
+          {
+            if (param.length == 0)
+              TypeService.getType()
+            else
+              TypeService.getType(param)
+          }
+
         case Action.GETALLTYPES => response = TypeService.getAllTypes
-        case Action.REMOVETYPE => response = TypeService.removeType
+        case Action.REMOVETYPE => response =
+          {
+            if (param.length == 0)
+              TypeService.removeType()
+            else
+              TypeService.removeType(param)
+
+          }
         case Action.LOADTYPESFROMAFILE=> response = TypeService.loadTypesFromAFile
         case Action.DUMPALLTYPESBYOBJTYPEASJSON => response = TypeService.dumpAllTypesByObjTypeAsJson
         //function management
         case Action.ADDFUNCTION => response = FunctionService.addFunction(input)
-        case Action.GETFUNCTION => response = FunctionService.getFunction
-        case Action.REMOVEFUNCTION => response = FunctionService.removeFunction
+        case Action.GETFUNCTION => response =
+          {
+            if (param.length == 0)
+              FunctionService.getFunction()
+            else
+              FunctionService.getFunction(param)
+
+          }
+        case Action.REMOVEFUNCTION => response =
+          {
+            if (param.length == 0)
+              FunctionService.removeFunction()
+            else
+              FunctionService.removeFunction(param)
+
+          }
+
         case Action.UPDATEFUNCTION => response = FunctionService.updateFunction(input)
         case Action.LOADFUNCTIONSFROMAFILE => response = FunctionService.loadFunctionsFromAFile
         case Action.DUMPALLFUNCTIONSASJSON => response = FunctionService.dumpAllFunctionsAsJson
         //config
-        case Action.UPLOADENGINECONFIG => response = ConfigService.uploadEngineConfig(input)
+        case Action.UPLOADCLUSTERCONFIG => response = ConfigService.uploadClusterConfig(input)
         case Action.UPLOADCOMPILECONFIG => response = ConfigService.uploadCompileConfig(input)
         case Action.DUMPALLCFGOBJECTS => response = ConfigService.dumpAllCfgObjects
         case Action.REMOVEENGINECONFIG => response = ConfigService.removeEngineConfig
-        //service
+        //concept
         case Action.ADDCONCEPT => response = ConceptService.addConcept(input)
-        case Action.REMOVECONCEPT => response =ConceptService.removeConcept
+        case Action.REMOVECONCEPT => response =
+          {
+            if (param.length == 0)
+              ConceptService.removeConcept()
+            else
+              ConceptService.removeConcept(param)
+
+          }
+
         case Action.LOADCONCEPTSFROMAFILE => response =ConceptService.loadConceptsFromAFile
         case Action.DUMPALLCONCEPTSASJSON => response =ConceptService.dumpAllConceptsAsJson
         //jar

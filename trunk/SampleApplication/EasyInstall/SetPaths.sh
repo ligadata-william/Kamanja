@@ -1,8 +1,9 @@
+
+echo "Setting up paths"
 KafkaRootDir=$1
 if [ -d "$KafkaRootDir" ]; then
 	KafkaRootDir=$(echo $KafkaRootDir | sed 's/[\/]*$//')
 fi
-
 jar_full_path=$(which jar)
 if [ "$?" != "0" ]; then
 	jar_full_path=$JAVA_HOME/bin/jar
@@ -36,8 +37,8 @@ scala_home_repl=$(echo $scala_home | sed 's/\//\\\//g')
 install_dir_repl=$(echo $install_dir | sed 's/\//\\\//g')
 
 # changing path in script files
-sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/script/ClusterMetadata_Template.sh > $install_dir/bin/ClusterMetadata.sh
-sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/script/ClusterMetadata_Cassandra_Template.sh > $install_dir/bin/ClusterMetadata_Cassandra.sh
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/script/ClusterMetadata_Template.sh > $install_dir/bin/ClusterMetadata.sh
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/script/ClusterMetadata_Cassandra_Template.sh > $install_dir/bin/ClusterMetadata_Cassandra.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/script/StartEngine_Template.sh > $install_dir/bin/StartEngine.sh
 
 #sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Medical/template/script/InitKvStores_Template.sh > $install_dir/input/Medical/bin/InitKvStores.sh

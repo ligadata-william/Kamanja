@@ -50,14 +50,26 @@ object FunctionService {
     } else {
       //input provided
       var function = new File(input.toString)
-      val functionDef = Source.fromFile(function).mkString
-      response = MetadataAPIImpl.AddFunctions(functionDef.toString, "JSON", userid)
+      if(function.exists()){
+        val functionDef = Source.fromFile(function).mkString
+        response = MetadataAPIImpl.AddFunctions(functionDef.toString, "JSON", userid)
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }
-  def getFunction: String ={
+  def getFunction(param: String = ""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.GetFunctionDef(ns, name,"JSON", userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val functionKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true, None)
       if (functionKeys.length == 0) {
         val errorMsg="Sorry, No functions available, in the Metadata, to display!"
@@ -92,9 +104,18 @@ object FunctionService {
     }
     response
   }
-  def removeFunction: String ={
+  def removeFunction(param: String = ""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.RemoveFunction(ns, name,ver.toInt, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
+
       val functionKeys =MetadataAPIImpl.GetAllFunctionsFromCache(true, None)
       if (functionKeys.length == 0) {
         val errorMsg="Sorry, No functions available, in the Metadata, to delete!"
@@ -166,8 +187,12 @@ object FunctionService {
     } else {
       //input provided
       var function = new File(input.toString)
-      val functionDef = Source.fromFile(function).mkString
-      response = MetadataAPIImpl.UpdateFunctions(functionDef.toString, "JSON", userid)
+      if(function.exists()){
+        val functionDef = Source.fromFile(function).mkString
+        response = MetadataAPIImpl.UpdateFunctions(functionDef.toString, "JSON", userid)
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }

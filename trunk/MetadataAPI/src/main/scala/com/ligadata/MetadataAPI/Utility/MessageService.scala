@@ -132,7 +132,6 @@ object MessageService {
   def removeMessage(parm: String = ""): String = {
     var response = ""
     try {
-      
       if (parm.length > 0) {
          val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(parm)
          try {
@@ -141,7 +140,7 @@ object MessageService {
            case e: Exception => e.printStackTrace()
          }
       }
-      
+
       val messageKeys = MetadataAPIImpl.GetAllMessagesFromCache(true, None)
 
       if (messageKeys.length == 0) {
@@ -177,6 +176,58 @@ object MessageService {
     response
   }
 
+  def getMessage(param: String= "") : String = {
+    try {
+      var response=""
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.GetMessageDef(ns, name,"JSON", ver, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
+
+      //    logger.setLevel(Level.TRACE); //check again
+
+      //val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef", None)
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true, None)
+      if (msgKeys.length == 0) {
+        response="Sorry, No messages available in the Metadata"
+      }else{
+        println("\nPick the message to be presented from the following list: ")
+
+        var seq = 0
+        msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+
+        print("\nEnter your choice: ")
+        val choice: Int = readInt()
+
+        if (choice < 1 || choice > msgKeys.length) {
+          response = "Invalid choice " + choice + ",start with main menu..."
+        }
+        else{
+          val msgKey = msgKeys(choice - 1)
+          val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
+          val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace, msgName, msgVersion.toLong)
+          logger.debug("DependentModels => " + depModels)
+
+          logger.debug("DependentModels => " + depModels)
+
+          val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace, msgName, "JSON", msgVersion, userid)
+
+          //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+          response=apiResult
+        }
+      }
+      response
+
+    } catch {
+      case e: Exception => {
+      e.getStackTraceString
+      }
+    }
+  }
 
   def IsValidDir(dirName: String): Boolean = {
     val iFile = new File(dirName)
@@ -305,9 +356,20 @@ object MessageService {
   }
 
 
-  def removeOutputMessage: String = {
+  def removeOutputMessage(param: String = ""): String = {
     var response = ""
+
     try {
+      if (param.length > 0) {
+
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIOutputMsg.RemoveOutputMsg(ns, name, ver.toLong, userid)
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
+
       val outputMessageKeys = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true, userid)
 
       if (outputMessageKeys.length == 0) {
@@ -365,4 +427,40 @@ object MessageService {
     }
     response
   }
+
+  def getOutputMessage(param: String = ""): String ={
+    var response = ""
+
+    if (param.length > 0) {
+      val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+      try {
+        return MetadataAPIOutputMsg.GetOutputMessageDefFromCache(ns, name,"JSON" ,ver,userid)
+      } catch {
+        case e: Exception => e.printStackTrace()
+      }
+    }
+    val outputMessageKeys: Array[String] = MetadataAPIOutputMsg GetAllOutputMsgsFromCache(true,userid)
+
+    if (outputMessageKeys.length == 0) {
+      response = "Sorry, No output messages are available in the Metadata"
+    } else {
+      println("\nPick the output message to be presented from the following list: ")
+      var seq = 0
+      outputMessageKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice < 1 || choice > outputMessageKeys.length) {
+        response = "Invalid choice " + choice + ",start with main menu..."
+      }
+      val outputMessageKey = outputMessageKeys(choice - 1)
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(outputMessageKey)
+      val apiResult = MetadataAPIOutputMsg.GetOutputMessageDefFromCache(msgNameSpace, msgName, "JSON", msgVersion, userid)
+     // val apiResult=MetadataAPIOutputMsg.GetOutputMessageDef(msgNameSpace, msgName, "JSON", msgVersion)
+      response=apiResult
+    }
+      response
+    }
+
 }

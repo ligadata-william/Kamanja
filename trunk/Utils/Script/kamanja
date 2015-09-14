@@ -1,5 +1,3 @@
-#!/bin/bash
-
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -10,15 +8,14 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 KAMANJA_HOME="$(dirname "$SCRIPT_DIR")"
 export KAMANJA_HOME=$KAMANJA_HOME
-jar_full_path=$(which jar)
 INPUT=$@
+jar_full_path=$(which jar)
 if [ "$?" != "0" ]; then
 	echo "Not found java home directory."
 	exit 1
 fi
 
 scala_full_path=$(which scala)
-
 if [ "$?" != "0" ]; then
 	echo "Not found scala home directory."
 	exit 1

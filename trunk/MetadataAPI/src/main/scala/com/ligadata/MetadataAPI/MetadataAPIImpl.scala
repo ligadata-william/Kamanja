@@ -238,7 +238,6 @@ object MetadataAPIImpl extends MetadataAPI {
         throw e // Rethrow
       }
     }
-    
     // All is good, create the new class
     var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[AuditAdapter]]
     auditObj = className.newInstance
@@ -584,10 +583,10 @@ object MetadataAPIImpl extends MetadataAPI {
 
         def Value = value
         def Construct(k: Key, v: Value) =
-          {
-            key = k;
-            value = v;
-          }
+        {
+          key = k;
+          value = v;
+        }
       }
 
       var k = key
@@ -1891,12 +1890,11 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-
   def TruncateAuditStore: Unit = lock.synchronized {
     try {
       logger.debug("Truncating Audit datastore")
       if(auditObj != null ){
-	auditObj.TruncateStore
+        auditObj.TruncateStore
       }
     } catch {
       case e: Exception => {
@@ -1914,20 +1912,20 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def AddType(typeDef: BaseTypeDef): String = {
     TypeUtils.AddType(typeDef)
-      }
+  }
 
   def AddTypes(typesText: String, format: String, userid: Option[String]): String = {
     TypeUtils.AddTypes(typesText,format,userid)
-        }
+  }
 
   // Remove type for given TypeName and Version
   def RemoveType(typeNameSpace: String, typeName: String, version: Long, userid: Option[String]): String = {
     TypeUtils.RemoveType(typeNameSpace,typeName,version,userid)
-      }
+  }
 
   def UpdateType(typeJson: String, format: String, userid: Option[String]): String = {
     TypeUtils.UpdateType(typeJson,format,userid)
-            }
+  }
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1959,35 +1957,34 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-
   def AddDerivedConcept(conceptsText: String, format: String): String = {
     ConceptUtils.AddDerivedConcept(conceptsText,format)
   }
 
   def AddConcepts(conceptsText: String, format: String, userid: Option[String]): String = {
     ConceptUtils.AddConcepts(conceptsText,format,userid)
-      }
+  }
 
   def UpdateConcepts(conceptsText: String, format: String, userid: Option[String]): String = {
     ConceptUtils.UpdateConcepts(conceptsText,format,userid)
-      }
+  }
 
   def RemoveConcept(key: String, userid: Option[String]): String = {
     ConceptUtils.RemoveConcept(key,userid)
-      }
+  }
 
   def RemoveConcept(concept: AttributeDef): String = {
     ConceptUtils.RemoveConcept(concept)
-      }
+  }
 
   def RemoveConcept(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
     ConceptUtils.RemoveConcept(nameSpace,name,version,userid)
-      }
+  }
 
   // RemoveConcepts take all concepts names to be removed as an Array
   def RemoveConcepts(concepts: Array[String], userid: Option[String]): String = {
     ConceptUtils.RemoveConcepts(concepts,userid)
-      }
+  }
 
   def AddContainerDef(contDef: ContainerDef, recompile: Boolean = false): String = {
     var key = contDef.FullNameWithVer
@@ -3007,19 +3004,19 @@ object MetadataAPIImpl extends MetadataAPI {
       if (isValid && modDef != null) {
         logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, sourceCode, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
         val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
-	if( latestVersion != None ){
+        if( latestVersion != None ){
           RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
-	}
-	logger.info("Begin uploading dependent Jars, please wait.")
+        }
+        logger.info("Begin uploading dependent Jars, please wait.")
         UploadJarsToDB(modDef)
-	logger.info("Finished uploading dependent Jars.")
+        logger.info("Finished uploading dependent Jars.")
         val apiResult = AddModel(modDef)
         var objectsUpdated = new Array[BaseElemDef](0)
         var operations = new Array[String](0)
-	if( latestVersion != None ){
+        if( latestVersion != None ){
           objectsUpdated = objectsUpdated :+ latestVersion.get
           operations = operations :+ "Remove"
-	}
+        }
         objectsUpdated = objectsUpdated :+ modDef
         operations = operations :+ "Add"
         NotifyEngine(objectsUpdated, operations)
@@ -3066,19 +3063,22 @@ object MetadataAPIImpl extends MetadataAPI {
         logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, pmmlText, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
         val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
 
-	// when a version number changes, latestVersion  has different namespace making it unique
-	// latest version may not be found in the cache. So need to remove it
-	if( latestVersion != None ){
-        RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
-	}
+        // when a version number changes, latestVersion  has different namespace making it unique
+        // latest version may not be found in the cache. So need to remove it
+        if( latestVersion != None ) {
+          RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+        }
+
         UploadJarsToDB(modDef)
         val result = AddModel(modDef)
         var objectsUpdated = new Array[BaseElemDef](0)
         var operations = new Array[String](0)
-	if( latestVersion != None ){
-        objectsUpdated = objectsUpdated :+ latestVersion.get
-        operations = operations :+ "Remove"
-	}
+
+        if( latestVersion != None ){
+          objectsUpdated = objectsUpdated :+ latestVersion.get
+          operations = operations :+ "Remove"
+        }
+
         objectsUpdated = objectsUpdated :+ modDef
         operations = operations :+ "Add"
         NotifyEngine(objectsUpdated, operations)
@@ -3384,11 +3384,11 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetAllConceptsFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     ConceptUtils.GetAllConceptsFromCache(active,userid)
-          }
+  }
 
   def GetAllTypesFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     TypeUtils.GetAllTypesFromCache(active,userid)
-          }
+  }
 
   // Specific models (format JSON or XML) as an array of strings using modelName(without version) as the key
   def GetModelDef(nameSpace: String, objectName: String, formatType: String): String = {
@@ -3570,7 +3570,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var key = modDef.nameSpace + "." + modDef.name + "." + modDef.ver
       val dispkey = modDef.nameSpace + "." + modDef.name + "." + MdMgr.Pad0s2Version(modDef.ver)
       val o = MdMgr.GetMdMgr.Models(modDef.nameSpace.toLowerCase,
-				    modDef.name.toLowerCase,false,true)
+        modDef.name.toLowerCase,false,true)
       o match {
         case None =>
           None
@@ -3822,55 +3822,54 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetAllKeys(objectType: String, userid: Option[String]): Array[String] = {
     try {
       var keys = scala.collection.mutable.Set[String]()
-      typeStore.getAllKeys({ (key: Key) =>
-        {
-          val strKey = KeyAsStr(key)
-          val i = strKey.indexOf(".")
-          val objType = strKey.substring(0, i)
-          val typeName = strKey.substring(i + 1)
-          objectType match {
-            case "TypeDef" => {
-              if (IsTypeObject(objType)) {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.TYPE, AuditConstants.SUCCESS, "", AuditConstants.TYPE)
+      typeStore.getAllKeys({ (key: Key) => {
+        val strKey = KeyAsStr(key)
+        val i = strKey.indexOf(".")
+        val objType = strKey.substring(0, i)
+        val typeName = strKey.substring(i + 1)
+        objectType match {
+          case "TypeDef" => {
+            if (IsTypeObject(objType)) {
+              keys.add(typeName)
             }
-            case "FunctionDef" => {
-              if (objType == "functiondef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.TYPE, AuditConstants.SUCCESS, "", AuditConstants.TYPE)
+          }
+          case "FunctionDef" => {
+            if (objType == "functiondef") {
+              keys.add(typeName)
             }
-            case "MessageDef" => {
-              if (objType == "messagedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
+          }
+          case "MessageDef" => {
+            if (objType == "messagedef") {
+              keys.add(typeName)
             }
-            case "ContainerDef" => {
-              if (objType == "containerdef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
+          }
+          case "ContainerDef" => {
+            if (objType == "containerdef") {
+              keys.add(typeName)
             }
-            case "Concept" => {
-              if (objType == "attributedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONCEPT, AuditConstants.SUCCESS, "", AuditConstants.CONCEPT)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
+          }
+          case "Concept" => {
+            if (objType == "attributedef") {
+              keys.add(typeName)
             }
-            case "ModelDef" => {
-              if (objType == "modeldef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONCEPT, AuditConstants.SUCCESS, "", AuditConstants.CONCEPT)
+          }
+          case "ModelDef" => {
+            if (objType == "modeldef") {
+              keys.add(typeName)
             }
-            case _ => {
-              logger.error("Unknown object type " + objectType + " in GetAllKeys function")
-              throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
-            }
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
+          }
+          case _ => {
+            logger.error("Unknown object type " + objectType + " in GetAllKeys function")
+            throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
           }
         }
+      }
       })
       keys.toArray
     } catch {
@@ -4490,15 +4489,15 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def AddFunctions(functionsText:String, formatType:String, userid: Option[String]): String = {
     FunctionUtils.AddFunctions(functionsText,formatType,userid)
-      }
+  }
 
   def UpdateFunctions(functionsText:String, formatType:String, userid: Option[String]): String = {
     FunctionUtils.UpdateFunctions(functionsText,formatType,userid)
-      }
+  }
 
   def RemoveFunction(nameSpace:String, functionName:String, version:Long, userid: Option[String]): String = {
     FunctionUtils.RemoveFunction(nameSpace,functionName,version,userid)
-    }
+  }
 
   def GetAllFunctionDefs(formatType: String, userid: Option[String]): (Int, String) = {
     FunctionUtils.GetAllFunctionDefs(formatType,userid)
@@ -4506,7 +4505,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetFunctionDef(objectName:String,formatType: String, userid: Option[String]) : String = {
     FunctionUtils.GetFunctionDef(objectName,formatType,userid)
-      }
+  }
 
   def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     FunctionUtils.GetFunctionDef(nameSpace,objectName,formatType,version,userid)
@@ -4519,19 +4518,19 @@ object MetadataAPIImpl extends MetadataAPI {
   // All available concepts as a String
   def GetAllConcepts(formatType: String, userid: Option[String]): String = {
     ConceptUtils.GetAllConcepts(formatType,userid)
-      }
+  }
 
   // A single concept as a string using name and version as the key
   def GetConcept(nameSpace: String, objectName: String, version: String, formatType: String): String = {
     ConceptUtils.GetConcept(nameSpace,objectName,version,formatType)
-      }
+  }
   // A single concept as a string using name and version as the key
   def GetConcept(objectName: String, version: String, formatType: String): String = {
     GetConcept(MdMgr.sysNS, objectName, version, formatType)
   }
 
   // A single concept as a string using name and version as the key
-  def GetConceptDef(nameSpace: String, objectName: String, formatType: String, 
+  def GetConceptDef(nameSpace: String, objectName: String, formatType: String,
 		    version: String, userid: Option[String]): String = {
     ConceptUtils.GetConceptDef(nameSpace,objectName,formatType,version,userid)
   }
@@ -4539,50 +4538,50 @@ object MetadataAPIImpl extends MetadataAPI {
   // A list of concept(s) as a string using name 
   def GetConcept(objectName: String, formatType: String): String = {
     ConceptUtils.GetConcept(objectName,formatType)
-      }
+  }
 
   // All available derived concepts(format JSON or XML) as a String
   def GetAllDerivedConcepts(formatType: String): String = {
     ConceptUtils.GetAllDerivedConcepts(formatType)
-          }
+  }
 
   // A derived concept(format JSON or XML) as a string using name(without version) as the key
   def GetDerivedConcept(objectName: String, formatType: String): String = {
     ConceptUtils.GetDerivedConcept(objectName,formatType)
-          }
+  }
   // A derived concept(format JSON or XML) as a string using name and version as the key
   def GetDerivedConcept(objectName: String, version: String, formatType: String): String = {
     ConceptUtils.GetDerivedConcept(objectName,version,formatType)
-          }
+  }
 
   // All available types(format JSON or XML) as a String
   def GetAllTypes(formatType: String, userid: Option[String]): String = {
     TypeUtils.GetAllTypes(formatType,userid)
-      }
+  }
 
   // All available types(format JSON or XML) as a String
   def GetAllTypesByObjType(formatType: String, objType: String): String = {
     TypeUtils.GetAllTypesByObjType(formatType,objType)
-          }
+  }
 
   // Get types for a given name
   def GetType(objectName: String, formatType: String): String = {
     TypeUtils.GetType(objectName,formatType)
-      }
+  }
 
   def GetTypeDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     TypeUtils.GetTypeDef(nameSpace,objectName,formatType,version,userid)
-      }
+  }
 
   def GetType(nameSpace: String, objectName: String, version: String, formatType: String, userid: Option[String]): Option[BaseTypeDef] = {
     TypeUtils.GetType(nameSpace,objectName,version,formatType,userid)
-            }
+  }
 
   def AddNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
-    jarPaths: List[String], scala_home: String,
-    java_home: String, classpath: String,
-    clusterId: String, power: Int,
-    roles: Array[String], description: String): String = {
+              jarPaths: List[String], scala_home: String,
+              java_home: String, classpath: String,
+              clusterId: String, power: Int,
+              roles: Array[String], description: String): String = {
     try {
       // save in memory
       val ni = MdMgr.GetMdMgr.MakeNode(nodeId, nodePort, nodeIpAddr, jarPaths, scala_home,
