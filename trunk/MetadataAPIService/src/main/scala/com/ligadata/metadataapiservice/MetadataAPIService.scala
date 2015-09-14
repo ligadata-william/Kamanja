@@ -218,8 +218,8 @@ trait MetadataAPIService extends HttpService {
       //TODO
       logger.debug("In put request process of model java")
 
-      val updateSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
-      updateSourceModelService ! UpdateSourceModelService.ProcessJava(body)
+          val updateSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
+      updateSourceModelService ! UpdateSourceModelService.UpdateJava(body)
 
     }
     else if (objtype.equalsIgnoreCase("modelscala")) {
@@ -228,7 +228,7 @@ trait MetadataAPIService extends HttpService {
         logger.debug("In put request process of model scala")
         // rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
         val updateSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new UpdateSourceModelService(rContext, userid, password, role,modelname)))
-        updateSourceModelService ! UpdateSourceModelService.ProcessScala(body)
+        updateSourceModelService ! UpdateSourceModelService.UpdateScala(body)
       }catch {
         case e : Exception => {
           logger.debug("Exception updating scala model "+e.getStackTraceString)
@@ -427,12 +427,14 @@ trait MetadataAPIService extends HttpService {
    * MakeJsonStrForArgList
    */
   private def createGetArg(objKey: String, objectType: String): String = {
-    val keyTokens = objKey.split("\\.")
+   /* val keyTokens = objKey.split("\\.")
     val nameSpace = keyTokens(0)
     val name = keyTokens(1)
     val version = keyTokens(2)
-    val lVersion = version.toLong
-    val mdArg = new MetadataApiArg(objectType, nameSpace, name, version, "JSON")
+   */
+   val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(objKey)
+    val lVersion = ver.toLong
+    val mdArg = new MetadataApiArg(objectType, ns, name, ver, "JSON")
     val argList = new Array[MetadataApiArg](1)
     argList(0) = mdArg
     val mdArgList = new MetadataApiArgList(argList.toList)
