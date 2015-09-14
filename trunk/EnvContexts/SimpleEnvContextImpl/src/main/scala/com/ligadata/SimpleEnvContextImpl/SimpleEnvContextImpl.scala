@@ -1015,6 +1015,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   override def SetClassLoader(cl: java.lang.ClassLoader): Unit = {
     _classLoader = cl
+    if (_kryoSer != null)
+      _kryoSer.SetClassLoader(_classLoader)
   }
 
   override def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit = {
@@ -1432,7 +1434,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (unloadMsgsContainers == null)
       return
     unloadMsgsContainers.foreach(mc => {
-      val msgCont = _messagesOrContainers.getOrElse(mc.toLowerCase, null)
+      val msgCont = _messagesOrContainers.getOrElse(mc.trim.toLowerCase, null)
       if (msgCont != null && msgCont.data != null) {
         msgCont.data.clear
       }

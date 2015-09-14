@@ -719,8 +719,7 @@ object KamanjaLeader {
         }
 
         if (changedVals != null) {
-          envCtxt.clearIntermediateResults
-          // envCtxt.clearIntermediateResults(changedVals)
+          envCtxt.clearIntermediateResults(changedVals)
         }
       }
 

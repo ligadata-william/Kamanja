@@ -16,7 +16,7 @@ import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import com.ligadata.Utils.{ Utils, KamanjaClassLoader }
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.Exceptions.StackTrace
 
 class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
@@ -70,26 +70,25 @@ class KamanjaMetadata {
     true
   }
 
-  def LoadMdMgrElems(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror,
-    tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
+  def LoadMdMgrElems(tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
     tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
-    PrepareMessages(loadedJars, loader, mirror, tmpMsgDefs)
-    PrepareContainers(loadedJars, loader, mirror, tmpContainerDefs)
-    PrepareModels(loadedJars, loader, mirror, tmpModelDefs)
+    PrepareMessages(tmpMsgDefs)
+    PrepareContainers(tmpContainerDefs)
+    PrepareModels(tmpModelDefs)
 
     LOG.info("Loaded Metadata Messages:" + messageObjects.map(container => container._1).mkString(","))
     LOG.info("Loaded Metadata Containers:" + containerObjects.map(container => container._1).mkString(","))
     LOG.info("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
   }
 
-  private[this] def CheckAndPrepMessage(clsName: String, loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef): Boolean = {
+  private[this] def CheckAndPrepMessage(clsName: String, msg: MessageDef): Boolean = {
     var isMsg = true
     var curClass: Class[_] = null
 
     try {
       // If required we need to enable this test
       // Convert class name into a class
-      var curClz = Class.forName(clsName, true, loader)
+      var curClz = Class.forName(clsName, true, KamanjaConfiguration.metadataLoader.loader)
       curClass = curClz
 
       isMsg = false
@@ -101,7 +100,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.debug("Failed to get classname :" + clsName)
+        LOG.error("Failed to get classname :" + clsName)
         return false
       }
     }
@@ -111,14 +110,14 @@ class KamanjaMetadata {
         var objinst: Any = null
         try {
           // Trying Singleton Object
-          val module = mirror.staticModule(clsName)
-          val obj = mirror.reflectModule(module)
+          val module = KamanjaConfiguration.metadataLoader.mirror.staticModule(clsName)
+          val obj = KamanjaConfiguration.metadataLoader.mirror.reflectModule(module)
           objinst = obj.instance
         } catch {
           case e: Exception => {
             // Trying Regular Object instantiation
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.debug("StackTrace:"+stackTrace)
+            LOG.debug("StackTrace:" + stackTrace)
             objinst = curClass.newInstance
           }
         }
@@ -166,35 +165,35 @@ class KamanjaMetadata {
     return false
   }
 
-  def PrepareMessage(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef, loadJars: Boolean): Unit = {
+  def PrepareMessage(msg: MessageDef, loadJars: Boolean): Unit = {
     if (loadJars)
-      LoadJarIfNeeded(msg, loadedJars, loader)
+      LoadJarIfNeeded(msg)
     // else Assuming we are already loaded all the required jars
 
     var clsName = msg.PhysicalName.trim
     var orgClsName = clsName
 
-    var foundFlg = CheckAndPrepMessage(clsName, loadedJars, loader, mirror, msg)
+    var foundFlg = CheckAndPrepMessage(clsName, msg)
 
     if (foundFlg == false) {
       if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
         clsName = clsName + "$"
-        foundFlg = CheckAndPrepMessage(clsName, loadedJars, loader, mirror, msg)
+        foundFlg = CheckAndPrepMessage(clsName, msg)
       }
     }
     if (foundFlg == false) {
-      LOG.error("Failed to instantiate message object :" + orgClsName)
+      LOG.error("Failed to instantiate message object: " + orgClsName)
     }
   }
 
-  private[this] def CheckAndPrepContainer(clsName: String, loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef): Boolean = {
+  private[this] def CheckAndPrepContainer(clsName: String, container: ContainerDef): Boolean = {
     var isContainer = true
     var curClass: Class[_] = null
 
     try {
       // If required we need to enable this test
       // Convert class name into a class
-      var curClz = Class.forName(clsName, true, loader)
+      var curClz = Class.forName(clsName, true, KamanjaConfiguration.metadataLoader.loader)
       curClass = curClz
 
       isContainer = false
@@ -206,7 +205,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.debug("Failed to get classname :" + clsName)
+        LOG.error("Failed to get classname: " + clsName)
         return false
       }
     }
@@ -216,13 +215,13 @@ class KamanjaMetadata {
         var objinst: Any = null
         try {
           // Trying Singleton Object
-          val module = mirror.staticModule(clsName)
-          val obj = mirror.reflectModule(module)
+          val module = KamanjaConfiguration.metadataLoader.mirror.staticModule(clsName)
+          val obj = KamanjaConfiguration.metadataLoader.mirror.reflectModule(module)
           objinst = obj.instance
         } catch {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("Stacktrace:"+stackTrace)
+            LOG.error("Stacktrace:" + stackTrace)
             // Trying Regular Object instantiation
             objinst = curClass.newInstance
           }
@@ -251,9 +250,9 @@ class KamanjaMetadata {
     return false
   }
 
-  def PrepareContainer(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef, loadJars: Boolean, ignoreClassLoad: Boolean): Unit = {
+  def PrepareContainer(container: ContainerDef, loadJars: Boolean, ignoreClassLoad: Boolean): Unit = {
     if (loadJars)
-      LoadJarIfNeeded(container, loadedJars, loader)
+      LoadJarIfNeeded(container)
     // else Assuming we are already loaded all the required jars
 
     if (ignoreClassLoad) {
@@ -268,11 +267,11 @@ class KamanjaMetadata {
     var clsName = container.PhysicalName.trim
     var orgClsName = clsName
 
-    var foundFlg = CheckAndPrepContainer(clsName, loadedJars, loader, mirror, container)
+    var foundFlg = CheckAndPrepContainer(clsName, container)
     if (foundFlg == false) {
       if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
         clsName = clsName + "$"
-        foundFlg = CheckAndPrepContainer(clsName, loadedJars, loader, mirror, container)
+        foundFlg = CheckAndPrepContainer(clsName, container)
       }
     }
     if (foundFlg == false) {
@@ -280,14 +279,14 @@ class KamanjaMetadata {
     }
   }
 
-  private[this] def CheckAndPrepModel(clsName: String, loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef): Boolean = {
+  private[this] def CheckAndPrepModel(clsName: String, mdl: ModelDef): Boolean = {
     var isModel = true
     var curClass: Class[_] = null
 
     try {
       // If required we need to enable this test
       // Convert class name into a class
-      var curClz = Class.forName(clsName, true, loader)
+      var curClz = Class.forName(clsName, true, KamanjaConfiguration.metadataLoader.loader)
       curClass = curClz
 
       isModel = false
@@ -299,7 +298,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.debug("Failed to get classname :" + clsName)
+        LOG.error("Failed to get classname :" + clsName)
         return false
       }
     }
@@ -311,14 +310,14 @@ class KamanjaMetadata {
         var objinst: Any = null
         try {
           // Trying Singleton Object
-          val module = mirror.staticModule(clsName)
-          val obj = mirror.reflectModule(module)
+          val module = KamanjaConfiguration.metadataLoader.mirror.staticModule(clsName)
+          val obj = KamanjaConfiguration.metadataLoader.mirror.reflectModule(module)
           // curClz.newInstance
           objinst = obj.instance
         } catch {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.debug("StackTrace:"+stackTrace)
+            LOG.debug("StackTrace:" + stackTrace)
             // Trying Regular Object instantiation
             objinst = curClass.newInstance
           }
@@ -338,7 +337,7 @@ class KamanjaMetadata {
         }
       } catch {
         case e: Exception =>
-          
+
           LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
           return false
       }
@@ -346,20 +345,20 @@ class KamanjaMetadata {
     return false
   }
 
-  def PrepareModel(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
+  def PrepareModel(mdl: ModelDef, loadJars: Boolean): Unit = {
     if (loadJars)
-      LoadJarIfNeeded(mdl, loadedJars, loader)
+      LoadJarIfNeeded(mdl)
     // else Assuming we are already loaded all the required jars
 
     var clsName = mdl.PhysicalName.trim
     var orgClsName = clsName
 
-    var foundFlg = CheckAndPrepModel(clsName, loadedJars, loader, mirror, mdl)
+    var foundFlg = CheckAndPrepModel(clsName, mdl)
 
     if (foundFlg == false) {
       if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
         clsName = clsName + "$"
-        foundFlg = CheckAndPrepModel(clsName, loadedJars, loader, mirror, mdl)
+        foundFlg = CheckAndPrepModel(clsName, mdl)
       }
     }
     if (foundFlg == false) {
@@ -385,10 +384,10 @@ class KamanjaMetadata {
     return allJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toSet
   }
 
-  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
+  private def LoadJarIfNeeded(elem: BaseElem): Boolean = {
     val allJars = GetAllJarsFromElem(elem)
     if (allJars.size > 0) {
-      return Utils.LoadJars(allJars.toArray, loadedJars, loader)
+      return Utils.LoadJars(allJars.toArray, KamanjaConfiguration.metadataLoader.loadedJars, KamanjaConfiguration.metadataLoader.loader)
     } else {
       return true
     }
@@ -417,7 +416,7 @@ class KamanjaMetadata {
     }
   }
 
-  private def PrepareMessages(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]]): Unit = {
+  private def PrepareMessages(tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]]): Unit = {
     if (tmpMsgDefs == None) // Not found any messages
       return
 
@@ -426,15 +425,15 @@ class KamanjaMetadata {
     // Load all jars first
     msgDefs.foreach(msg => {
       // LOG.debug("Loading msg:" + msg.FullName)
-      LoadJarIfNeeded(msg, loadedJars, loader)
+      LoadJarIfNeeded(msg)
     })
 
     msgDefs.foreach(msg => {
-      PrepareMessage(loadedJars, loader, mirror, msg, false) // Already Loaded required dependency jars before calling this
+      PrepareMessage(msg, false) // Already Loaded required dependency jars before calling this
     })
   }
 
-  private def PrepareContainers(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]]): Unit = {
+  private def PrepareContainers(tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]]): Unit = {
     if (tmpContainerDefs == None) // Not found any containers
       return
 
@@ -442,7 +441,7 @@ class KamanjaMetadata {
 
     // Load all jars first
     containerDefs.foreach(container => {
-      LoadJarIfNeeded(container, loadedJars, loader)
+      LoadJarIfNeeded(container)
     })
 
     val baseContainersPhyName = scala.collection.mutable.Set[String]()
@@ -452,12 +451,12 @@ class KamanjaMetadata {
     })
 
     containerDefs.foreach(container => {
-      PrepareContainer(loadedJars, loader, mirror, container, false, baseContainersPhyName.contains(container.PhysicalName.trim)) // Already Loaded required dependency jars before calling this
+      PrepareContainer(container, false, baseContainersPhyName.contains(container.PhysicalName.trim)) // Already Loaded required dependency jars before calling this
     })
 
   }
 
-  private def PrepareModels(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
+  private def PrepareModels(tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
     if (tmpModelDefs == None) // Not found any models
       return
 
@@ -465,11 +464,11 @@ class KamanjaMetadata {
 
     // Load all jars first
     modelDefs.foreach(mdl => {
-      LoadJarIfNeeded(mdl, loadedJars, loader)
+      LoadJarIfNeeded(mdl)
     })
 
     modelDefs.foreach(mdl => {
-      PrepareModel(loadedJars, loader, mirror, mdl, false) // Already Loaded required dependency jars before calling this
+      PrepareModel(mdl, false) // Already Loaded required dependency jars before calling this
     })
   }
 }
@@ -478,10 +477,6 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
-  private[this] var loadedJars: TreeSet[String] = _
-  private[this] var loader: KamanjaClassLoader = _
-  private[this] var mirror: reflect.runtime.universe.Mirror = _
-
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   private[this] var modelObjects = new HashMap[String, MdlInfo]
   private[this] var zkListener: ZooKeeperListener = _
@@ -502,8 +497,9 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.writeLock().unlock();
     }
@@ -612,11 +608,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     MetadataAPIImpl.InitMdMgrFromBootStrap(KamanjaConfiguration.configFile, false)
   }
 
-  def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: KamanjaClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
-    loadedJars = tmpLoadedJars
-    loader = tmpLoader
-    mirror = tmpMirror
-
+  def InitMdMgr(zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
     val tmpMsgDefs = mdMgr.Messages(true, true)
     val tmpContainerDefs = mdMgr.Containers(true, true)
     val tmpModelDefs = mdMgr.Models(true, true)
@@ -624,7 +616,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     val obj = new KamanjaMetadata
 
     try {
-      obj.LoadMdMgrElems(loadedJars, loader, mirror, tmpMsgDefs, tmpContainerDefs, tmpModelDefs)
+      obj.LoadMdMgrElems(tmpMsgDefs, tmpContainerDefs, tmpModelDefs)
       // Lock the global object here and update the global objects
       UpdateKamanjaMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, null, null, null)
     } catch {
@@ -641,7 +633,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       } catch {
         case e: Exception => {
-          
+
           LOG.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
           throw e
         }
@@ -686,6 +678,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
 
     val unloadMsgsContainers = scala.collection.mutable.Set[String]()
 
+    var removedValues = 0
+
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
       LOG.debug("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
@@ -701,10 +695,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               } catch {
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.debug("StackTrace:"+stackTrace)
+                  LOG.debug("StackTrace:" + stackTrace)
                 }
               }
             }
+            case "Remove" | "Deactivate" => { removedValues += 1 }
             case _ => {}
           }
         }
@@ -720,15 +715,16 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               } catch {
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.error("StackTrace:"+stackTrace)
+                  LOG.error("StackTrace:" + stackTrace)
                 }
               }
             }
+            case "Remove" => { removedValues += 1 }
             case _ => {}
           }
         }
         case "ContainerDef" => {
-          // unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name) // Can we clear Container also?
+          unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name)
           zkMessage.Operation match {
             case "Add" => {
               try {
@@ -739,16 +735,31 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               } catch {
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.error("StackTrace:"+stackTrace)
+                  LOG.error("StackTrace:" + stackTrace)
                 }
               }
             }
+            case "Remove" => { removedValues += 1 }
             case _ => {}
           }
         }
         case _ => {}
       }
     })
+
+    // Removed some elements
+    if (removedValues > 0) {
+      reent_lock.writeLock().lock();
+      try {
+        KamanjaConfiguration.metadataLoader = new KamanjaLoaderInfo(KamanjaConfiguration.metadataLoader, true, true)
+        envCtxt.SetClassLoader(KamanjaConfiguration.metadataLoader.loader)
+      } catch {
+        case e: Exception => {
+        }
+      } finally {
+        reent_lock.writeLock().unlock();
+      }
+    }
 
     if (unloadMsgsContainers.size > 0)
       envCtxt.clearIntermediateResults(unloadMsgsContainers.toArray)
@@ -771,13 +782,13 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               try {
                 val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (mdl != None) {
-                  obj.PrepareModel(loadedJars, loader, mirror, mdl.get, true)
+                  obj.PrepareModel(mdl.get, true)
                 } else {
                   LOG.error("Failed to find Model:" + key)
                 }
               } catch {
                 case e: Exception => {
-                  
+
                   LOG.error("Failed to Add Model:" + key)
                 }
               }
@@ -787,7 +798,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
                 removedModels += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
-                  
+
                   LOG.error("Failed to Remove Model:" + key)
                 }
               }
@@ -803,7 +814,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               try {
                 val msg = mdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (msg != None) {
-                  obj.PrepareMessage(loadedJars, loader, mirror, msg.get, true)
+                  obj.PrepareMessage(msg.get, true)
                 } else {
                   LOG.error("Failed to find Message:" + key)
                 }
@@ -833,7 +844,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               try {
                 val container = mdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (container != None) {
-                  obj.PrepareContainer(loadedJars, loader, mirror, container.get, true, false)
+                  obj.PrepareContainer(container.get, true, false)
                 } else {
                   LOG.error("Failed to find Container:" + key)
                 }
@@ -848,7 +859,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
                 removedContainers += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
-                 
+
                   LOG.error("Failed to Remove Container:" + key)
                 }
               }
@@ -893,8 +904,9 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.readLock().unlock();
     }
@@ -911,10 +923,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     try {
       v = localgetModel(mdlName)
     } catch {
-      case e: Exception => { 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.readLock().unlock();
     }
@@ -931,10 +944,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     try {
       v = localgetContainer(containerName)
     } catch {
-      case e: Exception => { 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.readLock().unlock();
     }
@@ -951,10 +965,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     try {
       v = localgetMessgeOrContainer(msgOrContainerName)
     } catch {
-      case e: Exception => { 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.readLock().unlock();
     }
@@ -971,10 +986,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     try {
       v = localgetAllMessges
     } catch {
-      case e: Exception => { 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.readLock().unlock();
     }
@@ -991,10 +1007,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     try {
       v = localgetAllModels
     } catch {
-      case e: Exception => { 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.readLock().unlock();
     }
@@ -1011,10 +1028,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     try {
       v = localgetAllContainers
     } catch {
-      case e: Exception => { 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        exp = e }
+        LOG.debug("StackTrace:" + stackTrace)
+        exp = e
+      }
     } finally {
       reent_lock.readLock().unlock();
     }

@@ -25,8 +25,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
-
-      val models: Array[MdlInfo] = KamanjaMetadata.getAllModels.map(mdl => mdl._2).toArray
+      val tmpMdls = KamanjaMetadata.getAllModels
+      val models = if (tmpMdls != null) tmpMdls.map(mdl => mdl._2).toArray else Array[MdlInfo]()
 
       val outputAlways: Boolean = false;
 
@@ -157,8 +157,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
       return returnOutput.toArray
     } catch {
       case e: Exception => {
-        LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("Failed to create and run message. Reason:%s Message:%s\nStackTrace:%s".format(e.getCause, e.getMessage, stackTrace))
       }
     }
     return Array[(String, String)]()
