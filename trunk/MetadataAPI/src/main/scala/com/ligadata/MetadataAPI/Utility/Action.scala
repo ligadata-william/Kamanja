@@ -14,6 +14,7 @@ object Action extends Enumeration {
   val UPDATEMESSAGE=Value("updatemessage")
   val GETALLMESSAGES=Value("getallmessages")
   val REMOVEMESSAGE=Value("removemessage")
+  val GETMESSAGE=Value("getmessage")
   //output message management
   val ADDOUTPUTMESSAGE=Value("addoutputmessage")
   val UPDATEOUTPUTMESSAGE=Value("updateoutputmessage")
@@ -26,7 +27,9 @@ object Action extends Enumeration {
   val REMOVEMODEL=Value("removemodel")
   val ACTIVATEMODEL=Value("activatemodel")
   val DEACTIVATEMODEL=Value("deactivatemodel")
-  val UPDATEMODEL=Value("updatemodel")
+  val UPDATEMODELPMML=Value("updatemodelpmml")
+  val UPDATEMODELSCALA=Value("updatemodelscala")
+  val UPDATEMODELJAVA=Value("updatemodeljava")
   val GETALLMODELS=Value("getallmodels")
   val GETMODEL=Value("getmodel")
   //container management
@@ -50,7 +53,7 @@ object Action extends Enumeration {
   val LOADFUNCTIONSFROMAFILE= Value("loadfunctionsfromafile")
   val DUMPALLFUNCTIONSASJSON= Value("dumpallfunctions")
   //config
-  val UPLOADENGINECONFIG= Value("uploadengineconfig")
+  val UPLOADCLUSTERCONFIG= Value("uploadclusterconfig")
   val UPLOADCOMPILECONFIG= Value("uploadcompileconfig")
   val DUMPALLCFGOBJECTS= Value("dumpallcfgobjects")
   val REMOVEENGINECONFIG= Value("removeengineconfig")
@@ -67,5 +70,5 @@ object Action extends Enumeration {
   val DUMPALLCLUSTERS=Value("dumpallclusters")
   val DUMPALLCLUSTERCFGS=Value("dumpallclustercfgs")
   val DUMPALLADAPTERS=Value("dumpalladapters")
+  val GETOUTPUTMESSAGE=Value("getoutputmessage")
 }
-

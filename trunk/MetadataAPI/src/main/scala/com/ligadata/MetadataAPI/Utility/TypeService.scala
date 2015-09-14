@@ -52,15 +52,28 @@ object TypeService {
     } else {
       //input provided
       var message = new File(input.toString)
-      val typeDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.AddTypes(typeDef.toString, "JSON", userid)
+      if(message.exists()){
+        val typeDef = Source.fromFile(message).mkString
+        response = MetadataAPIImpl.AddTypes(typeDef.toString, "JSON", userid)
+
+      }else{
+        response="File does not exist"
+      }
     }
     response
   }
 
-  def getType: String ={
+  def getType(param: String=""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.GetType(ns, name,ver,"JSON", userid).toString
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val typeKeys = MetadataAPIImpl.GetAllKeys("TypeDef", None)
       if (typeKeys.length == 0) {
         val errorMsg="Sorry, No types available, in the Metadata, to display!"
@@ -100,9 +113,17 @@ object TypeService {
     MetadataAPIImpl.GetAllTypes("JSON", userid)
   }
 
-  def removeType: String ={
+  def removeType(param: String = ""): String ={
     var response=""
     try {
+      if (param.length > 0) {
+        val(ns, name, ver) = com.ligadata.kamanja.metadata.Utils.parseNameToken(param)
+        try {
+          return MetadataAPIImpl.RemoveType(ns, name,ver.toLong, userid).toString
+        } catch {
+          case e: Exception => e.printStackTrace()
+        }
+      }
       val typeKeys =MetadataAPIImpl.GetAllKeys("TypeDef", None)
 
       if (typeKeys.length == 0) {

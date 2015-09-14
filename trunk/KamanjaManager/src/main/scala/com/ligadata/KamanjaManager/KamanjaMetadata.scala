@@ -101,7 +101,6 @@ class KamanjaMetadata {
     } catch {
       case e: Exception => {
         LOG.error("Failed to get classname :" + clsName)
-
         return false
       }
     }
@@ -183,7 +182,7 @@ class KamanjaMetadata {
       }
     }
     if (foundFlg == false) {
-      LOG.error("Failed to instantiate message object :" + orgClsName)
+      LOG.error("Failed to instantiate message object: " + orgClsName)
     }
   }
 
@@ -206,8 +205,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to get classname :" + clsName)
-
+        LOG.error("Failed to get classname: " + clsName)
         return false
       }
     }
@@ -300,9 +298,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-
         LOG.error("Failed to get classname :" + clsName)
-
         return false
       }
     }

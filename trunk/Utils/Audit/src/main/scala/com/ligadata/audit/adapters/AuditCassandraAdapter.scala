@@ -29,7 +29,7 @@ import com.ligadata.Exceptions._
 class AuditCassandraAdapter extends AuditAdapter {
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  
+
   var adapterProperties: scala.collection.mutable.Map[String,String] = scala.collection.mutable.Map[String,String]()
 
   // Read all cassandra parameters
@@ -263,6 +263,19 @@ class AuditCassandraAdapter extends AuditAdapter {
     cluster.close()
   }
   
+  override def TruncateStore: Unit = {
+    try {
+      var stmt = session.prepare("truncate " + table + ";")
+      val rs = session.execute(stmt.bind().setConsistencyLevel(consistencylevelDelete))
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        throw new Exception("Failed to truncate Audit Store: " + e.getMessage())
+      }
+    }
+  }
+
   private def initPropertiesFromFile(parmFile: String): Unit = {
     
     try {

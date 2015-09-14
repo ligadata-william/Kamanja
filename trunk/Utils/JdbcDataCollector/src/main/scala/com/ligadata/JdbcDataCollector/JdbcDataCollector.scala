@@ -68,7 +68,7 @@ object RunJdbcCollector {
         } catch {
           case e: Exception => {
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
-            LOG.error("Error:"+errMsg)
+            LOG.error("Error:" + errMsg)
             throw new Exception(errMsg)
           }
         }
@@ -330,6 +330,16 @@ object RunJdbcCollector {
       LOG.debug("%s:Loading Driver Jars".format(GetCurDtTmStr))
       LoadJars(depJars)
       LOG.debug("%s:Loading Driver".format(GetCurDtTmStr))
+
+      try {
+        Class.forName(driverType, true, clsLoader)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to load Driver class %s with Reason:%s Message:%s".format(driverType, e.getCause, e.getMessage))
+          sys.exit(1)
+        }
+      }
+
       val d = Class.forName(driverType, true, clsLoader).newInstance.asInstanceOf[Driver]
       LOG.debug("%s:Registering Driver".format(GetCurDtTmStr))
       DriverManager.registerDriver(new DriverShim(d));
