@@ -238,27 +238,6 @@ class KamanjaManager extends Observer {
     val loadConfigs = KamanjaConfiguration.allConfigs
 
     try {
-      /*
-      KamanjaConfiguration.metadataDataStoreInfo = loadConfigs.getProperty("MetadataDataStore".toLowerCase, "")
-      KamanjaConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataStoreType.size == 0) {
-        LOG.error("Not found valid MetadataStoreType.")
-        return false
-      }
-
-      KamanjaConfiguration.metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataSchemaName.size == 0) {
-        LOG.error("Not found valid MetadataSchemaName.")
-        return false
-      }
-
-      KamanjaConfiguration.metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
-      if (KamanjaConfiguration.metadataLocation.size == 0) {
-        LOG.error("Not found valid MetadataLocation.")
-        return false
-      }
-*/
-
       KamanjaConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
       if (KamanjaConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")
@@ -341,8 +320,8 @@ class KamanjaManager extends Observer {
 
     } catch {
       case e: Exception => {
-        LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("Failed to initialize. Reason:%s Message:%s\nStackTrace:%s".format(e.getCause, e.getMessage, stackTrace))
         retval = false
       }
     } finally {

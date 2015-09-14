@@ -238,7 +238,6 @@ object MetadataAPIImpl extends MetadataAPI {
         throw e // Rethrow
       }
     }
-
     // All is good, create the new class
     var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[AuditAdapter]]
     auditObj = className.newInstance
@@ -1891,7 +1890,6 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-
   def TruncateAuditStore: Unit = lock.synchronized {
     try {
       logger.debug("Truncating Audit datastore")
@@ -1958,7 +1956,6 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-
 
   def AddDerivedConcept(conceptsText: String, format: String): String = {
     ConceptUtils.AddDerivedConcept(conceptsText,format)
@@ -3068,17 +3065,20 @@ object MetadataAPIImpl extends MetadataAPI {
 
         // when a version number changes, latestVersion  has different namespace making it unique
         // latest version may not be found in the cache. So need to remove it
-        if( latestVersion != None ){
+        if( latestVersion != None ) {
           RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
         }
+
         UploadJarsToDB(modDef)
         val result = AddModel(modDef)
         var objectsUpdated = new Array[BaseElemDef](0)
         var operations = new Array[String](0)
+
         if( latestVersion != None ){
           objectsUpdated = objectsUpdated :+ latestVersion.get
           operations = operations :+ "Remove"
         }
+
         objectsUpdated = objectsUpdated :+ modDef
         operations = operations :+ "Add"
         NotifyEngine(objectsUpdated, operations)
@@ -3822,8 +3822,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetAllKeys(objectType: String, userid: Option[String]): Array[String] = {
     try {
       var keys = scala.collection.mutable.Set[String]()
-      typeStore.getAllKeys({ (key: Key) =>
-      {
+      typeStore.getAllKeys({ (key: Key) => {
         val strKey = KeyAsStr(key)
         val i = strKey.indexOf(".")
         val objType = strKey.substring(0, i)
@@ -4532,7 +4531,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   // A single concept as a string using name and version as the key
   def GetConceptDef(nameSpace: String, objectName: String, formatType: String,
-                    version: String, userid: Option[String]): String = {
+		    version: String, userid: Option[String]): String = {
     ConceptUtils.GetConceptDef(nameSpace,objectName,formatType,version,userid)
   }
 
@@ -4605,10 +4604,10 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
-                 jarPaths: List[String], scala_home: String,
-                 java_home: String, classpath: String,
-                 clusterId: String, power: Int,
-                 roles: Array[String], description: String): String = {
+    jarPaths: List[String], scala_home: String,
+    java_home: String, classpath: String,
+    clusterId: String, power: Int,
+    roles: Array[String], description: String): String = {
     AddNode(nodeId, nodePort, nodeIpAddr, jarPaths, scala_home,
       java_home, classpath,
       clusterId, power, roles, description)
@@ -4630,8 +4629,8 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddAdapter(name: String, typeString: String, dataFormat: String, className: String,
-                 jarName: String, dependencyJars: List[String],
-                 adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
+    jarName: String, dependencyJars: List[String],
+    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
     try {
       // save in memory
       val ai = MdMgr.GetMdMgr.MakeAdapter(name, typeString, dataFormat, className, jarName,
@@ -4654,8 +4653,8 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateAdapter(name: String, typeString: String, dataFormat: String, className: String,
-                    jarName: String, dependencyJars: List[String],
-                    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
+    jarName: String, dependencyJars: List[String],
+    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
     AddAdapter(name, typeString, dataFormat, className, jarName, dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
   }
 
@@ -4719,7 +4718,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddClusterCfg(clusterCfgId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
-                    modifiedTime: Date, createdTime: Date): String = {
+    modifiedTime: Date, createdTime: Date): String = {
     try {
       // save in memory
       val ci = MdMgr.GetMdMgr.MakeClusterCfg(clusterCfgId, cfgMap, modifiedTime, createdTime)
@@ -4741,7 +4740,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateClusterCfg(clusterCfgId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
-                       modifiedTime: Date, createdTime: Date): String = {
+    modifiedTime: Date, createdTime: Date): String = {
     AddClusterCfg(clusterCfgId, cfgMap, modifiedTime, createdTime)
   }
 

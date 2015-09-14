@@ -6,7 +6,6 @@ import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteAr
 import com.ligadata.Exceptions.StackTrace
 import org.apache.log4j._
 
-
 trait MessageContainerBase {
   var transactionId: Long
   def isMessage: Boolean
@@ -72,7 +71,7 @@ object SerializeDeserialize {
     } catch {
       case e: Exception => {
         //LOG.error("Failed to get classname :" + clsName)
-          logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
+        logger.debug("StackTrace:" + StackTrace.ThrowableTraceString(e))
         dos.close
         bos.close
         throw e
@@ -81,7 +80,7 @@ object SerializeDeserialize {
     null
   }
 
-  def Deserialize(bytearray: Array[Byte], mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, isTopObject:Boolean, desClassName: String): MessageContainerBase = {
+  def Deserialize(bytearray: Array[Byte], mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, isTopObject: Boolean, desClassName: String): MessageContainerBase = {
     var dis = new DataInputStream(new ByteArrayInputStream(bytearray));
 
     val typName = dis.readUTF
@@ -94,6 +93,14 @@ object SerializeDeserialize {
         if (isTopObject) {
           mdResolver.getMessgeOrContainerInstance(typName)
         } else {
+          try {
+            Class.forName(desClassName, true, loader)
+          } catch {
+            case e: Exception => {
+              logger.error("Failed to load Message/Container class %s with Reason:%s Message:%s".format(desClassName, e.getCause, e.getMessage))
+              throw e // Rethrow
+            }
+          }
           var curClz = Class.forName(desClassName, true, loader)
           curClz.newInstance().asInstanceOf[MessageContainerBase]
         }
@@ -106,7 +113,7 @@ object SerializeDeserialize {
     } catch {
       case e: Exception => {
         // LOG.error("Failed to get classname :" + clsName)
-        logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
+        logger.debug("StackTrace:" + StackTrace.ThrowableTraceString(e))
         dis.close
         throw e
       }
