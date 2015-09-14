@@ -1,6 +1,6 @@
 {
   "ZookeeperInfo": {
-    "ZooKeeperNodeBasePath": "/ligadata",
+    "ZooKeeperNodeBasePath": "/kamanja",
     "ZooKeeperConnectString": "localhost:2181",
     "ZooKeeperUpdateFrequency": "500"
   },
