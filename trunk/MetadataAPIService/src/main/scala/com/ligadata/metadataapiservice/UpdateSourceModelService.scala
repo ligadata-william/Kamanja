@@ -14,8 +14,8 @@ import scala.util.control._
 import org.apache.log4j._
 
 object UpdateSourceModelService {
-  case class ProcessJava(sourceCode:String)
-  case class ProcessScala(sourceCode:String)
+  case class UpdateJava(sourceCode:String)
+  case class UpdateScala(sourceCode:String)
 }
 
 
@@ -32,12 +32,12 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
   val logger = Logger.getLogger(loggerName)
 
   def receive = {
-    case ProcessJava(sourceCode) => {
+    case UpdateJava(sourceCode) => {
       log.debug("Updating java model")
-      processJava(sourceCode)
+      updateJava(sourceCode)
       context.stop(self)
     }
-    case ProcessScala(sourceCode) => {
+    case UpdateScala(sourceCode) => {
       log.debug("Updating scala model")
       processScala(sourceCode)
       context.stop(self)
@@ -62,11 +62,11 @@ class UpdateSourceModelService(requestContext: RequestContext, userid:Option[Str
     }
   }
 
-  def processJava(pmmlStr:String) = {
+  def updateJava(pmmlStr:String) = {
 
     log.debug("Requesting UpdateSourceModel {}",pmmlStr)
     val usersModelName=userid.getOrElse("")+"."+modelname.getOrElse("")
-    logger.debug("user model name is: "+usersModelName)
+    logger.debug("(Put request) user model name is: "+usersModelName)
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","model"))) {
       //  MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,pmmlStr,AuditConstants.FAIL,"",nameVal)
