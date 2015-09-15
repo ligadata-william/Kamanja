@@ -283,6 +283,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
     qc.hosts.foreach(broker => {
       val brokerName = broker.split(":")
+      var brokerHost = brokerName(0)
       val partConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
         KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
         KafkaSimpleConsumer.FETCHSIZE,
@@ -303,8 +304,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             // if the leader for this Topic's partition is this broker, then return this in the result.
             println("Checking "+brokerName(0)+" vs. " + leader.host)
             println("Checking "+brokerName(1).toInt+" vs. " + leader.port )
+            if (brokerHost.equalsIgnoreCase("localhost"))
+              brokerHost = getLocalhostIP.trim
             if (leader == null ||
-                (leader != null && leader.host.equalsIgnoreCase(brokerName(0))  && leader.port == brokerName(1).toInt)) {
+                (leader != null && leader.host.equalsIgnoreCase(brokerHost)  && leader.port == brokerName(1).toInt)) {
               println("Returnting THIS..... "+leader.host+":"+leader.port)
               partitionNames = uniqueKey :: partitionNames             
             } else {
@@ -611,6 +614,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     }
     val brokerId = brokerName(0) + ":" + brokerName(1)
     brokerId
+  }
+  
+  private def getLocalhostIP: String = {
+    return InetAddress.getLocalHost.getHostAddress
   }
 
   /**
