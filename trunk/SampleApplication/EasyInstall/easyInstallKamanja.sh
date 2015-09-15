@@ -384,17 +384,9 @@ cp -rf * $installPath/documentation
 
 cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/config
 
-# Not copying anything from here
-# cd $srcPath/SampleApplication/Medical/Configs
-# cp * $installPath/input/Medical/metadata/config
-
 #HelloWorld
-
 cd $srcPath/SampleApplication/HelloWorld/data
 cp * $installPath/input/SampleApplications/data
-
-#cd $srcPath/SampleApplication/HelloWorld/container
-#cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/HelloWorld/message
 cp * $installPath/input/SampleApplications/metadata/message
@@ -411,7 +403,6 @@ cp -rf * $installPath/config
 #HelloWorld
 
 #Medical
-
 cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
 
@@ -441,7 +432,6 @@ cp -rf * $installPath/config
 #Medical
 
 #Telecom
-
 cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/SampleApplications/data
 
