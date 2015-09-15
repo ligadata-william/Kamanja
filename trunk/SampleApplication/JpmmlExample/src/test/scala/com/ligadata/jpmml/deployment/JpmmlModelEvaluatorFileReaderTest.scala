@@ -7,6 +7,8 @@ import com.ligadata.SimpleEnvContextImpl.SimpleEnvContextImpl
 import com.ligadata.jpmml.concrete.JpmmlModelEvaluatorConcrete
 import com.ligadata.jpmml.message.JpmmlMessage
 import org.scalatest.FlatSpec
+import scala.language.reflectiveCalls
+
 /**
  * Tests
  */
