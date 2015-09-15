@@ -274,6 +274,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
    */
   def GetAllPartitionUniqueRecordKey: Array[PartitionUniqueRecordKey] = lock.synchronized {
     // iterate through all the simple consumers - collect the metadata about this topic on each specified host
+    var partitionRecord: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
 
     val topics: Array[String] = Array(qc.topic)
     val metaDataReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
@@ -283,37 +284,24 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
     qc.hosts.foreach(broker => {
       val brokerName = broker.split(":")
-      var brokerHost = brokerName(0)
       val partConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
         KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
         KafkaSimpleConsumer.FETCHSIZE,
         KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
       try {
         val metaDataResp: kafka.api.TopicMetadataResponse = partConsumer.send(metaDataReq)
+      //  metaDataResp.
         val metaData = metaDataResp.topicsMetadata
         metaData.foreach(topicMeta => {
           topicMeta.partitionsMetadata.foreach(partitionMeta => {
-            println("*** KAFKA_ADAPTER: Processing broker("+broker+") - partitionId "+partitionMeta.partitionId+" for topic "+qc.topic +" LEADER is "+partitionMeta.leader.get.id+":"+partitionMeta.leader.get.port)
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             uniqueKey.PartitionId = partitionMeta.partitionId
             uniqueKey.Name = qc.Name
             uniqueKey.TopicName = qc.topic
-            var leader = partitionMeta.leader.getOrElse(null)
-          
-            // If there is no leader, assume this is a signle host installation. so return this in the result. OR
-            // if the leader for this Topic's partition is this broker, then return this in the result.
-            println("Checking "+brokerName(0)+" vs. " + leader.host)
-            println("Checking "+brokerName(1).toInt+" vs. " + leader.port )
-            if (brokerHost.equalsIgnoreCase("localhost"))
-              brokerHost = getLocalhostIP.trim
-            if (leader == null ||
-                (leader != null && leader.host.equalsIgnoreCase(brokerHost)  && leader.port == brokerName(1).toInt)) {
-              println("Returnting THIS..... "+leader.host+":"+leader.port)
-              partitionNames = uniqueKey :: partitionNames             
-            } else {
-              println("RETURNING NOTHING")
+            if (!partitionRecord.contains(qc.topic+partitionMeta.partitionId.toString)) {
+              partitionNames = uniqueKey :: partitionNames 
+              partitionRecord = partitionRecord + (qc.topic+partitionMeta.partitionId.toString)
             }
-            
           })
         })
       } catch {
@@ -616,9 +604,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     brokerId
   }
   
-  private def getLocalhostIP: String = {
-    return InetAddress.getLocalHost.getHostAddress
-  }
+
 
   /**
    * combine the ip address and port number into a Kafka Configuratio ID
