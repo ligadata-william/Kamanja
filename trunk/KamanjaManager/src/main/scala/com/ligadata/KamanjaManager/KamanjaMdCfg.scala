@@ -256,7 +256,7 @@ object KamanjaMdCfg {
 
     // Try for errors before we do real loading & processing
     try {
-      Class.forName(className, true, loaderInfo.loader)
+      Class.forName(className, true, KamanjaConfiguration.adaptersAndEnvCtxtLoader.loader)
     } catch {
       case e: Exception => {
         LOG.error("Failed to load EnvironmentContext class %s with Reason:%s Message:%s".format(className, e.getCause, e.getMessage))
@@ -382,7 +382,7 @@ object KamanjaMdCfg {
 
     // Try for errors before we do real loading & processing
     try {
-      Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
+      Class.forName(statusAdapterCfg.className, true, KamanjaConfiguration.adaptersAndEnvCtxtLoader.loader)
     } catch {
       case e: Exception => {
         LOG.error("Failed to load Status/Output Adapter %s with class %s with Reason:%s Message:%s".format(statusAdapterCfg.Name, statusAdapterCfg.className, e.getCause, e.getMessage))
@@ -482,7 +482,7 @@ object KamanjaMdCfg {
 
     // Try for errors before we do real loading & processing
     try {
-      Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
+      Class.forName(statusAdapterCfg.className, true, KamanjaConfiguration.adaptersAndEnvCtxtLoader.loader)
     } catch {
       case e: Exception => {
         LOG.error("Failed to load Validate/Input Adapter %s with class %s with Reason:%s Message:%s".format(statusAdapterCfg.Name, statusAdapterCfg.className, e.getCause, e.getMessage))
