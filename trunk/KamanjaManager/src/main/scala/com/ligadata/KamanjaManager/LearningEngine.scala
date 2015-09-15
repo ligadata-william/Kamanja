@@ -44,8 +44,6 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
       val models: Array[ModelInfo] = KamanjaMetadata.getAllModels.values.toArray
 
-      val models: Array[ModelInfo] = KamanjaMetadata.getAllModels.values.toArray
-
       val outputAlways: Boolean = false;
 
       // Execute all modes here
