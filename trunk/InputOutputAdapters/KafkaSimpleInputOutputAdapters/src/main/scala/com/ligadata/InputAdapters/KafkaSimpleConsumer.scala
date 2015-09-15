@@ -273,6 +273,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
    */
   def GetAllPartitionUniqueRecordKey: Array[PartitionUniqueRecordKey] = lock.synchronized {
     // iterate through all the simple consumers - collect the metadata about this topic on each specified host
+    var partitionRecord: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
 
     val topics: Array[String] = Array(qc.topic)
     val metaDataReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
@@ -295,7 +296,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             uniqueKey.PartitionId = partitionMeta.partitionId
             uniqueKey.Name = qc.Name
             uniqueKey.TopicName = qc.topic
-            partitionNames = uniqueKey :: partitionNames
+            if (!partitionRecord.contains(qc.topic+partitionMeta.partitionId.toString)) {
+              partitionNames = uniqueKey :: partitionNames 
+              partitionRecord = partitionRecord + (qc.topic+partitionMeta.partitionId.toString)
+            }
           })
         })
       } catch {
@@ -597,6 +601,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     val brokerId = brokerName(0) + ":" + brokerName(1)
     brokerId
   }
+  
+
 
   /**
    * combine the ip address and port number into a Kafka Configuratio ID
