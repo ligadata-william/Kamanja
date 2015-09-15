@@ -301,6 +301,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           
             // If there is no leader, assume this is a signle host installation. so return this in the result. OR
             // if the leader for this Topic's partition is this broker, then return this in the result.
+            println("Checking "+brokerName(0)+" vs. " + leader.host)
+            println("Checking "+brokerName(1).toInt+" vs. " + leader.port )
             if (leader == null ||
                 (leader != null && leader.host.equalsIgnoreCase(brokerName(0))  && leader.port == brokerName(1).toInt)) {
               println("Returnting THIS..... "+leader.host+":"+leader.port)
