@@ -7,6 +7,7 @@ import java.util.Properties
 import java.io.InputStream
 import scala.actors.threadpool.{ Executors, ExecutorService }
 import sys.process._
+//import scala.tools.jline_embedded._
 
 
 /**
@@ -76,13 +77,15 @@ object KamanjaShell {
   // TO keep or not to keep.
   private[this] var _exec: ExecutorService = null
   private var opts: InstanceContext = null
+ // var console: scala.tools.jline_embedded.console.ConsoleReader = new scala.tools.jline_embedded.console.ConsoleReader
+  
 
   /**
    * Main entry point
    * @param args Array[String]
    */
   def main(args: Array[String]) {
-    
+    var line: String = ""
     var metadataParams = new Properties
     var runtimeParams = new Properties
     
@@ -91,8 +94,7 @@ object KamanjaShell {
         println("Either NODE or CLUSTER must be specified when starting Kamanja")
         return
       }
-      
-      logger.info("SHIT SHIT")
+
       // Starting the Kamanja Shell, initialize the shell and 
       parseInitialInput(args)
       // Get the options for this installations.
@@ -101,6 +103,10 @@ object KamanjaShell {
       opts.setIPath(tempPath + "/node_" + tempName)
       opts.setIPort(tempPort)
       opts.setUserid("shellLocal")
+      
+      // set up Console prompt
+     // console.setPrompt("Kamanja Instance: NODE_" + opts.getIName + ">")
+      // print("Kamanja Instance: NODE_" + opts.getIName + ">")
       
       // See if the directory already exists or not, if it needs to be created, create it along with the basic
       // configurations to be used.
@@ -134,14 +140,18 @@ object KamanjaShell {
       Thread.sleep(3000)
       
       //go into a loop listening for commands.
-      while (isRunning) {  
-        println("...")
-        println("Ready to process commands")
-        val input = getLine()
-        if (input.equalsIgnoreCase(this.EXIT)) isRunning = false else exectuteShellCommand(input)
+    //  while (isRunning) {  
+    //    println("...")
+    //    println("Ready to process commands")
+   //     val input = getLine()
+   //     if (input.equalsIgnoreCase(this.EXIT)) isRunning = false else exectuteShellCommand(input)
         
-        println("??????")
-      }
+   //     println("??????")
+  //    }
+      
+  //    while ((line = console.readLine()) != null) {
+   //     console.println(line);
+ //     }
       
       // cleanup and bail
       cleanup

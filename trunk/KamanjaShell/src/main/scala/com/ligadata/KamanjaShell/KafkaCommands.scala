@@ -70,22 +70,22 @@ object KafkaCommands {
    // var numPart = knownTopics(topicName)
     var numPart = 8
     var numOfThd = 1
-    var kafkaCommand = ("java -jar "+ opts.getKamanjaHome +"/bin/SimpleKafkaProducer-0.1.0 --gz "+ isGZ +" --topics \"" + topicName +
-               "\" --threads "+ numOfThd + " --topicpartitions " +numPart+ " --brokerlist \""+ brokerList + "\" --files \""+ sourceFile +
-               "\" --partitionkeyidxs \""+ partitionIndex +"\" --format " + sourceCodeFormat)
-               
+    // "\" --partitionkeyidxs \""+ partitionIndex +
+    // java -jar /bin/Kamanja/bin/SimpleKafkaProducer-0.1.0 --gz false --topics testin_1 --threads 1 --topicpartitions 8 --brokerlist localhost:9092 --files /Users/danielkozin/kamanjaApps/BOFA/data/sampleData.csv --partitionkeyidx 1 --format CSV
+    var kafkaCommand = "java -jar "+ opts.getKamanjaHome +"/bin/SimpleKafkaProducer-0.1.0 --gz "+ isGZ +" --topics \"" + topicName + " --threads "+ numOfThd + " --topicpartitions " +numPart+ " --brokerlist \""+ brokerList + "\" --files \""+ sourceFile + " --format " + sourceCodeFormat
+    println("Executing ")
+    println(kafkaCommand)
     exec.execute(new Runnable() {
       override def run() = {
         //var retVal = Process(kafkaCommand).!
         val buffer = new StringBuffer() 
         val lines =  kafkaCommand lines_! ProcessLogger(buffer append _)
+        println("Executing -COMPLETED ")
       }
     })  
     
     // wait for the command to finish
     Thread sleep 1200
-      
-    
   }
   
    /**

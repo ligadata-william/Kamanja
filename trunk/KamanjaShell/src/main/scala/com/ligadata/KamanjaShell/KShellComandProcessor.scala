@@ -118,8 +118,6 @@ object KShellComandProcessor {
         var sourceFile = cOptions.getOrElse(SOURCE_FILE, "")
         var partitionOn =  cOptions.getOrElse(PARTITION_ON, "")
        
-        KafkaCommands.pushMessages(exec, opts, topic, partitionOn, sourceFile)
-       
         println("Kamanja Shell is executing PUSH DATA command into \nTOPIC NAME: " + topic)
         try {
           KafkaCommands.pushMessages(exec, opts, topic, partitionOn, sourceFile)

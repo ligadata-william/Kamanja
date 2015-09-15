@@ -30,12 +30,9 @@ object EningeCommandProcessor {
         args(1) = opts.getIPath + "/config/engineConfig_"+ opts.getIName +".properties"
 
         println("**** STARTING KAMANJA using "+ args(1))
-        mgr.run(args)
-        
+        mgr.run(args)        
       }
-    })
-    
-         
+    })       
   }
   
   def shutdown: Unit = {
