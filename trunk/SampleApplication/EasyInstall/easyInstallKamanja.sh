@@ -405,6 +405,7 @@ cp -rf * $installPath/config
 #Medical
 cd $srcPath/SampleApplication/Medical/SampleData
 cp *.csv $installPath/input/SampleApplications/data
+cp *.csv.gz $installPath/input/SampleApplications/data
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
 cp * $installPath/input/SampleApplications/metadata/container
