@@ -20,6 +20,7 @@ import scala.io._
 import java.util.concurrent._
 import scala.collection.JavaConverters._
 import com.ligadata.Exceptions.StackTrace
+import com.google.common.io.Closeables
 
 class ZooKeeperListener {
   val loggerName = this.getClass.getName
@@ -27,7 +28,6 @@ class ZooKeeperListener {
   var zkc: CuratorFramework = null
   var nodeCache: NodeCache = _
   var pathChildCache: PathChildrenCache = _
-
   private def ProcessData(newData: ChildData, ListenCallback: (String) => Unit) = {
     try {
       val data = newData.getData()
@@ -79,7 +79,8 @@ class ZooKeeperListener {
   //  - All Childs Paths & Data.
   def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, getAllChildsData:Boolean, ListenCallback: (String, String,  Array[Byte], Array[(String, Array[Byte])]) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
     try {
-      zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+      if (zkc == null)
+        zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       pathChildCache = new PathChildrenCache(zkc, znodePath, true);
 
       pathChildCache.getListenable().addListener(new PathChildrenCacheListener {
@@ -109,6 +110,12 @@ class ZooKeeperListener {
   }
 
   def Shutdown: Unit = {
+    if (pathChildCache != null)
+      Closeables.close(pathChildCache,false)
+    
+    if(nodeCache != null)
+      Closeables.close(nodeCache,false)     
+      
     if (zkc != null)
       zkc.close
     zkc = null

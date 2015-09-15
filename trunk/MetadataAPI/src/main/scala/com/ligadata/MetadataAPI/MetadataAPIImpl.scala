@@ -1896,7 +1896,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       logger.debug("Truncating Audit datastore")
       if(auditObj != null ){
-	auditObj.TruncateStore
+	      auditObj.TruncateStore
       }
     } catch {
       case e: Exception => {
@@ -5838,9 +5838,9 @@ object MetadataAPIImpl extends MetadataAPI {
   private def shutdownZkListener: Unit = {
     try {
       CloseZKSession 
-      if (zkListener != null) {
+      if (zkListener != null) 
         zkListener.Shutdown
-      }
+      zkListener = null
     } catch {
       case e: Exception => {
         logger.error("Error trying to shutdown zookeeper listener.  ")

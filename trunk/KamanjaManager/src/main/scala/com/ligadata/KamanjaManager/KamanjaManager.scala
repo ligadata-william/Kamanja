@@ -149,7 +149,7 @@ class KamanjaManager extends Observer {
     LOG.warn("    --config <configfilename>")
   }
 
-  private def Shutdown(exitCode: Int): Int = {
+  def Shutdown(exitCode: Int): Int = {
     if (KamanjaMetadata.envCtxt != null)
       KamanjaMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
     if (heartBeat != null)

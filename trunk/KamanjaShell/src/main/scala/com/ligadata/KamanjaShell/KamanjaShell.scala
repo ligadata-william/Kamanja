@@ -91,6 +91,8 @@ object KamanjaShell {
         println("Either NODE or CLUSTER must be specified when starting Kamanja")
         return
       }
+      
+      logger.info("SHIT SHIT")
       // Starting the Kamanja Shell, initialize the shell and 
       parseInitialInput(args)
       // Get the options for this installations.
@@ -137,6 +139,8 @@ object KamanjaShell {
         println("Ready to process commands")
         val input = getLine()
         if (input.equalsIgnoreCase(this.EXIT)) isRunning = false else exectuteShellCommand(input)
+        
+        println("??????")
       }
       
       // cleanup and bail
@@ -484,33 +488,51 @@ object KamanjaShell {
    */
   private def cleanup: Unit = {
     
-    println("Stopping Metadata Process")
+    // This should kill the Engine if it is running
+    logger.info ("Cleaning up the shell sturctures...")
+    
+    // First things first, Clear Kamanja Metadata Object and the Runtime engine if it is running.
+    logger.info("Stopping Metadata Process")
     try {
       MetadataProxy.shutdown(opts)
+      EningeCommandProcessor.shutdown
     } catch {
       case e: Exception => e.printStackTrace()
     }
-    println("...")
+    logger.info("...")
     Thread.sleep(2000)
     
-    println("Stoping KAFKA ")
-    val cmd2 = Seq("sh","-c","ps ax | grep -i 'kafka\\.Kafka' | grep java | grep -v grep | awk '{print $1}' | xargs kill -SIGKILL")
-    val mvCmdRc : Int = Process(cmd2).!
- 
-    println("...")
-    Thread.sleep(5000)
+    logger.info("Stoping KAFKA ") 
+    _exec.execute(new Runnable() {
+      override def run() = {
+        val cmd2 = Seq("sh","-c","ps ax | grep -i 'kafka\\.Kafka' | grep java | grep -v grep | awk '{print $1}' | xargs kill -SIGKILL")
+        val mvCmdRc : Int = Process(cmd2).!       
+      }
+    })
+
+    // Allow Kafka a few seconds to shutdown.
+    logger.info("...")
+    Thread.sleep(3000)
+
+    // Shut down the zookeeper
+    logger.info("Stoping ZOOKEEPER ")   
+    _exec.execute(new Runnable() {
+      override def run() = {
+        val stopZK =  s"$tmpZKPath/bin/zkServer.sh stop".!      
+      }
+    })
+    // Let zk a few seconds to shutdown
+    Thread.sleep(2000)
+    logger.info("...")
     
-    println("Stopping ZooKeeper")
-    val stopZK =  s"$tmpZKPath/bin/zkServer.sh stop".! 
-    
-    println ("Cleaning up the shell sturctures")
-    if (_exec != null)
-      _exec.shutdown    
-    
-    
-    println("Completed KamanjaShell shutdown/cleanup.")
-   // if (_exec != null)
-   //   _exec.shutdown 
+
+    // Clean up the executor
+    if (_exec != null) {
+       logger.info ("Cleaning up the shell sturctures")
+       _exec.shutdown   
+    }
+     _exec = null
+    logger.info ("Kamanja Shell shutdown Complete.")
   }
   
 }

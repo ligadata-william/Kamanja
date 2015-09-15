@@ -8,7 +8,19 @@ import com.ligadata.KamanjaManager._
  */
 object EningeCommandProcessor {
   
+  var mgr: KamanjaManager = null
+  
   def startEngineProcess (opts: InstanceContext, exec: ExecutorService) {
+     
+    KamanjaConfiguration.shutdown = true   
+    mgr = new KamanjaManager 
+
+    scala.sys.addShutdownHook({
+      if (KamanjaConfiguration.shutdown == false) {
+        println("Got Shutdown request")
+        KamanjaConfiguration.shutdown = true // Setting the global shutdown
+      }
+     })
 
     exec.execute(new Runnable() {
       override def run() = {
@@ -18,11 +30,20 @@ object EningeCommandProcessor {
         args(1) = opts.getIPath + "/config/engineConfig_"+ opts.getIName +".properties"
 
         println("**** STARTING KAMANJA using "+ args(1))
+        mgr.run(args)
         
-        val mgr = new KamanjaManager
-        sys.exit(mgr.run(args))
       }
     })
+    
+         
   }
+  
+  def shutdown: Unit = {
+    if (mgr != null) {
+      KamanjaConfiguration.shutdown = true
+      mgr = null
+    }
+  }
+
   
 }
