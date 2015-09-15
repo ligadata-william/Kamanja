@@ -291,6 +291,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         val metaData = metaDataResp.topicsMetadata
         metaData.foreach(topicMeta => {
           topicMeta.partitionsMetadata.foreach(partitionMeta => {
+            println("*** KAFKA_ADAPTER: Processing broker("+broker+") - partitionId "+partitionMeta.partitionId+" for topic "+qc.topic +" LEADER is "+partitionMeta.leader.get.id+":"+partitionMeta.leader.get.port)
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             uniqueKey.PartitionId = partitionMeta.partitionId
             uniqueKey.Name = qc.Name
