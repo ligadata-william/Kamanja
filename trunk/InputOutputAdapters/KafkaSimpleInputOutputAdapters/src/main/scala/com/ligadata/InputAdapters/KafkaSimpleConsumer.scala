@@ -28,7 +28,6 @@ import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
 import com.ligadata.Exceptions.StackTrace
-//import kafka.cluster.Cl
 
 object KafkaSimpleConsumer extends InputAdapterObj {
   val METADATA_REQUEST_CORR_ID = 2
@@ -290,7 +289,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
       try {
         val metaDataResp: kafka.api.TopicMetadataResponse = partConsumer.send(metaDataReq)
-      //  metaDataResp.
         val metaData = metaDataResp.topicsMetadata
         metaData.foreach(topicMeta => {
           topicMeta.partitionsMetadata.foreach(partitionMeta => {
