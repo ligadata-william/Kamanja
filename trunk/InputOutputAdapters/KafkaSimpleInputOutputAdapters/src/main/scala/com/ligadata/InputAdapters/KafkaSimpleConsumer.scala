@@ -303,8 +303,12 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             // if the leader for this Topic's partition is this broker, then return this in the result.
             if (leader == null ||
                 (leader != null && leader.host.equalsIgnoreCase(brokerName(0))  && leader.port == brokerName(1).toInt)) {
+              println("Returnting THIS..... "+leader.host+":"+leader.port)
               partitionNames = uniqueKey :: partitionNames             
+            } else {
+              println("RETURNING NOTHING")
             }
+            
           })
         })
       } catch {
