@@ -31,7 +31,6 @@ import scala.reflect.runtime.universe._
  */
 
 trait UdfBase {
-trait UdfBase {
 	val typeMirror = runtimeMirror(this.getClass.getClassLoader)
 	val instanceMirror = typeMirror.reflect(this)
 	val members = instanceMirror.symbol.typeSignature.members
