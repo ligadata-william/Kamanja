@@ -403,9 +403,6 @@ cp -rf * $installPath/config
 #HelloWorld
 
 #Medical
-cd $srcPath/Utils/KVInit/src/main/resources
-cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
-
 cd $srcPath/SampleApplication/Medical/SampleData
 cp *.csv $installPath/input/SampleApplications/data
 
