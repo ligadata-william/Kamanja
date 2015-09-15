@@ -27,7 +27,7 @@
         "Location": "{InstallDirectory}/storage"
       },
       "ZooKeeperInfo": {
-        "ZooKeeperNodeBasePath": "/ligadata",
+        "ZooKeeperNodeBasePath": "/kamanja",
         "ZooKeeperConnectString": "localhost:2181",
         "ZooKeeperSessionTimeoutMs": "30000",
         "ZooKeeperConnectionTimeoutMs": "30000"
