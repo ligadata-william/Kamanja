@@ -10,7 +10,6 @@ import org.jpmml.model.{ImportFilter, JAXBUtil}
 import org.xml.sax.InputSource
 import org.xml.sax.helpers.XMLReaderFactory
 
-import scala.collection.JavaConverters._
 import scala.collection.concurrent.TrieMap
 
 /**

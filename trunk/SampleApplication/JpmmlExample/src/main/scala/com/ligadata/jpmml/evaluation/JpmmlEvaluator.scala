@@ -40,7 +40,7 @@ trait JpmmlEvaluator {
     private def prepareFields(activeFields: JList[FieldName], msg: MessageContainerBase, me: ModelEvaluator[_]): Map[FieldName, FieldValue] = {
       activeFields.asScala.foldLeft(Map.empty[FieldName, FieldValue])((map, activeField) => {
         val key = activeField.getValue
-        //TODO: What should be done if an active field is missing from map ? 
+        //TODO: What should be done if an active field is missing from map ?
         Option(msg.get(key)).fold(map)(value => {
           val fieldValue = EvaluatorUtil.prepare(me, activeField, value)
           map.updated(activeField, fieldValue)
