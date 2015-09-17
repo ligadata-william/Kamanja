@@ -1242,22 +1242,24 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Final Commit for the given transaction
-  override def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit = {
+  override def commitData(transId: Long, key: String, value: String, outResults: List[(String, String)]): Unit = {
+    val outputResults = if (outResults != null) outResults else List[(String, String)]()
+
     // Commit Data and Removed Transaction information from status
     val txnCtxt = getTransactionContext(transId, false)
-    if (txnCtxt == null)
+    if (txnCtxt == null && (key == null || value == null))
       return
 
     // Persist current transaction objects
-    val messagesOrContainers = txnCtxt.getAllMessagesAndContainers
+    val messagesOrContainers = if (txnCtxt != null) txnCtxt.getAllMessagesAndContainers else Map[String, MsgContainerInfo]()
 
     val localValues = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
 
     if (key != null && value != null && outputResults != null)
       localValues(key) = (transId, value, outputResults)
 
-    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else txnCtxt.getAllAdapterUniqKeyValData
-    val modelsResult = txnCtxt.getAllModelsResult
+    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String)])]() 
+    val modelsResult = if (txnCtxt != null) txnCtxt.getAllModelsResult else Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
     if (_kryoSer == null) {
       _kryoSer = SerializerManager.GetSerializer("kryo")
