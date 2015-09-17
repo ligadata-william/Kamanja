@@ -25,9 +25,13 @@ import com.ligadata.KamanjaBase._
 import org.apache.log4j.Logger
 import com.ligadata.Exceptions.StackTrace
 
-trait LogTrait {
+object RuntimeGlobalLogger {
     val loggerName = this.getClass.getName()
     val logger = Logger.getLogger(loggerName)
+}
+
+trait LogTrait {
+    val logger = RuntimeGlobalLogger.logger
 }
 
 /** class Context(mgr : MdMgr) { <== we may want 'mgr' this at runtime ...*/

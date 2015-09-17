@@ -226,9 +226,13 @@ import com.ligadata.Exceptions.StackTrace
 	
  */
 
-trait LogTrait {
+object PmmlCompilerGlobalLogger {
     val loggerName = this.getClass.getName()
     val logger = Logger.getLogger(loggerName)
+}
+
+trait LogTrait {
+    val logger = PmmlCompilerGlobalLogger.logger
 }
 
 object PmmlCompiler extends App with LogTrait {
