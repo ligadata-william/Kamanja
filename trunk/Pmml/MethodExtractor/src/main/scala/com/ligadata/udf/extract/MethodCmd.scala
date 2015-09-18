@@ -1,10 +1,27 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.udf.extract
 
 import scala.collection.mutable._
 import util.control.Breaks._
 import scala.util.matching.Regex
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata._
+import com.ligadata.Exceptions.StackTrace
+import com.ligadata.kamanja.metadata._
 
 
 /** 
@@ -159,7 +176,8 @@ class MethodCmd(  val mgr : MdMgr
 				argNames = ((reNames findAllIn typeSigArgs).mkString(",")).split(',').map(nm => nm.stripSuffix(":"))
 				argTypes = typeSigArgs.split(reTypes).filter(_.length > 0).map(typ => typ.trim)
 			} catch {
-				case e : Exception => {	}
+				case e : Exception => { val stackTrace = StackTrace.ThrowableTraceString(e)	
+          logger.debug("StackTrace:"+stackTrace)}
 			}
 			
 			if (argNames.size == 0 || argTypes.size == 0) {

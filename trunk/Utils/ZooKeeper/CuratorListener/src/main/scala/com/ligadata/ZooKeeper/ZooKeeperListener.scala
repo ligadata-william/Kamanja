@@ -1,8 +1,24 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.ZooKeeper
 
 import com.ligadata.Serialize._
 //import com.ligadata.MetadataAPI._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework._
 import org.apache.curator.framework.recipes.cache._
@@ -19,6 +35,7 @@ import java.io._
 import scala.io._
 import java.util.concurrent._
 import scala.collection.JavaConverters._
+import com.ligadata.Exceptions.StackTrace
 
 class ZooKeeperListener {
   val loggerName = this.getClass.getName
@@ -38,7 +55,8 @@ class ZooKeeperListener {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -64,7 +82,9 @@ class ZooKeeperListener {
       // logger.setLevel(Level.TRACE);
     } catch {
       case e: Exception => {
-        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
+        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -97,6 +117,8 @@ class ZooKeeperListener {
       pathChildCache.start();
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + znodePath + "):" + e.getMessage())
       }
     }
@@ -146,6 +168,8 @@ object ZooKeeperListenerTest {
       cache.start();
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + zNodePath + "):" + e.getMessage())
       }
     }
@@ -208,7 +232,7 @@ object ZooKeeperListenerTest {
     if (args.length == 0) {
       logger.error("Config File defaults to " + configFile)
       logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
+      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/Kamanja/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
     } else {
       val options = nextOption(Map(), args.toList)
       val cfgfile = options.getOrElse('config, null)

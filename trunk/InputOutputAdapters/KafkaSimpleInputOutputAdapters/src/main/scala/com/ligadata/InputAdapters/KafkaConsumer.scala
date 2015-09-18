@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.ligadata.InputAdapters
 
@@ -6,7 +21,7 @@ import java.util.Properties
 import kafka.consumer.{ ConsumerConfig, Consumer, ConsumerConnector }
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.FatafatBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, ExecContextObj, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo, InputAdapterCallerContext }
 import com.ligadata.AdaptersConfiguration.{ KafkaQueueAdapterConfiguration, KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 import org.apache.zookeeper.data.Stat
@@ -17,12 +32,14 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import kafka.consumer.ConsoleConsumer
+import com.ligadata.Exceptions.StackTrace
+
 
 object KafkaConsumer extends InputAdapterObj {
-  def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
+  def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
 }
 
-class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
+class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputAdapterCallerContext, val execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter) extends InputAdapter {
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val props = new Properties
   private[this] val fetchsize = 64 * 1024
@@ -35,7 +52,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
+  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordValue)]()
 
   val groupName = "T" + hashCode.toString
 
@@ -77,7 +94,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   }
 
   // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter) 
-  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
+  override def StartProcessing(partitionInfo: Array[StartProcPartInfo], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
     LOG.debug("===============> Called StartProcessing")
     if (partitionInfo == null || partitionInfo.size == 0)
       return
@@ -87,12 +104,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), groupName)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("\nStackTrace:"+stackTrace)
       }
     }
+    
+    val maxParts = GetAllPartitionsUniqueKeys.size
 
     consumerConnector = Consumer.create(consumerConfig)
 
-    val partInfo = partitionInfo.map(quad => { (quad._1.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._2.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._3, (quad._4._1.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._4._2, quad._4._3)) })
+    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfoVal.asInstanceOf[KafkaPartitionUniqueRecordValue]) })
 
     qc.instancePartitions = partInfo.map(trip => { trip._1.PartitionId }).toSet
 
@@ -139,15 +160,12 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             var execThread: ExecContext = null
             var cntr: Long = 0
             var currentOffset: Long = -1
-            var processingXformMsg = 0
-            var totalXformMsg = 0
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             val uniqueVal = new KafkaPartitionUniqueRecordValue
 
             uniqueKey.Name = qc.Name
             uniqueKey.TopicName = qc.topic
 
-            var tempTransId: Long = 0
             var ignoreOff: Long = -1
 
             try {
@@ -176,7 +194,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                         }
                         checkForPartition = false
                         uniqueKey.PartitionId = curPartitionId
-                        execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
+                        execThread = execCtxtObj.CreateExecContext(input, uniqueKey, callerCtxt)
                         val kv = kvs.getOrElse(curPartitionId, null)
                         if (kv != null) {
                           if (kv._2.Offset != -1) {
@@ -190,29 +208,21 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                             }
 
                           }
-                          tempTransId = kv._3
-                          ignoreOff = if (ignoreFirstMsg) kv._4._1.Offset else kv._4._1.Offset - 1 
-                          processingXformMsg = kv._4._2
-                          totalXformMsg = kv._4._3
+                          ignoreOff = if (ignoreFirstMsg) kv._3.Offset else kv._3.Offset - 1 
                         }
                       }
                       if (executeCurMsg) {
                         try {
                           // Creating new string to convert from Byte Array to string
-                          val msg = new String(message.message)
                           uniqueVal.Offset = currentOffset
-                          if (message.offset >= ignoreOff) {
-                            processingXformMsg = 0
-                            totalXformMsg = 0
-                          }
-                          execThread.execute(tempTransId, msg, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
-                          tempTransId += 1
+                          execThread.execute(message.message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, qc.associatedMsg, qc.delimiterString)
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"
                           cntrAdapter.addCntr(key, 1) // for now adding each row
                         } catch {
-                          case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                          case e: Exception => {
+                            LOG.error("Failed with Message:" + e.getMessage)}
                         }
                       } else {
                         LOG.debug("Ignoring Message:%s".format(new String(message.message)))
@@ -258,9 +268,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     val dataAndStat = try {
       (Some(client.readData(path, stat)), stat)
     } catch {
-      case e: ZkNoNodeException =>
+      case e: ZkNoNodeException =>{
+       val stackTrace = StackTrace.ThrowableTraceString(e)
+       LOG.debug("\nStackTrace:"+stackTrace)
         (None, stat)
-      case e2: Exception => throw e2
+      }
+      case e2: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e2)
+        LOG.debug("\nStackTrace:"+stackTrace)
+        throw e2
+        }
     }
     dataAndStat
   }

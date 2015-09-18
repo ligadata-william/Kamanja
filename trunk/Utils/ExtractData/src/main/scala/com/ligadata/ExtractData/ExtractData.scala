@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.ExtractData
 
 import scala.reflect.runtime.universe
@@ -8,35 +24,27 @@ import java.io.{ OutputStream, FileOutputStream, File, BufferedWriter, Writer, P
 import java.util.zip.GZIPOutputStream
 import java.nio.file.{ Paths, Files }
 import scala.reflect.runtime.{ universe => ru }
-import java.net.{ URL, URLClassLoader }
 import scala.collection.mutable.TreeSet
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.ligadata.Serialize._
-import com.ligadata.FatafatData.FatafatData
+import com.ligadata.KamanjaData.KamanjaData
 import com.ligadata.MetadataAPI.MetadataAPIImpl
-import com.ligadata.fatafat.metadata.MdMgr._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.kamanja.metadata._
 import com.ligadata.keyvaluestore._
-import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.FatafatBase._
-import com.ligadata.fatafat.metadataload.MetadataLoad
-import com.ligadata.Utils.Utils
+import com.ligadata.KamanjaBase._
+import com.ligadata.kamanja.metadataload.MetadataLoad
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.Serialize.{ JDataStore }
+import com.ligadata.StorageBase.{ Key, Value, IStorage, DataStoreOperations, DataStore, Transaction, StorageAdapterObj }
+import com.ligadata.Exceptions.StackTrace
 
-case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
-
-// ClassLoader
-class ExtractDataClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
-  override def addURL(url: URL) {
-    super.addURL(url)
-  }
-}
+case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
 object ExtractData extends MdBaseResolveInfo {
   private val LOG = Logger.getLogger(getClass);
-  private val clsLoader = new ExtractDataClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
-  private val loadedJars: TreeSet[String] = new TreeSet[String];
+  private val clsLoaderInfo = new KamanjaLoaderInfo
   private val _serInfoBufBytes = 32
   private var _currentMessageObj: BaseMsgObj = null
   private var _currentContainerObj: BaseContainerObj = null
@@ -61,17 +69,6 @@ object ExtractData extends MdBaseResolveInfo {
     return null
   }
 
-  private def GetValidJarFile(jarName: String): String = {
-    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
-    jarPaths.foreach(jPath => {
-      val fl = new File(jPath + "/" + jarName)
-      if (fl.exists) {
-        return fl.getPath
-      }
-    })
-    return jarName // Returning base jarName if not found in jar paths
-  }
-
   private def LoadJars(elem: BaseElem): Boolean = {
     var retVal: Boolean = true
     var allJars: Array[String] = null
@@ -88,7 +85,7 @@ object ExtractData extends MdBaseResolveInfo {
       return retVal
     }
 
-    val jars = allJars.map(j => GetValidJarFile(j))
+    val jars = allJars.map(j => Utils.GetValidJarFile(jarPaths, j))
 
     // Loading all jars
     for (j <- jars) {
@@ -97,16 +94,17 @@ object ExtractData extends MdBaseResolveInfo {
       val fl = new File(jarNm)
       if (fl.exists) {
         try {
-          if (loadedJars(fl.getPath())) {
+          if (clsLoaderInfo.loadedJars(fl.getPath())) {
             LOG.debug("%s:Jar %s already loaded to class path.".format(GetCurDtTmStr, jarNm))
           } else {
-            clsLoader.addURL(fl.toURI().toURL())
+            clsLoaderInfo.loader.addURL(fl.toURI().toURL())
             LOG.debug("%s:Jar %s added to class path.".format(GetCurDtTmStr, jarNm))
-            loadedJars += fl.getPath()
+            clsLoaderInfo.loadedJars += fl.getPath()
           }
         } catch {
           case e: Exception => {
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
+            logger.error("Error:" + errMsg)
             throw new Exception(errMsg)
           }
         }
@@ -146,22 +144,6 @@ object ExtractData extends MdBaseResolveInfo {
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
   }
 
-  private def isDerivedFrom(clz: Class[_], clsName: String): Boolean = {
-    var isIt: Boolean = false
-
-    val interfecs = clz.getInterfaces()
-    logger.debug("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
-
-    for (intf <- interfecs) {
-      logger.debug("Interface:" + intf.getName())
-      if (intf.getName().equals(clsName)) {
-        return true
-      }
-    }
-
-    return false
-  }
-
   private def getSerializeInfo(tupleBytes: Value): String = {
     if (tupleBytes.size < _serInfoBufBytes) return ""
     val serInfoBytes = new Array[Byte](_serInfoBufBytes)
@@ -176,7 +158,7 @@ object ExtractData extends MdBaseResolveInfo {
     valInfoBytes
   }
 
-  private def buildObject(tupleBytes: Value, objs: Array[FatafatData]): Unit = {
+  private def buildObject(tupleBytes: Value, objs: Array[KamanjaData]): Unit = {
     // Get first _serInfoBufBytes bytes
     if (tupleBytes.size < _serInfoBufBytes) {
       val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
@@ -189,8 +171,8 @@ object ExtractData extends MdBaseResolveInfo {
     serInfo.toLowerCase match {
       case "manual" => {
         val valInfo = getValueInfo(tupleBytes)
-        val datarec = new FatafatData
-        datarec.DeserializeData(valInfo, this, clsLoader)
+        val datarec = new KamanjaData
+        datarec.DeserializeData(valInfo, this, clsLoaderInfo.loader)
         objs(0) = datarec
       }
       case _ => {
@@ -221,19 +203,26 @@ object ExtractData extends MdBaseResolveInfo {
     if (isMsg == false) {
       // Checking for Message
       try {
-        // If required we need to enable this test
+        try {
+          Class.forName(clsName, true, clsLoaderInfo.loader)
+        } catch {
+          case e: Exception => {
+            logger.error("Failed to load Message class %s with Reason:%s Message:%s".format(clsName, e.getCause, e.getMessage))
+            sys.exit(1)
+          }
+        }
+
         // Convert class name into a class
-        var curClz = Class.forName(clsName, true, clsLoader)
+        var curClz = Class.forName(clsName, true, clsLoaderInfo.loader)
 
         while (curClz != null && isContainer == false) {
-          isContainer = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
+          isContainer = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
           if (isContainer == false)
             curClz = curClz.getSuperclass()
         }
       } catch {
         case e: Exception => {
           LOG.error("Failed to get classname:%s as message".format(clsName))
-          e.printStackTrace
           sys.exit(1)
         }
       }
@@ -242,19 +231,26 @@ object ExtractData extends MdBaseResolveInfo {
     if (isContainer == false) {
       // Checking for container
       try {
-        // If required we need to enable this test
+        try {
+          Class.forName(clsName, true, clsLoaderInfo.loader)
+        } catch {
+          case e: Exception => {
+            logger.error("Failed to load Container class %s with Reason:%s Message:%s".format(clsName, e.getCause, e.getMessage))
+            sys.exit(1)
+          }
+        }
+
         // Convert class name into a class
-        var curClz = Class.forName(clsName, true, clsLoader)
+        var curClz = Class.forName(clsName, true, clsLoaderInfo.loader)
 
         while (curClz != null && isMsg == false) {
-          isMsg = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseMsgObj")
+          isMsg = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
           if (isMsg == false)
             curClz = curClz.getSuperclass()
         }
       } catch {
         case e: Exception => {
           LOG.error("Failed to get classname:%s as container".format(clsName))
-          e.printStackTrace
           sys.exit(1)
         }
       }
@@ -262,7 +258,7 @@ object ExtractData extends MdBaseResolveInfo {
 
     if (isMsg || isContainer) {
       try {
-        val mirror = ru.runtimeMirror(clsLoader)
+        val mirror = ru.runtimeMirror(clsLoaderInfo.loader)
         val module = mirror.staticModule(clsName)
         val obj = mirror.reflectModule(module)
         val objinst = obj.instance
@@ -290,72 +286,43 @@ object ExtractData extends MdBaseResolveInfo {
     }
   }
 
-  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, adapterSpecificConfig: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
     try {
-      var connectinfo = new PropertyMap
-      connectinfo += ("connectiontype" -> storeType)
-      connectinfo += ("table" -> tableName)
-      if (adapterSpecificConfig != null)
-        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
-      storeType match {
-        case "hashmap" => {
-          connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "false")
-        }
-        case "treemap" => {
-          connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "false")
-        }
-        case "cassandra" => {
-          connectinfo += ("hostlist" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
-          connectinfo += ("ConsistencyLevelRead" -> "ONE")
-        }
-        case "hbase" => {
-          connectinfo += ("hostlist" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
-        }
-        case _ => {
-          throw new Exception("The database type " + storeType + " is not supported yet ")
-        }
-      }
-      logger.debug("Getting DB Connection: " + connectinfo.mkString(","))
-      KeyValueManager.Get(connectinfo)
+      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
+      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:" + stackTrace)
         throw new Exception(e.getMessage())
       }
     }
   }
 
-  private def makeKey(key: String): com.ligadata.keyvaluestore.Key = {
-    var k = new com.ligadata.keyvaluestore.Key
+  private def makeKey(key: String): Key = {
+    var k = new Key
     k ++= key.getBytes("UTF8")
     k
   }
 
-  private def loadObjFromDb(key: List[String]): FatafatData = {
-    val partKeyStr = FatafatData.PrepareKey(_currentTypName, key, 0, 0)
-    var objs: Array[FatafatData] = new Array[FatafatData](1)
+  private def loadObjFromDb(key: List[String]): KamanjaData = {
+    val partKeyStr = KamanjaData.PrepareKey(_currentTypName, key, 0, 0)
+    var objs: Array[KamanjaData] = new Array[KamanjaData](1)
     val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs) }
     try {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        logger.debug("1. Data not found for key:" + partKeyStr)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("1. Data not found for key:" + partKeyStr + "\nStackTrace:" + stackTrace)
       }
     }
     return objs(0)
   }
 
-  private def collectKey(key: Key, keys: ArrayBuffer[FatafatDataKey]): Unit = {
+  private def collectKey(key: Key, keys: ArrayBuffer[KamanjaDataKey]): Unit = {
     implicit val jsonFormats = org.json4s.DefaultFormats
-    val parsed_key = org.json4s.jackson.JsonMethods.parse(new String(key.toArray)).extract[FatafatDataKey]
+    val parsed_key = org.json4s.jackson.JsonMethods.parse(new String(key.toArray)).extract[KamanjaDataKey]
     keys += parsed_key
   }
 
@@ -364,7 +331,7 @@ object ExtractData extends MdBaseResolveInfo {
     if (partKey == null || partKey.size == 0) {
       LOG.debug("Getting all Partition Keys")
       // Getting all keys if no partition key specified
-      val all_keys = ArrayBuffer[FatafatDataKey]() // All keys for all tables for now
+      val all_keys = ArrayBuffer[KamanjaDataKey]() // All keys for all tables for now
       val keyCollector = (key: Key) => { collectKey(key, all_keys) }
       _allDataDataStore.getAllKeys(keyCollector)
       // LOG.debug("Got all Keys: " + all_keys.map(k => (k.T + " -> " + k.K.mkString(","))).mkString(":"))
@@ -399,7 +366,7 @@ object ExtractData extends MdBaseResolveInfo {
           if (hasValidPrimaryKey) {
             // Search for primary key match
             val v = loadedFfData.GetMessageContainerBase(primaryKey.toArray, false)
-LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
+            LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
             if (v != null) {
               os.write(gson.toJson(v).getBytes("UTF8"));
               os.write(ln);
@@ -424,6 +391,8 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
         if (os != null)
           os.close
         os = null
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:" + stackTrace)
         throw new Exception("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause))
       }
     }
@@ -471,7 +440,7 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
 
       val typName = loadConfigs.getProperty("TypeName".toLowerCase, "").replace("\"", "").trim.toLowerCase
 
-      MetadataAPIImpl.InitMdMgrFromBootStrap(cfgfile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(cfgfile, false)
 
       val nodeInfo = mdMgr.Nodes.getOrElse(nodeId.toString, null)
       if (nodeInfo == null) {
@@ -496,7 +465,7 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
         LOG.error("DataStore not found for Node %d  & ClusterId : %s".format(nodeId, nodeInfo.ClusterId))
         sys.exit(1)
       }
-
+      /*
       var dataStoreInfo: JDataStore = null
 
       {
@@ -523,10 +492,10 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
       }
       
       val adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
-
+*/
       resolveCurretType(typName)
 
-      _allDataDataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation, adapterSpecificConfig)
+      _allDataDataStore = GetDataStoreHandle(jarPaths, dataStore, "AllData")
 
       val partKey = loadConfigs.getProperty("PartitionKey".toLowerCase, "").replace("\"", "").trim.split(",").map(_.trim.toLowerCase).filter(_.size > 0).toList
       val primaryKey = loadConfigs.getProperty("PrimaryKey".toLowerCase, "").replace("\"", "").trim.split(",").map(_.trim).filter(_.size > 0).toList

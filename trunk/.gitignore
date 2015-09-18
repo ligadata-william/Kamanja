@@ -14,7 +14,7 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
-
+.idea
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
@@ -26,6 +26,8 @@ project/plugins/project/
 *.pydevproject
 .project
 .metadata
+.cache-main
+.cache-tests
 bin/
 tmp/
 *.tmp
@@ -219,7 +221,6 @@ $RECYCLE.BIN/
 
 # Mac crap
 .DS_Store
-
 
 #############
 ## Python

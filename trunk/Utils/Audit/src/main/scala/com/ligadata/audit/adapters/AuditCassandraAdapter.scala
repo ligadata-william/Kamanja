@@ -1,15 +1,30 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.audit.adapters
 
-import com.ligadata.keyvaluestore._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.StorageBase.{ Key, Value}
+import com.ligadata.AuditAdapterInfo._
 import org.apache.log4j._
 import java.util.Date
 import java.util.Calendar
 import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
-import com.ligadata.keyvaluestore.cassandra.CreateKeySpaceFailedException
-
+import com.ligadata.Exceptions._
 
 /*
   	You open connection to a cluster hostname[,hostname]:port
@@ -30,7 +45,7 @@ import com.ligadata.keyvaluestore.cassandra.CreateKeySpaceFailedException
 class AuditCassandraAdapter extends AuditAdapter {
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  
+
   var adapterProperties: scala.collection.mutable.Map[String,String] = scala.collection.mutable.Map[String,String]()
 
   // Read all cassandra parameters
@@ -91,7 +106,11 @@ class AuditCassandraAdapter extends AuditAdapter {
         try {
           session.execute(createKeySpaceStmt);
         } catch {
-          case e: Exception => { throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()) }
+          case e: Exception => {
+              val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
+              throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()) 
+            }
         }
       
         // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
@@ -105,6 +124,8 @@ class AuditCassandraAdapter extends AuditAdapter {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
       }
     } 
@@ -171,7 +192,8 @@ class AuditCassandraAdapter extends AuditAdapter {
       }
     }catch {
       case e: Exception => 
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception(e.getMessage())
     }
   }
@@ -242,6 +264,8 @@ class AuditCassandraAdapter extends AuditAdapter {
       auditRecords
     } catch {
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Failed to fetch audit records: " + e.getMessage())
       }
     }
@@ -255,6 +279,19 @@ class AuditCassandraAdapter extends AuditAdapter {
     cluster.close()
   }
   
+  override def TruncateStore: Unit = {
+    try {
+      var stmt = session.prepare("truncate " + table + ";")
+      val rs = session.execute(stmt.bind().setConsistencyLevel(consistencylevelDelete))
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        throw new Exception("Failed to truncate Audit Store: " + e.getMessage())
+      }
+    }
+  }
+
   private def initPropertiesFromFile(parmFile: String): Unit = {
     
     try {
@@ -264,6 +301,8 @@ class AuditCassandraAdapter extends AuditAdapter {
        })
     } catch {
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Failed to read Audit Configuration: " + e.getMessage())
       }     
     }

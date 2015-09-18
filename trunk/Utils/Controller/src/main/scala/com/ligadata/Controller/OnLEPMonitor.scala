@@ -1,18 +1,33 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.Controller
 
 import java.io.File
 
 import com.ligadata.AdaptersConfiguration.KafkaPartitionUniqueRecordValue
 import com.ligadata.InputAdapters.KafkaSimpleConsumer
-import com.ligadata.FatafatBase._
-import com.ligadata.ZooKeeper.{ZooKeeperListener, CreateClient}
+import com.ligadata.InputOutputAdapterInfo._
+import com.ligadata.ZooKeeper.{ ZooKeeperListener, CreateClient }
 import org.apache.curator.framework.CuratorFramework
 import org.apache.log4j.Logger
 
-
 import scala.io.Source
 import org.json4s.jackson.JsonMethods._
-import scala.sys.process.{ProcessIO, Process}
+import scala.sys.process.{ ProcessIO, Process }
 
 object SimpleStats extends CountersAdapter {
 
@@ -23,59 +38,59 @@ object SimpleStats extends CountersAdapter {
   override def copyMap: scala.collection.immutable.Map[String, Long] = null
 }
 
-object FatafatMonitorConfig {
+object KamanjaMonitorConfig {
   var modelsData: List[Map[String, Any]] = null
 }
 
-object MakeExecContextImpl extends MakeExecContext {
-  def CreateExecContext(input: InputAdapter, curPartitionId: Int, output: Array[OutputAdapter], envCtxt: EnvContext): ExecContext = {
-    new ExecContextImpl(input, curPartitionId, output, envCtxt)
+object ExecContextObjImpl extends ExecContextObj {
+  def CreateExecContext(input: InputAdapter, curPartitionKey: PartitionUniqueRecordKey, callerCtxt: InputAdapterCallerContext): ExecContext = {
+    new ExecContextImpl(input, curPartitionKey, callerCtxt)
   }
 }
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
-class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
+class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
   val agg = SampleAggregator.getNewSampleAggregator
-  initializeModelsToMonitor(FatafatMonitorConfig.modelsData,agg)
+  initializeModelsToMonitor(KamanjaMonitorConfig.modelsData, agg)
   agg.setIsLookingForSeed(true)
 
-  private def initializeModelsToMonitor(modelsToMonitorInfo: List[Map[String,Any]], agg: SampleAggregator): Unit = {
+  private def initializeModelsToMonitor(modelsToMonitorInfo: List[Map[String, Any]], agg: SampleAggregator): Unit = {
     modelsToMonitorInfo.foreach(model => {
       val mName = model("name").asInstanceOf[String]
       agg.addModelToMonitor(mName)
 
       val keys = model("keys").asInstanceOf[List[String]]
-      agg.addAggregationKey(mName,keys)
+      agg.addAggregationKey(mName, keys)
 
-      val valCombos = model("displayValues").asInstanceOf[List[Map[String,List[String]]]]
+      val valCombos = model("displayValues").asInstanceOf[List[Map[String, List[String]]]]
       valCombos.foreach(value => {
         val dvals = value("values").asInstanceOf[List[String]]
-        agg.addValueCombination(mName,dvals)
+        agg.addValueCombination(mName, dvals)
       })
     })
 
   }
 
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit = {
 
     if (format.equalsIgnoreCase("json")) {
-    //if (data.charAt(0).toString.equals("{")) {
-      agg.processJsonMessage(parse(data).values.asInstanceOf[Map[String,Any]])
+      //if (data.charAt(0).toString.equals("{")) {
+      agg.processJsonMessage(parse(new String(data)).values.asInstanceOf[Map[String, Any]])
     } else {
-      agg.processCSVMessage(data,uniqueVal.asInstanceOf[KafkaPartitionUniqueRecordValue].Offset)
+      agg.processCSVMessage(new String(data), uniqueVal.asInstanceOf[KafkaPartitionUniqueRecordValue].Offset)
     }
   }
 }
 
-class FatafatMonitor  {
+class KamanjaMonitor {
   private val LOG = Logger.getLogger(getClass)
   type OptionMap = Map[Symbol, Any]
   var isStarted: Boolean = false
-  var zkNodeBasePath:String = null
-  var zkConnectString:String = null
-  var dataLoadCommand:String = null
-  var zkDataPath:String = null
-  var zkActionPath:String = null
+  var zkNodeBasePath: String = null
+  var zkConnectString: String = null
+  var dataLoadCommand: String = null
+  var zkDataPath: String = null
+  var zkActionPath: String = null
   var seed: Long = 0
   var prc: Process = null
 
@@ -104,21 +119,24 @@ class FatafatMonitor  {
       // Start all the neede Kafka Adapters for Output queues
       oAdaptersConfigs.foreach(conf => {
         // Create Kafka Consumer Here for the output queue
-        val t_adapter = KafkaSimpleConsumer.CreateInputAdapter(conf, null, null, MakeExecContextImpl, SimpleStats)
+        val t_adapter = KafkaSimpleConsumer.CreateInputAdapter(conf, null, ExecContextObjImpl, SimpleStats)
         val t_adapterMeta: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = t_adapter.getAllPartitionEndValues
 
         //  Initialize and start the adapter that is going to read the output queues here.
         val inputMeta = t_adapterMeta.map(partMeta => {
-          val elem: (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int)) = (partMeta._1, partMeta._2, 0, (partMeta._2, 0, 0))
-          elem
+          val info = new StartProcPartInfo
+          info._key = partMeta._1
+          info._val = partMeta._2
+          info._validateInfoVal = partMeta._2
+          info
         }).toArray
-        t_adapter.StartProcessing(t_adapterMeta.size, inputMeta, false)
+        t_adapter.StartProcessing(inputMeta, false)
         oAdapters = oAdapters ::: List(t_adapter)
       })
 
       // Initialize and start the adapter that is going to read the status queue here.  - there is onlly 1 of these for now.
       var sub: Boolean = false
-      s_adapter = KafkaSimpleConsumer.CreateInputAdapter(sAdaptersConfigs.head, null, null, MakeExecContextImpl, SimpleStats)
+      s_adapter = KafkaSimpleConsumer.CreateInputAdapter(sAdaptersConfigs.head, null, ExecContextObjImpl, SimpleStats)
       val s_adapterMeta: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = s_adapter.getAllPartitionEndValues
       val s_inputMeta = s_adapterMeta.map(partMeta => {
         if (!sub) {
@@ -126,23 +144,27 @@ class FatafatMonitor  {
           SampleAggregator.setTT(partMeta._2.asInstanceOf[KafkaPartitionUniqueRecordValue].Offset)
           sub = true
         }
-        val elem: (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int)) = (partMeta._1, partMeta._2, 0, (partMeta._2, 0, 0))
-        elem
+
+        val info = new StartProcPartInfo
+        info._key = partMeta._1
+        info._val = partMeta._2
+        info._validateInfoVal = partMeta._2
+        info
       }).toArray
-      s_adapter.StartProcessing(s_adapterMeta.size, s_inputMeta, false)
+      s_adapter.StartProcessing(s_inputMeta, false)
       sAdapters = sAdapters ::: List(s_adapter)
 
       // The adapters have been scheduled to run.. data will be coming in and aggregated  asynchrinously..  Flip the switch to externalize the collected
       // data to zookeeper (or another destination when we allow for it)
       isStarted = true
 
-      // If it is required start loading input data into the Fatafat engine by executing a separate script.
+      // If it is required start loading input data into the Kamanja engine by executing a separate script.
       // for example: "java -jar /mnt/d3/demo_20150115/engine/SimpleKafkaProducer-0.1.0 --gz true --topics \"testin_1\" --threads 1 --topicpartitions 8 --brokerlist \"localhost:9092\" --files \"/mnt/d3/demo_20150115/demodata/msgdata/copdv1_eval_combined_25000.csv.gz\" --partitionkeyidxs \"1\"  --sleep 10 --format CSV"
       if (dataLoadCommand != null) {
         val pb = Process(dataLoadCommand)
         val pio = new ProcessIO(_ => (),
-                                stdout => scala.io.Source.fromInputStream(stdout).getLines.foreach(LOG.debug),
-                                err => {scala.io.Source.fromInputStream(err).getLines.foreach(LOG.error)})
+          stdout => scala.io.Source.fromInputStream(stdout).getLines.foreach(LOG.debug),
+          err => { scala.io.Source.fromInputStream(err).getLines.foreach(LOG.error) })
 
         prc = pb.run(pio)
       }
@@ -152,17 +174,17 @@ class FatafatMonitor  {
 
       // clean up monitor resources here.
       if (prc != null) {
-	      prc.destroy()
+        prc.destroy()
         prc = null
-	    }
+      }
 
       if (sAdapters.size > 0) {
-        sAdapters.map(adapter => {adapter.Shutdown})
+        sAdapters.map(adapter => { adapter.Shutdown })
         sAdapters = List[InputAdapter]()
       }
 
       if (oAdapters.size > 0) {
-        oAdapters.map(adapter => {adapter.Shutdown})
+        oAdapters.map(adapter => { adapter.Shutdown })
         oAdapters = List[InputAdapter]()
       }
 
@@ -190,17 +212,18 @@ class FatafatMonitor  {
     val jsonparms = parse(Source.fromFile(parmFile).getLines.mkString).values.asInstanceOf[Map[String, Any]]
 
     // Get the ZooKeeper info and preform the zookeeper initialization
-    val zkInfo = jsonparms.getOrElse("ZookeeperInfo", null).asInstanceOf[Map[String, String]]
-    if (zkInfo == null) {
+    val zkInfo1 = jsonparms.getOrElse("ZooKeeperInfo", null)
+    if (zkInfo1 == null) {
       LOG.error("ERROR: missing Zookeeper info")
       return
     }
+    val zkInfo = zkInfo1.asInstanceOf[Map[String, String]]
     zkNodeBasePath = zkInfo.getOrElse("ZooKeeperNodeBasePath", null)
     zkConnectString = zkInfo.getOrElse("ZooKeeperConnectString", null)
-    dataLoadCommand = jsonparms.getOrElse("inputProcessString",null).toString
+    dataLoadCommand = jsonparms.getOrElse("inputProcessString", null).toString
 
-    val zkUpdateFreq = zkInfo.getOrElse("ZooKeeperUpdateFrequency",null)
-    if (zkUpdateFreq == null ) {
+    val zkUpdateFreq = zkInfo.getOrElse("ZooKeeperUpdateFrequency", null)
+    if (zkUpdateFreq == null) {
       LOG.error("ERROR: Invalid Freq")
       return
     }
@@ -219,7 +242,7 @@ class FatafatMonitor  {
     val zcf: CuratorFramework = CreateClient.createSimple(zkConnectString)
 
     // Read the kafka queue informations
-    val kafkaInfo = jsonparms.getOrElse("KafkaInfo",null).asInstanceOf[Map[String,List[Any]]]
+    val kafkaInfo = jsonparms.getOrElse("KafkaInfo", null).asInstanceOf[Map[String, List[Any]]]
     if (kafkaInfo == null) {
       LOG.warn("WARN: NOTHING TO MONITOR - No kafka sources specified")
       return
@@ -243,8 +266,7 @@ class FatafatMonitor  {
       LOG.warn("WARN: NOTHING TO MONITOR  - no models specified")
       return
     }
-    FatafatMonitorConfig.modelsData = modelsData
-
+    KamanjaMonitorConfig.modelsData = modelsData
 
     // Establish a listener for the action field.  If that value changes, "ActinOnActionChange" callback function will be
     // called.
@@ -263,37 +285,37 @@ class FatafatMonitor  {
     if (prc != null) {
       prc.destroy()
     }
-    return;
+    return ;
   }
 
   /**
    * configureKafkaAdapters - set up the oAdapters and sAdapter arrays here.
    * @param aConfigs  Map[String,List[Any]]
    */
-  private def configureKafkaAdapters(aConfigs: Map[String,List[Any]]): Unit = {
-    val statusQs: List[Map[String,Any]] = aConfigs.getOrElse("StatusQs",null).asInstanceOf[List[Map[String,Any]]]
-    val outputQs: List[Map[String,Any]] = aConfigs.getOrElse("OutputQs",null).asInstanceOf[List[Map[String,Any]]]
+  private def configureKafkaAdapters(aConfigs: Map[String, List[Any]]): Unit = {
+    val statusQs: List[Map[String, Any]] = aConfigs.getOrElse("StatusQs", null).asInstanceOf[List[Map[String, Any]]]
+    val outputQs: List[Map[String, Any]] = aConfigs.getOrElse("OutputQs", null).asInstanceOf[List[Map[String, Any]]]
 
     // Process all the status kafka Qs here
     if (statusQs != null) {
       statusQs.foreach(qConf => {
         val thisConf: AdapterConfiguration = new AdapterConfiguration
-        thisConf.Name = qConf.getOrElse("Name","").toString
-        thisConf.formatOrInputAdapterName = qConf.getOrElse("Format","").toString
-        thisConf.className = qConf.getOrElse("ClassName","").toString
-        thisConf.jarName = qConf.getOrElse("JarName","").toString
-        thisConf.dependencyJars = qConf.getOrElse("DependencyJars","").asInstanceOf[List[String]].toSet
-        thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg","").toString
-        thisConf.delimiterString = qConf.getOrElse("DelimiterString","").toString
-        thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage","").toString
+        thisConf.Name = qConf.getOrElse("Name", "").toString
+        thisConf.formatOrInputAdapterName = qConf.getOrElse("Format", "").toString
+        thisConf.className = qConf.getOrElse("ClassName", "").toString
+        thisConf.jarName = qConf.getOrElse("JarName", "").toString
+        thisConf.dependencyJars = qConf.getOrElse("DependencyJars", "").asInstanceOf[List[String]].toSet
+        thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg", "").toString
+        thisConf.delimiterString = qConf.getOrElse("DelimiterString", "").toString
+        thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage", "").toString
 
         // Ignore if any value in the adapter was not set.
         if (thisConf.Name.size > 0 &&
-            thisConf.formatOrInputAdapterName.size > 0 &&
-            thisConf.className.size > 0 &&
-            thisConf.jarName.size > 0 &&
-            thisConf.dependencyJars.size > 0 &&
-            thisConf.dependencyJars.size > 0) {
+          thisConf.formatOrInputAdapterName.size > 0 &&
+          thisConf.className.size > 0 &&
+          thisConf.jarName.size > 0 &&
+          thisConf.dependencyJars.size > 0 &&
+          thisConf.dependencyJars.size > 0) {
           sAdaptersConfigs = sAdaptersConfigs ::: List[AdapterConfiguration](thisConf)
         }
       })
@@ -303,22 +325,22 @@ class FatafatMonitor  {
     if (outputQs != null) {
       outputQs.foreach(qConf => {
         val thisConf: AdapterConfiguration = new AdapterConfiguration
-        thisConf.Name = qConf.getOrElse("Name","").toString
-        thisConf.formatOrInputAdapterName = qConf.getOrElse("Format","").toString
-        thisConf.className = qConf.getOrElse("ClassName","").toString
-        thisConf.jarName = qConf.getOrElse("JarName","").toString
-        thisConf.dependencyJars = qConf.getOrElse("DependencyJars","").asInstanceOf[List[String]].toSet
-        thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg","").toString
-        thisConf.delimiterString = qConf.getOrElse("DelimiterString","").toString
-        thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage","").toString
+        thisConf.Name = qConf.getOrElse("Name", "").toString
+        thisConf.formatOrInputAdapterName = qConf.getOrElse("Format", "").toString
+        thisConf.className = qConf.getOrElse("ClassName", "").toString
+        thisConf.jarName = qConf.getOrElse("JarName", "").toString
+        thisConf.dependencyJars = qConf.getOrElse("DependencyJars", "").asInstanceOf[List[String]].toSet
+        thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg", "").toString
+        thisConf.delimiterString = qConf.getOrElse("DelimiterString", "").toString
+        thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage", "").toString
 
         // Ignore if any value in the adapter was not set.
         if (thisConf.Name.size > 0 &&
-            thisConf.formatOrInputAdapterName.size > 0 &&
-            thisConf.className.size > 0 &&
-            thisConf.jarName.size > 0 &&
-            thisConf.dependencyJars.size > 0 &&
-            thisConf.dependencyJars.size > 0) {
+          thisConf.formatOrInputAdapterName.size > 0 &&
+          thisConf.className.size > 0 &&
+          thisConf.jarName.size > 0 &&
+          thisConf.dependencyJars.size > 0 &&
+          thisConf.dependencyJars.size > 0) {
           oAdaptersConfigs = oAdaptersConfigs ::: List[AdapterConfiguration](thisConf)
         }
       })
@@ -342,14 +364,13 @@ class FatafatMonitor  {
   }
 }
 
-
 /**
  * Created by dan on 1/9/15.
  */
 object Monitor {
-  def main (args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = {
 
-    val monitor: FatafatMonitor = new FatafatMonitor()
+    val monitor: KamanjaMonitor = new KamanjaMonitor()
     monitor.start(args)
 
   }

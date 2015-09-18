@@ -21,7 +21,7 @@ Rule number: 7 [IsBadBuy=1 cover=1717 (3%) prob=0.86]
 Its simple representation : Array[IntRange] ... that is an array of tuples ... its type name might be ArrayOfIntRange
 where IntRange = Tuple2[Int]
 
-The data for this would be loaded into the array from kv store made available through the EnvContext singleton made available to each model by the FataFat engine.  For example, tables can be loaded with something like this directly into the model:
+The data for this would be loaded into the array from kv store made available through the EnvContext singleton made available to each model by the Kamanja engine.  For example, tables can be loaded with something like this directly into the model:
 
 
 <DerivedField name="SuspectAuctionZipRangeBases" dataType="ArrayOfMessageContainerBase" optype="categorical">

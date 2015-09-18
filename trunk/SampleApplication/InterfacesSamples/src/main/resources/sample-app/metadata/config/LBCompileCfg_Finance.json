@@ -1,0 +1,6 @@
+{
+    "LowBalanceAlert":{
+        "Dependencies":["kamanjabase_2.10-1.0.jar"],
+        "MessageAndContainers":["system.custalerthistory","system.custpreferences","system.globalpreferences","system.customerinfo", "system.transactionmsg"]
+    }
+}

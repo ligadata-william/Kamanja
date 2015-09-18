@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.Serialize
 
 import java.util.Properties
@@ -8,7 +24,7 @@ import org.apache.log4j._
 
 import scala.collection.JavaConversions._
 
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.ExtensionRegistry;
@@ -16,8 +32,8 @@ import com.google.protobuf.ExtensionRegistry;
 import com.ligadata.Serialize.MetadataObjects._
 import com.ligadata.Serialize.MetadataObjects.MetadataType._
 import java.io._
-
-case class ProtoBufSerializationException(e: String) extends Throwable(e)
+import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 class ProtoBufSerializer extends Serializer{
 
@@ -151,7 +167,8 @@ class ProtoBufSerializer extends Serializer{
       m
     }catch{
       case e:Exception => {
-	e.printStackTrace()
+	val stackTrace = StackTrace.ThrowableTraceString(e)
+  logger.debug("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to Deserialize the object: " + e.getMessage())
       }
     }
@@ -176,6 +193,8 @@ class ProtoBufSerializer extends Serializer{
       }
     }catch{
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
       }
     }
@@ -186,12 +205,12 @@ class ProtoBufSerializer extends Serializer{
     logger.debug("Parse " + ba.length + " bytes to create a " + objectType + " object ")
     try{
       objectType match{
-	case "com.ligadata.fatafat.metadata.AttributeDef" => {
+	case "com.ligadata.kamanja.metadata.AttributeDef" => {
 	  val a = Attribute.parseFrom(ba);
 	  logger.debug("Attribute => " + a)
 	  a
 	}
-	case "com.ligadata.fatafat.metadata.ModelDef" => {
+	case "com.ligadata.kamanja.metadata.ModelDef" => {
 	  val m = Model.parseFrom(ba);
 	  logger.debug("Deserialized Model as protobuf object => " + m)
 	  val mDef = buildModel(m)
@@ -203,6 +222,8 @@ class ProtoBufSerializer extends Serializer{
       }
     }catch{
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to DeSerialize the object:" + e.getMessage())
       }
     }

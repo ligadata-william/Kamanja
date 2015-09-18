@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.keyvaluestore.cassandra
 
 import com.ligadata.keyvaluestore._
@@ -9,6 +25,9 @@ import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.BatchStatement
 import java.nio.ByteBuffer
 import org.apache.log4j._
+import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
+
 /*
   	You open connection to a cluster hostname[,hostname]:port
   	You could provide username/password
@@ -24,8 +43,6 @@ import org.apache.log4j._
 	USE default;
 	CREATE TABLE default (key blob, value blob, primary key(key) );
  */
-
-case class CreateKeySpaceFailedException(e: String) extends Exception(e)
 
 class KeyValueCassandraTx(owner: DataStore) extends Transaction {
   var parent: DataStore = owner
@@ -76,6 +93,8 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
 	session.execute(createKeySpaceStmt);
       } catch {
 	case e: Exception => {
+    val stackTrace = StackTrace.ThrowableTraceString(e)
+    logger.debug("StackTrace:"+stackTrace)
 	  throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
 	}
       }
@@ -89,6 +108,8 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
     }
   } catch {
     case e: Exception => {
+      val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.debug("StackTrace:"+stackTrace)
       throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
     }
   }

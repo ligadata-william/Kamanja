@@ -1,0 +1,549 @@
+{
+"Functions" :[ 
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "id_gen",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.ID_GEN",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "string",
+  "Arguments" : [ ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "hashkey",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.hashKey",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "key",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "iso8601datefmt",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.ISO8601DateFmt",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "string",
+  "Arguments" : [ {
+    "ArgName" : "fmtStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "yyyymmdds",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "int"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "timestampfmt",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.timestampFmt",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "string",
+  "Arguments" : [ {
+    "ArgName" : "fmtStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "timestamp",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "timestampfromstr",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.timeStampFromStr",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "fmtStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "timestampStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "datefromstr",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.dateFromStr",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "fmtStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "timestampStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "timefromstr",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.timeFromStr",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "fmtStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "timestampStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "datesecondssincemidnight",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.dateSecondsSinceMidnight",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "fmtStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "timestampStr",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "datesecondssincemidnight",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.dateSecondsSinceMidnight",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "timestamp",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "millisecsbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.millisecsBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "secondsbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.secondsBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "minutesbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.minutesBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "hoursbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.hoursBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "daysbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.daysBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "weeksbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.weeksBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "monthsbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.monthsBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "yearsbetween",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.yearsBetween",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "long",
+  "Arguments" : [ {
+    "ArgName" : "time1",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "time2",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "long"
+  }, {
+    "ArgName" : "inclusive",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "logmsg",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.LogMsg",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "boolean",
+  "Arguments" : [ {
+    "ArgName" : "severity",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "contextMsg",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "eventMsg",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "bool",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "boolean"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "concat",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.concat",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "string",
+  "Arguments" : [ {
+    "ArgName" : "args",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "any"
+  } ],
+  "Features" : [ "HAS_INDEFINITE_ARITY" ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "replace",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.replace",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "string",
+  "Arguments" : [ {
+    "ArgName" : "replacewithin",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "any"
+  }, {
+    "ArgName" : "inWord",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "any"
+  }, {
+    "ArgName" : "replacewith",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "any"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "matches",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.matches",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "boolean",
+  "Arguments" : [ {
+    "ArgName" : "matchwithin",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "any"
+  }, {
+    "ArgName" : "matchwith",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "any"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "random",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.random",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "double",
+  "Arguments" : [ ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "formatnumber",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.formatNumber",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "string",
+  "Arguments" : [ {
+    "ArgName" : "num",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "any"
+  }, {
+    "ArgName" : "formatting",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "gettokenizedcounts",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.getTokenizedCounts",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "arrayofinteger",
+  "Arguments" : [ {
+    "ArgName" : "inputString",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "context",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "arrayofstring"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+},
+{
+  "NameSpace" : "com.mycompany.pmml.udfs.customudfs",
+  "Name" : "gettokenizedboolean",
+  "PhysicalName" : "com.mycompany.pmml.udfs.CustomUdfs.getTokenizedBoolean",
+  "ReturnTypeNameSpace" : "system",
+  "ReturnTypeName" : "boolean",
+  "Arguments" : [ {
+    "ArgName" : "inputString",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "string"
+  }, {
+    "ArgName" : "context",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "arrayofstring"
+  }, {
+    "ArgName" : "degree",
+    "ArgTypeNameSpace" : "system",
+    "ArgTypeName" : "integer"
+  } ],
+  "Features" : [ ],
+  "Version" : "000000000001000000",
+  "JarName" : "customudflib_2.10-1.0.jar",
+  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "json4s-jackson_2.10-3.2.9.jar", "scala-reflect-2.10.4.jar", "pmmludfs_2.10-1.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.8.2.jar", "joda-convert-1.6.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "guava-18.0.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "scalatest_2.10-2.2.4.jar", "json4s-ast_2.10-3.2.9.jar", "log4j-1.2.17.jar" ],
+  "TransactionId" : 0
+} ]
+
+}

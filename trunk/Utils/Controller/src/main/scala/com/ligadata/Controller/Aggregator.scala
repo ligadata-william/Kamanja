@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.Controller
 
 import com.ligadata.ZooKeeper.CreateClient
@@ -90,7 +106,7 @@ object SampleAggregator {
         aggKeys = agg.keysToMonitor.toMap
         statusData = agg.aggregatedStatusData.toMap
 
-        // Total Messages Processed - number of message out of FatafatEngine output kafka queues
+        // Total Messages Processed - number of message out of KamanjaEngine output kafka queues
         totalMsgProcessed = totalMsgProcessed + agg.getMsgProcessed()
 
         // aggregate values reported by the status queues.
@@ -169,7 +185,7 @@ class SampleAggregator  {
   def getData = aggregatedData.toMap
 
   /**
-   * processCSVMessage - Used to process messages out of the standard FatafatEngine status queue.
+   * processCSVMessage - Used to process messages out of the standard KamanjaEngine status queue.
    * @param msg - message
    * @param seedOffset - offset of the message that contains for this Status Queue.
    */
@@ -200,8 +216,8 @@ class SampleAggregator  {
   }
 
   /**
-   * processJsonMessage - this will process a message out of the FatafatEngine output kafka queue..  They are guaranteed
-   * to be JSON format as defined by the existing FatafatEngine documentation.
+   * processJsonMessage - this will process a message out of the KamanjaEngine output kafka queue..  They are guaranteed
+   * to be JSON format as defined by the existing KamanjaEngine documentation.
    * @param msg Map[String,Any] - The standard Map representation of the JSON string.
    */
   def processJsonMessage(msg: Map[String,Any]): Unit = lock.synchronized {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.metadataapiservice
 
 import akka.actor.{ActorSystem, Props}
@@ -7,13 +23,15 @@ import akka.io.IO
 import akka.io.Tcp._
 import spray.can.Http
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadataload.MetadataLoad
-import com.ligadata.MetadataAPI._
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadataload.MetadataLoad
+import com.ligadata.MetadataAPI.MetadataAPIImpl
 import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
+import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 class APIService extends LigadataSSLConfiguration with Runnable{
 
@@ -71,11 +89,11 @@ class APIService extends LigadataSSLConfiguration with Runnable{
 
   private def StartService(args: Array[String]) : Unit = {
     try{
-      var configFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
+      var configFile = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
       if (args.length == 0) {
         logger.warn("Config File defaults to " + configFile)
         logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-        logger.warn("The config file supplied is a complete path name of a  json file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+        logger.warn("The config file supplied is a complete path name of a  json file similar to one in github/Kamanja/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
       } else {
         val options = nextOption(Map(), args.toList)
         val cfgfile = options.getOrElse('config, null)
@@ -86,7 +104,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         configFile = cfgfile.asInstanceOf[String]
       }
 
-      val (loadConfigs, failStr) = Utils.loadConfiguration(configFile.toString, true)
+      val (loadConfigs, failStr) = com.ligadata.Utils.Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
         logger.error(failStr)
         Shutdown(1)
@@ -101,7 +119,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
       APIInit.SetConfigFile(configFile.toString)
 
       // Read properties file and Open db connection
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile, true)
       // APIInit deals with shutdown activity and it needs to know
       // that database connections were successfully made
       APIInit.SetDbOpen
@@ -138,7 +156,8 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         logger.debug("Unexpected Interrupt")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
       }
     } finally {
       Shutdown(0)
@@ -155,7 +174,7 @@ object APIService {
   
   
   /**
-   * extractNameFromJson - applies to a simple Fatafat object
+   * extractNameFromJson - applies to a simple Kamanja object
    */
   def extractNameFromJson (jsonObj: String, objType: String): String = {
     var inParm: Map[String,Any] = null

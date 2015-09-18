@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import scala.reflect.runtime.universe
 import scala.collection.mutable.ArrayBuffer
 import java.util.Properties
@@ -9,8 +25,8 @@ import java.nio.file.{ Paths, Files }
 import scala.reflect.runtime.{ universe => ru }
 import java.net.{ URL, URLClassLoader }
 import scala.collection.mutable.TreeSet
-import java.sql.{ Driver, DriverPropertyInfo };
-
+import java.sql.{ Driver, DriverPropertyInfo }
+import com.ligadata.Exceptions.StackTrace
 // ClassLoader
 class JdbcClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   override def addURL(url: URL) {
@@ -68,6 +84,7 @@ object RunJdbcCollector {
         } catch {
           case e: Exception => {
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
+            LOG.error("Error:" + errMsg)
             throw new Exception(errMsg)
           }
         }
@@ -329,6 +346,16 @@ object RunJdbcCollector {
       LOG.debug("%s:Loading Driver Jars".format(GetCurDtTmStr))
       LoadJars(depJars)
       LOG.debug("%s:Loading Driver".format(GetCurDtTmStr))
+
+      try {
+        Class.forName(driverType, true, clsLoader)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to load Driver class %s with Reason:%s Message:%s".format(driverType, e.getCause, e.getMessage))
+          sys.exit(1)
+        }
+      }
+
       val d = Class.forName(driverType, true, clsLoader).newInstance.asInstanceOf[Driver]
       LOG.debug("%s:Registering Driver".format(GetCurDtTmStr))
       DriverManager.registerDriver(new DriverShim(d));

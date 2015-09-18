@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.ZooKeeper
 
 import org.apache.curator.RetryPolicy
@@ -6,8 +22,12 @@ import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.zookeeper.CreateMode
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 object CreateClient {
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
   def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
     var zkc: CuratorFramework = null
     try {
@@ -33,6 +53,8 @@ object CreateClient {
       })
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
     } finally {

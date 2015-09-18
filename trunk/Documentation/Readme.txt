@@ -1,2 +1,2 @@
-Please find Fatafat documentation online at 
-https://github.com/ligaDATA/Fatafat/wiki
+Please find Kamanja documentation on line at
+kamanja.org

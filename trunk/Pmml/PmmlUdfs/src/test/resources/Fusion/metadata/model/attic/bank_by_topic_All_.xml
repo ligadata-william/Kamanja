@@ -1,0 +1,2128 @@
+<!-- ===================================================================================================== 
+file:  tweet_4x4.xml
+by:    Greg Makowski
+last update:  Mon 5/18/2015
+
+OVERVIEW
+First match or filter on the 4 topics
+then get counts for the 4x4 array
+cnt_x_y
+
+x axis - 4 topics, ordered alphabetically
+1 fraud
+2 investment
+3 security
+4 retirement
+
+y axis - industries, ordered alphabetically
+1 financialPubs
+2 insurance
+3 investmentBanks
+4 retailBanks
+
+
+CODE OUTLINE
+1) scoreCheckRule:                 the data mining rule
+2) scoreCheckTweets:               the rule uses this variable
+
+2.0) checkTimeWindow:              
+2.0.1) resetCounters:              reset the 16 counters to 0, the 16 alerts to empty string
+
+2.1) checkIfMatchAny:              match or filter on the 4 topics, check for (0 < doSum)
+2.3.1.2)* checkIfMatch_a .. _d        match or filter on the 4 topics
+2.3.1.2.1) fraudTermsArray … retailbanksTermsArray:    accessing the word sets by topic
+2.3.1.2.2) sumCounters:              increment if found
+
+2.2) doSum:                        sum the number of matches over the 4 topics
+
+2.3) successPath:                  the path to check the 16 counters and increment them
+
+2.3.1) incrSetsumCounters:
+2.3.1.2)* checkIfMatch_a .. _h:     match or on the 8 topics (row & col for the 4x4 counters)
+2.3.1.2.1) fraudTermsArray … retailbanksTermsArray:    accessing the word sets by topic
+2.3.1.2.2) sumCounters:              increment if found
+
+2.3.1.1) incMatchCounter:          if some match on the 4 topics does occur, then increment matchcounter
+2.3.1.3) IncrCounter_1_1 .. _4_4:     increment the 4x4 counters
+
+2.3.2) setAndPrepareReturnString:  assign the counters to the global storage (i.e. hash map)
+
+2.3.3) checkThreshold:             check each cell of the 4x4 count, against an alert threshold (i.e. 5)
+2.3.3.1) PrepareAlertMsg_1_1 .. _4_4:   concatenate the text and alert number to the alert
+
+2.3.4) cumTweetsWithAlerts:        if length(all alerts) = 0
+2.3.4.1) incCumTweetsWithAlerts       then +1 for each tweet
+
+2.3.5) saveIncrSetsumCounters:     Put sumCounters to global storage
+
+* the weird numbering, out of order, was meeting the need that 
+"functions must be defined before being called" and the specific function was called in 2 places.
+
+
+CODING TO DO:
+   
+===================================================================================================== --> 
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+    <Header copyright="LigaDATA. Copyright 2015" description="TwitterDemo">
+     <Application name="KamanjaTwitterDemo" version="00.01.00"/>
+    </Header>
+
+  <!-- ===================================================================================================== -->
+<DataDictionary numberOfFields="19">
+  <DataField name="msg" displayName="msg" optype="categorical" dataType="twittermsg"/>
+  <DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+  <DataField name="parameters" displayName="parameters" dataType="container">
+    <Value value="gCtx" property="valid"/>
+    <Value value="msg" property="valid"/>
+  </DataField>
+
+
+  <!-- OUTPUT fields to go from PMML to GUI -->
+  <DataField name="cntWithAlert" displayName="cntWithAlert" optype="continuous" dataType="integer"/>
+  <DataField name="anyMatchcounter" displayName="anyMatchcounter" optype="continuous" dataType="integer"/>
+   <DataField name="cntAllTweets" displayName="count all tweets"    optype="continuous" dataType="integer"/>
+  <!-- simulated 2 dimensional array CNT[ topic, industry ] Full size is CNT[4, 4] -->
+  <DataField name="cnt_1_1" displayName="cnt_1_1" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_1_2" displayName="cnt_1_2" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_1_3" displayName="cnt_1_3" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_1_4" displayName="cnt_1_4" optype="continuous" dataType="integer"/>
+
+  <DataField name="cnt_2_1" displayName="cnt_2_1" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_2_2" displayName="cnt_2_2" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_2_3" displayName="cnt_2_3" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_2_4" displayName="cnt_2_4" optype="continuous" dataType="integer"/>
+
+  <DataField name="cnt_3_1" displayName="cnt_3_1" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_3_2" displayName="cnt_3_2" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_3_3" displayName="cnt_3_3" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_3_4" displayName="cnt_3_4" optype="continuous" dataType="integer"/>
+
+  <DataField name="cnt_4_1" displayName="cnt_4_1" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_4_2" displayName="cnt_4_2" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_4_3" displayName="cnt_4_3" optype="continuous" dataType="integer"/>
+  <DataField name="cnt_4_4" displayName="cnt_4_4" optype="continuous" dataType="integer"/>
+
+  <DataField name="alertText_1_1" displayName="alertText_1_1" optype="categorical" dataType="string"/>
+  <DataField name="alertText_1_2" displayName="alertText_1_2" optype="categorical" dataType="string"/>
+  <DataField name="alertText_1_3" displayName="alertText_1_3" optype="categorical" dataType="string"/>
+  <DataField name="alertText_1_4" displayName="alertText_1_4" optype="categorical" dataType="string"/>
+
+  <DataField name="alertText_2_1" displayName="alertText_2_1" optype="categorical" dataType="string"/>
+  <DataField name="alertText_2_2" displayName="alertText_2_2" optype="categorical" dataType="string"/>
+  <DataField name="alertText_2_3" displayName="alertText_2_3" optype="categorical" dataType="string"/>
+  <DataField name="alertText_2_4" displayName="alertText_2_4" optype="categorical" dataType="string"/>
+
+  <DataField name="alertText_3_1" displayName="alertText_3_1" optype="categorical" dataType="string"/>
+  <DataField name="alertText_3_2" displayName="alertText_3_2" optype="categorical" dataType="string"/>
+  <DataField name="alertText_3_3" displayName="alertText_3_3" optype="categorical" dataType="string"/>
+  <DataField name="alertText_3_4" displayName="alertText_3_4" optype="categorical" dataType="string"/>
+
+  <DataField name="alertText_4_1" displayName="alertText_4_1" optype="categorical" dataType="string"/>
+  <DataField name="alertText_4_2" displayName="alertText_4_2" optype="categorical" dataType="string"/>
+  <DataField name="alertText_4_3" displayName="alertText_4_3" optype="categorical" dataType="string"/>
+  <DataField name="alertText_4_4" displayName="alertText_4_4" optype="categorical" dataType="string"/>
+
+  <DataField name="result_a" displayName="result_a" optype="continuous" dataType="integer"/>
+  <DataField name="result_b" displayName="result_b" optype="continuous" dataType="integer"/>
+  <DataField name="result_c" displayName="result_c" optype="continuous" dataType="integer"/>
+  <DataField name="result_d" displayName="result_d" optype="continuous" dataType="integer"/>
+
+  <DataField name="match_a" displayName="match_a" optype="categorical" dataType="boolean"/>
+  <DataField name="match_b" displayName="match_b" optype="categorical" dataType="boolean"/>
+  <DataField name="match_c" displayName="match_c" optype="categorical" dataType="boolean"/>
+  <DataField name="match_d" displayName="match_d" optype="categorical" dataType="boolean"/>
+  <DataField name="match_e" displayName="match_e" optype="categorical" dataType="boolean"/>
+  <DataField name="match_f" displayName="match_f" optype="categorical" dataType="boolean"/>
+  <DataField name="match_g" displayName="match_g" optype="categorical" dataType="boolean"/>
+  <DataField name="match_h" displayName="match_h" optype="categorical" dataType="boolean"/>
+
+    <DataField name="msgTimeSinceMidnight"    displayName="msgTimeSinceMidnight"    optype="categorical"  dataType="Long"/>
+  <DataField name="current_time_window"    displayName="current_time_window"    optype="categorical"  dataType="Long"/>
+
+  <DataField name="predictedField" displayName="predictedField" optype="continuous" dataType="integer"/>
+  <DataField name="UDFSearchPath" displayName="UDFSearchPath" dataType="container">
+    <Value value="com.ligadata.pmml.udfs.CustomUdfs" property="valid"/>
+  </DataField>
+  <DataField name="tweet" displayName="tweet" optype="categorical" dataType="string"/>
+</DataDictionary>
+
+
+<!-- ===================================================================================================== -->
+<TransformationDictionary>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.5) Save the Incremented conters to db -->
+  <!-- get from the KAMANJA global context -->
+  <DerivedField name="saveIncrSetsumCounters" dataType="boolean" optype="categorical">
+    <Apply function="Put">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.Counters</Constant>
+      <FieldRef field="sumCounters.key"/>
+      <FieldRef field="sumCounters"/>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.4.1) -->
+  <DerivedField name="incCumTweetsWithAlerts" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cumtweetswithalerts"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.4) Increment this counter by one, if the current tweet has one or more alerts -->
+  <DerivedField name="cumTweetsWithAlerts" dataType="boolean" optype="categorical">
+
+    <Apply function="if">    <!-- if (any alert text is populated) then alert_cnt = alert_cnt + 1 -->
+
+
+        <Apply function="or">
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_1_1"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_1_2"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_1_3"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_1_4"/>
+            </Apply>
+          </Apply>
+          <!-- ...................................... -->
+
+         <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_2_1"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_2_2"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_2_3"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_2_4"/>
+            </Apply>
+          </Apply>
+          <!-- ...................................... -->
+
+         <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_3_1"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_3_2"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_3_3"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_3_4"/>
+            </Apply>
+          </Apply>
+          <!-- ...................................... -->
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_4_1"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_4_2"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_4_3"/>
+            </Apply>
+          </Apply>
+
+          <Apply function="lessOrEqual">
+            <Constant dataType="integer">1</Constant>
+            <Apply function="Length">
+              <FieldRef field="alertText_4_4"/>
+            </Apply>
+          </Apply>
+          <!-- ...................................... -->
+
+        </Apply> <!-- end "or" -->
+      <!-- Then -->
+      <Apply function="and">
+
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cumtweetswithalerts"/>
+          <FieldRef field="incCumTweetsWithAlerts"/>       <!-- 2.3.4.1 -->
+        </Apply>
+
+        <Apply function="Put">
+          <Constant dataType="string">cntWithAlert</Constant>
+          <FieldRef field="sumCounters.cumtweetswithalerts"/>
+        </Apply>
+
+      </Apply>
+
+      <!-- else -->
+      <Apply function="Put">
+          <Constant dataType="string">cntWithAlert</Constant>
+          <FieldRef field="sumCounters.cumtweetswithalerts"/>
+        </Apply>
+    </Apply> <!-- end "if" -->
+  </DerivedField>   <!-- end cumTweetsWithAlerts -->
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.3.1) -->
+    <DerivedField name="PrepareAlertMsg_1_1" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_1_1"/>
+          <Constant dataType="string"> fraud and financial publication alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_1_2" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_1_2"/>
+         <Constant dataType="string"> fraud and insurance alerts at min </Constant> 
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_1_3" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_1_3"/>
+         <Constant dataType="string"> fraud and investment banks alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_1_4" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_1_4"/>
+                <Constant dataType="string"> fraud and retail banks alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+  <!-- ................................................................ -->
+
+  <DerivedField name="PrepareAlertMsg_2_1" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_2_1"/>
+                <Constant dataType="string"> investment and financial publication alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_2_2" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_2_2"/>
+               <Constant dataType="string"> investment and insurance alerts at min </Constant>   
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_2_3" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_2_3"/>
+               <Constant dataType="string"> investment and  investment banks alerts at min </Constant>   
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_2_4" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_2_4"/>
+      
+              <Constant dataType="string"> investment and retail banks alerts at min </Constant>   
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+  <!-- ................................................................ -->
+
+  <DerivedField name="PrepareAlertMsg_3_1" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_3_1"/>
+              <Constant dataType="string"> retirement and financial publication alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_3_2" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_3_2"/>
+              <Constant dataType="string"> retirement and insurance alerts at min </Constant>   
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_3_3" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_3_3"/>
+              <Constant dataType="string"> retirement and investment banks alerts at min </Constant>   
+      <FieldRef field="msg.tweet_date_time"/> 
+    </Apply>
+  </DerivedField>
+  
+  <DerivedField name="PrepareAlertMsg_3_4" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_3_4"/>
+             <Constant dataType="string"> retirement and retail banks alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <!-- ................................................................ -->
+  <DerivedField name="PrepareAlertMsg_4_1" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_4_1"/>
+               <Constant dataType="string"> security and financial publication alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_4_2" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_4_2"/>
+               <Constant dataType="string"> security and insurance alerts at min </Constant>   
+      <FieldRef field="msg.tweet_date_time"/>
+      </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_4_3" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_4_3"/>
+             <Constant dataType="string"> security and investment banks alerts at min </Constant>  
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="PrepareAlertMsg_4_4" dataType="string" optype="categorical">
+    <Apply function="Concat">
+      <FieldRef field="cnt_4_4"/>
+               <Constant dataType="string"> security and retail banks alerts at min </Constant>   
+      <FieldRef field="msg.tweet_date_time"/>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.3) -->
+  <!-- Check if threshold is passed for each Object and prepare returning string for GUI -->
+
+  <DerivedField name="checkThreshold" dataType="boolean" optype="categorical">
+    <Apply function="and"> <!-- implementing a COMPOUND STATEMENT here -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_1_1"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_1_1</Constant>
+          <FieldRef field="PrepareAlertMsg_1_1"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+       <Apply function="Put">
+          <Constant dataType="string">alertText_1_1</Constant>
+          <Constant dataType="string"></Constant>           <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_1_2"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_1_2</Constant>
+          <FieldRef field="PrepareAlertMsg_1_2"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_1_2</Constant>
+          <Constant dataType="string"></Constant>           <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_1_3"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_1_3</Constant>
+          <FieldRef field="PrepareAlertMsg_1_3"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_1_3</Constant>
+          <Constant dataType="string"></Constant>          <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_1_4"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_1_4</Constant>
+          <FieldRef field="PrepareAlertMsg_1_4"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_1_4</Constant>
+          <Constant dataType="string"></Constant>           <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+      <!-- ................................................... -->
+
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_2_1"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_2_1</Constant>
+          <FieldRef field="PrepareAlertMsg_2_1"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+         <Apply function="Put">
+          <Constant dataType="string">alertText_2_1</Constant>
+          <Constant dataType="string"></Constant>           <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_2_2"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_2_2</Constant>
+          <FieldRef field="PrepareAlertMsg_2_2"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+               <Apply function="Put">
+          <Constant dataType="string">alertText_2_2</Constant>
+          <Constant dataType="string"></Constant>           <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_2_3"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_2_3</Constant>
+          <FieldRef field="PrepareAlertMsg_2_3"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_2_3</Constant>
+          <Constant dataType="string"></Constant>          <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_2_4"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_2_4</Constant>
+          <FieldRef field="PrepareAlertMsg_2_4"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+       <Apply function="Put">
+          <Constant dataType="string">alertText_2_4</Constant>
+          <Constant dataType="string"></Constant>           <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+      <!-- ................................................... -->
+
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_3_1"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_3_1</Constant>
+          <FieldRef field="PrepareAlertMsg_3_1"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+                <Apply function="Put">
+          <Constant dataType="string">alertText_3_1</Constant>
+         <Constant dataType="string"></Constant>          <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_3_2"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_3_2</Constant>
+          <FieldRef field="PrepareAlertMsg_3_2"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_3_2</Constant>
+          <Constant dataType="string"></Constant>          <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_3_3"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_3_3</Constant>
+          <FieldRef field="PrepareAlertMsg_3_3"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+         <Apply function="Put">
+          <Constant dataType="string">alertText_3_3</Constant>
+          <Constant dataType="string"></Constant>          <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_3_4"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_3_4</Constant>
+          <FieldRef field="PrepareAlertMsg_3_4"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_3_4</Constant>
+          <Constant dataType="string"></Constant>          <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+      <!-- ................................................... -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_4_1"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_4_1</Constant>
+          <FieldRef field="PrepareAlertMsg_4_1"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_4_1</Constant>
+          <Constant dataType="string"></Constant>           <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_4_2"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_4_2</Constant>
+          <FieldRef field="PrepareAlertMsg_4_2"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_4_2</Constant>
+          <Constant dataType="string"></Constant>          <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_4_3"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_4_3</Constant>
+          <FieldRef field="PrepareAlertMsg_4_3"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+         <Apply function="Put">
+          <Constant dataType="string">alertText_4_3</Constant>
+          <Constant dataType="string"></Constant>         <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+
+      <Apply function="if">
+        <Apply function="GreaterOrEqual">
+          <FieldRef field="cnt_4_4"/>
+          <Constant dataType="integer">60</Constant>         <!-- change back to 60.  later, use field from GUI -->
+        </Apply>
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_4_4</Constant>
+          <FieldRef field="PrepareAlertMsg_4_4"/>           <!-- 2.3.3.1 -->
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">alertText_4_4</Constant>
+          <Constant dataType="string"></Constant>        <!-- 2.3.3.1 -->
+        </Apply>
+      </Apply> <!-- end "if" -->
+      <!-- ................................................... -->
+
+    </Apply> <!-- end the compound statment, impelmented with "and" -->
+  </DerivedField> <!-- end checkThreshold -->
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.2) Sets value to the return variable -->
+  <!-- SET ALL 16 RETURN VALUES FOR THE OUTPUT JSON RECORD HERE -->
+  <DerivedField name="setAndPrepareReturnString" dataType="boolean" optype="categorical">
+    <Apply function="and">   <!-- simulated COMPOUND STATEMENT -->
+      <!-- ......................................... -->
+      <Apply function="Put">
+        <Constant dataType="string">cnt_1_1</Constant>
+        <FieldRef field="sumCounters.cnt_1_1"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_1_2</Constant>
+        <FieldRef field="sumCounters.cnt_1_2"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_1_3</Constant>
+        <FieldRef field="sumCounters.cnt_1_3"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_1_4</Constant>
+        <FieldRef field="sumCounters.cnt_1_4"/>
+      </Apply>
+
+      <!-- ......................................... -->
+      <Apply function="Put">
+        <Constant dataType="string">cnt_2_1</Constant>
+        <FieldRef field="sumCounters.cnt_2_1"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_2_2</Constant>
+        <FieldRef field="sumCounters.cnt_2_2"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_2_3</Constant>
+        <FieldRef field="sumCounters.cnt_2_3"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_2_4</Constant>
+        <FieldRef field="sumCounters.cnt_2_4"/>
+      </Apply>
+
+      <!-- ......................................... -->
+      <Apply function="Put">
+        <Constant dataType="string">cnt_3_1</Constant>
+        <FieldRef field="sumCounters.cnt_3_1"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_3_2</Constant>
+        <FieldRef field="sumCounters.cnt_3_2"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_3_3</Constant>
+        <FieldRef field="sumCounters.cnt_3_3"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_3_4</Constant>
+        <FieldRef field="sumCounters.cnt_3_4"/>
+      </Apply>
+
+      <!-- ......................................... -->
+      <Apply function="Put">
+        <Constant dataType="string">cnt_4_1</Constant>
+        <FieldRef field="sumCounters.cnt_4_1"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_4_2</Constant>
+        <FieldRef field="sumCounters.cnt_4_2"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_4_3</Constant>
+        <FieldRef field="sumCounters.cnt_4_3"/>
+      </Apply>
+
+      <Apply function="Put">
+        <Constant dataType="string">cnt_4_4</Constant>
+        <FieldRef field="sumCounters.cnt_4_4"/>
+      </Apply>
+
+          <Apply function="Put">
+        <Constant dataType="string">anyMatchcounter</Constant>
+        <FieldRef field="sumCounters.matchcounter"/>
+      </Apply>
+
+
+    </Apply>  <!-- end simulated compound statement -->
+  </DerivedField> <!-- end setAndPrepareReturnString -->
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.1.3) -->
+  <!-- increment the counters in the 4x4 array -->
+  <DerivedField name="IncCounter_1_1" dataType="integer" optype="categorical">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_1_1"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_1_2" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_1_2"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_1_3" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_1_3"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_1_4" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_1_4"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+  <!-- ........................................... -->
+
+  <DerivedField name="IncCounter_2_1" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_2_1"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_2_2" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_2_2"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_2_3" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_2_3"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_2_4" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_2_4"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+  <!-- ........................................... -->
+
+  <DerivedField name="IncCounter_3_1" dataType="integer" optype="continuous">
+    <Apply function="+">
+        <FieldRef field="sumCounters.cnt_3_1"/>
+        <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_3_2" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_3_2"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_3_3" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_3_3"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_3_4" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_3_4"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+  <!-- ........................................... -->
+
+  <DerivedField name="IncCounter_4_1" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_4_1"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_4_2" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_4_2"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_4_3" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_4_3"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="IncCounter_4_4" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_4_4"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.1.2.1 and related -->
+  <!-- LOAD WORD SETS for later matching with text in Twitter -->
+  <!-- get from the KAMANJA global context -->
+  <!-- ........ LOAD WORDSET _a ............................. -->
+  <!-- these first word sets are for the "topics" in the GUI, such as lines in the line chart -->
+  <DerivedField name="container_a" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.fraud</Constant>
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="fraud" dataType="ArrayOfFraud" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_a"/>
+      <Constant dataType="mbrTypename">fraud</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="fraudTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="fraud"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ........ LOAD WORDSET _b ............................. -->
+  <!-- load word set into an array of terms -->
+  <DerivedField name="container_b" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.investment</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="investment" dataType="ArrayOfInvestment" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_b"/>
+      <Constant dataType="mbrTypename">investment</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="investmentTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="investment"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ........ LOAD WORDSET _c ............................. -->
+  <!-- load word set into an array of terms -->
+  <DerivedField name="container_c" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.retirement</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="retirement" dataType="ArrayOfRetirement" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_c"/>
+      <Constant dataType="mbrTypename">retirement</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="retirementTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="retirement"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ........ LOAD WORDSET _d ............................. -->
+  <!-- load word set into an array of terms -->
+  <DerivedField name="container_d" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.security</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="security" dataType="ArrayOfSecurity" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_d"/>
+      <Constant dataType="mbrTypename">security</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="securityTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="security"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+<!-- load the word sets for the top 20 banks and financial publications -->
+
+
+  <!-- ........ LOAD WORDSET _e ............................. -->
+  <DerivedField name="container_e" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.financialpubs</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="financialpubs" dataType="ArrayOfFinancialpubs" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_e"/>
+      <Constant dataType="mbrTypename">financialpubs</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="financialpubsTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="financialpubs"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ........ LOAD WORDSET _f ............................. -->
+  <DerivedField name="container_f" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.insurance</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="insurance" dataType="ArrayOfInsurance" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_f"/>
+      <Constant dataType="mbrTypename">insurance</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="insuranceTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="insurance"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ........ LOAD WORDSET _g ............................. -->
+  <DerivedField name="container_g" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.investmentbanks</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="investmentbanks" dataType="ArrayOfInvestmentbanks" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_g"/>
+      <Constant dataType="mbrTypename">investmentbanks</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="investmentbanksTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="investmentbanks"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ........ LOAD WORDSET _h ............................. -->
+  <DerivedField name="container_h" dataType="ArrayOfMessageContainerBase" optype="categorical">
+    <Apply function="GetArray">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="string">System.retailbanks</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <DerivedField name="retailbanks" dataType="ArrayOfRetailbanks" optype="categorical">
+    <Apply function="DownCastArrayMembers">
+      <FieldRef field="container_h"/>
+      <Constant dataType="mbrTypename">retailbanks</Constant> <!-- specific to data file name -->
+    </Apply>
+  </DerivedField>
+
+  <!-- 2.3.1.2.1) load word set into an array of terms -->
+  <DerivedField name="retailbanksTermsArray" dataType="ArrayOfString" optype="categorical">
+    <Apply function="ToArray">
+      <Apply function="ContainerMap">
+        <FieldRef field="retailbanks"/>
+        <Constant dataType="ident">terms</Constant>
+      </Apply>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.1.2.2) -->
+  <!-- get from the KAMANJA global context -->
+  <!-- Get Summary Counters cosniders all companies under one group -->
+  <DerivedField name="sumCounters" dataType="Counters" optype="continuous">
+    <Apply function="GetMsgContainerElseNew">
+      <FieldRef field="gCtx"/>
+      <Constant dataType="typename">sumCounters</Constant>
+      <Constant dataType="string">System.Counters</Constant>
+      <Constant dataType="string">0</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.1.2) check if tweet has wordset _a -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_a" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="fraudTermsArray"/>                       <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_a" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_a"/>                <!-- 2.3.1.2.2 -->
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- 2.3.1.2) check if tweet has wordset _b -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_b" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="investmentTermsArray"/>                  <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_b" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_b"/>                <!-- 2.3.1.2.2 -->
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- 2.3.1.2) check if tweet has wordset _c -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_c" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="retirementTermsArray"/>                  <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_c" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_c"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- 2.3.1.2) check if tweet has wordset _d -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_d" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="securityTermsArray"/>                    <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_d" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_d"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- 2.3.1.2) check if tweet has wordset _e -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_e" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="financialpubsTermsArray"/>               <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_e" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_e"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- 2.3.1.2) check if tweet has wordset _f -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_f" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="insuranceTermsArray"/>                   <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_f" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_f"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- 2.3.1.2) check if tweet has wordset _g -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_g" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="investmentbanksTermsArray"/>             <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_g" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_g"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- 2.3.1.2) check if tweet has wordset _h -->
+  <!-- check for a match between this tweet and anything in this wordset ............... -->
+  <DerivedField name="checkIfMatch_h" dataType="boolean" optype="categorical">
+    <Apply function="matchTweet">
+      <FieldRef field="msg.tweet"/>
+      <FieldRef field="retailbanksTermsArray"/>                 <!-- 2.3.1.2.1 -->
+      <Constant dataType="integer">3</Constant>
+    </Apply>
+  </DerivedField>
+
+  <!-- Increments the Counter -->
+  <DerivedField name="IncMatchCnt_h" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cnt_h"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.1.1 -->
+  <DerivedField name="incMatchCounter" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="sumCounters.matchcounter"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3.1) -->
+  <!-- ALL 16 HARD CODED IF STATMENTS AND COUNTER INCREMENTS HERE -->
+  <DerivedField name="incrSetsumCounters" dataType="boolean" optype="categorical">
+    <Apply function="and">    <!-- simulated COMPOUND STATEMENT -->
+
+      <Apply function="setField">
+        <FieldRef field="sumCounters.key"/>
+        <Constant dataType="string">0</Constant>      <!-- later, change key... -->
+      </Apply>
+
+      <Apply function="setField">
+        <FieldRef field="sumCounters.matchcounter"/>
+        <FieldRef field="incMatchCounter"/>                <!-- 2.3.1.1 -->
+      </Apply>
+
+      <!-- ........................................................... -->
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_a"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_e"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [a,e] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_1_1"/>
+          <FieldRef field="IncCounter_1_1"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_a"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_f"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_1_2"/>
+          <FieldRef field="IncCounter_1_2"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_a"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_g"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_1_3"/>
+          <FieldRef field="IncCounter_1_3"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_a"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_h"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_1_4"/>
+          <FieldRef field="IncCounter_1_4"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+      <!-- ..................................................... -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_b"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_e"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_2_1"/>
+          <FieldRef field="IncCounter_2_1"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+      <!-- (CONDITION) -->
+      <Apply function="and">
+        <FieldRef field="match_b"/>                <!-- 2.3.1.2 -->
+        <FieldRef field="match_f"/>                <!-- 2.3.1.2 -->
+      </Apply> <!-- end checking if there is a match for [,] -->
+      <!-- THEN -->
+      <Apply function="setField">
+        <FieldRef field="sumCounters.cnt_2_2"/>
+        <FieldRef field="IncCounter_2_2"/>                <!-- 2.3.1.3 -->
+      </Apply>
+      <!-- ELSE -->
+      <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_b"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_g"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_2_3"/>
+          <FieldRef field="IncCounter_2_3"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_b"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_h"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_2_4"/>
+          <FieldRef field="IncCounter_2_4"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+      <!-- ..................................................... -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_c"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_e"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_3_1"/>
+          <FieldRef field="IncCounter_3_1"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_c"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_f"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_3_2"/>
+          <FieldRef field="IncCounter_3_2"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_c"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_g"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_3_3"/>
+          <FieldRef field="IncCounter_3_3"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_c"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_h"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_3_4"/>
+          <FieldRef field="IncCounter_3_4"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+      <!-- ..................................................... -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_d"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_e"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [a,d] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_4_1"/>
+          <FieldRef field="IncCounter_4_1"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_d"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_f"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_4_2"/>
+          <FieldRef field="IncCounter_4_2"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_d"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_g"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_4_3"/>
+          <FieldRef field="IncCounter_4_3"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <Apply function="if">
+        <!-- (CONDITION) -->
+        <Apply function="and">
+          <FieldRef field="match_d"/>                <!-- 2.3.1.2 -->
+          <FieldRef field="match_h"/>                <!-- 2.3.1.2 -->
+        </Apply> <!-- end checking if there is a match for [,] -->
+        <!-- THEN -->
+        <Apply function="setField">
+          <FieldRef field="sumCounters.cnt_4_4"/>
+          <FieldRef field="IncCounter_4_4"/>                <!-- 2.3.1.3 -->
+        </Apply>
+        <!-- ELSE -->
+        <Constant dataType="boolean">true</Constant>
+      </Apply> <!-- end "if" (..) -->
+
+      <!-- ..................................................... -->
+    </Apply> <!-- end COMPOUND STATEMENT with "and" -->
+  </DerivedField> <!-- end incrSetsumCounters -->
+
+   <!-- this derivedField is for performance purpose. use match function only on time for each topics and subject -->
+ <DerivedField name="checkTopicAndSubjects" dataType="boolean" optype="categorical">
+     <Apply function="and">
+           <Apply function="if">
+             <Apply function="GreaterThan">
+                  <FieldRef field="result_a"/>
+                  <Constant dataType="integer">0</Constant>
+                 </Apply>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_a</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_a</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+           <Apply function="if">
+             <Apply function="GreaterThan">
+                  <FieldRef field="result_b"/>
+                  <Constant dataType="integer">0</Constant>
+                 </Apply>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_b</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_b</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+            <Apply function="if">
+             <Apply function="GreaterThan">
+                  <FieldRef field="result_c"/>
+                  <Constant dataType="integer">0</Constant>
+                 </Apply>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_c</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_c</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+            <Apply function="if">
+             <Apply function="GreaterThan">
+                  <FieldRef field="result_d"/>
+                  <Constant dataType="integer">0</Constant>
+                 </Apply>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_d</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_d</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+            <Apply function="if">
+             <FieldRef field="checkIfMatch_e"/>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_e</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_e</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+            <Apply function="if">
+             <FieldRef field="checkIfMatch_f"/>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_f</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_f</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+           <Apply function="if">
+            <FieldRef field="checkIfMatch_g"/>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_g</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_g</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+            <Apply function="if">
+             <FieldRef field="checkIfMatch_h"/>
+                 <!-- then -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_h</Constant>
+                  <Constant dataType="boolean">true</Constant>
+                 </Apply>
+                 <!-- else -->
+                 <Apply function="Put">
+                  <Constant dataType="string">match_h</Constant>
+                  <Constant dataType="boolean">false</Constant>
+                 </Apply>
+           </Apply>
+         </Apply>
+
+   </DerivedField> <!-- end checkTopicAndSubjects -->
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.3) Steps to take when the 'if' return a "true" -->
+  <DerivedField name="successPath" dataType="boolean" optype="categorical">
+    <Apply function="and"> <!-- simulated COMPOUND STATEMENT -->
+          <FieldRef field="checkTopicAndSubjects"/>
+      <FieldRef field="incrSetsumCounters"/>                              <!-- 2.3.1 -->
+      <FieldRef field="setAndPrepareReturnString"/>                       <!-- 2.3.2 -->
+      <FieldRef field="checkThreshold"/>                                  <!-- 2.3.3 -->
+      <FieldRef field="cumTweetsWithAlerts"/>                             <!-- 2.3.4 -->
+      <FieldRef field="saveIncrSetsumCounters"/>                          <!-- 2.3.5 -->
+    </Apply>
+  </DerivedField> <!-- end successPath -->
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.2) -->
+  <DerivedField name="doSum" dataType="integer" optype="continuous">
+    <Apply function="+">
+      <FieldRef field="result_a"/>      <!-- these vars are incremented in 2.1 checkIfMatchAny -->
+      <FieldRef field="result_b"/>
+      <FieldRef field="result_c"/>
+      <FieldRef field="result_d"/>
+    </Apply>
+  </DerivedField>
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.1) this derived field is needed because currently we don't have long cycle function to execute multiple derivedField that we can use in pmml -->
+  <DerivedField name="checkIfMatchAny" dataType="boolean" optype="categorical">
+    <Apply function="and">   <!-- simulated COMPOUND STATEMENT -->
+
+      <Apply function="if">
+        <FieldRef field="checkIfMatch_a"/>                    <!-- 2.3.1.2 -->
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">result_a</Constant>
+          <Constant dataType="integer">1</Constant>
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">result_a</Constant>
+          <Constant dataType="integer">0</Constant>               <!-- initialize counter here -->
+        </Apply>
+      </Apply>  <!-- end "if" -->
+
+      <Apply function="if">
+        <FieldRef field="checkIfMatch_b"/>                    <!-- 2.3.1.2 -->
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">result_b</Constant>
+          <Constant dataType="integer">1</Constant>
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">result_b</Constant>
+          <Constant dataType="integer">0</Constant>               <!-- initialize counter here -->
+        </Apply>
+      </Apply>  <!-- end "if" -->
+
+      <Apply function="if">
+        <FieldRef field="checkIfMatch_c"/>                    <!-- 2.3.1.2 -->
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">result_c</Constant>
+          <Constant dataType="integer">1</Constant>
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">result_c</Constant>
+          <Constant dataType="integer">0</Constant>               <!-- initialize counter here -->
+        </Apply>
+      </Apply>  <!-- end "if" -->
+
+      <Apply function="if">
+        <FieldRef field="checkIfMatch_d"/>                    <!-- 2.3.1.2 -->
+        <!-- THEN -->
+        <Apply function="Put">
+          <Constant dataType="string">result_d</Constant>
+          <Constant dataType="integer">1</Constant>
+        </Apply>
+        <!-- ELSE -->
+        <Apply function="Put">
+          <Constant dataType="string">result_d</Constant>
+          <Constant dataType="integer">0</Constant>               <!-- initialize counter here -->
+        </Apply>
+      </Apply>  <!-- end "if" -->
+
+    </Apply>  <!-- end compound statement -->
+  </DerivedField> <!-- end checkIfMatchAny -->
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.0.1)   (I will increment all the numbering later) -->
+        <!-- reset counters for each time window -->
+        <DerivedField name="resetCounters" dataType="boolean" optype="categorical">
+                <Apply function="and">  <!-- simulated COMPOUND STATEMENT -->
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_1_1"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_1_2"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_1_3"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_1_4"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+      <!-- ........................................ -->
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_2_1"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_2_2"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_2_3"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_2_4"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+      <!-- ........................................ -->
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_3_1"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_3_2"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_3_3"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_3_4"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+      <!-- ........................................ -->
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_4_1"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_4_2"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_4_3"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+
+                        <Apply function="setField">
+                                <FieldRef field="sumCounters.cnt_4_4"/>
+                                <Constant dataType="integer">0</Constant>
+                        </Apply>
+      <!-- ........................................ -->
+      <!-- ........................................ -->
+
+      <!-- ........................................ -->
+
+                </Apply>
+  </DerivedField>   <!-- end resetCounters -->
+
+
+  <!-- ================================================================================ -->
+  <!-- 2.0   (I will increment all the numbering later) -->
+        <!-- check if now >= last value to the timewindow in database -->
+  <!-- if ((msgTimeSinceMidnight - current_time_window) >= 30) then
+            resetCounters
+            sumCounters.timewindow = msgTimeSinceMidnight   # save a var globally
+
+     change code to
+        if (30 < (this_window_started - tweet_date_time)) then
+            resetCounters
+            thisWindowStarted = tweet_date_time
+            Put(thisWindowStarted)
+        else
+            true
+
+        initialize the first  this_window_started = tweet_date_time
+            -->
+
+
+  <DerivedField name="secondsSinceMidnight" dataType="Long" optype="categorical">
+    <Apply function="Now"/>
+  </DerivedField>
+
+     <DerivedField name="checkTimeWindow" dataType="boolean" optype="categorical">
+      <Apply function="if">
+       <Apply function="lessOrEqual">
+        <Constant dataType="Long">30000</Constant>    <!-- will use var when populated by the GUI -->
+                <Apply function="-">
+                  <FieldRef field="msgTimeSinceMidnight"/>
+                  <FieldRef field="current_time_window"/>                <!-- the time the current window started  -->
+                </Apply>
+      </Apply>  <!-- end if "condition" -->
+
+      <!-- THEN -->
+      <Apply function="and">   <!-- simulated COMPOUND STATEMENT -->
+        <FieldRef field="resetCounters"/>                           <!-- 2.0.1 -->
+         <Apply function="setField">
+         <FieldRef field="sumCounters.timewindow"/>
+         <FieldRef field="msgTimeSinceMidnight"/>                  <!-- 2.0.2 -->
+         </Apply>
+        </Apply>  <!-- end COMPOUND STATEMENT -->
+
+      <!-- ELSE -->
+                        <Constant dataType="boolean">true</Constant>
+
+                </Apply>  <!-- end "if" -->
+     </DerivedField>  <!-- end checkTimeWindow -->
+
+  <DerivedField name="incCntAllTweets" dataType="integer" optype="categorical">
+    <Apply function="+">
+      <FieldRef field="sumCounters.cntalltweets"/>
+      <Constant dataType="integer">1</Constant>
+    </Apply>
+  </DerivedField>
+
+   <DerivedField name="countAllTweets" dataType="boolean"  optype="categorical">
+
+    <Apply function="and">    <!-- simulated COMPOUND STATEMENT -->
+
+      <Apply function="setField">
+        <FieldRef field="sumCounters.key"/>
+        <Constant dataType="string">0</Constant>      <!-- later, change key... -->
+      </Apply>
+
+      <Apply function="setField">
+        <FieldRef field="sumCounters.cntalltweets"/>
+        <FieldRef field="incCntAllTweets"/>                <!-- 2.b.1 -->
+      </Apply>
+
+         <Apply function="Put">
+           <Constant dataType="string">cntAllTweets</Constant>
+           <FieldRef field="sumCounters.cntalltweets"/>
+         </Apply>
+
+          <FieldRef field="saveIncrSetsumCounters"/>
+
+    </Apply>  <!-- end compound statement -->
+  </DerivedField>  <!-- end countAllTweets -->
+
+
+
+
+  <!-- ================================================================================ -->
+  <!-- 2) Called by scoreCheckRule - for this variable to be created -->
+  <DerivedField name="scoreCheckTweets" dataType="boolean" optype="categorical">
+    <Apply function="and">  <!-- simulated COMPOUND STATEMENT -->
+
+  <!--   <FieldRef field="checkTimeWindow"/>   -->                 <!-- 2.0  I will update numbering later -->
+
+
+     <Apply function="Put">
+           <Constant dataType="string">current_time_window</Constant> <!--this to get the last saved time in database-->
+           <FieldRef field="sumCounters.timewindow"/>
+         </Apply>
+         <Apply function="Put">
+           <Constant dataType="string">msgTimeSinceMidnight</Constant>  <!-- this to get the time now from the system -->
+          <FieldRef field="secondsSinceMidnight"/>
+         </Apply>
+
+     <FieldRef field="countAllTweets"/>                     <!-- 2.b -->
+         <FieldRef field="checkTimeWindow"/>                   <!-- 2.0  I will update numbering later -->
+
+      <FieldRef field="checkIfMatchAny"/>                    <!-- 2.1    was checkIfBanks -->
+
+      <Apply function="if">
+        <Apply function="GreaterThan">
+          <FieldRef field="doSum"/>                          <!-- 2.2 -->
+         <!-- <Constant dataType="integer">1</Constant> -->
+          <Constant dataType="integer">0</Constant>
+        </Apply>
+        <!-- THEN -->
+        <FieldRef field="successPath"/>                      <!-- 2.3 -->
+        <!-- ELSE -->
+        <Constant dataType="boolean">false</Constant>
+      </Apply>  <!-- end "if" -->
+
+    </Apply>
+  </DerivedField> <!-- end scoreCheckTweets -->
+
+</TransformationDictionary>
+
+
+<!-- ===================================================================================================== -->
+<RuleSetModel modelName="DemoModel" functionName="classification" algorithmName="RuleSet">
+
+  <!-- For Kamanja (only), list the variables in the output record -->
+  <!-- for normal PMML, these are the fields avilable to be used by the model -->
+  <MiningSchema>
+    <MiningField name="cnt_1_1" usageType="supplementary"/>
+    <MiningField name="cnt_1_2" usageType="supplementary"/>
+    <MiningField name="cnt_1_3" usageType="supplementary"/>
+    <MiningField name="cnt_1_4" usageType="supplementary"/>
+
+    <MiningField name="cnt_2_1" usageType="supplementary"/>
+    <MiningField name="cnt_2_2" usageType="supplementary"/>
+    <MiningField name="cnt_2_3" usageType="supplementary"/>
+    <MiningField name="cnt_2_4" usageType="supplementary"/>
+
+    <MiningField name="cnt_3_1" usageType="supplementary"/>
+    <MiningField name="cnt_3_2" usageType="supplementary"/>
+    <MiningField name="cnt_3_3" usageType="supplementary"/>
+    <MiningField name="cnt_3_4" usageType="supplementary"/>
+
+    <MiningField name="cnt_4_1" usageType="supplementary"/>
+    <MiningField name="cnt_4_2" usageType="supplementary"/>
+    <MiningField name="cnt_4_3" usageType="supplementary"/>
+    <MiningField name="cnt_4_4" usageType="supplementary"/>
+
+    <MiningField name="alertText_1_1" usageType="supplementary"/>
+    <MiningField name="alertText_1_2" usageType="supplementary"/>
+    <MiningField name="alertText_1_3" usageType="supplementary"/>
+    <MiningField name="alertText_1_4" usageType="supplementary"/>
+
+    <MiningField name="alertText_2_1" usageType="supplementary"/>
+    <MiningField name="alertText_2_2" usageType="supplementary"/>
+    <MiningField name="alertText_2_3" usageType="supplementary"/>
+    <MiningField name="alertText_2_4" usageType="supplementary"/>
+
+    <MiningField name="alertText_3_1" usageType="supplementary"/>
+    <MiningField name="alertText_3_2" usageType="supplementary"/>
+    <MiningField name="alertText_3_3" usageType="supplementary"/>
+    <MiningField name="alertText_3_4" usageType="supplementary"/>
+
+    <MiningField name="alertText_4_1" usageType="supplementary"/>
+    <MiningField name="alertText_4_2" usageType="supplementary"/>
+    <MiningField name="alertText_4_3" usageType="supplementary"/>
+    <MiningField name="alertText_4_4" usageType="supplementary"/>
+
+        <MiningField name="cntAllTweets" usageType="supplementary"/>
+
+    <MiningField name="cntWithAlert" usageType="supplementary"/>      <!-- 2.3.4 -->
+    <MiningField name="anyMatchcounter" usageType="supplementary"/>
+    <MiningField name="predictedField" usageType="predicted"/>
+  </MiningSchema>
+
+  <RuleSet defaultScore="0">
+    <RuleSelectionMethod criterion="firstHit"/>
+
+    <!-- 1) scoreCheckRule calls scoreCheckTweets to be created -->
+    <SimpleRule id="scoreCheckRule" score="1b">
+            <SimplePredicate field="scoreCheckTweets" operator="equal" value="true"/> <!-- 2 -->
+    </SimpleRule>
+
+  </RuleSet>
+</RuleSetModel>
+
+</PMML>

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mycompany.pmml.udfs
 
 import java.util.UUID
@@ -12,10 +28,10 @@ import com.ligadata.pmml.udfs.Udfs._
   * Sample udfs .. com.mycompany.pmml.udfs.SomeCustomUdfs
 
     This is a sample udf library to illustrate how one would add their own library of
-    functions to the Fatafat system such that they could be used in the PMML models run
+    functions to the Kamanja system such that they could be used in the PMML models run
     there.
 
-    The udfs used in Fatafat must be declared in an object (i.e., they are static methods
+    The udfs used in Kamanja must be declared in an object (i.e., they are static methods
     for those of you familiar with java).
 
     NOTE: If you want to invoke functions in the core library, make your UDF project that 
@@ -51,7 +67,7 @@ import com.ligadata.pmml.udfs.Udfs._
     into the udf jar for PmmlUdfs at the functions on the 'fullObjectPath'.
 
     As written, the types do not really need to be loaded into the MetadataAPI, as they 
-    have all been defined in the Fatafat metadata bootstrap.  The udfs json file must be loaded 
+    have all been defined in the Kamanja metadata bootstrap.  The udfs json file must be loaded 
     however.  The types would be needed if you introduced a type that has not been previously declared
     in the bootstrap.  If you are not sure there is no harm loading the types file.  If one of 
     the types is already present, an error will be logged to that effect.  This is probably ok,
@@ -65,7 +81,7 @@ import com.ligadata.pmml.udfs.Udfs._
           <Value value="com.mycompany.pmml.udfs.CustomUdfs" property="valid"/>
         </DataField>
 
-    Important: Don't forget to upload your library to the Fatafat cluster.  There is an upload jar
+    Important: Don't forget to upload your library to the Kamanja cluster.  There is an upload jar
     protocol for this purpose.
 
   */
@@ -83,6 +99,24 @@ object CustomUdfs extends LogTrait {
     def ID_GEN() : String = {
         UUID.randomUUID().toString;
     }
+    
+    /**
+     * FNV fast hashing algorithm in 64 bits.
+     * @see http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
+     */
+    def hashKey(key: String): Long = {
+      val keyBytes : Array[Byte] = key.getBytes
+      val PRIME: Long = 1099511628211L
+      var i = 0
+      val len = keyBytes.length
+      var rv: Long = 0xcbf29ce484222325L
+      while (i < len) {
+        rv = (rv * PRIME) ^ (keyBytes(i) & 0xff)
+        i += 1
+      }
+      rv & 0xffffffffL
+    }
+
 
     /**
        Convert the supplied iso8601 date integer according to these format codes:
@@ -125,7 +159,7 @@ object CustomUdfs extends LogTrait {
      @param yyyymmdds: an Int encoded with iso8601 date...
      @return string rep of this date
     */
-    def iso8601DateFmt(fmtStr : String, yyyymmdds : Int): String = {
+    def ISO8601DateFmt(fmtStr : String, yyyymmdds : Int): String = {
         val dateTime : DateTime = toDateTime(yyyymmdds)
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
         val str : String = fmt.print(dateTime);

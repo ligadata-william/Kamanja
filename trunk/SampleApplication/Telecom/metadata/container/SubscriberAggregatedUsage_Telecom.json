@@ -1,0 +1,26 @@
+{
+  "Container": {
+	"NameSpace": "System",
+	"Name": "SubscriberAggregatedUsage",
+	"Version": "00.01.00",
+	"Description": "Subscriber Aggregated Usage",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "msisdn",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "thisMonthUsage",
+		"Type": "System.Long"
+	  }
+	],
+	"PrimaryKey": [
+	  "msisdn"
+	],
+	"PartitionKey": [
+	  "msisdn"
+	]
+  }
+}

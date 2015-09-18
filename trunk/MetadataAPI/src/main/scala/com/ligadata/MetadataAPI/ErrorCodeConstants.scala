@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.MetadataAPI
 
 object ErrorCodeConstants {
@@ -143,6 +159,10 @@ object ErrorCodeConstants {
    val Get_Model_From_Cache_Failed = "Failed to fetch model from cache";
    val Get_Model_From_DB_Failed = "Failed to fetch Model from DB";
    val Get_Model_From_DB_Successful = "Successfully fetched Model form DB";
+   val Model_Compilation_Failed = "Model Compilation Failed, see compliation errors in the log"
+   
+   // Functions
+   val Remove_Function_Failed_Not_Found = "Failed to delete an existing Function"
    
    //Node
    val Add_Node_Failed = "Failed to add/update a node";
@@ -190,4 +210,7 @@ object ErrorCodeConstants {
    
    //Object
    val Get_All_Object_Keys_Successful = "Successfully fetched all object keys";
+   
+   //Monitor
+   val GetHeartbeat_Success = "Heartbeats fetched successfully"
 }

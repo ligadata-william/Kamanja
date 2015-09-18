@@ -1,0 +1,26 @@
+{
+  "Container": {
+	"NameSpace": "System",
+	"Name": "AccountInfo",
+	"Version": "00.01.00",
+	"Description": "Subscriber Account Information",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "actNo",
+		"Type": "System.String"
+	  },
+	  {
+		"Name": "thresholdAlertOptOut",
+		"Type": "System.Boolean"
+	  }
+	],
+	"PrimaryKey": [
+	  "actNo"
+	],
+	"PartitionKey": [
+	  "actNo"
+	]
+  }
+}

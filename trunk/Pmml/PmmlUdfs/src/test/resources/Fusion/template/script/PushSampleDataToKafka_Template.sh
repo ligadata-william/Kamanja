@@ -1,1 +1,1 @@
-java -jar {InstallDirectory}/bin/SimpleKafkaProducer-0.1.0 --gz true --topics "testin_1" --threads 1 --topicpartitions 8 --brokerlist "localhost:9092" --files "{InstallDirectory}/input/application1/data/copd_demo.csv.gz" --partitionkeyidxs "1" --format CSV
+java -jar {InstallDirectory}/bin/SimpleKafkaProducer-0.1.0 --gz true --topics "testin_1" --threads 1 --topicpartitions 8 --brokerlist "localhost:9092" --files "{InstallDirectory}/input/SampleApplications/data/copd_demo.csv.gz" --partitionkeyidxs "1" --format CSV

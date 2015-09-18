@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.MetadataAPI
 
 import java.util.Properties
@@ -12,23 +28,16 @@ import scala.collection.mutable.ArrayBuffer
 
 import scala.collection.mutable._
 import scala.reflect.runtime.{ universe => ru }
-import java.net.URL
-import java.net.URLClassLoader
 
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
 
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.kamanja.metadataload.MetadataLoad
 
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.ResultSet
-
-import com.ligadata.keyvaluestore._
-import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.keyvaluestore.cassandra._
+// import com.ligadata.keyvaluestore._
+import com.ligadata.HeartBeat.HeartBeatUtil
+import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
 
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.{ JSONObject, JSONArray }
@@ -36,7 +45,10 @@ import scala.collection.immutable.Map
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.HashMap
 
+import com.google.common.base.Throwables
+
 import com.ligadata.messagedef._
+import com.ligadata.Exceptions._
 
 import scala.xml.XML
 import org.apache.log4j._
@@ -49,70 +61,44 @@ import com.ligadata.ZooKeeper._
 import org.apache.curator.framework.CuratorFramework
 import org.apache.zookeeper.CreateMode
 
+import com.ligadata.keyvaluestore._
 import com.ligadata.Serialize._
 import com.ligadata.Utils._
 import util.control.Breaks._
+import com.ligadata.AuditAdapterInfo._
+import com.ligadata.SecurityAdapterInfo.SecurityAdapter
+import com.ligadata.keyvaluestore.KeyValueManager
+import com.ligadata.Exceptions.StackTrace
 
 import java.util.Date
 
+import org.json4s.jackson.Serialization
+
 case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], /* MetadataAdapterSpecificConfig: Option[String], */ MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String], OUTPUTMESSAGE_FILES_DIR: Option[String])
+
+case class Argument(ArgName: String, ArgTypeNameSpace: String, ArgTypeName: String)
+
+// case class Attr(NameSpace: String, Name: String, Version: Long, Type: TypeDef)
+
+// case class MessageStruct(NameSpace: String, Name: String, FullName: String, Version: Long, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
+case class MessageDefinition(Message: MessageStruct)
+case class ContainerDefinition(Container: MessageStruct)
+
+case class ModelInfo(NameSpace: String, Name: String, Version: String, ModelType: String, JarName: String, PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
+case class ModelDefinition(Model: ModelInfo)
+
+case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
 
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
 case class APIResultInfo(statusCode: Int, functionName: String, resultData: String, description: String)
 case class APIResultJsonProxy(APIResults: APIResultInfo)
 
-case class UnsupportedObjectException(e: String) extends Exception(e)
-case class Json4sParsingException(e: String) extends Exception(e)
-case class FunctionListParsingException(e: String) extends Exception(e)
-case class FunctionParsingException(e: String) extends Exception(e)
-case class TypeDefListParsingException(e: String) extends Exception(e)
-case class TypeParsingException(e: String) extends Exception(e)
-case class TypeDefProcessingException(e: String) extends Exception(e)
-case class ConceptListParsingException(e: String) extends Exception(e)
-case class ConceptParsingException(e: String) extends Exception(e)
-case class MessageDefParsingException(e: String) extends Exception(e)
-case class ContainerDefParsingException(e: String) extends Exception(e)
-case class ModelDefParsingException(e: String) extends Exception(e)
-case class ApiResultParsingException(e: String) extends Exception(e)
-case class UnexpectedMetadataAPIException(e: String) extends Exception(e)
-case class ObjectNotFoundException(e: String) extends Exception(e)
-case class CreateStoreFailedException(e: String) extends Exception(e)
-case class UpdateStoreFailedException(e: String) extends Exception(e)
-
-case class LoadAPIConfigException(e: String) extends Exception(e)
-case class MissingPropertyException(e: String) extends Exception(e)
-case class InvalidPropertyException(e: String) extends Exception(e)
-case class KryoSerializationException(e: String) extends Exception(e)
-case class InternalErrorException(e: String) extends Exception(e)
-case class TranIdNotFoundException(e: String) extends Exception(e)
-
-/**
- *  MetadataClassLoader - contains the classes that need to be dynamically resolved the the
- *  reflective calls
- */
-class MetadataClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
-  override def addURL(url: URL) {
-    super.addURL(url)
-  }
-}
-
-/**
- * MetadataLoaderInfo
- */
-class MetadataLoader {
-  // class loader
-  val loader: MetadataClassLoader = new MetadataClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
-  // Loaded jars
-  val loadedJars: TreeSet[String] = new TreeSet[String]
-  // Get a mirror for reflection
-  //val mirror: scala.reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
-}
-
 // The implementation class
 object MetadataAPIImpl extends MetadataAPI {
 
-  lazy val sysNS = "System" // system name space
+  lazy val sysNS = "System"
+  // system name space
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
@@ -127,15 +113,21 @@ object MetadataAPIImpl extends MetadataAPI {
   private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
   private var currentTranLevel: Long = _
   private var passwd: String = null
+  private var compileCfg: String = ""
+  private var heartBeat: HeartBeatUtil = null
+  var zkHeartBeatNodePath = ""
 
-  
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
-  var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS","ZK_CONNECTION_TIMEOUT_MS","DATABASE_SCHEMA","DATABASE","DATABASE_LOCATION","DATABASE_HOST","API_LEADER_SELECTION_ZK_NODE",
-                               "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
-                               "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
-                               "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","SSL_PASSWD", "DO_AUTH","SECURITY_IMPL_CLASS",
-                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT","AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG")
+  var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS", "ZK_CONNECTION_TIMEOUT_MS", "DATABASE_SCHEMA", "DATABASE", "DATABASE_LOCATION", "DATABASE_HOST", "API_LEADER_SELECTION_ZK_NODE",
+    "JAR_PATHS", "JAR_TARGET_DIR", "ROOT_DIR", "GIT_ROOT", "SCALA_HOME", "JAVA_HOME", "MANIFEST_PATH", "CLASSPATH", "NOTIFY_ENGINE", "SERVICE_HOST",
+    "ZNODE_PATH", "ZOOKEEPER_CONNECT_STRING", "COMPILER_WORK_DIR", "SERVICE_PORT", "MODEL_FILES_DIR", "TYPE_FILES_DIR", "FUNCTION_FILES_DIR",
+    "CONCEPT_FILES_DIR", "MESSAGE_FILES_DIR", "CONTAINER_FILES_DIR", "CONFIG_FILES_DIR", "MODEL_EXEC_LOG", "NODE_ID", "SSL_CERTIFICATE", "SSL_PASSWD", "DO_AUTH", "SECURITY_IMPL_CLASS",
+    "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS", "AUDIT_IMPL_JAR", "DO_AUDIT", "AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG", "METADATA_DATASTORE")
+
+  // This is used to exclude all non-engine related configs from Uplodad Config method 
+  private val excludeList: Set[String] = Set[String]("ClusterId", "StatusInfo", "Nodes", "Config", "Adapters", "DataStore", "ZooKeeperInfo", "EnvironmentContext")
+
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -158,6 +150,24 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   /**
+   *  getHealthCheck - will return all the health-check information for the nodeId specified.
+   *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes
+   */
+  def getHealthCheck(nodeId: String = ""): String = {
+    val ids = parse(nodeId).values.asInstanceOf[List[String]]
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
+    apiResult.toString
+  }
+
+  /**
+   * clockNewActivity - update Metadata health info, showing its still alive.
+   */
+  def clockNewActivity: Unit = {
+    if (heartBeat != null)
+      heartBeat.SetMainData(metadataAPIConfig.getProperty("NODE_ID").toString)
+  }
+
+  /**
    * InitSecImpl  - 1. Create the Security Adapter class.  The class name and jar name containing
    *                the implementation of that class are specified in the CONFIG FILE.
    *                2. Create the Audit Adapter class, The class name and jar name containing
@@ -165,21 +175,20 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def InitSecImpl: Unit = {
     logger.debug("Establishing connection to domain security server..")
-    val classLoader: MetadataLoader = new MetadataLoader
-    
+    val classLoader = new KamanjaLoaderInfo
+
     // Validate the Auth/Audit flags for valid input.
     if ((metadataAPIConfig.getProperty("DO_AUTH") != null) &&
-        (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES") &&
-         !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("NO"))) {
+      (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES") &&
+        !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("NO"))) {
       throw new Exception("Invalid value for DO_AUTH detected.  Correct it and restart")
-    }    
+    }
     if ((metadataAPIConfig.getProperty("DO_AUDIT") != null) &&
-        (!metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("YES") &&
-         !metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("NO"))) {
+      (!metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("YES") &&
+        !metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("NO"))) {
       throw new Exception("Invalid value for DO_AUDIT detected.  Correct it and restart")
-    } 
-    
-    
+    }
+
     // If already have one, use that!
     if (authObj == null && (metadataAPIConfig.getProperty("DO_AUTH") != null) && (metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
       createAuthObj(classLoader)
@@ -192,58 +201,74 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * private method to instantiate an authObj
    */
-  private def createAuthObj(classLoader : MetadataLoader): Unit = {
+  private def createAuthObj(classLoader: KamanjaLoaderInfo): Unit = {
     // Load the location and name of the implementing class from the
     val implJarName = if (metadataAPIConfig.getProperty("SECURITY_IMPL_JAR") == null) "" else metadataAPIConfig.getProperty("SECURITY_IMPL_JAR").trim
     val implClassName = if (metadataAPIConfig.getProperty("SECURITY_IMPL_CLASS") == null) "" else metadataAPIConfig.getProperty("SECURITY_IMPL_CLASS").trim
-    logger.debug("Using "+implClassName+", from the "+implJarName+" jar file")
+    logger.debug("Using " + implClassName + ", from the " + implJarName + " jar file")
     if (implClassName == null) {
       logger.error("Security Adapter Class is not specified")
       return
     }
 
     // Add the Jarfile to the class loader
-    loadJar(classLoader,implJarName)
+    loadJar(classLoader, implJarName)
+
+    try {
+      Class.forName(implClassName, true, classLoader.loader)
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to load Security Adapter class %s with Reason:%s Message:%s".format(implClassName, e.getCause, e.getMessage))
+        throw e // Rethrow
+      }
+    }
 
     // All is good, create the new class
-    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.fatafat.metadata.SecurityAdapter]]
+    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[SecurityAdapter]]
     authObj = className.newInstance
     authObj.init
-    logger.debug("Created class "+ className.getName)
+    logger.debug("Created class " + className.getName)
   }
-  
-  
-   /**
+
+  /**
    * private method to instantiate an authObj
    */
-  private def createAuditObj (classLoader : MetadataLoader): Unit = {
+  private def createAuditObj(classLoader: KamanjaLoaderInfo): Unit = {
     // Load the location and name of the implementing class froms the
     val implJarName = if (metadataAPIConfig.getProperty("AUDIT_IMPL_JAR") == null) "" else metadataAPIConfig.getProperty("AUDIT_IMPL_JAR").trim
     val implClassName = if (metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS") == null) "" else metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
-    logger.debug("Using "+implClassName+", from the "+implJarName+" jar file")
+    logger.debug("Using " + implClassName + ", from the " + implJarName + " jar file")
     if (implClassName == null) {
       logger.error("Audit Adapter Class is not specified")
       return
     }
 
     // Add the Jarfile to the class loader
-    loadJar(classLoader,implJarName)
+    loadJar(classLoader, implJarName)
 
+    try {
+      Class.forName(implClassName, true, classLoader.loader)
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to load Audit Adapter class %s with Reason:%s Message:%s".format(implClassName, e.getCause, e.getMessage))
+        throw e // Rethrow
+      }
+    }
     // All is good, create the new class
-    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.fatafat.metadata.AuditAdapter]]
+    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[AuditAdapter]]
     auditObj = className.newInstance
     auditObj.init(metadataAPIConfig.getProperty("AUDIT_PARMS"))
-    logger.debug("Created class "+ className.getName)
+    logger.debug("Created class " + className.getName)
   }
-  
-  
+
   /**
    * loadJar - load the specified jar into the classLoader
    */
-  private def loadJar (classLoader : MetadataLoader, implJarName: String): Unit = {
+  private def loadJar(classLoader: KamanjaLoaderInfo, implJarName: String): Unit = {
     // Add the Jarfile to the class loader
-    val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-    val jarName = JarPathsUtils.GetValidJarFile(jarPaths, implJarName)
+    val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+    val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
+    val jarName = com.ligadata.Utils.Utils.GetValidJarFile(jarPaths, implJarName)
     val fl = new File(jarName)
     if (fl.exists) {
       try {
@@ -251,44 +276,43 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.debug("Jar " + implJarName.trim + " added to class path.")
         classLoader.loadedJars += fl.getPath()
       } catch {
-          case e: Exception => {
-            logger.error("Failed to add "+implJarName + " due to internal exception " + e.printStackTrace)
-            return
-          }
+        case e: Exception => {
+          logger.error("Failed to add " + implJarName + " due to internal exception " + e.printStackTrace)
+          return
         }
+      }
     } else {
-      logger.error("Unable to locate Jar '"+implJarName+"'")
+      logger.error("Unable to locate Jar '" + implJarName + "'")
       return
     }
   }
 
-  
   /**
    * checkAuth
    */
-   def checkAuth (usrid:Option[String], password:Option[String], role: Option[String], privilige: String): Boolean = {
- 
-     var authParms: java.util.Properties = new Properties
-     // Do we want to run AUTH?
-     if ((metadataAPIConfig.getProperty("DO_AUTH") == null) ||
-         (metadataAPIConfig.getProperty("DO_AUTH") != null && !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
-       return true
-     }
-     
-     // check if the Auth object exists
-     if (authObj == null) return false
- 
-     // Run the Auth - if userId is supplied, defer to that.
-     if ((usrid == None) && (role == None)) return false
- 
-     if (usrid != None) authParms.setProperty("userid",usrid.get.asInstanceOf[String])
-     if (password != None) authParms.setProperty("password", password.get.asInstanceOf[String])
-     if (role != None) authParms.setProperty("role", role.get.asInstanceOf[String])
-     authParms.setProperty("privilige",privilige)
- 
-     return authObj.performAuth(authParms)
-   } 
-  
+  def checkAuth(usrid: Option[String], password: Option[String], role: Option[String], privilige: String): Boolean = {
+
+    var authParms: java.util.Properties = new Properties
+    // Do we want to run AUTH?
+    if ((metadataAPIConfig.getProperty("DO_AUTH") == null) ||
+      (metadataAPIConfig.getProperty("DO_AUTH") != null && !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
+      return true
+    }
+
+    // check if the Auth object exists
+    if (authObj == null) return false
+
+    // Run the Auth - if userId is supplied, defer to that.
+    if ((usrid == None) && (role == None)) return false
+
+    if (usrid != None) authParms.setProperty("userid", usrid.get.asInstanceOf[String])
+    if (password != None) authParms.setProperty("password", password.get.asInstanceOf[String])
+    if (role != None) authParms.setProperty("role", role.get.asInstanceOf[String])
+    authParms.setProperty("privilige", privilige)
+
+    return authObj.performAuth(authParms)
+  }
+
   /**
    * getPrivilegeName
    */
@@ -297,9 +321,8 @@ object MetadataAPIImpl extends MetadataAPI {
     logger.debug("op => " + op)
     logger.debug("objName => " + objName)
     if (authObj == null) return ""
-    return authObj.getPrivilegeName (op,objName)
-  }  
-  
+    return authObj.getPrivilegeName(op, objName)
+  }
 
   /**
    * getSSLCertificatePath
@@ -309,7 +332,7 @@ object MetadataAPIImpl extends MetadataAPI {
     if (certPath != null) return certPath
     ""
   }
-  
+
   /**
    * getSSLCertificatePasswd
    */
@@ -317,16 +340,13 @@ object MetadataAPIImpl extends MetadataAPI {
     if (passwd != null) return passwd
     ""
   }
-  
+
   /**
    * setSSLCertificatePasswd
    */
   def setSSLCertificatePasswd(pw: String) = {
     passwd = pw
   }
-  
-  
-  
 
   /**
    * getCurrentTime - Return string representation of the current Date/Time
@@ -338,19 +358,19 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * logAuditRec - Record an Audit event using the audit adapter.
    */
-  def logAuditRec(userOrRole:Option[String], userPrivilege:Option[String], action:String, objectText:String, success:String, transactionId:String, objName:String) = {
-    if( auditObj != null ){
+  def logAuditRec(userOrRole: Option[String], userPrivilege: Option[String], action: String, objectText: String, success: String, transactionId: String, objName: String) = {
+    if (auditObj != null) {
       val aRec = new AuditRecord
 
       // If no userName is provided here, that means that somehow we are not running with Security but with Audit ON.
       var userName = "undefined"
-      if( userOrRole != None ){
+      if (userOrRole != None) {
         userName = userOrRole.get
       }
 
       // If no priv is provided here, that means that somehow we are not running with Security but with Audit ON.
       var priv = "undefined"
-      if( userPrivilege != None ){
+      if (userPrivilege != None) {
         priv = userPrivilege.get
       }
 
@@ -361,37 +381,39 @@ object MetadataAPIImpl extends MetadataAPI {
       aRec.objectAccessed = objName
       aRec.success = success
       aRec.transactionId = transactionId
-      aRec.notes  = objectText
-      try{
+      aRec.notes = objectText
+      try {
         auditObj.addAuditRecord(aRec)
       } catch {
         case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.debug("\nStackTrace:" + stackTrace)
           throw new UpdateStoreFailedException("Failed to save audit record" + aRec.toString + ":" + e.getMessage())
         }
       }
     }
   }
- 
-  
+
   /**
    * getAuditRec - Get an audit record from the audit adapter.
    */
-  def getAuditRec(startTime: Date, endTime: Date, userOrRole:String, action:String, objectAccessed:String) : String = {
+  def getAuditRec(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): String = {
     var apiResultStr = ""
-    if( auditObj == null ){
+    if (auditObj == null) {
       apiResultStr = "no audit records found "
       return apiResultStr
     }
-    try{
-      val recs = auditObj.getAuditRecord(startTime,endTime,userOrRole,action,objectAccessed)
-      if( recs.length > 0 ){
+    try {
+      val recs = auditObj.getAuditRecord(startTime, endTime, userOrRole, action, objectAccessed)
+      if (recs.length > 0) {
         apiResultStr = JsonSerializer.SerializeAuditRecordsToJson(recs)
-      }
-      else{
+      } else {
         apiResultStr = "no audit records found "
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "Failed to fetch all the audit objects:", null, "Error :" + e.toString)
         apiResultStr = apiResult.toString()
       }
@@ -403,96 +425,97 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * parseDateStr
    */
-  def parseDateStr(dateStr: String) : Date = {
-    try{
+  def parseDateStr(dateStr: String): Date = {
+    try {
       val format = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
       val d = format.parse(dateStr)
       d
-    }catch {
-      case e:ParseException => {
-       val format = new java.text.SimpleDateFormat("yyyyMMdd")
-       val d = format.parse(dateStr)
-       d
+    } catch {
+      case e: ParseException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        val format = new java.text.SimpleDateFormat("yyyyMMdd")
+        val d = format.parse(dateStr)
+        d
       }
     }
   }
 
-  def getLeaderHost(leaderNode: String) : String = {
+  def getLeaderHost(leaderNode: String): String = {
     val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
-    if ( nodes.length == 0 ){
+    if (nodes.length == 0) {
       logger.debug("No Nodes found ")
-      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available +" :" + leaderNode)
+      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available + " :" + leaderNode)
       apiResult.toString()
-    }
-    else{
+    } else {
       val nhosts = nodes.filter(n => n.nodeId == leaderNode)
-      if ( nhosts.length == 0 ){
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available +" :" + leaderNode)
+      if (nhosts.length == 0) {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available + " :" + leaderNode)
         apiResult.toString()
-      }
-      else{
-  val nhost = nhosts(0)
+      } else {
+        val nhost = nhosts(0)
         logger.debug("node addr => " + nhost.NodeAddr)
-  nhost.NodeAddr
+        nhost.NodeAddr
       }
     }
   }
-   
-   def getAuditRec(filterParameters: Array[String]) : String = {
+
+  def getAuditRec(filterParameters: Array[String]): String = {
     var apiResultStr = ""
-    if( auditObj == null ){
+    if (auditObj == null) {
       apiResultStr = "no audit records found "
       return apiResultStr
     }
-    try{
+    try {
       var audit_interval = 10
       var ai = metadataAPIConfig.getProperty("AUDIT_INTERVAL")
-      if( ai != null ){
-  audit_interval = ai.toInt
+      if (ai != null) {
+        audit_interval = ai.toInt
       }
-      var startTime:Date = new Date((new Date).getTime() - audit_interval * 60000)
-      var endTime:Date = new Date()
-      var userOrRole:String = null
-      var action:String = null
-      var objectAccessed:String = null
+      var startTime: Date = new Date((new Date).getTime() - audit_interval * 60000)
+      var endTime: Date = new Date()
+      var userOrRole: String = null
+      var action: String = null
+      var objectAccessed: String = null
 
-      if (filterParameters != null ){
-  val paramCnt = filterParameters.size
-  paramCnt match {
-    case 1 => {
-      startTime = parseDateStr(filterParameters(0))
-    }
-    case 2 => {
-      startTime = parseDateStr(filterParameters(0))
-      endTime = parseDateStr(filterParameters(1))
-    }
-    case 3 => {
-      startTime = parseDateStr(filterParameters(0))
-      endTime = parseDateStr(filterParameters(1))
-      userOrRole = filterParameters(2)
-    }
-    case 4 => {
-      startTime = parseDateStr(filterParameters(0))
-      endTime = parseDateStr(filterParameters(1))
-      userOrRole = filterParameters(2)
-      action = filterParameters(3)
-    }
-    case 5 => {
-      startTime = parseDateStr(filterParameters(0))
-      endTime = parseDateStr(filterParameters(1))
-      userOrRole = filterParameters(2)
-      action = filterParameters(3)
-      objectAccessed = filterParameters(4)
-    }
-  }
+      if (filterParameters != null) {
+        val paramCnt = filterParameters.size
+        paramCnt match {
+          case 1 => {
+            startTime = parseDateStr(filterParameters(0))
+          }
+          case 2 => {
+            startTime = parseDateStr(filterParameters(0))
+            endTime = parseDateStr(filterParameters(1))
+          }
+          case 3 => {
+            startTime = parseDateStr(filterParameters(0))
+            endTime = parseDateStr(filterParameters(1))
+            userOrRole = filterParameters(2)
+          }
+          case 4 => {
+            startTime = parseDateStr(filterParameters(0))
+            endTime = parseDateStr(filterParameters(1))
+            userOrRole = filterParameters(2)
+            action = filterParameters(3)
+          }
+          case 5 => {
+            startTime = parseDateStr(filterParameters(0))
+            endTime = parseDateStr(filterParameters(1))
+            userOrRole = filterParameters(2)
+            action = filterParameters(3)
+            objectAccessed = filterParameters(4)
+          }
+        }
+      } else {
+        logger.debug("filterParameters is null")
       }
-      else{
-  logger.debug("filterParameters is null")
-      }
-      apiResultStr = getAuditRec(startTime,endTime,userOrRole,action,objectAccessed)
+      apiResultStr = getAuditRec(startTime, endTime, userOrRole, action, objectAccessed)
     } catch {
       case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "Failed to fetch all the audit objects:", null, "Error :" + e.toString )
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "Failed to fetch all the audit objects:", null, "Error :" + e.toString)
         apiResultStr = apiResult.toString()
       }
     }
@@ -502,7 +525,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   /**
    * InitZooKeeper - Establish a connection to zookeeper
-   */  
+   */
   def InitZooKeeper: Unit = {
     logger.debug("Connect to zookeeper..")
     if (zkc != null) {
@@ -518,11 +541,13 @@ object MetadataAPIImpl extends MetadataAPI {
       zkc = CreateClient.createSimple(zkcConnectString)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new InternalErrorException("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
     }
   }
-  
+
   private def shutdownAuditAdapter(): Unit = {
     if (auditObj != null) auditObj.Shutdown
   }
@@ -547,32 +572,37 @@ object MetadataAPIImpl extends MetadataAPI {
   private var jarStore: DataStore = _
   private var configStore: DataStore = _
   private var outputmsgStore: DataStore = _
+  private var modelConfigStore: DataStore = _
 
   def oStore = otherStore
 
-  def KeyAsStr(k: com.ligadata.keyvaluestore.Key): String = {
+  def GetFunctionStore: DataStore = functionStore
+  def GetJarStore: DataStore = jarStore
+
+  def KeyAsStr(k: Key): String = {
     val k1 = k.toArray[Byte]
     new String(k1)
   }
 
-  def ValueAsStr(v: com.ligadata.keyvaluestore.Value): String = {
+  def ValueAsStr(v: Value): String = {
     val v1 = v.toArray[Byte]
     new String(v1)
   }
 
-  def GetObject(key: com.ligadata.keyvaluestore.Key, store: DataStore): IStorage = {
+  def GetObject(key: Key, store: DataStore): IStorage = {
     try {
       object o extends IStorage {
-        var key = new com.ligadata.keyvaluestore.Key;
-        var value = new com.ligadata.keyvaluestore.Value
+        var key = new Key;
+        var value = new Value
 
         def Key = key
+
         def Value = value
-        def Construct(k: com.ligadata.keyvaluestore.Key, v: com.ligadata.keyvaluestore.Value) =
-          {
-            key = k;
-            value = v;
-          }
+        def Construct(k: Key, v: Value) =
+        {
+          key = k;
+          value = v;
+        }
       }
 
       var k = key
@@ -581,41 +611,42 @@ object MetadataAPIImpl extends MetadataAPI {
       o
     } catch {
       case e: KeyNotFoundException => {
-        logger.debug("KeyNotFound Exception: Error => " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("KeyNotFound Exception: Error => " + e.getMessage() + "\nStackTrace:" + stackTrace)
         throw new ObjectNotFoundException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
-        logger.debug("General Exception: Error => " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("General Exception: Error => " + e.getMessage() + "\nStackTrace:" + stackTrace)
         throw new ObjectNotFoundException(e.getMessage())
       }
     }
   }
 
   def GetObject(key: String, store: DataStore): IStorage = {
-    try {
-      var k = new com.ligadata.keyvaluestore.Key
-      for (c <- key) {
-        k += c.toByte
-      }
-      GetObject(k, store)
+    var k = new Key
+    for (c <- key) {
+      k += c.toByte
     }
+    GetObject(k, store)
   }
 
   def SaveObject(key: String, value: Array[Byte], store: DataStore) {
     val t = store.beginTx
     object obj extends IStorage {
-      var k = new com.ligadata.keyvaluestore.Key
-      var v = new com.ligadata.keyvaluestore.Value
+      var k = new Key
+      var v = new Value
       for (c <- key) {
         k += c.toByte
       }
       for (c <- value) {
         v += c
       }
+
       def Key = k
+
       def Value = v
-      def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+      def Construct(Key: Key, Value: Value) = {}
     }
     try {
       store.put(obj)
@@ -623,7 +654,6 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update object for : " + key + ", Reason:" + e.getCause + ", Message:" + e.getMessage)
-        e.printStackTrace
         store.endTx(t)
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + key)
       }
@@ -639,35 +669,16 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.debug("Writing Key:" + key)
 
       SaveObject(key, value, store)
-/*
-
-      object obj extends IStorage {
-        var k = new com.ligadata.keyvaluestore.Key
-        var v = new com.ligadata.keyvaluestore.Value
-        for (c <- key) {
-          k += c.toByte
-        }
-        for (c <- value) {
-          v += c
-        }
-        def Key = k
-        def Value = v
-        def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
-      }
-      storeObjects(i) = obj
-*/
-
-
       i = i + 1
     })
 
-
-/*
+    /*
     try {
       store.putBatch(storeObjects)
       store.commitTx(t)
     } catch {
       case e: Exception => {
+      
         logger.error("Failed to insert/update object for : " + keyList.mkString(",") + ". Exception Message:" + e.getMessage + ". Reason:" + e.getCause)
         store.endTx(t)
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
@@ -677,13 +688,12 @@ object MetadataAPIImpl extends MetadataAPI {
 
   }
 
-
   def RemoveObjectList(keyList: Array[String], store: DataStore) {
     var i = 0
     val t = store.beginTx
     val KeyList = new Array[Key](keyList.length)
     keyList.foreach(key => {
-      var k = new com.ligadata.keyvaluestore.Key
+      var k = new Key
       for (c <- key) {
         k += c.toByte
       }
@@ -791,40 +801,41 @@ object MetadataAPIImpl extends MetadataAPI {
       keyList.foreach(key => {
         var value = valueList(i)
         object obj extends IStorage {
-          var k = new com.ligadata.keyvaluestore.Key
-          var v = new com.ligadata.keyvaluestore.Value
+          var k = new Key
+          var v = new Value
           for (c <- key) {
             k += c.toByte
           }
           for (c <- value) {
             v += c
           }
+
           def Key = k
+
           def Value = v
-          def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+          def Construct(Key: Key, Value: Value) = {}
         }
         storeObjects(i) = obj
         i = i + 1
       })
-      val storeType = GetMetadataAPIConfig.getProperty("DATABASE")
-      storeType match {
-        case "cassandra" => {
-          val store = tableStoreMap(tableList(0))
+
+      {
+        var i = 0
+        tableList.foreach(table => {
+          val store = tableStoreMap(table)
           val t = store.beginTx
-          KeyValueBatchTransaction.putCassandraBatch(tableList, store, storeObjects)
+          store.put(storeObjects(i))
           store.commitTx(t)
-        }
-        case _ => {
-          var i = 0
-          tableList.foreach(table => {
-            val store = tableStoreMap(table)
-            val t = store.beginTx
-            store.put(storeObjects(i))
-            store.commitTx(t)
-            i = i + 1
-          })
-        }
+          i = i + 1
+        })
       }
+
+      /*
+      val store = tableStoreMap(tableList(0))
+      val t = store.beginTx
+      store.putBatch(storeObjects)
+      store.commitTx(t)
+*/
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update object for : " + keyList.mkString(","))
@@ -836,7 +847,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def SaveOutputMsObjectList(objList: Array[BaseElemDef]) {
     SaveObjectList(objList, outputmsgStore)
   }
-  
+
   def SaveObject(key: String, value: String, store: DataStore) {
     var ba = serializer.SerializeObjectToByteArray(value)
     SaveObject(key, ba, store)
@@ -852,6 +863,8 @@ object MetadataAPIImpl extends MetadataAPI {
       notification.getBytes
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new InternalErrorException("Failed to generate a zookeeper message from the objList " + e.getMessage())
       }
     }
@@ -860,28 +873,29 @@ object MetadataAPIImpl extends MetadataAPI {
   def NotifyEngine(objList: Array[BaseElemDef], operations: Array[String]) {
     try {
       val notifyEngine = GetMetadataAPIConfig.getProperty("NOTIFY_ENGINE")
-      
+
       // We have to update the currentTranLevel here, since addObjectToCache method does not have the tranId in object
       // yet (a bug that is being ractified now)...  We can remove this code when that is fixed.
       var max: Long = 0
-      objList.foreach(obj => {max = scala.math.max(max, obj.TranId)}) 
+      objList.foreach(obj => {
+        max = scala.math.max(max, obj.TranId)
+      })
       if (currentTranLevel < max) currentTranLevel = max
-      
+
       if (notifyEngine != "YES") {
         logger.warn("Not Notifying the engine about this operation because The property NOTIFY_ENGINE is not set to YES")
         PutTranId(objList(0).tranId)
         return
       }
-      
+
       // Set up the cache of CACHES!!!! Since we are listening for changes to Metadata, we will be notified by Zookeeper
       // of this change that we are making.  This cache of Caches will tell us to ignore this.
       var corrId: Int = 0
-      objList.foreach ( elem => {
-        cacheOfOwnChanges.add((operations(corrId)+"."+elem.NameSpace+"."+elem.Name+"."+elem.Version).toLowerCase)
+      objList.foreach(elem => {
+        cacheOfOwnChanges.add((operations(corrId) + "." + elem.NameSpace + "." + elem.Name + "." + elem.Version).toLowerCase)
         corrId = corrId + 1
-      }) 
-      
-      
+      })
+
       val data = ZooKeeperMessage(objList, operations)
       InitZooKeeper
       val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/metadataupdate"
@@ -890,6 +904,8 @@ object MetadataAPIImpl extends MetadataAPI {
       PutTranId(objList(0).tranId)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new InternalErrorException("Failed to notify a zookeeper message from the objectList " + e.getMessage())
       }
     }
@@ -903,10 +919,14 @@ object MetadataAPIImpl extends MetadataAPI {
       idStr.toLong + 1
     } catch {
       case e: ObjectNotFoundException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         // first time
         1
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString)
       }
     }
@@ -920,11 +940,15 @@ object MetadataAPIImpl extends MetadataAPI {
       idStr.toLong
     } catch {
       case e: ObjectNotFoundException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         // first time
         0
       }
       case e: Exception => {
-        throw new TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -936,6 +960,8 @@ object MetadataAPIImpl extends MetadataAPI {
       SaveObject(key, value, transStore)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new UpdateStoreFailedException("Unable to Save the transaction id " + tId + ":" + e.getMessage())
       }
     }
@@ -1053,10 +1079,12 @@ object MetadataAPIImpl extends MetadataAPI {
       true
     } catch {
       case e: AlreadyExistsException => {
+        e.printStackTrace()
         logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
         false
-     }
+      }
       case e: Exception => {
+        e.printStackTrace()
         logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
         false
       }
@@ -1166,13 +1194,12 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       val iFile = new File(jarName)
       if (!iFile.exists) {
+        logger.error("Jar file (" + jarName + ") is not found: ")
         throw new FileNotFoundException("Jar file (" + jarName + ") is not found: ")
       }
-
       val bis = new BufferedInputStream(new FileInputStream(iFile));
       val baos = new ByteArrayOutputStream();
       var readBuf = new Array[Byte](1024) // buffer size
-
       // read until a single byte is available
       while (bis.available() > 0) {
         val c = bis.read();
@@ -1182,12 +1209,14 @@ object MetadataAPIImpl extends MetadataAPI {
       baos.toByteArray()
     } catch {
       case e: IOException => {
-        e.printStackTrace()
-        throw new FileNotFoundException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new FileNotFoundException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
       case e: Exception => {
-        e.printStackTrace()
-        throw new InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -1206,17 +1235,6 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  private def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
-    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
-    jarPaths.foreach(jPath => {
-      val fl = new File(jPath + "/" + jarName)
-      if (fl.exists) {
-        return fl.getPath
-      }
-    })
-    return jarName // Returning base jarName if not found in jar paths
-  }
-
   def UploadJarsToDB(obj: BaseElemDef, forceUploadMainJar: Boolean = true, alreadyCheckedJars: scala.collection.mutable.Set[String] = null): Unit = {
     val checkedJars: scala.collection.mutable.Set[String] = if (alreadyCheckedJars == null) scala.collection.mutable.Set[String]() else alreadyCheckedJars
 
@@ -1224,11 +1242,12 @@ object MetadataAPIImpl extends MetadataAPI {
       var keyList = new ArrayBuffer[String](0)
       var valueList = new ArrayBuffer[Array[Byte]](0)
 
-      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-
-      if (obj.jarName != null && (forceUploadMainJar || checkedJars.contains(obj.jarName) == false)) { //BUGBUG 
+      val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+      val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
+      if (obj.jarName != null && (forceUploadMainJar || checkedJars.contains(obj.jarName) == false)) {
+        //BUGBUG
         val jarsPathsInclTgtDir = jarPaths + MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
-        var jarName = JarPathsUtils.GetValidJarFile(jarsPathsInclTgtDir, obj.jarName)
+        var jarName = com.ligadata.Utils.Utils.GetValidJarFile(jarsPathsInclTgtDir, obj.jarName)
         var value = GetJarAsArrayOfBytes(jarName)
 
         var loadObject = false
@@ -1241,6 +1260,8 @@ object MetadataAPIImpl extends MetadataAPI {
             mObj = GetObject(obj.jarName, jarStore)
           } catch {
             case e: ObjectNotFoundException => {
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("\nStackTrace:" + stackTrace)
               loadObject = true
             }
           }
@@ -1270,13 +1291,15 @@ object MetadataAPIImpl extends MetadataAPI {
           // do not upload if it already exist & just uploaded/checked in db, minor optimization
           if (j.endsWith(".jar") && checkedJars.contains(j) == false) {
             var loadObject = false
-            val jarName = JarPathsUtils.GetValidJarFile(jarPaths, j)
+            val jarName = com.ligadata.Utils.Utils.GetValidJarFile(jarPaths, j)
             val value = GetJarAsArrayOfBytes(jarName)
             var mObj: IStorage = null
             try {
               mObj = GetObject(j, jarStore)
             } catch {
               case e: ObjectNotFoundException => {
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.debug("\nStackTrace:" + stackTrace)
                 loadObject = true
               }
             }
@@ -1307,7 +1330,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new InternalErrorException("Failed to Update the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
       }
     }
@@ -1327,24 +1351,27 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJarToDB", null, "Error : " + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarName)
         apiResult.toString()
       }
     }
   }
 
-
-  def UploadJarToDB(jarName:String,byteArray: Array[Byte], userid: Option[String]): String = {
+  def UploadJarToDB(jarName: String, byteArray: Array[Byte], userid: Option[String]): String = {
     try {
-        var key = jarName
-        var value = byteArray
-        logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
-        logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,jarName,AuditConstants.SUCCESS,"",jarName) 
-        SaveObject(key, value, jarStore)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
-        apiResult.toString()
+      var key = jarName
+      var value = byteArray
+      logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
+      logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTJAR, jarName, AuditConstants.SUCCESS, "", jarName)
+      SaveObject(key, value, jarStore)
+      var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
+      apiResult.toString()
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJarToDB", null, "Error : " + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarName)
         apiResult.toString()
       }
@@ -1357,8 +1384,9 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.debug("The object " + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + " has no jar associated with it. Nothing to download..")
         false
       }
-      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-      val jarName = JarPathsUtils.GetValidJarFile(jarPaths, jar)
+      val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+      val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
+      val jarName = com.ligadata.Utils.Utils.GetValidJarFile(jarPaths, jar)
       val f = new File(jarName)
       if (f.exists()) {
         val key = jar
@@ -1380,6 +1408,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new InternalErrorException("Failed to verify whether a download is required for the jar " + jar + " of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
       }
     }
@@ -1400,13 +1430,15 @@ object MetadataAPIImpl extends MetadataAPI {
       allJars
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new InternalErrorException("Failed to get dependant jars for the given object (" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
       }
     }
   }
 
   def DownloadJarFromDB(obj: BaseElemDef) {
-    var curJar : String = ""
+    var curJar: String = ""
     try {
       //val key:String = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       if (obj.jarName == null) {
@@ -1416,7 +1448,8 @@ object MetadataAPIImpl extends MetadataAPI {
       var allJars = GetDependantJars(obj)
       logger.debug("Found " + allJars.length + " dependant jars. Jars:" + allJars.mkString(","))
       if (allJars.length > 0) {
-        val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+        val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+        val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
         jarPaths.foreach(jardir => {
           val dir = new File(jardir)
           if (!dir.exists()) {
@@ -1424,14 +1457,14 @@ object MetadataAPIImpl extends MetadataAPI {
             dir.mkdir();
           }
         })
-        
+
         val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
         val dir = new File(dirPath)
         if (!dir.exists()) {
           // attempt to create the missing directory
           dir.mkdir();
         }
-        
+
         allJars.foreach(jar => {
           curJar = jar
           try {
@@ -1446,26 +1479,28 @@ object MetadataAPIImpl extends MetadataAPI {
             }
           } catch {
             case e: Exception => {
+              val stackTrace = StackTrace.ThrowableTraceString(e)
               logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "). Message:" + e.getMessage + " Reason:" + e.getCause)
-              e.printStackTrace
+
             }
           }
         })
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "). Message:" + e.getMessage + " Reason:" + e.getCause)
-        e.printStackTrace
+
       }
     }
   }
 
   def UpdateObjectInCache(obj: BaseElemDef, operation: String, mdMgr: MdMgr): BaseElemDef = {
     var updatedObject: BaseElemDef = null
-    
+
     // Update the current transaction level with this object  ???? What if an exception occurs ????
     if (currentTranLevel < obj.TranId) currentTranLevel = obj.TranId
-    
+
     try {
       obj match {
         case o: FunctionDef => {
@@ -1532,10 +1567,30 @@ object MetadataAPIImpl extends MetadataAPI {
       updatedObject
     } catch {
       case e: ObjectNolongerExistsException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new ObjectNolongerExistsException("The object " + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + " nolonger exists in metadata : It may have been removed already")
       }
       case e: Exception => {
-        throw new Exception("Unexpected error in UpdateObjectInCache: " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new Exception("Unexpected error in UpdateObjectInCache: " + e.getMessage() + "\nStackTrace:" + stackTrace)
+      }
+    }
+  }
+
+  // For now only handle the Model COnfig... Engine Configs will come later
+  def AddConfigObjToCache(tid: Long, key: String, mdlConfig: Map[String, List[String]], mdMgr: MdMgr) {
+    // Update the current transaction level with this object  ???? What if an exception occurs ????
+    if (currentTranLevel < tid) currentTranLevel = tid
+    try {
+      mdMgr.AddModelConfig(key, mdlConfig)
+    } catch { //Map[String, List[String]]
+      case e: AlreadyExistsException => {
+        logger.error("Failed to Cache the config object(" + key + "): " + e.getMessage())
+      }
+      case e: Exception => {
+        logger.error("Failed to Cache the config object(" + key + "): " + e.getMessage())
       }
     }
   }
@@ -1543,10 +1598,10 @@ object MetadataAPIImpl extends MetadataAPI {
   def AddObjectToCache(o: Object, mdMgr: MdMgr) {
     // If the object's Delete flag is set, this is a noop.
     val obj = o.asInstanceOf[BaseElemDef]
-    
+
     // Update the current transaction level with this object  ???? What if an exception occurs ????
     if (currentTranLevel < obj.TranId) currentTranLevel = obj.TranId
-    
+
     if (obj.IsDeleted)
       return
     try {
@@ -1653,13 +1708,15 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.error("The object " + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + " nolonger exists in metadata : It may have been removed already")
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new Exception("Unexpected error in ModifyObject: " + e.getMessage())
       }
     }
   }
 
   def DeleteObject(key: String, store: DataStore) {
-    var k = new com.ligadata.keyvaluestore.Key
+    var k = new Key
     for (c <- key) {
       k += c.toByte
     }
@@ -1676,6 +1733,8 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.error("The object " + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + " nolonger exists in metadata : It may have been removed already")
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new Exception("Unexpected error in DeleteObject: " + e.getMessage())
       }
     }
@@ -1686,9 +1745,12 @@ object MetadataAPIImpl extends MetadataAPI {
       ModifyObject(obj, "Activate")
     } catch {
       case e: ObjectNolongerExistsException => {
-        logger.error("The object " + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + " nolonger exists in metadata : It may have been removed already")
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("The object " + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + " nolonger exists in metadata : It may have been removed already")
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new Exception("Unexpected error in ActivateObject: " + e.getMessage())
       }
     }
@@ -1702,6 +1764,8 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.error("The object " + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + " nolonger exists in metadata : It may have been removed already")
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new Exception("Unexpected error in DeactivateObject: " + e.getMessage())
       }
     }
@@ -1719,73 +1783,40 @@ object MetadataAPIImpl extends MetadataAPI {
       (apiResultInfo.APIResults.statusCode + apiResultInfo.APIResults.functionName + apiResultInfo.APIResults.resultData + apiResultInfo.APIResults.description)
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new ApiResultParsingException(e.getMessage())
       }
     }
   }
 
-  @throws(classOf[CreateStoreFailedException])
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, adapterSpecificConfig: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
     try {
-      var connectinfo = new PropertyMap
-      connectinfo += ("connectiontype" -> storeType)
-      connectinfo += ("table" -> tableName)
-      if (adapterSpecificConfig != null)
-        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
-      storeType match {
-        case "hbase" => {
-          val databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
-          val databaseSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
-          connectinfo += ("hostlist" -> databaseHost)
-          connectinfo += ("schema" -> databaseSchema)
-        }
-        case "hashmap" => {
-          var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
-          connectinfo += ("path" -> databaseLocation)
-          connectinfo += ("schema" -> storeName)
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "true")
-        }
-        case "treemap" => {
-          var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
-          connectinfo += ("path" -> databaseLocation)
-          connectinfo += ("schema" -> storeName)
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "true")
-        }
-        case "cassandra" => {
-          var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
-          var databaseSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
-          connectinfo += ("hostlist" -> databaseHost)
-          connectinfo += ("schema" -> databaseSchema)
-          connectinfo += ("ConsistencyLevelRead" -> "ONE")
-        }
-        case _ => {
-          throw new CreateStoreFailedException("The database type " + storeType + " is not supported yet ")
-        }
-      }
-      KeyValueManager.Get(connectinfo)
+      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
+      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new CreateStoreFailedException(e.getMessage())
       }
     }
   }
 
-  @throws(classOf[CreateStoreFailedException])
-  def OpenDbStore(storeType: String, adapterSpecificConfig: String) {
+  def OpenDbStore(jarPaths: collection.immutable.Set[String], dataStoreInfo: String) {
     try {
       logger.debug("Opening datastore")
-      metadataStore = GetDataStoreHandle(storeType, "metadata_store", "metadata_objects", adapterSpecificConfig)
-      configStore = GetDataStoreHandle(storeType, "config_store", "config_objects", adapterSpecificConfig)
-      jarStore = GetDataStoreHandle(storeType, "metadata_jars", "jar_store", adapterSpecificConfig)
-      transStore = GetDataStoreHandle(storeType, "metadata_trans", "transaction_id", adapterSpecificConfig)
+      metadataStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "metadata_objects")
+      configStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "config_objects")
+      jarStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "jar_store")
+      transStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "transaction_id")
+      modelConfigStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "model_config_objects")
+
       modelStore = metadataStore
       messageStore = metadataStore
       containerStore = metadataStore
@@ -1804,15 +1835,19 @@ object MetadataAPIImpl extends MetadataAPI {
         "jar_store" -> jarStore,
         "config_objects" -> configStore,
         "transaction_id" -> transStore,
-        "outputmsgs" -> outputmsgStore)
+        "outputmsgs" -> outputmsgStore,
+        "model_config_objects" -> modelConfigStore,
+        "transaction_id" -> transStore)
     } catch {
       case e: CreateStoreFailedException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new CreateStoreFailedException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
-        throw new CreateStoreFailedException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new CreateStoreFailedException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -1840,13 +1875,19 @@ object MetadataAPIImpl extends MetadataAPI {
         configStore = null
         logger.debug("configStore closed")
       }
+      if (modelConfigStore != null) {
+        modelConfigStore.Shutdown()
+        modelConfigStore = null
+        logger.debug("modelConfigStore closed")
+      }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw e;
       }
     }
   }
-
 
   def TruncateDbStore: Unit = lock.synchronized {
     try {
@@ -1855,171 +1896,51 @@ object MetadataAPIImpl extends MetadataAPI {
       transStore.TruncateStore
       jarStore.TruncateStore
       configStore.TruncateStore
+      modelConfigStore.TruncateStore
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw e;
       }
     }
   }
 
+  def TruncateAuditStore: Unit = lock.synchronized {
+    try {
+      logger.debug("Truncating Audit datastore")
+      if(auditObj != null ){
+        auditObj.TruncateStore
+      }
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw e;
+      }
+    }
+  }
 
   def AddType(typeText: String, format: String): String = {
-    try {
-      logger.debug("Parsing type object given as Json String..")
-      val typ = JsonSerializer.parseType(typeText, "JSON")
-      SaveObject(typ, MdMgr.GetMdMgr)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddType", typeText, ErrorCodeConstants.Add_Type_Successful)
-      apiResult.toString()
-    } catch {
-      case e: AlreadyExistsException => {
-        logger.warn("Failed to add the type, json => " + typeText + "\nError => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddType", typeText,  "Error :" + e.toString() + ErrorCodeConstants.Add_Type_Failed)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddType", typeText, "Error :" + e.toString() + ErrorCodeConstants.Add_Type_Failed )
-        apiResult.toString()
-      }
-    }
+    TypeUtils.AddType(typeText,format)
   }
 
-  def DumpTypeDef(typeDef: ScalarTypeDef) {
-    logger.debug("NameSpace => " + typeDef.nameSpace)
-    logger.debug("Name => " + typeDef.name)
-    logger.debug("Version => " + MdMgr.Pad0s2Version(typeDef.ver))
-    logger.debug("Description => " + typeDef.description)
-    logger.debug("Implementation class name => " + typeDef.implementationNm)
-    logger.debug("Implementation jar name => " + typeDef.jarName)
-  }
 
   def AddType(typeDef: BaseTypeDef): String = {
-    val dispkey = typeDef.FullName + "." + MdMgr.Pad0s2Version(typeDef.Version)
-    try {
-      var key = typeDef.FullNameWithVer
-      var value = JsonSerializer.SerializeObjectToJson(typeDef);
-      logger.debug("key => " + key + ",value =>" + value);
-      SaveObject(typeDef, MdMgr.GetMdMgr)
-       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddType", null, ErrorCodeConstants.Add_Type_Successful + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddType" , null, "Error :" + e.toString() + ErrorCodeConstants.Add_Type_Failed+ ":" + dispkey)
-        apiResult.toString()
-      }
-    }
+    TypeUtils.AddType(typeDef)
   }
 
   def AddTypes(typesText: String, format: String, userid: Option[String]): String = {
-    try {
-      if (format != "JSON") {
-        var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddTypes", typesText, ErrorCodeConstants.Not_Implemented_Yet_Msg )
-        apiResult.toString()
-      } else {
-        var typeList = JsonSerializer.parseTypeList(typesText, "JSON")
-        if (typeList.length > 0) {
-          logger.debug("Found " + typeList.length + " type objects ")
-          typeList.foreach(typ => {
-            logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,typesText,AuditConstants.SUCCESS,"",typ.FullNameWithVer) 
-            SaveObject(typ, MdMgr.GetMdMgr)
-            logger.debug("Type object name => " + typ.FullName + "." + MdMgr.Pad0s2Version(typ.Version))
-          })
-          /** Only report the ones actually saved... if there were others, they are in the log as "fail to add" due most likely to already being defined */
-          val typesSavedAsJson : String = JsonSerializer.SerializeObjectListToJson(typeList)
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddTypes" , typesText, ErrorCodeConstants.Add_Type_Successful)
-          apiResult.toString()
-        } else {
-          var apiResult = new ApiResult(ErrorCodeConstants.Warning, "AddTypes", null, "All supplied types are already available. No types to add.")
-          apiResult.toString()
-        }
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddTypes" , typesText, "Error :" + e.toString() + ErrorCodeConstants.Add_Type_Failed)
-        apiResult.toString()
-      }
-    }
+    TypeUtils.AddTypes(typesText,format,userid)
   }
 
   // Remove type for given TypeName and Version
   def RemoveType(typeNameSpace: String, typeName: String, version: Long, userid: Option[String]): String = {
-    val key = typeNameSpace + "." + typeName + "." + version
-    val dispkey = typeNameSpace + "." + typeName + "." + MdMgr.Pad0s2Version(version)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",key)
-    try {
-      val typ = MdMgr.GetMdMgr.Type(typeNameSpace, typeName, version, true)
-      typ match {
-        case None =>
-          None
-          logger.debug("Type " + dispkey + " is not found in the cache ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveType", null, ErrorCodeConstants.Remove_Type_Not_Found + ":" + dispkey)
-          apiResult.toString()
-        case Some(ts) =>
-          DeleteObject(ts.asInstanceOf[BaseElemDef])
-         var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveType", null, ErrorCodeConstants.Remove_Type_Successful + ":" + dispkey)
-          apiResult.toString()
-      }
-    } catch {
-      case e: ObjectNolongerExistsException => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveType", null, "Error: " + e.toString() + ErrorCodeConstants.Remove_Type_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveType", null, "Error: " + e.toString() + ErrorCodeConstants.Remove_Type_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
+    TypeUtils.RemoveType(typeNameSpace,typeName,version,userid)
   }
 
   def UpdateType(typeJson: String, format: String, userid: Option[String]): String = {
-    implicit val jsonFormats: Formats = DefaultFormats
-    val typeDef = JsonSerializer.parseType(typeJson, "JSON")
-    logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,typeJson,AuditConstants.SUCCESS,"",typeDef.FullNameWithVer)
-    
-    val key = typeDef.nameSpace + "." + typeDef.name + "." + typeDef.Version
-    val dispkey = typeDef.nameSpace + "." + typeDef.name + "." + MdMgr.Pad0s2Version(typeDef.Version)
-    var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType" , null, ErrorCodeConstants.Update_Type_Internal_Error + ":" + dispkey)
-    try {
-      val fName = MdMgr.MkFullName(typeDef.nameSpace, typeDef.name)
-      val latestType = MdMgr.GetMdMgr.Types(typeDef.nameSpace, typeDef.name, true, true)
-      latestType match {
-        case None =>
-          None
-          logger.debug("No types with the name " + fName + " are found ")
-          apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, ErrorCodeConstants.Update_Type_Failed_Not_Found + ":" + dispkey)
-        case Some(ts) =>
-          val tsa = ts.toArray
-          logger.debug("Found " + tsa.length + " types ")
-          if (tsa.length > 1) {
-            apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, ErrorCodeConstants.Update_Type_Failed_More_Than_One_Found + ":" + dispkey)
-          } else {
-            val latestVersion = tsa(0)
-            if (latestVersion.ver > typeDef.ver) {
-              RemoveType(latestVersion.nameSpace, latestVersion.name, latestVersion.ver, userid)
-              AddType(typeDef)
-              apiResult = new ApiResult(ErrorCodeConstants.Success, "UpdateType", null, ErrorCodeConstants.Update_Type_Successful + ":" + key)
-            } else {
-              apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, ErrorCodeConstants.Update_Type_Failed_Higher_Version_Required + ":" + dispkey)
-            }
-          }
-      }
-      apiResult.toString()
-    } catch {
-      case e: MappingException => {
-        logger.error("Failed to parse the type, json => " + typeJson + ",Error => " + e.getMessage())
-        apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Type_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-      case e: AlreadyExistsException => {
-        logger.error("Failed to update the type, json => " + typeJson + ",Error => " + e.getMessage())
-        apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Type_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        logger.error("Failed to up the type, json => " + typeJson + ",Error => " + e.getMessage())
-        apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Type_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
+    TypeUtils.UpdateType(typeJson,format,userid)
   }
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2044,429 +1965,44 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJar", null, "Error :" + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarPath)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def DumpAttributeDef(attrDef: AttributeDef) {
-    logger.debug("NameSpace => " + attrDef.nameSpace)
-    logger.debug("Name => " + attrDef.name)
-    logger.debug("Type => " + attrDef.typeString)
-  }
-
-  def AddConcept(attributeDef: BaseAttributeDef): String = {
-    val key = attributeDef.FullNameWithVer
-    val dispkey = attributeDef.FullName + "." + MdMgr.Pad0s2Version(attributeDef.Version)
-    try {
-      SaveObject(attributeDef, MdMgr.GetMdMgr)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddConcept", null, ErrorCodeConstants.Add_Concept_Successful + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Concept_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def RemoveConcept(concept: AttributeDef): String = {
-    var key = concept.nameSpace + ":" + concept.name
-    val dispkey = key // Not looking version at this moment
-    try {
-      DeleteObject(concept)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConcept", null, ErrorCodeConstants.Remove_Concept_Successful + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Concept_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def RemoveConcept(key: String, userid: Option[String]): String = {
-    try {
-      if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",key)
-      val c = MdMgr.GetMdMgr.Attributes(key, false, false)
-      c match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConcept", null, ErrorCodeConstants.Remove_Concept_Failed_Not_Available + ":" + key)
-          apiResult.toString()
-        case Some(cs) =>
-          val conceptArray = cs.toArray
-          conceptArray.foreach(concept => { DeleteObject(concept) })
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConcept", null, ErrorCodeConstants.Remove_Concept_Successful + ":" + key)//JsonSerializer.SerializeObjectListToJson(conceptArray))
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Concept_Failed + ":" + key)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def RemoveConcept(nameSpace:String, name:String, version:Long, userid: Option[String]): String = {
-    val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",dispkey)
-    try {
-      val c = MdMgr.GetMdMgr.Attribute(nameSpace,name,version, true)
-      c match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConcept", null, ErrorCodeConstants.Remove_Concept_Failed_Not_Available + ":" + dispkey)
-          apiResult.toString()
-        case Some(cs) =>
-          val concept = cs.asInstanceOf[AttributeDef]
-          DeleteObject(concept)
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConcept", null, ErrorCodeConstants.Remove_Concept_Successful + ":" + dispkey)//JsonSerializer.SerializeObjectListToJson(concept))
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Concept_Failed+ ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def AddFunction(functionDef: FunctionDef): String = {
-    val key = functionDef.FullNameWithVer
-    val dispkey = functionDef.FullName + "." + MdMgr.Pad0s2Version(functionDef.Version)
-    try {
-      val value = JsonSerializer.SerializeObjectToJson(functionDef)
-
-      logger.debug("key => " + key + ",value =>" + value);
-      SaveObject(functionDef, MdMgr.GetMdMgr)
-      logger.debug("Added function " + key + " successfully ")
-      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddFunction" , null, ErrorCodeConstants.Add_Function_Successful + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunction" , null, ErrorCodeConstants.Add_Function_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def RemoveFunction(functionDef: FunctionDef): String = {
-    var key = functionDef.typeString
-    val dispkey = functionDef.FullName + "." + MdMgr.Pad0s2Version(functionDef.Version)
-    try {
-      DeleteObject(functionDef)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def RemoveFunction(nameSpace: String, functionName: String, version: Long, userid: Option[String]): String = {
-    var key = functionName + ":" + version
-    val dispkey = functionName + "." + MdMgr.Pad0s2Version(version)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameSpace+"."+key)
-    try {
-      DeleteObject(key, functionStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def DumpFunctionDef(funcDef: FunctionDef) {
-    logger.debug("Name => " + funcDef.Name)
-    for (arg <- funcDef.args) {
-      logger.debug("arg_name => " + arg.name)
-      logger.debug("arg_type => " + arg.Type.tType)
-    }
-    logger.debug("Json string => " + JsonSerializer.SerializeObjectToJson(funcDef))
-  }
-
-  def UpdateFunction(functionDef: FunctionDef): String = {
-    val key = functionDef.typeString
-    val dispkey = key // This does not have version at this moment
-    try {
-      if (IsFunctionAlreadyExists(functionDef)) {
-        functionDef.ver = functionDef.ver + 1
-      }
-      AddFunction(functionDef)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "UpdateFunction", null, ErrorCodeConstants.Update_Function_Successful + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: AlreadyExistsException => {
-        logger.error("Failed to update the function, key => " + key + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        logger.error("Failed to up the type, json => " + key + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
-  private def CheckForMissingJar(obj: BaseElemDef): Array[String] = {
-    val missingJars = scala.collection.mutable.Set[String]()
-
-    var allJars = GetDependantJars(obj)
-    if (allJars.length > 0) {
-      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-      jarPaths.foreach(jardir => {
-        val dir = new File(jardir)
-        if (!dir.exists()) {
-          // attempt to create the missing directory
-          dir.mkdir();
-        }
-      })
-
-      val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
-      val dir = new File(dirPath)
-      if (!dir.exists()) {
-        // attempt to create the missing directory
-        dir.mkdir();
-      }
-
-      allJars.foreach(jar => {
-        val jarName = JarPathsUtils.GetValidJarFile(jarPaths, jar)
-        val f = new File(jarName)
-        if (f.exists()) {
-          // Nothing to do
-        } else {
-          try {
-            val mObj = GetObject(jar, jarStore)
-            // Nothing to do after getting the object.
-          } catch {
-            case e: Exception => {
-              missingJars += jar
-            }
-          }
-        }
-      })
-    }
-
-    missingJars.toArray
-  }
-
-  def AddFunctions(functionsText: String, format: String, userid: Option[String]): String = {
-    logger.debug("Started AddFunctions => ")
-    var aggFailures: String = ""
-    try {
-      if (format != "JSON") {
-        var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddFunctions", functionsText, ErrorCodeConstants.Not_Implemented_Yet_Msg)
-        apiResult.toString()
-      } else {
-        var funcList = JsonSerializer.parseFunctionList(functionsText, "JSON")
-        // Check for the Jars
-        val missingJars = scala.collection.mutable.Set[String]()
-        funcList.foreach(func => {
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionsText,AuditConstants.SUCCESS,"",func.FullNameWithVer)  
-          SaveObject(func, MdMgr.GetMdMgr)
-          missingJars ++= CheckForMissingJar(func)
-        })
-        if (missingJars.size > 0) {
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunctions", null, "Error : Not found required jars " + missingJars.mkString(",") + "\n" + ErrorCodeConstants.Add_Function_Failed + ":" + functionsText)
-          return apiResult.toString()
-        }
-        val alreadyCheckedJars = scala.collection.mutable.Set[String]()        
-        funcList.foreach(func => {
-          UploadJarsToDB(func, false, alreadyCheckedJars)
-          if (!SaveObject(func, MdMgr.GetMdMgr)) {
-            if (!aggFailures.equalsIgnoreCase("")) aggFailures = aggFailures + ","  
-            aggFailures = aggFailures + func.FullNameWithVer
-          }
-        })
-/*
-        val objectsAdded = funcList.map(f => f.asInstanceOf[BaseElemDef])
-        val operations = funcList.map(f => "Add")
-        NotifyEngine(objectsAdded, operations)
-*/
-        if (funcList.size > 0)
-          PutTranId(funcList(0).tranId)
-        if (!aggFailures.equalsIgnoreCase("")) {
-          (new ApiResult(ErrorCodeConstants.Warning, "AddFunctions", aggFailures, ErrorCodeConstants.Add_Function_Warning)).toString()
-        }
-        else { 
-          (new ApiResult(ErrorCodeConstants.Success, "AddFunctions", functionsText, ErrorCodeConstants.Add_Function_Successful)).toString()
-        }
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunctions", functionsText, "Error :" + e.toString() + ErrorCodeConstants.Add_Function_Failed)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def UpdateFunctions(functionsText: String, format: String, userid: Option[String]): String = {
-    logger.debug("Started UpdateFunctions => ")
-    try {
-      if (format != "JSON") {
-        var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "UpdateFunctions", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + functionsText + ".Format not JSON.")
-        apiResult.toString()
-      } else {
-        var funcList = JsonSerializer.parseFunctionList(functionsText, "JSON")
-        // Check for the Jars
-        val missingJars = scala.collection.mutable.Set[String]()
-        funcList.foreach(func => {
-          missingJars ++= CheckForMissingJar(func)
-        })
-        if (missingJars.size > 0) {
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error : Not found required jars " + missingJars.mkString(",") + "\n" + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
-          return apiResult.toString()
-        }
-        val alreadyCheckedJars = scala.collection.mutable.Set[String]()        
-        funcList.foreach(func => {
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,functionsText,AuditConstants.SUCCESS,"",func.FullNameWithVer)
-          UploadJarsToDB(func, false, alreadyCheckedJars)
-          UpdateFunction(func)
-        })
-/*
-        val objectsAdded = funcList.map(f => f.asInstanceOf[BaseElemDef])
-        val operations = funcList.map(f => "Add")
-        NotifyEngine(objectsAdded, operations)
-*/
-        if (funcList.size > 0)
-          PutTranId(funcList(0).tranId)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "UpdateFunctions", null, ErrorCodeConstants.Update_Function_Successful + ":" + functionsText)
-        apiResult.toString()
-      }
-    } catch {
-      case e: MappingException => {
-        logger.error("Failed to parse the function, json => " + functionsText + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
-        apiResult.toString()
-      }
-      case e: AlreadyExistsException => {
-        logger.error("Failed to add the function, json => " + functionsText + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        logger.error("Failed to up the function, json => " + functionsText + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJar", null, "Error :" + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarPath + "\nStackTrace:" + stackTrace)
         apiResult.toString()
       }
     }
   }
 
   def AddDerivedConcept(conceptsText: String, format: String): String = {
-    try {
-      if (format != "JSON") {
-        var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddDerivedConcept", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + conceptsText + ".Format not JSON.")
-        apiResult.toString()
-      } else {
-        var concept = JsonSerializer.parseDerivedConcept(conceptsText, format)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddDerivedConcept", null, ErrorCodeConstants.Add_Concept_Successful + ":" + conceptsText)
-        apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants. Failure, "AddDerivedConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Concept_Failed + ":" + conceptsText)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.AddDerivedConcept(conceptsText,format)
   }
 
-  def AddConcepts(conceptsText: String, format: String,  userid:Option[String]): String = {
-    try {
-      if (format != "JSON") {
-        var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddConcepts", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + conceptsText + ".Format not JSON.")
-        apiResult.toString()
-      } else {
-        var conceptList = JsonSerializer.parseConceptList(conceptsText, format)
-        conceptList.foreach(concept => {
-          //logger.debug("Save concept object " + JsonSerializer.SerializeObjectToJson(concept))
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,conceptsText,AuditConstants.SUCCESS,"",concept.FullNameWithVer)
-          SaveObject(concept, MdMgr.GetMdMgr)
-        })
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddConcepts", null, ErrorCodeConstants.Add_Concept_Successful + ":" + conceptsText)
-        apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddConcepts", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Concept_Failed + ":" + conceptsText)
-        apiResult.toString()
-      }
-    }
-  }
-
-  def UpdateConcept(concept: BaseAttributeDef): String = {
-    val key = concept.FullNameWithVer
-    val dispkey = concept.FullName + "." + MdMgr.Pad0s2Version(concept.Version)
-    try {
-      if (IsConceptAlreadyExists(concept)) {
-        concept.ver = concept.ver + 1
-      }
-      AddConcept(concept)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "UpdateConcept", null, ErrorCodeConstants.Update_Concept_Successful + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: AlreadyExistsException => {
-        logger.error("Failed to update the concept, key => " + key + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Concept_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        logger.error("Failed to update the concept, key => " + key + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Concept_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
+  def AddConcepts(conceptsText: String, format: String, userid: Option[String]): String = {
+    ConceptUtils.AddConcepts(conceptsText,format,userid)
   }
 
   def UpdateConcepts(conceptsText: String, format: String, userid: Option[String]): String = {
-    try {
-      if (format != "JSON") {
-        var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "UpdateConcepts", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + conceptsText + ".Format not JSON.")
-        apiResult.toString()
-      } else {
-        var conceptList = JsonSerializer.parseConceptList(conceptsText, "JSON")
-        conceptList.foreach(concept => {
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,conceptsText,AuditConstants.SUCCESS,"",concept.FullNameWithVer)  
-          UpdateConcept(concept)
-        })
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "UpdateConcepts", null, ErrorCodeConstants.Update_Concept_Successful + ":" + conceptsText)
-        apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateConcepts", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Concept_Failed + ":" + conceptsText)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.UpdateConcepts(conceptsText,format,userid)
+  }
+
+  def RemoveConcept(key: String, userid: Option[String]): String = {
+    ConceptUtils.RemoveConcept(key,userid)
+  }
+
+  def RemoveConcept(concept: AttributeDef): String = {
+    ConceptUtils.RemoveConcept(concept)
+  }
+
+  def RemoveConcept(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
+    ConceptUtils.RemoveConcept(nameSpace,name,version,userid)
   }
 
   // RemoveConcepts take all concepts names to be removed as an Array
   def RemoveConcepts(concepts: Array[String], userid: Option[String]): String = {
-    val json = ("ConceptList" -> concepts.toList)
-    val jsonStr = pretty(render(json))
-  //  logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",concepts.mkString(",")) 
-    try {
-      concepts.foreach(c => { RemoveConcept(c,None) })
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConcepts", null, ErrorCodeConstants.Remove_Concept_Successful + ":" + jsonStr)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConcepts", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Concept_Failed + ":" + jsonStr)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.RemoveConcepts(concepts,userid)
   }
 
-  def AddContainerDef(contDef: ContainerDef, recompile:Boolean = false): String = {
+  def AddContainerDef(contDef: ContainerDef, recompile: Boolean = false): String = {
     var key = contDef.FullNameWithVer
     val dispkey = contDef.FullName + "." + MdMgr.Pad0s2Version(contDef.Version)
     try {
@@ -2481,13 +2017,15 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerDef", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Container_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
   }
 
-  def AddMessageDef(msgDef: MessageDef, recompile:Boolean = false): String = {
+  def AddMessageDef(msgDef: MessageDef, recompile: Boolean = false): String = {
     val dispkey = msgDef.FullName + "." + MdMgr.Pad0s2Version(msgDef.Version)
     try {
       AddObjectToCache(msgDef, MdMgr.GetMdMgr)
@@ -2497,10 +2035,12 @@ object MetadataAPIImpl extends MetadataAPI {
       SaveObjectList(objectsAdded, metadataStore)
       val operations = for (op <- objectsAdded) yield "Add"
       NotifyEngine(objectsAdded, operations)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddMessageDef", null,ErrorCodeConstants.Add_Message_Successful + ":" + dispkey)
+      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddMessageDef", null, ErrorCodeConstants.Add_Message_Successful + ":" + dispkey)
       apiResult.toString()
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddMessageDef", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Message_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -2509,13 +2049,14 @@ object MetadataAPIImpl extends MetadataAPI {
 
   // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
   // along with the messageDef.  
-  def AddMessageTypes(msgDef: BaseElemDef, mdMgr: MdMgr, recompile:Boolean = false): Array[BaseElemDef] = {
+  def AddMessageTypes(msgDef: BaseElemDef, mdMgr: MdMgr, recompile: Boolean = false): Array[BaseElemDef] = {
     logger.debug("The class name => " + msgDef.getClass().getName())
     try {
       var types = new Array[BaseElemDef](0)
       val msgType = getObjectType(msgDef)
       val depJars = if (msgDef.DependencyJarNames != null)
-        (msgDef.DependencyJarNames :+ msgDef.JarName) else Array(msgDef.JarName)
+        (msgDef.DependencyJarNames :+ msgDef.JarName)
+      else Array(msgDef.JarName)
       msgType match {
         case "MessageDef" | "ContainerDef" => {
           // ArrayOf<TypeName>
@@ -2534,12 +2075,12 @@ object MetadataAPIImpl extends MetadataAPI {
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ImmutableMapOfIntArrayOf<TypeName>
-          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof" + msgDef.name, ("System", "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof" + msgDef.name, (sysNS, "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ImmutableMapOfString<TypeName>
-          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofstringarrayof" + msgDef.name, ("System", "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofstringarrayof" + msgDef.name, (sysNS, "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
@@ -2549,12 +2090,12 @@ object MetadataAPIImpl extends MetadataAPI {
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // MapOfStringArrayOf<TypeName>
-          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofstringarrayof" + msgDef.name, ("System", "String"), ("System", "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofstringarrayof" + msgDef.name, (sysNS, "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // MapOfIntArrayOf<TypeName>
-          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofintarrayof" + msgDef.name, ("System", "Int"), ("System", "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofintarrayof" + msgDef.name, (sysNS, "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
@@ -2576,21 +2117,23 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        throw new Exception(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("\nStackTrace:" + stackTrace)
+        throw e
       }
     }
   }
 
-  private def AddContainerOrMessage(contOrMsgText: String, format: String, userid: Option[String], recompile:Boolean = false): String = {
-    var resultStr:String = ""
+  private def AddContainerOrMessage(contOrMsgText: String, format: String, userid: Option[String], recompile: Boolean = false): String = {
+    var resultStr: String = ""
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
-      val (classStr, cntOrMsgDef) = compProxy.compileMessageDef(contOrMsgText,recompile)
+      //compProxy.setLoggerLevel(Level.TRACE)
+      val (classStrVer, cntOrMsgDef, classStrNoVer) = compProxy.compileMessageDef(contOrMsgText, recompile)
       logger.debug("Message/Container Compiler returned an object of type " + cntOrMsgDef.getClass().getName())
       cntOrMsgDef match {
         case msg: MessageDef => {
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,contOrMsgText,AuditConstants.SUCCESS,"",msg.FullNameWithVer)
+          logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, contOrMsgText, AuditConstants.SUCCESS, "", msg.FullNameWithVer)
           // Make sure we are allowed to add this version.
           val latestVersion = GetLatestMessage(msg)
           var isValid = true
@@ -2602,20 +2145,19 @@ object MetadataAPIImpl extends MetadataAPI {
             apiResult.toString()
           }
 
-          if( recompile ) {
+          if (recompile) {
             // Incase of recompile, Message Compiler is automatically incrementing the previous version
             // by 1. Before Updating the metadata with the new version, remove the old version
             val latestVersion = GetLatestMessage(msg)
             RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
             resultStr = AddMessageDef(msg, recompile)
-          }
-          else{
+          } else {
             resultStr = AddMessageDef(msg, recompile)
           }
-          
-          if( recompile ) {
-            val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.ver)
-            if( depModels.length > 0 ){
+
+          if (recompile) {
+            val depModels = GetDependentModels(msg.NameSpace, msg.Name, msg.ver)
+            if (depModels.length > 0) {
               depModels.foreach(mod => {
                 logger.debug("DependentModel => " + mod.FullNameWithVer)
                 resultStr = resultStr + RecompileModel(mod)
@@ -2625,9 +2167,9 @@ object MetadataAPIImpl extends MetadataAPI {
           resultStr
         }
         case cont: ContainerDef => {
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,contOrMsgText,AuditConstants.SUCCESS,"",cont.FullNameWithVer)
+          logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, contOrMsgText, AuditConstants.SUCCESS, "", cont.FullNameWithVer)
           // Make sure we are allowed to add this version.
-          val latestVersion = GetLatestContainer(cont) 
+          val latestVersion = GetLatestContainer(cont)
           var isValid = true
           if (latestVersion != None) {
             isValid = IsValidVersion(latestVersion.get, cont)
@@ -2635,22 +2177,21 @@ object MetadataAPIImpl extends MetadataAPI {
           if (!isValid) {
             var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + cont.Name + " Error:Invalid Version")
             apiResult.toString()
-          }   
+          }
 
-          if( recompile ){
+          if (recompile) {
             // Incase of recompile, Message Compiler is automatically incrementing the previous version
             // by 1. Before Updating the metadata with the new version, remove the old version
-                  val latestVersion = GetLatestContainer(cont)
-                  RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
-                  resultStr = AddContainerDef(cont, recompile)
+            val latestVersion = GetLatestContainer(cont)
+            RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+            resultStr = AddContainerDef(cont, recompile)
+          } else {
+            resultStr = AddContainerDef(cont, recompile)
           }
-          else{
-                  resultStr = AddContainerDef(cont, recompile)
-          }
-      
-          if( recompile ){
-            val depModels = GetDependentModels(cont.NameSpace,cont.Name,cont.ver)
-            if( depModels.length > 0 ){
+
+          if (recompile) {
+            val depModels = GetDependentModels(cont.NameSpace, cont.Name, cont.ver)
+            if (depModels.length > 0) {
               depModels.foreach(mod => {
                 logger.debug("DependentModel => " + mod.FullNameWithVer)
                 resultStr = resultStr + RecompileModel(mod)
@@ -2662,26 +2203,32 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: ModelCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
         apiResult.toString()
       }
       case e: MsgCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
         apiResult.toString()
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
         apiResult.toString()
       }
     }
   }
 
-  def AddMessage(messageText: String, format: String, userid:Option[String]): String = {
+  def AddMessage(messageText: String, format: String, userid: Option[String]): String = {
     AddContainerOrMessage(messageText, format, userid)
   }
 
-  def AddMessage(messageText: String, userid:Option[String]): String = {
-    AddMessage(messageText,"JSON",userid)
+  def AddMessage(messageText: String, userid: Option[String]): String = {
+    AddMessage(messageText, "JSON", userid)
   }
 
   def AddContainer(containerText: String, format: String, userid: Option[String]): String = {
@@ -2689,37 +2236,39 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddContainer(containerText: String, userid: Option[String]): String = {
-    AddContainer(containerText,"JSON", userid)
+    AddContainer(containerText, "JSON", userid)
   }
 
   def RecompileMessage(msgFullName: String): String = {
-    var resultStr:String = ""
+    var resultStr: String = ""
     try {
-      var messageText:String = null
+      var messageText: String = null
 
-      val latestMsgDef = MdMgr.GetMdMgr.Message(msgFullName,-1,true)
-      if( latestMsgDef == None){
-  val latestContDef = MdMgr.GetMdMgr.Container(msgFullName,-1,true)
-  if( latestContDef == None ){
+      val latestMsgDef = MdMgr.GetMdMgr.Message(msgFullName, -1, true)
+      if (latestMsgDef == None) {
+        val latestContDef = MdMgr.GetMdMgr.Container(msgFullName, -1, true)
+        if (latestContDef == None) {
           var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName + " Error:No message or container named ")
           return apiResult.toString()
-  }
-  else{
-    messageText = latestContDef.get.objectDefinition
-  }
+        } else {
+          messageText = latestContDef.get.objectDefinition
+        }
+      } else {
+        messageText = latestMsgDef.get.objectDefinition
       }
-      else{
-  messageText = latestMsgDef.get.objectDefinition
-      }
-      resultStr = AddContainerOrMessage(messageText,"JSON", None,true)
+      resultStr = AddContainerOrMessage(messageText, "JSON", None, true)
       resultStr
 
     } catch {
       case e: MsgCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName)
         apiResult.toString()
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName)
         apiResult.toString()
       }
@@ -2727,15 +2276,15 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateMessage(messageText: String, format: String, userid: Option[String]): String = {
-    var resultStr:String = ""
+    var resultStr: String = ""
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
-      val (classStr, msgDef) = compProxy.compileMessageDef(messageText)
+      //compProxy.setLoggerLevel(Level.TRACE)
+      val (classStrVer, msgDef, classStrNoVer) = compProxy.compileMessageDef(messageText)
       val key = msgDef.FullNameWithVer
       msgDef match {
         case msg: MessageDef => {
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,messageText,AuditConstants.SUCCESS,"",msg.FullNameWithVer)
+          logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, messageText, AuditConstants.SUCCESS, "", msg.FullNameWithVer)
           val latestVersion = GetLatestMessage(msg)
           var isValid = true
           if (latestVersion != None) {
@@ -2747,14 +2296,14 @@ object MetadataAPIImpl extends MetadataAPI {
 
             logger.debug("Check for dependent messages ...")
             val depMessages = GetDependentMessages.getDependentObjects(msg)
-            if( depMessages.length > 0 ){
+            if (depMessages.length > 0) {
               depMessages.foreach(msg => {
                 logger.debug("DependentMessage => " + msg)
                 resultStr = resultStr + RecompileMessage(msg)
               })
-            }  
-            val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
-            if( depModels.length > 0 ){
+            }
+            val depModels = GetDependentModels(msg.NameSpace, msg.Name, msg.Version.toLong)
+            if (depModels.length > 0) {
               depModels.foreach(mod => {
                 logger.debug("DependentModel => " + mod.FullNameWithVer)
                 resultStr = resultStr + RecompileModel(mod)
@@ -2762,12 +2311,12 @@ object MetadataAPIImpl extends MetadataAPI {
             }
             resultStr
           } else {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, ErrorCodeConstants.Update_Message_Failed +" Error:Invalid Version")
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, ErrorCodeConstants.Update_Message_Failed + " Error:Invalid Version")
             apiResult.toString()
           }
         }
         case msg: ContainerDef => {
-          logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,messageText,AuditConstants.SUCCESS,"",msg.FullNameWithVer)
+          logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, messageText, AuditConstants.SUCCESS, "", msg.FullNameWithVer)
           val latestVersion = GetLatestContainer(msg)
           var isValid = true
           if (latestVersion != None) {
@@ -2777,22 +2326,21 @@ object MetadataAPIImpl extends MetadataAPI {
             RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
             resultStr = AddContainerDef(msg)
 
-
-      val depMessages = GetDependentMessages.getDependentObjects(msg)
-      if( depMessages.length > 0 ){
-        depMessages.foreach(msg => {
-    logger.debug("DependentMessage => " + msg)
-    resultStr = resultStr + RecompileMessage(msg)
-        })
-      }
-      val depModels = MetadataAPIImpl.GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
-      if( depModels.length > 0 ){
-        depModels.foreach(mod => {
-    logger.debug("DependentModel => " + mod.FullName + "." + MdMgr.Pad0s2Version(mod.Version))
-    resultStr = resultStr + RecompileModel(mod)
-        })
-      }
-      resultStr
+            val depMessages = GetDependentMessages.getDependentObjects(msg)
+            if (depMessages.length > 0) {
+              depMessages.foreach(msg => {
+                logger.debug("DependentMessage => " + msg)
+                resultStr = resultStr + RecompileMessage(msg)
+              })
+            }
+            val depModels = MetadataAPIImpl.GetDependentModels(msg.NameSpace, msg.Name, msg.Version.toLong)
+            if (depModels.length > 0) {
+              depModels.foreach(mod => {
+                logger.debug("DependentModel => " + mod.FullName + "." + MdMgr.Pad0s2Version(mod.Version))
+                resultStr = resultStr + RecompileModel(mod)
+              })
+            }
+            resultStr
           } else {
             var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, ErrorCodeConstants.Update_Message_Failed + " Error:Invalid Version")
             apiResult.toString()
@@ -2801,37 +2349,42 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: MsgCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
         apiResult.toString()
       }
       case e: ObjectNotFoundException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
         apiResult.toString()
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
         apiResult.toString()
       }
     }
   }
 
-
   def UpdateContainer(messageText: String, format: String, userid: Option[String]): String = {
-    UpdateMessage(messageText,format,userid)
+    UpdateMessage(messageText, format, userid)
   }
 
   def UpdateContainer(messageText: String, userid: Option[String]): String = {
-    UpdateMessage(messageText,"JSON",userid)
+    UpdateMessage(messageText, "JSON", userid)
   }
 
   def UpdateMessage(messageText: String, userid: Option[String]): String = {
-    UpdateMessage(messageText,"JSON",userid)
+    UpdateMessage(messageText, "JSON", userid)
   }
-  
+
   /**
    * UpdateCompiledContainer - called from a few places to update a compiled ContainerDef
    */
-  private def UpdateCompiledContainer( msg:ContainerDef, latestVersion:Option[ContainerDef], key:String): String = {
+  private def UpdateCompiledContainer(msg: ContainerDef, latestVersion: Option[ContainerDef], key: String): String = {
     var isValid = true
     if (latestVersion != None) {
       isValid = IsValidVersion(latestVersion.get, msg)
@@ -2840,15 +2393,15 @@ object MetadataAPIImpl extends MetadataAPI {
       RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
       AddContainerDef(msg)
     } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledContainer", null, "Error : Failed to update compiled Container" )
-        apiResult.toString()
-    }   
+      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledContainer", null, "Error : Failed to update compiled Container")
+      apiResult.toString()
+    }
   }
-  
-    /**
+
+  /**
    * UpdateCompiledContainer - called from a few places to update a compiled ContainerDef
    */
-  private def UpdateCompiledMessage( msg: MessageDef, latestVersion: Option[MessageDef], key:String): String = {
+  private def UpdateCompiledMessage(msg: MessageDef, latestVersion: Option[MessageDef], key: String): String = {
     var isValid = true
     if (latestVersion != None) {
       isValid = IsValidVersion(latestVersion.get, msg)
@@ -2857,18 +2410,17 @@ object MetadataAPIImpl extends MetadataAPI {
       RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
       AddMessageDef(msg)
     } else {
-       var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledMessage", null, "Error : Failed to update compiled Message" )
-       apiResult.toString()
-    }  
+      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledMessage", null, "Error : Failed to update compiled Message")
+      apiResult.toString()
+    }
   }
-  
 
   // Remove container with Container Name and Version Number
-  def RemoveContainer(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
+  def RemoveContainer(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify: Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     var newTranId = GetNewTranId
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,"Container",AuditConstants.SUCCESS,"",key)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.DELETEOBJECT, "Container", AuditConstants.SUCCESS, "", key)
     try {
       val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -2883,7 +2435,7 @@ object MetadataAPIImpl extends MetadataAPI {
           var objectsToBeRemoved = GetAdditionalTypesAdded(contDef, MdMgr.GetMdMgr)
           // Also remove a type with same name as messageDef
           var typeName = name
-          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON",None)
+          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON", None)
           if (typeDef != None) {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
@@ -2894,7 +2446,7 @@ object MetadataAPIImpl extends MetadataAPI {
           // ContainerDef itself
           contDef.tranId = newTranId
           DeleteObject(contDef)
-          var allObjectsArray =  objectsToBeRemoved :+ contDef
+          var allObjectsArray = objectsToBeRemoved :+ contDef
 
           val operations = for (op <- allObjectsArray) yield "Remove"
           NotifyEngine(allObjectsArray, operations)
@@ -2904,6 +2456,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveContainer", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Container_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -2911,12 +2465,11 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Remove message with Message Name and Version Number
-  def RemoveMessage(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
+  def RemoveMessage(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify: Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
-
     var newTranId = GetNewTranId
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",key)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.DELETEOBJECT, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", key)
     try {
       val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -2932,17 +2485,17 @@ object MetadataAPIImpl extends MetadataAPI {
 
           // Also remove a type with same name as messageDef
           var typeName = name
-          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON",None)
-          
+          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON", None)
+
           if (typeDef != None) {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
-          
-          objectsToBeRemoved.foreach(typ => {   
-            typ.tranId = newTranId         
+
+          objectsToBeRemoved.foreach(typ => {
+            typ.tranId = newTranId
             RemoveType(typ.nameSpace, typ.name, typ.ver, None)
           })
-          
+
           // MessageDef itself - add it to the list of other objects to be passed to the zookeeper
           // to notify other instnances
           msgDef.tranId = newTranId
@@ -2957,6 +2510,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Message_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -2972,61 +2527,61 @@ object MetadataAPIImpl extends MetadataAPI {
         case "MessageDef" | "ContainerDef" => {
           // ArrayOf<TypeName>
           var typeName = "arrayof" + msgDef.name
-          var typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          var typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ArrayBufferOf<TypeName>
           typeName = "arraybufferof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // SortedSetOf<TypeName>
           typeName = "sortedsetof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ImmutableMapOfIntArrayOf<TypeName>
           typeName = "immutablemapofintarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ImmutableMapOfString<TypeName>
           typeName = "immutablemapofstringarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ArrayOfArrayOf<TypeName>
           typeName = "arrayofarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // MapOfStringArrayOf<TypeName>
           typeName = "mapofstringarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // MapOfIntArrayOf<TypeName>
           typeName = "mapofintarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // SetOf<TypeName>
           typeName = "setof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // TreeSetOf<TypeName>
           typeName = "treesetof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON", None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
@@ -3039,7 +2594,9 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        throw new Exception(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new Exception(e.getMessage() + "\nStacktrace:" + stackTrace)
       }
     }
   }
@@ -3071,7 +2628,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        logger.error("Failed to delete the Message from cache:" + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Failed to delete the Message from cache:" + e.toString + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -3100,7 +2658,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        logger.error("Failed to delete the Message from cache:" + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Failed to delete the Message from cache:" + e.toString + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -3110,25 +2669,24 @@ object MetadataAPIImpl extends MetadataAPI {
     RemoveMessage(sysNS, messageName, version, userid)
   }
 
-
   // Remove container with Container Name and Version Number
   def RemoveContainer(containerName: String, version: Long, userid: Option[String]): String = {
     RemoveContainer(sysNS, containerName, version, userid)
   }
 
   /**
-   * 
+   *
    */
   def DeactivateModel(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
-    logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS,"",dispkey)
-    if (DeactivateLocalModel(nameSpace,name,version)) {
-       (new ApiResult(ErrorCodeConstants.Success, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Successful + ":" + dispkey)).toString
+    logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.DEACTIVATEOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS, "", dispkey)
+    if (DeactivateLocalModel(nameSpace, name, version)) {
+      (new ApiResult(ErrorCodeConstants.Success, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Successful + ":" + dispkey)).toString
     } else {
-       (new ApiResult(ErrorCodeConstants.Failure, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Failed_Not_Active + ":" + dispkey)).toString
+      (new ApiResult(ErrorCodeConstants.Failure, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Failed_Not_Active + ":" + dispkey)).toString
     }
   }
-  
+
   // Remove model with Model Name and Version Number
   private def DeactivateLocalModel(nameSpace: String, name: String, version: Long): Boolean = {
     var key = nameSpace + "." + name + "." + version
@@ -3144,7 +2702,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
           DeactivateObject(m.asInstanceOf[ModelDef])
-          
+
           // TODO: Need to deactivate the appropriate message?
           m.tranId = newTranId
           var objectsUpdated = new Array[BaseElemDef](0)
@@ -3155,52 +2713,53 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        logger.error(e.getStackTrace)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         false
       }
     }
   }
 
   /**
-   * 
+   *
    */
   def ActivateModel(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     var currActiveModel: ModelDef = null
     val newTranId = GetNewTranId
-    
+
     // Audit this call
-    logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"", nameSpace+"."+name+"."+version)
+    logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.ACTIVATEOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS, "", nameSpace + "." + name + "." + version)
 
     try {
       // We may need to deactivate an model if something else is active.  Find the active model
       val oCur = MdMgr.GetMdMgr.Models(nameSpace, name, true, false)
       oCur match {
-        case None => 
+        case None =>
         case Some(m) =>
           var setOfModels = m.asInstanceOf[scala.collection.immutable.Set[ModelDef]]
           if (setOfModels.size > 1) {
-            logger.error("Internal Metadata error, there are more then 1 versions of model "+nameSpace+"."+name+" active on this system.")
+            logger.error("Internal Metadata error, there are more then 1 versions of model " + nameSpace + "." + name + " active on this system.")
           }
-          
+
           // If some model is active, deactivate it.
           if (setOfModels.size != 0) {
-            currActiveModel = setOfModels.last 
+            currActiveModel = setOfModels.last
             if (currActiveModel.NameSpace.equalsIgnoreCase(nameSpace) &&
-                currActiveModel.name.equalsIgnoreCase(name) &&
-                currActiveModel.Version == version) {
-              return (new ApiResult(ErrorCodeConstants.Success, "ActivateModel", null, dispkey+" already active")).toString  
-              
+              currActiveModel.name.equalsIgnoreCase(name) &&
+              currActiveModel.Version == version) {
+              return (new ApiResult(ErrorCodeConstants.Success, "ActivateModel", null, dispkey + " already active")).toString
+
             }
             var isSuccess = DeactivateLocalModel(currActiveModel.nameSpace, currActiveModel.name, currActiveModel.Version)
             if (!isSuccess) {
-              logger.error("Error while trying to activate "+dispkey+", unable to deactivate active model. model ")
-              var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey +" -Unable to deactivate existing model")
-              apiResult.toString()      
+              logger.error("Error while trying to activate " + dispkey + ", unable to deactivate active model. model ")
+              var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey + " -Unable to deactivate existing model")
+              apiResult.toString()
             }
-          } 
-        
+          }
+
       }
 
       // Ok, at this point, we have deactivate  a previously active model.. now we activate this one.
@@ -3214,7 +2773,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
           ActivateObject(m.asInstanceOf[ModelDef])
-          
+
           // Issue a Notification to all registered listeners that an Acivation took place.
           // TODO: Need to activate the appropriate message?
           var objectsUpdated = new Array[BaseElemDef](0)
@@ -3228,8 +2787,10 @@ object MetadataAPIImpl extends MetadataAPI {
           apiResult.toString()
       }
     } catch {
-      
+
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -3239,7 +2800,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // Remove model with Model Name and Version Number
   def RemoveModel(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
     var key = nameSpace + "." + name + "." + version
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,"Model",AuditConstants.SUCCESS,"",key)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.DELETEOBJECT, "Model", AuditConstants.SUCCESS, "", key)
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     var newTranId = GetNewTranId
     try {
@@ -3263,6 +2824,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveModel", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Model_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -3284,7 +2847,43 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: Exception => {
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddModel", null, ErrorCodeConstants.Add_Model_Successful + ":" + dispkey)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddModel", null, ErrorCodeConstants.Add_Model_Successful + ":" + dispkey)
+        apiResult.toString()
+      }
+    }
+  }
+
+  def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
+    try {
+      var compProxy = new CompilerProxy
+      compProxy.setSessionUserId(userid)
+      val modDef: ModelDef = compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
+      logger.info("Begin uploading dependent Jars, please wait.")
+      UploadJarsToDB(modDef)
+      logger.info("Finished uploading dependent Jars.")
+      val apiResult = AddModel(modDef)
+
+      // Add all the objects and NOTIFY the world
+      var objectsAdded = new Array[BaseElemDef](0)
+      objectsAdded = objectsAdded :+ modDef
+      val operations = for (op <- objectsAdded) yield "Add"
+      logger.debug("Notify engine via zookeeper")
+      NotifyEngine(objectsAdded, operations)
+      apiResult
+    } catch {
+      case e: AlreadyExistsException => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required)
+        apiResult.toString()
+      }
+      case e: MsgCompilationFailedException => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Model_Compilation_Failed)
+        apiResult.toString()
+      }
+      case e: Exception => {
+        logger.error("Unknown compilation error occured: " + Throwables.getStackTraceAsString(e))
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
     }
@@ -3294,16 +2893,16 @@ object MetadataAPIImpl extends MetadataAPI {
   def AddModel(pmmlText: String, userid: Option[String]): String = {
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
+      //compProxy.setLoggerLevel(Level.TRACE)
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
 
       // ModelDef may be null if there were pmml compiler errors... act accordingly.  If modelDef present,
       // make sure the version of the model is greater than any of previous models with same FullName
       val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
-      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
- 
+      val isValid: Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
+
       if (isValid && modDef != null) {
-        logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,pmmlText,AuditConstants.SUCCESS,"",modDef.FullNameWithVer)   
+        logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, pmmlText, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
         // save the jar file first
         UploadJarsToDB(modDef)
         val apiResult = AddModel(modDef)
@@ -3315,22 +2914,28 @@ object MetadataAPIImpl extends MetadataAPI {
         NotifyEngine(objectsAdded, operations)
         apiResult
       } else {
-        val reasonForFailure : String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
-        val modDefName : String = if (modDef != null)  modDef.FullName else "(pmml compile failed)"
-        val modDefVer : String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" +  modDefName + "." + modDefVer)
+        val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
+        val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
+        val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
         apiResult.toString()
       }
     } catch {
       case e: ModelCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
       case e: AlreadyExistsException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
@@ -3338,14 +2943,30 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Add Model (format XML)
-  def RecompileModel(mod : ModelDef): String = {
+  def RecompileModel(mod: ModelDef): String = {
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
-      val pmmlText = mod.ObjectDefinition
-      var (classStr, modDef) = compProxy.compilePmml(pmmlText,true)
+      //compProxy.setLoggerLevel(Level.TRACE)
+      var modDef: ModelDef = null
+
+      // Models can be either PMML or Custom Sourced.  See which one we are dealing with
+      // here.
+      if (mod.objectFormat == ObjFormatType.fXML) {
+        val pmmlText = mod.ObjectDefinition
+        var (classStrTemp, modDefTemp) = compProxy.compilePmml(pmmlText, true)
+        modDef = modDefTemp
+      } else {
+        val saveModelParms = parse(mod.ObjectDefinition).values.asInstanceOf[Map[String, Any]]
+        //val souce = mod.ObjectDefinition
+        modDef = compProxy.recompileModelFromSource(saveModelParms.getOrElse(ModelCompilationConstants.SOURCECODE, "").asInstanceOf[String],
+          saveModelParms.getOrElse(ModelCompilationConstants.PHYSICALNAME, "").asInstanceOf[String],
+          saveModelParms.getOrElse(ModelCompilationConstants.DEPENDENCIES, List[String]()).asInstanceOf[List[String]],
+          saveModelParms.getOrElse(ModelCompilationConstants.TYPES_DEPENDENCIES, List[String]()).asInstanceOf[List[String]],
+          mod.ObjectFormat.toString)
+      }
+
       val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
-      val isValid : Boolean = (modDef != null)
+      val isValid: Boolean = (modDef != null)
       if (isValid) {
         RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
         UploadJarsToDB(modDef)
@@ -3359,23 +2980,88 @@ object MetadataAPIImpl extends MetadataAPI {
         NotifyEngine(objectsUpdated, operations)
         result
       } else {
-        val reasonForFailure : String = ErrorCodeConstants.Add_Model_Failed
-        val modDefName : String = if (modDef != null)  modDef.FullName else "(pmml compile failed)"
-        val modDefVer : String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" +  modDefName + "." + modDefVer)
+        val reasonForFailure: String = ErrorCodeConstants.Add_Model_Failed
+        val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
+        val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
         apiResult.toString()
       }
     } catch {
       case e: ModelCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error in producing scala file or Jar file.." + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
       case e: AlreadyExistsException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+        apiResult.toString()
+      }
+    }
+  }
+
+  def UpdateModel(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
+    try {
+      var compProxy = new CompilerProxy
+      compProxy.setSessionUserId(userid)
+      val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
+
+      val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
+      val isValid: Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
+
+      if (isValid && modDef != null) {
+        logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, sourceCode, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
+        val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
+        if( latestVersion != None ){
+          RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+        }
+        logger.info("Begin uploading dependent Jars, please wait.")
+        UploadJarsToDB(modDef)
+        logger.info("Finished uploading dependent Jars.")
+        val apiResult = AddModel(modDef)
+        var objectsUpdated = new Array[BaseElemDef](0)
+        var operations = new Array[String](0)
+        if( latestVersion != None ){
+          objectsUpdated = objectsUpdated :+ latestVersion.get
+          operations = operations :+ "Remove"
+        }
+        objectsUpdated = objectsUpdated :+ modDef
+        operations = operations :+ "Add"
+        NotifyEngine(objectsUpdated, operations)
+        apiResult
+      }
+      else{
+        val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
+        val modDefName: String = if (modDef != null) modDef.FullName else "(source compile failed)"
+        val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
+        apiResult.toString()
+      }
+    } catch {
+      case e: ModelCompilationFailedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+        apiResult.toString()
+      }
+      case e: AlreadyExistsException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+        apiResult.toString()
+      }
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
         apiResult.toString()
       }
     }
@@ -3384,39 +3070,52 @@ object MetadataAPIImpl extends MetadataAPI {
   def UpdateModel(pmmlText: String, userid: Option[String]): String = {
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
+      //compProxy.setLoggerLevel(Level.TRACE)
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
       val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
-      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
- 
+      val isValid: Boolean = (modDef != null)
+
       if (isValid && modDef != null) {
-        logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,pmmlText,AuditConstants.SUCCESS,"",modDef.FullNameWithVer)
+        logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, pmmlText, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
         val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
-        
-        RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+
+        // when a version number changes, latestVersion  has different namespace making it unique
+        // latest version may not be found in the cache. So need to remove it
+        if( latestVersion != None ) {
+          RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+        }
+
         UploadJarsToDB(modDef)
         val result = AddModel(modDef)
         var objectsUpdated = new Array[BaseElemDef](0)
         var operations = new Array[String](0)
-        objectsUpdated = objectsUpdated :+ latestVersion.get
-        operations = operations :+ "Remove"
+
+        if( latestVersion != None ){
+          objectsUpdated = objectsUpdated :+ latestVersion.get
+          operations = operations :+ "Remove"
+        }
+
         objectsUpdated = objectsUpdated :+ modDef
         operations = operations :+ "Add"
         NotifyEngine(objectsUpdated, operations)
         result
       } else {
-        val reasonForFailure : String = if (modDef != null) ErrorCodeConstants.Update_Model_Failed_Invalid_Version else ErrorCodeConstants.Update_Model_Failed
-        val modDefName : String = if (modDef != null)  modDef.FullName else "(pmml compile failed)"
-        val modDefVer : String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" +  modDefName + "." + modDefVer)
+        val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Update_Model_Failed_Invalid_Version else ErrorCodeConstants.Update_Model_Failed
+        val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
+        val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
         apiResult.toString()
       }
     } catch {
       case e: ObjectNotFoundException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
         apiResult.toString()
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "Update Model", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
         apiResult.toString()
       }
@@ -3486,9 +3185,9 @@ object MetadataAPIImpl extends MetadataAPI {
                   break
                 }
               })
-	      //Output vars don't determine dependant models at this time, comment out the following code
-	      // which is causing the Issue 355...
-	      /*
+              //Output vars don't determine dependant models at this time, comment out the following code
+              // which is causing the Issue 355...
+              /*
               mod.outputVars.foreach(ovar => {
                 val baseTyp = getBaseType(ovar.asInstanceOf[AttributeDef].typeDef)
                 if (baseTyp.FullName.toLowerCase == msgObjName) {
@@ -3505,7 +3204,9 @@ object MetadataAPIImpl extends MetadataAPI {
       depModels
     } catch {
       case e: Exception => {
-        throw new InternalErrorException("Unable to find dependent models " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new InternalErrorException("Unable to find dependent models " + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -3522,11 +3223,13 @@ object MetadataAPIImpl extends MetadataAPI {
           apiResult.toString()
         case Some(ms) =>
           val msa = ms.toArray
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllModelDefs",  JsonSerializer.SerializeObjectListToJson("Models", msa), ErrorCodeConstants.Get_All_Models_Successful)
+          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllModelDefs", JsonSerializer.SerializeObjectListToJson("Models", msa), ErrorCodeConstants.Get_All_Models_Successful)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllModelDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Models_Failed)
         apiResult.toString()
       }
@@ -3550,6 +3253,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllMessageDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Messages_Failed)
         apiResult.toString()
       }
@@ -3573,6 +3278,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllContainerDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Containers_Failed)
         apiResult.toString()
       }
@@ -3581,7 +3288,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetAllModelsFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var modelList: Array[String] = new Array[String](0)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MODEL,AuditConstants.SUCCESS,"",AuditConstants.MODEL)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
     try {
       val modDefs = MdMgr.GetMdMgr.Models(active, true)
       modDefs match {
@@ -3600,15 +3307,16 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the models:" + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the models:" + e.toString + "\nStackTrace:" + stackTrace)
       }
     }
   }
 
   def GetAllMessagesFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var messageList: Array[String] = new Array[String](0)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",AuditConstants.MESSAGE)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
     try {
       val msgDefs = MdMgr.GetMdMgr.Messages(active, true)
       msgDefs match {
@@ -3627,15 +3335,16 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the messages:" + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the messages:" + e.toString + "\nStackTrace:" + stackTrace)
       }
     }
   }
 
   def GetAllContainersFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var containerList: Array[String] = new Array[String](0)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",AuditConstants.CONTAINER)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
     try {
       val contDefs = MdMgr.GetMdMgr.Containers(active, true)
       contDefs match {
@@ -3654,16 +3363,16 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the containers:" + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the containers:" + e.toString + "\nStackTrace:" + stackTrace)
       }
     }
   }
 
-
   def GetAllFunctionsFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var functionList: Array[String] = new Array[String](0)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",AuditConstants.FUNCTION)
+    logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
     try {
       val contDefs = MdMgr.GetMdMgr.Functions(active, true)
       contDefs match {
@@ -3682,65 +3391,19 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the functions:" + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the functions:" + e.toString + "\nStackTrace:" + stackTrace)
       }
     }
   }
 
-
   def GetAllConceptsFromCache(active: Boolean, userid: Option[String]): Array[String] = {
-    var conceptList: Array[String] = new Array[String](0)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",AuditConstants.CONCEPT)
-    try {
-      val contDefs = MdMgr.GetMdMgr.Attributes(active, true)
-      contDefs match {
-        case None =>
-          None
-          logger.debug("No Concepts found ")
-          conceptList
-        case Some(ms) =>
-          val msa = ms.toArray
-          val contCount = msa.length
-          conceptList = new Array[String](contCount)
-          for (i <- 0 to contCount - 1) {
-            conceptList(i) = msa(i).FullName + "." + MdMgr.Pad0s2Version(msa(i).Version)
-          }
-          conceptList
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the concepts:" + e.toString)
-      }
-    }
+    ConceptUtils.GetAllConceptsFromCache(active,userid)
   }
 
   def GetAllTypesFromCache(active: Boolean, userid: Option[String]): Array[String] = {
-    var typeList: Array[String] = new Array[String](0)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.TYPE,AuditConstants.SUCCESS,"",AuditConstants.TYPE)
-    try {
-      val contDefs = MdMgr.GetMdMgr.Types(active, true)
-      contDefs match {
-        case None =>
-          None
-          logger.debug("No Types found ")
-          typeList
-        case Some(ms) =>
-          val msa = ms.toArray
-          val contCount = msa.length
-          typeList = new Array[String](contCount)
-          for (i <- 0 to contCount - 1) {
-            typeList(i) = msa(i).FullName + "." + MdMgr.Pad0s2Version(msa(i).Version)
-          }
-          typeList
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the types:" + e.toString)
-      }
-    }
+    TypeUtils.GetAllTypesFromCache(active,userid)
   }
 
   // Specific models (format JSON or XML) as an array of strings using modelName(without version) as the key
@@ -3751,7 +3414,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case None =>
           None
           logger.debug("No Models found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDef", null, ErrorCodeConstants.Get_Model_Failed_Not_Available + ":" + nameSpace+"."+objectName)
+          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDef", null, ErrorCodeConstants.Get_Model_Failed_Not_Available + ":" + nameSpace + "." + objectName)
           apiResult.toString()
         case Some(ms) =>
           val msa = ms.toArray
@@ -3760,6 +3423,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDef", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_Failed + ":" + nameSpace + "." + objectName)
         apiResult.toString()
       }
@@ -3774,7 +3439,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // Specific model (format JSON or XML) as a String using modelName(with version) as the key
   def GetModelDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String]): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.GETOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",dispkey)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.GETOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS, "", dispkey)
     try {
       var key = nameSpace + "." + name + "." + version.toLong
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
@@ -3791,6 +3456,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -3798,16 +3465,16 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Specific models (format JSON or XML) as an array of strings using modelName(without version) as the key
-  def GetModelDef(nameSpace: String, objectName: String, formatType:String, version: String, userid: Option[String]): String = {
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetModelDefFromCache(nameSpace,objectName,formatType,version,None)
+  def GetModelDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
+    logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS, "", nameSpace + "." + objectName + "." + version)
+    GetModelDefFromCache(nameSpace, objectName, formatType, version, None)
   }
 
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
   def GetMessageDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String]): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
     var key = nameSpace + "." + name + "." + version.toLong
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.GETOBJECT),AuditConstants.GETOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",dispkey)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.GETOBJECT), AuditConstants.GETOBJECT, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", dispkey)
     try {
       val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
@@ -3823,6 +3490,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetMessageDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Message_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -3833,7 +3502,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetContainerDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String]): String = {
     var key = nameSpace + "." + name + "." + version.toLong
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.GETOBJECT),AuditConstants.GETOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",dispkey)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.GETOBJECT), AuditConstants.GETOBJECT, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", dispkey)
     try {
       val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
@@ -3849,6 +3518,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetContainerDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Container_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -3872,7 +3543,9 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        throw new ObjectNotFoundException("Failed to Fetch the message:" + dispkey + ":" + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new ObjectNotFoundException("Failed to Fetch the message:" + dispkey + ":" + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -3895,13 +3568,14 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.debug("model not in the cache => " + dispkey)
           return false;
         case Some(m) =>
-          logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName +  "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].ver))
+          logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].ver))
           return true
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -3912,9 +3586,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var key = modDef.nameSpace + "." + modDef.name + "." + modDef.ver
       val dispkey = modDef.nameSpace + "." + modDef.name + "." + MdMgr.Pad0s2Version(modDef.ver)
       val o = MdMgr.GetMdMgr.Models(modDef.nameSpace.toLowerCase,
-                                    modDef.name.toLowerCase,
-                                    false,
-                                    true)
+        modDef.name.toLowerCase,false,true)
       o match {
         case None =>
           None
@@ -3925,12 +3597,13 @@ object MetadataAPIImpl extends MetadataAPI {
             logger.debug("model found => " + m.head.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.head.asInstanceOf[ModelDef].ver))
             Some(m.head.asInstanceOf[ModelDef])
           } else
-            None   
+            None
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -3945,10 +3618,13 @@ object MetadataAPIImpl extends MetadataAPI {
         modelmap.put(m.Version, m)
         verList = m.Version :: verList
       })
-       model = modelmap.getOrElse(verList.max, null)
+      model = modelmap.getOrElse(verList.max, null)
     } catch {
-      case e: Exception =>
-        throw new Exception("Error in traversing Model set " + e.getMessage())
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new Exception("Error in traversing Model set " + e.getMessage() + "\nStackTrace:" + stackTrace)
+      }
     }
     model
   }
@@ -3958,9 +3634,9 @@ object MetadataAPIImpl extends MetadataAPI {
       var key = fDef.nameSpace + "." + fDef.name + "." + fDef.ver
       val dispkey = fDef.nameSpace + "." + fDef.name + "." + MdMgr.Pad0s2Version(fDef.ver)
       val o = MdMgr.GetMdMgr.Messages(fDef.nameSpace.toLowerCase,
-                                      fDef.name.toLowerCase,
-                                      false,
-                                      true)
+        fDef.name.toLowerCase,
+        false,
+        true)
       o match {
         case None =>
           None
@@ -3969,26 +3645,27 @@ object MetadataAPIImpl extends MetadataAPI {
         case Some(m) =>
           // We can get called from the Add Message path, and M could be empty.
           if (m.size == 0) return None
-          logger.debug("message found => " + m.head.asInstanceOf[MessageDef].FullName  + "." + MdMgr.Pad0s2Version( m.head.asInstanceOf[MessageDef].ver))
+          logger.debug("message found => " + m.head.asInstanceOf[MessageDef].FullName + "." + MdMgr.Pad0s2Version(m.head.asInstanceOf[MessageDef].ver))
           Some(m.head.asInstanceOf[FunctionDef])
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
-    }    
+    }
   }
-  
+
   // Get the latest message for a given FullName
   def GetLatestMessage(msgDef: MessageDef): Option[MessageDef] = {
     try {
       var key = msgDef.nameSpace + "." + msgDef.name + "." + msgDef.ver
       val dispkey = msgDef.nameSpace + "." + msgDef.name + "." + MdMgr.Pad0s2Version(msgDef.ver)
       val o = MdMgr.GetMdMgr.Messages(msgDef.nameSpace.toLowerCase,
-                                      msgDef.name.toLowerCase,
-                                      false,
-                                      true)
+        msgDef.name.toLowerCase,
+        false,
+        true)
       o match {
         case None =>
           None
@@ -3997,13 +3674,14 @@ object MetadataAPIImpl extends MetadataAPI {
         case Some(m) =>
           // We can get called from the Add Message path, and M could be empty.
           if (m.size == 0) return None
-          logger.debug("message found => " + m.head.asInstanceOf[MessageDef].FullName  + "." + MdMgr.Pad0s2Version( m.head.asInstanceOf[MessageDef].ver))
+          logger.debug("message found => " + m.head.asInstanceOf[MessageDef].FullName + "." + MdMgr.Pad0s2Version(m.head.asInstanceOf[MessageDef].ver))
           Some(m.head.asInstanceOf[MessageDef])
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4022,16 +3700,17 @@ object MetadataAPIImpl extends MetadataAPI {
           None
           logger.debug("container not in the cache => " + dispkey)
           None
-        case Some(m) => 
+        case Some(m) =>
           // We can get called from the Add Container path, and M could be empty.
           if (m.size == 0) return None
-          logger.debug("container found => " + m.head.asInstanceOf[ContainerDef].FullName  + "." + MdMgr.Pad0s2Version(m.head.asInstanceOf[ContainerDef].ver))
+          logger.debug("container found => " + m.head.asInstanceOf[ContainerDef].FullName + "." + MdMgr.Pad0s2Version(m.head.asInstanceOf[ContainerDef].ver))
           Some(m.head.asInstanceOf[ContainerDef])
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4062,13 +3741,14 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.debug("message not in the cache => " + key)
           return false;
         case Some(m) =>
-          logger.debug("message found => " + m.asInstanceOf[MessageDef].FullName +  "." + MdMgr.Pad0s2Version(m.asInstanceOf[MessageDef].ver))
+          logger.debug("message found => " + m.asInstanceOf[MessageDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[MessageDef].ver))
           return true
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4087,39 +3767,14 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.debug("container not in the cache => " + dispkey)
           return false;
         case Some(m) =>
-          logger.debug("container found => " + m.asInstanceOf[ContainerDef].FullName +  "." + MdMgr.Pad0s2Version(m.asInstanceOf[ContainerDef].ver))
+          logger.debug("container found => " + m.asInstanceOf[ContainerDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ContainerDef].ver))
           return true
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
-      }
-    }
-  }
-
-  def IsFunctionAlreadyExists(funcDef: FunctionDef): Boolean = {
-    try {
-      var key = funcDef.typeString
-      val dispkey = key // No version in this string
-      val o = MdMgr.GetMdMgr.Function(funcDef.nameSpace,
-        funcDef.name,
-        funcDef.args.toList.map(a => (a.aType.nameSpace, a.aType.name)),
-        funcDef.ver,
-        false)
-      o match {
-        case None =>
-          None
-          logger.debug("function not in the cache => " + dispkey)
-          return false;
-        case Some(m) =>
-          logger.debug("function found => " + m.asInstanceOf[FunctionDef].typeString)
-          return true
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4143,33 +3798,9 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
-      }
-    }
-  }
-
-  def IsTypeAlreadyExists(typeDef: BaseTypeDef): Boolean = {
-    try {
-      var key = typeDef.nameSpace + "." + typeDef.name + "." + typeDef.ver
-      val dispkey = typeDef.nameSpace + "." + typeDef.name + "." + MdMgr.Pad0s2Version(typeDef.ver)
-      val o = MdMgr.GetMdMgr.Type(typeDef.nameSpace,
-        typeDef.name,
-        typeDef.ver,
-        false)
-      o match {
-        case None =>
-          None
-          logger.debug("Type not in the cache => " + key)
-          return false;
-        case Some(m) =>
-          logger.debug("Type found => " + m.asInstanceOf[BaseTypeDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[BaseTypeDef].ver))
-          return true
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw new UnexpectedMetadataAPIException(e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4178,13 +3809,15 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetModelDefFromDB(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     var key = "ModelDef" + "." + nameSpace + '.' + objectName + "." + version.toLong
     val dispkey = "ModelDef" + "." + nameSpace + '.' + objectName + "." + MdMgr.Pad0s2Version(version.toLong)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.GETOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",dispkey)
+    if (userid != None) logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.GETOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS, "", dispkey)
     try {
       var obj = GetObject(key.toLowerCase, modelStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", ValueAsStr(obj.Value), ErrorCodeConstants.Get_Model_From_DB_Successful + ":" + dispkey)
       apiResult.toString()
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_From_DB_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -4205,68 +3838,68 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetAllKeys(objectType: String, userid: Option[String]): Array[String] = {
     try {
       var keys = scala.collection.mutable.Set[String]()
-      typeStore.getAllKeys({ (key: Key) =>
-        {
-          val strKey = KeyAsStr(key)
-          val i = strKey.indexOf(".")
-          val objType = strKey.substring(0, i)
-          val typeName = strKey.substring(i + 1)
-          objectType match {
-            case "TypeDef" => {
-              if (IsTypeObject(objType)) {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.TYPE,AuditConstants.SUCCESS,"",AuditConstants.TYPE)
+      typeStore.getAllKeys({ (key: Key) => {
+        val strKey = KeyAsStr(key)
+        val i = strKey.indexOf(".")
+        val objType = strKey.substring(0, i)
+        val typeName = strKey.substring(i + 1)
+        objectType match {
+          case "TypeDef" => {
+            if (IsTypeObject(objType)) {
+              keys.add(typeName)
             }
-            case "FunctionDef" => {
-              if (objType == "functiondef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",AuditConstants.FUNCTION)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.TYPE, AuditConstants.SUCCESS, "", AuditConstants.TYPE)
+          }
+          case "FunctionDef" => {
+            if (objType == "functiondef") {
+              keys.add(typeName)
             }
-            case "MessageDef" => {
-              if (objType == "messagedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",AuditConstants.MESSAGE)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
+          }
+          case "MessageDef" => {
+            if (objType == "messagedef") {
+              keys.add(typeName)
             }
-            case "ContainerDef" => {
-              if (objType == "containerdef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",AuditConstants.CONTAINER)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
+          }
+          case "ContainerDef" => {
+            if (objType == "containerdef") {
+              keys.add(typeName)
             }
-            case "Concept" => {
-              if (objType == "attributedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",AuditConstants.CONCEPT)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
+          }
+          case "Concept" => {
+            if (objType == "attributedef") {
+              keys.add(typeName)
             }
-            case "ModelDef" => {
-              if (objType == "modeldef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MODEL,AuditConstants.SUCCESS,"",AuditConstants.MODEL)
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONCEPT, AuditConstants.SUCCESS, "", AuditConstants.CONCEPT)
+          }
+          case "ModelDef" => {
+            if (objType == "modeldef") {
+              keys.add(typeName)
             }
-            case _ => {
-              logger.error("Unknown object type " + objectType + " in GetAllKeys function")
-              throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
-            }
+            if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
+          }
+          case _ => {
+            logger.error("Unknown object type " + objectType + " in GetAllKeys function")
+            throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
           }
         }
+      }
       })
       keys.toArray
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw InternalErrorException("Failed to get keys from persistent store")
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        throw InternalErrorException("Failed to get keys from persistent store" + "\nStackTrace:" + stackTrace)
       }
     }
   }
 
   def LoadAllConfigObjectsIntoCache: Boolean = {
     try {
-      var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
+      var keys = scala.collection.mutable.Set[Key]()
       configStore.getAllKeys({ (key: Key) => keys.add(key) })
       val keyArray = keys.toArray
       if (keyArray.length == 0) {
@@ -4274,59 +3907,84 @@ object MetadataAPIImpl extends MetadataAPI {
         return false
       }
       keyArray.foreach(key => {
-  //logger.debug("key => " + KeyAsStr(key))
+        //logger.debug("key => " + KeyAsStr(key))
         val obj = GetObject(key, configStore)
         val strKey = KeyAsStr(key)
         val i = strKey.indexOf(".")
         val objType = strKey.substring(0, i)
         val typeName = strKey.substring(i + 1)
-  objType match {
-    case "nodeinfo" => {
+        objType match {
+          case "nodeinfo" => {
             val ni = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[NodeInfo]
-      MdMgr.GetMdMgr.AddNode(ni)
-    }
-    case "adapterinfo" => {
+            MdMgr.GetMdMgr.AddNode(ni)
+          }
+          case "adapterinfo" => {
             val ai = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[AdapterInfo]
-      MdMgr.GetMdMgr.AddAdapter(ai)
-    }
-    case "clusterinfo" => {
+            MdMgr.GetMdMgr.AddAdapter(ai)
+          }
+          case "clusterinfo" => {
             val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterInfo]
-      MdMgr.GetMdMgr.AddCluster(ci)
-    }
-    case "clustercfginfo" => {
+            MdMgr.GetMdMgr.AddCluster(ci)
+          }
+          case "clustercfginfo" => {
             val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterCfgInfo]
-      MdMgr.GetMdMgr.AddClusterCfg(ci)
-    }
-    case _ => {
+            MdMgr.GetMdMgr.AddClusterCfg(ci)
+          }
+          case "userproperties" => {
+            val up = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[UserPropertiesInfo]
+            MdMgr.GetMdMgr.AddUserProperty(up)
+          }
+          case _ => {
             throw InternalErrorException("LoadAllConfigObjectsIntoCache: Unknown objectType " + objType)
-    }
-  }
+          }
+        }
       })
       return true
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-  return false
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        return false
       }
     }
+  }
+
+  private def LoadAllModelConfigsIntoChache: Unit = {
+    val maxTranId = GetTranId
+    currentTranLevel = maxTranId
+    logger.debug("Max Transaction Id => " + maxTranId)
+    var keys = scala.collection.mutable.Set[Key]()
+    modelConfigStore.getAllKeys({ (key: Key) => keys.add(key) })
+    val keyArray = keys.toArray
+    if (keyArray.length == 0) {
+      logger.debug("No model config objects available in the Database")
+      return
+    }
+    keyArray.foreach(key => {
+      val obj = GetObject(key, modelConfigStore)
+      val conf = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[Map[String, List[String]]]
+      MdMgr.GetMdMgr.AddModelConfig(KeyAsStr(key), conf)
+    })
+    MdMgr.GetMdMgr.DumpModelConfigs
   }
 
   def LoadAllObjectsIntoCache {
     try {
       val configAvailable = LoadAllConfigObjectsIntoCache
-      if( configAvailable ){
+      if (configAvailable) {
         RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
-      }
-      else{
+      } else {
         logger.debug("Assuming bootstrap... No config objects in persistent store")
       }
+
+      // Load All the Model Configs here... 
+      LoadAllModelConfigsIntoChache
+      //LoadAllUserPopertiesIntoChache
       startup = true
+      val maxTranId = currentTranLevel
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
-      val maxTranId = GetTranId
-      currentTranLevel = maxTranId
-      logger.debug("Max Transaction Id => " + maxTranId)
-      var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
+      var keys = scala.collection.mutable.Set[Key]()
       metadataStore.getAllKeys({ (key: Key) => keys.add(key) })
       val keyArray = keys.toArray
       if (keyArray.length == 0) {
@@ -4341,10 +3999,9 @@ object MetadataAPIImpl extends MetadataAPI {
             AddObjectToCache(mObj, MdMgr.GetMdMgr)
             DownloadJarFromDB(mObj)
           } else {
-            if (mObj.isInstanceOf[FunctionDef]){
+            if (mObj.isInstanceOf[FunctionDef]) {
               // BUGBUG:: Not notifying functions at this moment. This may cause inconsistance between different instances of the metadata.
-            }
-            else {
+            } else {
               logger.debug("The transaction id of the object => " + mObj.tranId)
               AddObjectToCache(mObj, MdMgr.GetMdMgr)
               DownloadJarFromDB(mObj)
@@ -4367,7 +4024,8 @@ object MetadataAPIImpl extends MetadataAPI {
       startup = false
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4388,7 +4046,8 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4407,7 +4066,8 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4426,14 +4086,15 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
 
   def LoadAllMessagesIntoCache {
     try {
-      val msgKeys = GetAllKeys("MessageDef",None)
+      val msgKeys = GetAllKeys("MessageDef", None)
       if (msgKeys.length == 0) {
         logger.debug("No messages available in the Database")
         return
@@ -4445,7 +4106,8 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4463,7 +4125,8 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(msgDef, MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        logger.error("Failed to load message into cache " + key + ":" + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Failed to load message into cache " + key + ":" + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4480,7 +4143,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        logger.warn("Unable to load the object " + key + " into cache ")
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.warn("Unable to load the object " + key + " into cache " + "\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4498,7 +4162,8 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(modDef, MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4513,19 +4178,8 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(contDef, MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-      }
-    }
-  }
-
-  def LoadFunctionIntoCache(key: String) {
-    try {
-      val obj = GetObject(key.toLowerCase, functionStore)
-      val cont = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-      AddObjectToCache(cont.asInstanceOf[FunctionDef], MdMgr.GetMdMgr)
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4537,17 +4191,27 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(cont.asInstanceOf[AttributeDef], MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
-  
-  private def updateThisKey(zkMessage: ZooKeeperNotification) {
-    
+
+  private def updateThisKey(zkMessage: ZooKeeperNotification, tranId: Long) {
+
     var key: String = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version.toLong).toLowerCase
     val dispkey = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + MdMgr.Pad0s2Version(zkMessage.Version.toLong)).toLowerCase
 
     zkMessage.ObjectType match {
+      case "ConfigDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            val inConfig = "{\"" + zkMessage.Name + "\":" + zkMessage.ConfigContnent.get + "}"
+            AddConfigObjToCache(tranId, zkMessage.NameSpace + "." + zkMessage.Name, parse(inConfig).values.asInstanceOf[Map[String, List[String]]], MdMgr.GetMdMgr)
+          }
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
+        }
+      }
       case "ModelDef" => {
         zkMessage.Operation match {
           case "Add" => {
@@ -4558,11 +4222,12 @@ object MetadataAPIImpl extends MetadataAPI {
               MdMgr.GetMdMgr.ModifyModel(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStackTrace:" + stackTrace)
               }
             }
           }
-          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
         }
       }
       case "MessageDef" => {
@@ -4572,10 +4237,11 @@ object MetadataAPIImpl extends MetadataAPI {
           }
           case "Remove" => {
             try {
-              RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong,None,false)
+              RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, None, false)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStackTrace:" + stackTrace)
               }
             }
           }
@@ -4584,11 +4250,12 @@ object MetadataAPIImpl extends MetadataAPI {
               MdMgr.GetMdMgr.ModifyMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStackTrace:" + stackTrace)
               }
             }
           }
-          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
         }
       }
       case "ContainerDef" => {
@@ -4598,10 +4265,11 @@ object MetadataAPIImpl extends MetadataAPI {
           }
           case "Remove" => {
             try {
-              RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, None,false)
+              RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, None, false)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStackTrace:" + stackTrace)
               }
             }
           }
@@ -4610,28 +4278,30 @@ object MetadataAPIImpl extends MetadataAPI {
               MdMgr.GetMdMgr.ModifyContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStackTrace:" + stackTrace)
               }
             }
           }
-          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
         }
       }
       case "FunctionDef" => {
         zkMessage.Operation match {
           case "Add" => {
-            LoadFunctionIntoCache(key)
+            FunctionUtils.LoadFunctionIntoCache(key)
           }
           case "Remove" | "Activate" | "Deactivate" => {
             try {
               MdMgr.GetMdMgr.ModifyFunction(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStackTrace:" + stackTrace)
               }
             }
           }
-          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
         }
       }
       case "AttributeDef" => {
@@ -4644,11 +4314,12 @@ object MetadataAPIImpl extends MetadataAPI {
               MdMgr.GetMdMgr.ModifyAttribute(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStacktrace:" + stackTrace)
               }
             }
           }
-          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
         }
       }
       case "JarDef" => {
@@ -4656,7 +4327,7 @@ object MetadataAPIImpl extends MetadataAPI {
           case "Add" => {
             DownloadJarFromDB(MdMgr.GetMdMgr.MakeJarDef(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version))
           }
-          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
         }
       }
       case "ScalarTypeDef" | "ArrayTypeDef" | "ArrayBufTypeDef" | "ListTypeDef" | "MappedMsgTypeDef" | "SetTypeDef" | "TreeSetTypeDef" | "QueueTypeDef" | "MapTypeDef" | "ImmutableMapTypeDef" | "HashMapTypeDef" | "TupleTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
@@ -4670,64 +4341,66 @@ object MetadataAPIImpl extends MetadataAPI {
               MdMgr.GetMdMgr.ModifyType(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
             } catch {
               case e: ObjectNolongerExistsException => {
-                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + dispkey + " nolonger exists in metadata : It may have been removed already" + "\nStackTrace:" + stackTrace)
               }
             }
           }
-          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..") }
         }
       }
       case "OutputMsgDef" => {
-          zkMessage.Operation match {
-            case "Add" => {
-              LoadOutputMsgIntoCache(key)
-            }
-            case "Remove" | "Activate" | "Deactivate" => {
-              try {
-                MdMgr.GetMdMgr.ModifyOutputMsg(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-              } catch {
-                case e: ObjectNolongerExistsException => {
-                  logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadOutputMsgIntoCache(key)
+          }
+          case "Remove" | "Activate" | "Deactivate" => {
+            try {
+              MdMgr.GetMdMgr.ModifyOutputMsg(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already" + "\nStacktrace:" + stackTrace)
               }
             }
           }
         }
       }
       case _ => { logger.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..") }
-    }  
+    }
   }
-  
-  def LoadOutputMsgIntoCache(key: String) {
-	    try {
-	      logger.debug("Fetch the object " + key + " from database ")
-	      val obj = GetObject(key.toLowerCase, outputmsgStore)
-	      logger.debug("Deserialize the object " + key)
-	      val outputMsg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	      val outputMsgDef = outputMsg.asInstanceOf[OutputMsgDef]
-	      logger.debug("Add the output msg def object " + key + " to the cache ")
-	      AddObjectToCache(outputMsgDef, MdMgr.GetMdMgr)
-	    } catch {
-	      case e: Exception => {
-	        e.printStackTrace()
-	      }
-	    }
-	  }
 
+  def LoadOutputMsgIntoCache(key: String) {
+    try {
+      logger.debug("Fetch the object " + key + " from database ")
+      val obj = GetObject(key.toLowerCase, outputmsgStore)
+      logger.debug("Deserialize the object " + key)
+      val outputMsg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+      val outputMsgDef = outputMsg.asInstanceOf[OutputMsgDef]
+      logger.debug("Add the output msg def object " + key + " to the cache ")
+      AddObjectToCache(outputMsgDef, MdMgr.GetMdMgr)
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+      }
+    }
+  }
 
   def UpdateMdMgr(zkTransaction: ZooKeeperTransaction): Unit = {
     var key: String = null
     var dispkey: String = null
-    
+
     // If we already processed this transaction, currTranLevel will be at least at the level of this notify.
     if (zkTransaction.transactionId.getOrElse("0").toLong <= currentTranLevel) return
-    
+
     try {
       zkTransaction.Notifications.foreach(zkMessage => {
         key = (zkMessage.Operation + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
         dispkey = (zkMessage.Operation + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + MdMgr.Pad0s2Version(zkMessage.Version.toLong)).toLowerCase
         if (!cacheOfOwnChanges.contains(key)) {
           // Proceed with update.
-          updateThisKey(zkMessage)
+          updateThisKey(zkMessage, zkTransaction.transactionId.getOrElse("0").toLong)
         } else {
           // Ignore the update, remove the element from set.
           cacheOfOwnChanges.remove(key)
@@ -4735,18 +4408,19 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: AlreadyExistsException => {
-        logger.warn("Failed to load the object(" + dispkey + ") into cache: " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.warn("Failed to load the object(" + dispkey + ") into cache: " + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
       case e: Exception => {
-        logger.warn("Failed to load the object(" + dispkey + ") into cache: " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.warn("Failed to load the object(" + dispkey + ") into cache: " + e.getMessage() + "\nStackTrace:" + stackTrace)
       }
     }
   }
-  
 
   def LoadAllContainersIntoCache {
     try {
-      val contKeys = GetAllKeys("ContainerDef",None)
+      val contKeys = GetAllKeys("ContainerDef", None)
       if (contKeys.length == 0) {
         logger.debug("No containers available in the Database")
         return
@@ -4758,14 +4432,16 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
 
   def LoadAllModelsIntoCache {
     try {
-      val modKeys = GetAllKeys("ModelDef",None)
+      val modKeys = GetAllKeys("ModelDef", None)
       if (modKeys.length == 0) {
         logger.debug("No models available in the Database")
         return
@@ -4777,7 +4453,9 @@ object MetadataAPIImpl extends MetadataAPI {
       })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -4794,12 +4472,12 @@ object MetadataAPIImpl extends MetadataAPI {
   // Specific messages (format JSON or XML) as a String using messageName(without version) as the key
   def GetMessageDef(objectName: String, formatType: String): String = {
     val nameSpace = MdMgr.sysNS
-    GetMessageDefFromCache(nameSpace, objectName, formatType, "-1",None)
+    GetMessageDefFromCache(nameSpace, objectName, formatType, "-1", None)
   }
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
   def GetMessageDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetMessageDefFromCache(nameSpace, objectName, formatType, version,None)
+    logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETOBJECT, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", nameSpace + "." + objectName + "." + version)
+    GetMessageDefFromCache(nameSpace, objectName, formatType, version, None)
   }
 
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
@@ -4811,12 +4489,12 @@ object MetadataAPIImpl extends MetadataAPI {
   // Specific containers (format JSON or XML) as a String using containerName(without version) as the key
   def GetContainerDef(objectName: String, formatType: String): String = {
     val nameSpace = MdMgr.sysNS
-    GetContainerDefFromCache(nameSpace, objectName, formatType, "-1",None)
+    GetContainerDefFromCache(nameSpace, objectName, formatType, "-1", None)
   }
   // Specific container (format JSON or XML) as a String using containerName(with version) as the key
   def GetContainerDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetContainerDefFromCache(nameSpace, objectName, formatType, version,None)
+    logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETOBJECT, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", nameSpace + "." + objectName + "." + version)
+    GetContainerDefFromCache(nameSpace, objectName, formatType, version, None)
   }
 
   // Specific container (format JSON or XML) as a String using containerName(with version) as the key
@@ -4825,740 +4503,676 @@ object MetadataAPIImpl extends MetadataAPI {
     GetContainerDef(nameSpace, objectName, formatType, version, None)
   }
 
-  // Answer count and dump of all available functions(format JSON or XML) as a String
-  def GetAllFunctionDefs(formatType: String, userid: Option[String]): (Int,String) = {
-    try {
-      val funcDefs = MdMgr.GetMdMgr.Functions(true, true)
-      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"","ALL")
-      funcDefs match {
-        case None =>
-          None
-          logger.debug("No Functions found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllFunctionDefs", null, ErrorCodeConstants.Get_All_Functions_Failed_Not_Available)
-          (0,apiResult.toString())
-        case Some(fs) =>
-          val fsa : Array[FunctionDef]= fs.toArray
-           var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllFunctionDefs", JsonSerializer.SerializeObjectListToJson("Functions", fsa), ErrorCodeConstants.Get_All_Functions_Successful)
-          (fsa.size, apiResult.toString())
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllFunctionDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Functions_Failed)
-        (0, apiResult.toString())
-      }
-    }
+  def AddFunctions(functionsText:String, formatType:String, userid: Option[String]): String = {
+    FunctionUtils.AddFunctions(functionsText,formatType,userid)
   }
 
-  def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, userid: Option[String]): String = {
-    try {
-      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"LATEST")
-      val funcDefs = MdMgr.GetMdMgr.FunctionsAvailable(nameSpace, objectName)
-      if (funcDefs == null) {
-        logger.debug("No Functions found ")
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetFunctionDef", null, ErrorCodeConstants.Get_Function_Failed + ":" + nameSpace+"."+objectName)
-        apiResult.toString()
-      } else {
-        val fsa = funcDefs.toArray
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetFunctionDef", JsonSerializer.SerializeObjectListToJson("Functions", fsa), ErrorCodeConstants.Get_Function_Successful)
-        apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetFunctionDef", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Function_Failed + ":" + nameSpace+"."+objectName)
-        apiResult.toString()
-      }
-    }
+  def UpdateFunctions(functionsText:String, formatType:String, userid: Option[String]): String = {
+    FunctionUtils.UpdateFunctions(functionsText,formatType,userid)
   }
 
-  def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, version:String, userid: Option[String]): String = {
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetFunctionDef(nameSpace,objectName,formatType, None)
+  def RemoveFunction(nameSpace:String, functionName:String, version:Long, userid: Option[String]): String = {
+    FunctionUtils.RemoveFunction(nameSpace,functionName,version,userid)
   }
 
-  // Specific messages (format JSON or XML) as a String using messageName(without version) as the key
-  def GetFunctionDef(objectName: String, formatType: String, userid: Option[String]): String = {
+  def GetAllFunctionDefs(formatType: String, userid: Option[String]): (Int, String) = {
+    FunctionUtils.GetAllFunctionDefs(formatType,userid)
+  }
+
+  def GetFunctionDef(objectName:String,formatType: String, userid: Option[String]) : String = {
+    FunctionUtils.GetFunctionDef(objectName,formatType,userid)
+  }
+
+  def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
+    FunctionUtils.GetFunctionDef(nameSpace,objectName,formatType,version,userid)
+  }
+
+  def GetFunctionDef( objectName:String,version:String, formatType: String, userid: Option[String]) : String = {
     val nameSpace = MdMgr.sysNS
-    GetFunctionDef(nameSpace, objectName, formatType, userid)
+    FunctionUtils.GetFunctionDef(nameSpace,objectName,formatType,version,userid)
   }
-
   // All available concepts as a String
   def GetAllConcepts(formatType: String, userid: Option[String]): String = {
-    try {
-      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"","ALL")
-      val concepts = MdMgr.GetMdMgr.Attributes(true, true)
-      concepts match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllConcepts", null, ErrorCodeConstants.Get_All_Concepts_Failed_Not_Available)
-          apiResult.toString()
-        case Some(cs) =>
-          val csa = cs.toArray
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllConcepts", JsonSerializer.SerializeObjectListToJson("Concepts", csa), ErrorCodeConstants.Get_All_Concepts_Successful)
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllConcepts", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Concepts_Failed)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.GetAllConcepts(formatType,userid)
   }
 
   // A single concept as a string using name and version as the key
-  def GetConcept(nameSpace:String, objectName: String, version: String, formatType: String): String = {
-    var key = nameSpace + "." + objectName + "." + version.toLong
-    val dispkey = nameSpace + "." + objectName + "." + MdMgr.Pad0s2Version(version.toLong)
-    try {
-      val concept = MdMgr.GetMdMgr.Attribute(nameSpace, objectName, version.toLong, false)
-      concept match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetConcept", null, ErrorCodeConstants.Get_Concept_Failed_Not_Available)
-          apiResult.toString()
-        case Some(cs) =>
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetConcept", JsonSerializer.SerializeObjectToJson(cs), ErrorCodeConstants.Get_Concept_Successful + ":" + dispkey)
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Concept_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
+  def GetConcept(nameSpace: String, objectName: String, version: String, formatType: String): String = {
+    ConceptUtils.GetConcept(nameSpace,objectName,version,formatType)
   }
-
   // A single concept as a string using name and version as the key
   def GetConcept(objectName: String, version: String, formatType: String): String = {
-    GetConcept(MdMgr.sysNS,objectName,version,formatType)
+    GetConcept(MdMgr.sysNS, objectName, version, formatType)
   }
 
   // A single concept as a string using name and version as the key
-  def GetConceptDef(nameSpace:String, objectName: String, formatType: String,version: String, userid: Option[String]): String = {
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetConcept(nameSpace,objectName,version,formatType)
+  def GetConceptDef(nameSpace: String, objectName: String, formatType: String,
+		    version: String, userid: Option[String]): String = {
+    ConceptUtils.GetConceptDef(nameSpace,objectName,formatType,version,userid)
   }
 
   // A list of concept(s) as a string using name 
   def GetConcept(objectName: String, formatType: String): String = {
-    try {
-      val concepts = MdMgr.GetMdMgr.Attributes(MdMgr.sysNS, objectName, false, false)
-      concepts match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetConcept", null, ErrorCodeConstants.Get_Concept_Failed_Not_Available + ":" + objectName)
-          apiResult.toString()
-        case Some(cs) =>
-          val csa = cs.toArray
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetConcept", JsonSerializer.SerializeObjectListToJson("Concepts", csa), ErrorCodeConstants.Get_Concept_Successful + ":" + objectName)
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Concept_Failed + ":" + objectName)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.GetConcept(objectName,formatType)
   }
 
   // All available derived concepts(format JSON or XML) as a String
   def GetAllDerivedConcepts(formatType: String): String = {
-    try {
-      val concepts = MdMgr.GetMdMgr.Attributes(true, true)
-      concepts match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllDerivedConcepts", null, ErrorCodeConstants.Get_All_Derived_Concepts_Failed_Not_Available)
-          apiResult.toString()
-        case Some(cs) =>
-          val csa = cs.toArray.filter(t => { t.getClass.getName.contains("DerivedAttributeDef") })
-          if (csa.length > 0) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllDerivedConcepts", JsonSerializer.SerializeObjectListToJson("Concepts", csa), ErrorCodeConstants.Get_All_Derived_Concepts_Successful)
-            apiResult.toString()
-          } else {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllDerivedConcepts", null, ErrorCodeConstants.Get_All_Derived_Concepts_Failed_Not_Available)
-            apiResult.toString()
-          }
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllDerivedConcepts", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Derived_Concepts_Failed)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.GetAllDerivedConcepts(formatType)
   }
+
   // A derived concept(format JSON or XML) as a string using name(without version) as the key
   def GetDerivedConcept(objectName: String, formatType: String): String = {
-    try {
-      val concepts = MdMgr.GetMdMgr.Attributes(MdMgr.sysNS, objectName, false, false)
-      concepts match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetDerivedConcept", null, ErrorCodeConstants.Get_Derived_Concept_Failed_Not_Available + ":" + objectName)
-          apiResult.toString()
-        case Some(cs) =>
-          val csa = cs.toArray.filter(t => { t.getClass.getName.contains("DerivedAttributeDef") })
-          if (csa.length > 0) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetDerivedConcept", JsonSerializer.SerializeObjectListToJson("Concepts", csa), ErrorCodeConstants.Get_Derived_Concept_Successful + ":" + objectName)
-            apiResult.toString()
-          } else {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetDerivedConcept", null, ErrorCodeConstants.Get_Derived_Concept_Failed_Not_Available + ":" + objectName)
-            apiResult.toString()
-          }
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetDerivedConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Derived_Concept_Failed + ":" + objectName)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.GetDerivedConcept(objectName,formatType)
   }
   // A derived concept(format JSON or XML) as a string using name and version as the key
   def GetDerivedConcept(objectName: String, version: String, formatType: String): String = {
-    var key = objectName + "." + version.toLong
-    val dispkey = objectName + "." + MdMgr.Pad0s2Version(version.toLong)
-    try {
-      val concept = MdMgr.GetMdMgr.Attribute(MdMgr.sysNS, objectName, version.toLong, false)
-      concept match {
-        case None =>
-          None
-          logger.debug("No concepts found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetDerivedConcept", null, ErrorCodeConstants.Get_Derived_Concept_Failed_Not_Available + ":" + dispkey)
-          apiResult.toString()
-        case Some(cs) =>
-          if (cs.isInstanceOf[DerivedAttributeDef]) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetDerivedConcept", JsonSerializer.SerializeObjectToJson(cs), ErrorCodeConstants.Get_Derived_Concept_Successful + ":" + dispkey)
-            apiResult.toString()
-          } else {
-            logger.debug("No Derived concepts found ")
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetDerivedConcept", null, ErrorCodeConstants.Get_Derived_Concept_Failed_Not_Available + ":" + dispkey)
-            apiResult.toString()
-          }
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetDerivedConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Derived_Concept_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
+    ConceptUtils.GetDerivedConcept(objectName,version,formatType)
   }
 
   // All available types(format JSON or XML) as a String
   def GetAllTypes(formatType: String, userid: Option[String]): String = {
-    try {
-      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"","ALL")
-      val typeDefs = MdMgr.GetMdMgr.Types(true, true)
-      typeDefs match {
-        case None =>
-          None
-          logger.debug("No typeDefs found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllTypes", null, ErrorCodeConstants.Get_All_Types_Failed_Not_Available)
-          apiResult.toString()
-        case Some(ts) =>
-          val tsa = ts.toArray
-          logger.debug("Found " + tsa.length + " types ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllTypes", JsonSerializer.SerializeObjectListToJson("Types", tsa), ErrorCodeConstants.Get_All_Types_Successful)
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllTypes", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Types_Failed)
-        apiResult.toString()
-      }
-    }
+    TypeUtils.GetAllTypes(formatType,userid)
   }
 
   // All available types(format JSON or XML) as a String
   def GetAllTypesByObjType(formatType: String, objType: String): String = {
-    logger.debug("Find the types of type " + objType)
-    try {
-      val typeDefs = MdMgr.GetMdMgr.Types(true, true)
-      typeDefs match {
-        case None =>
-          None
-          logger.debug("No typeDefs found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllTypesByObjType", null, ErrorCodeConstants.Get_All_Types_Failed_Not_Available + ":" + objType)
-          apiResult.toString()
-        case Some(ts) =>
-          val tsa = ts.toArray.filter(t => { t.getClass.getName == objType })
-          if (tsa.length == 0) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllTypesByObjType", null, ErrorCodeConstants.Get_All_Types_Failed_Not_Available + ":" + objType)
-            apiResult.toString()
-          } else {
-            var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllTypesByObjType", JsonSerializer.SerializeObjectListToJson("Types", tsa), ErrorCodeConstants.Get_All_Types_Successful + ":" + objType)
-            apiResult.toString()
-          }
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllTypesByObjType", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Types_Failed + ":" + objType)
-        apiResult.toString()
-      }
-    }
+    TypeUtils.GetAllTypesByObjType(formatType,objType)
   }
 
   // Get types for a given name
   def GetType(objectName: String, formatType: String): String = {
-    try {
-      val typeDefs = MdMgr.GetMdMgr.Types(MdMgr.sysNS, objectName, false, false)
-      typeDefs match {
-        case None =>
-          None
-          logger.debug("No typeDefs found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetType" , null, ErrorCodeConstants.Get_Type_Failed_Not_Available + ":" + objectName)
-          apiResult.toString()
-        case Some(ts) =>
-          val tsa = ts.toArray
-          logger.debug("Found " + tsa.length + " types ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType" , JsonSerializer.SerializeObjectListToJson("Types", tsa), ErrorCodeConstants.Get_Type_Successful + ":" + objectName)
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetType" , null, "Error :" + e.toString() + ErrorCodeConstants.Get_Type_Failed + ":" + objectName)
-        apiResult.toString()
-      }
-    }
+    TypeUtils.GetType(objectName,formatType)
   }
 
-  def GetTypeDef(nameSpace: String, objectName: String, formatType: String,version: String, userid: Option[String]): String = {
-    var key = nameSpace + "." + objectName + "." + version.toLong
-    val dispkey = nameSpace + "." + objectName + "." + MdMgr.Pad0s2Version(version.toLong)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",dispkey)
-    try {
-      val typeDefs = MdMgr.GetMdMgr.Types(nameSpace, objectName,false,false)
-      typeDefs match {
-        case None =>
-          None
-          logger.debug("No typeDefs found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetTypeDef", null, ErrorCodeConstants.Get_Type_Def_Failed_Not_Available + ":" + dispkey)
-          apiResult.toString()
-        case Some(ts) =>
-          val tsa = ts.toArray
-          logger.debug("Found " + tsa.length + " types ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetTypeDef", JsonSerializer.SerializeObjectListToJson("Types", tsa), ErrorCodeConstants.Get_Type_Def_Successful + ":" + dispkey)
-          apiResult.toString()
-      }
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetTypeDef", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Type_Def_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
+  def GetTypeDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
+    TypeUtils.GetTypeDef(nameSpace,objectName,formatType,version,userid)
   }
 
   def GetType(nameSpace: String, objectName: String, version: String, formatType: String, userid: Option[String]): Option[BaseTypeDef] = {
-    try {
-      val dispkey = nameSpace+"."+objectName+"."+version
-      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",dispkey)
-      val typeDefs = MdMgr.GetMdMgr.Types(MdMgr.sysNS, objectName, false, false)
-      typeDefs match {
-        case None => None
-        case Some(ts) =>
-          val tsa = ts.toArray.filter(t => { t.ver == version.toLong })
-          tsa.length match {
-            case 0 => None
-            case 1 => Some(tsa(0))
-            case _ => {
-              logger.debug("Found More than one type, Doesn't make sesne")
-              Some(tsa(0))
-            }
-          }
-      }
-    } catch {
-      case e: Exception => {
-        logger.error("Failed to fetch the typeDefs:" + e.getMessage())
-        None
-      }
-    }
+    TypeUtils.GetType(nameSpace,objectName,version,formatType,userid)
   }
 
-  def AddNode(nodeId:String,nodePort:Int,nodeIpAddr:String,
-        jarPaths:List[String],scala_home:String,
-        java_home:String, classpath: String,
-        clusterId:String,power:Int,
-    roles: Array[String], description: String): String = {
-    try{
+  def AddNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
+              jarPaths: List[String], scala_home: String,
+              java_home: String, classpath: String,
+              clusterId: String, power: Int,
+              roles: Array[String], description: String): String = {
+    try {
       // save in memory
-      val ni = MdMgr.GetMdMgr.MakeNode(nodeId,nodePort,nodeIpAddr,jarPaths,scala_home,
-               java_home,classpath,clusterId,power,roles,description)
+      val ni = MdMgr.GetMdMgr.MakeNode(nodeId, nodePort, nodeIpAddr, jarPaths, scala_home,
+        java_home, classpath, clusterId, power, roles, description)
       MdMgr.GetMdMgr.AddNode(ni)
       // save in database
       val key = "NodeInfo." + nodeId
       val value = serializer.SerializeObjectToByteArray(ni)
-      SaveObject(key.toLowerCase,value,configStore)
+      SaveObject(key.toLowerCase, value, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddNode", null, ErrorCodeConstants.Add_Node_Successful + ":" + nodeId)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddNode", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Node_Failed + ":" + nodeId)
         apiResult.toString()
       }
-    } 
+    }
   }
 
-  def UpdateNode(nodeId:String,nodePort:Int,nodeIpAddr:String,
-     jarPaths:List[String],scala_home:String,
-     java_home:String, classpath: String,
-     clusterId:String,power:Int,
+  def UpdateNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
+    jarPaths: List[String], scala_home: String,
+    java_home: String, classpath: String,
+    clusterId: String, power: Int,
     roles: Array[String], description: String): String = {
-    AddNode(nodeId,nodePort,nodeIpAddr,jarPaths,scala_home,
-      java_home,classpath,
-      clusterId,power,roles,description)
+    AddNode(nodeId, nodePort, nodeIpAddr, jarPaths, scala_home,
+      java_home, classpath,
+      clusterId, power, roles, description)
   }
 
-  def RemoveNode(nodeId:String) : String = {
-    try{
+  def RemoveNode(nodeId: String): String = {
+    try {
       MdMgr.GetMdMgr.RemoveNode(nodeId)
       val key = "NodeInfo." + nodeId
-      DeleteObject(key.toLowerCase,configStore)
+      DeleteObject(key.toLowerCase, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveNode", null, ErrorCodeConstants.Remove_Node_Successful + ":" + nodeId)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveNode", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Node_Failed + ":" + nodeId)
         apiResult.toString()
       }
-    } 
+    }
   }
 
-
-  def AddAdapter(name:String,typeString:String,dataFormat: String,className: String, 
-     jarName: String, dependencyJars: List[String], 
+  def AddAdapter(name: String, typeString: String, dataFormat: String, className: String,
+    jarName: String, dependencyJars: List[String],
     adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
-    try{
+    try {
       // save in memory
-      val ai = MdMgr.GetMdMgr.MakeAdapter(name,typeString,dataFormat,className,jarName,
+      val ai = MdMgr.GetMdMgr.MakeAdapter(name, typeString, dataFormat, className, jarName,
         dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
       MdMgr.GetMdMgr.AddAdapter(ai)
       // save in database
       val key = "AdapterInfo." + name
       val value = serializer.SerializeObjectToByteArray(ai)
-      SaveObject(key.toLowerCase,value,configStore)
+      SaveObject(key.toLowerCase, value, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddAdapter", null, ErrorCodeConstants.Add_Adapter_Successful + ":" + name)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddAdapter", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Adapter_Failed + ":" + name)
         apiResult.toString()
       }
-    } 
+    }
   }
 
-  def UpdateAdapter(name:String,typeString:String,dataFormat: String,className: String, 
-        jarName: String, dependencyJars: List[String], 
+  def UpdateAdapter(name: String, typeString: String, dataFormat: String, className: String,
+    jarName: String, dependencyJars: List[String],
     adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
     AddAdapter(name, typeString, dataFormat, className, jarName, dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
   }
 
-  def RemoveAdapter(name:String) : String = {
-    try{
+  def RemoveAdapter(name: String): String = {
+    try {
       MdMgr.GetMdMgr.RemoveAdapter(name)
       val key = "AdapterInfo." + name
-      DeleteObject(key.toLowerCase,configStore)
+      DeleteObject(key.toLowerCase, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveAdapter", null, ErrorCodeConstants.Remove_Adapter_Successful + ":" + name)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveAdapter", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Adapter_Failed + ":" + name)
         apiResult.toString()
       }
-    } 
+    }
   }
 
-
-  def AddCluster(clusterId:String,description:String,privileges:String) : String = {
-    try{
+  def AddCluster(clusterId: String, description: String, privileges: String): String = {
+    try {
       // save in memory
-      val ci = MdMgr.GetMdMgr.MakeCluster(clusterId,description,privileges)
+      val ci = MdMgr.GetMdMgr.MakeCluster(clusterId, description, privileges)
       MdMgr.GetMdMgr.AddCluster(ci)
       // save in database
       val key = "ClusterInfo." + clusterId
       val value = serializer.SerializeObjectToByteArray(ci)
-      SaveObject(key.toLowerCase,value,configStore)
+      SaveObject(key.toLowerCase, value, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddCluster", null, ErrorCodeConstants.Add_Cluster_Successful + ":" + clusterId)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddCluster", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Cluster_Failed + ":" + clusterId)
         apiResult.toString()
       }
-    } 
+    }
   }
 
-  def UpdateCluster(clusterId:String,description:String,privileges:String): String = {
-    AddCluster(clusterId,description,privileges)
+  def UpdateCluster(clusterId: String, description: String, privileges: String): String = {
+    AddCluster(clusterId, description, privileges)
   }
 
-  def RemoveCluster(clusterId:String) : String = {
-    try{
+  def RemoveCluster(clusterId: String): String = {
+    try {
       MdMgr.GetMdMgr.RemoveCluster(clusterId)
       val key = "ClusterInfo." + clusterId
-      DeleteObject(key.toLowerCase,configStore)
+      DeleteObject(key.toLowerCase, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCluster", null, ErrorCodeConstants.Remove_Cluster_Successful + ":" + clusterId)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveCluster", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Cluster_Failed + ":" + clusterId)
         apiResult.toString()
       }
-    } 
+    }
   }
 
-
-  def AddClusterCfg(clusterCfgId:String,cfgMap:scala.collection.mutable.HashMap[String,String],
-        modifiedTime:Date,createdTime:Date) : String = {
-    try{
+  def AddClusterCfg(clusterCfgId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
+    modifiedTime: Date, createdTime: Date): String = {
+    try {
       // save in memory
-      val ci = MdMgr.GetMdMgr.MakeClusterCfg(clusterCfgId,cfgMap, modifiedTime,createdTime)
+      val ci = MdMgr.GetMdMgr.MakeClusterCfg(clusterCfgId, cfgMap, modifiedTime, createdTime)
       MdMgr.GetMdMgr.AddClusterCfg(ci)
       // save in database
       val key = "ClusterCfgInfo." + clusterCfgId
       val value = serializer.SerializeObjectToByteArray(ci)
-      SaveObject(key.toLowerCase,value,configStore)
+      SaveObject(key.toLowerCase, value, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddClusterCfg", null, ErrorCodeConstants.Add_Cluster_Config_Successful + ":" + clusterCfgId)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddClusterCfg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Cluster_Config_Failed + ":" + clusterCfgId)
         apiResult.toString()
       }
-    } 
+    }
   }
 
-
-  def UpdateClusterCfg(clusterCfgId:String,cfgMap:scala.collection.mutable.HashMap[String,String],
-           modifiedTime:Date,createdTime:Date): String = {
-    AddClusterCfg(clusterCfgId,cfgMap,modifiedTime,createdTime)
+  def UpdateClusterCfg(clusterCfgId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
+    modifiedTime: Date, createdTime: Date): String = {
+    AddClusterCfg(clusterCfgId, cfgMap, modifiedTime, createdTime)
   }
 
-  def RemoveClusterCfg(clusterCfgId:String) : String = {
-    try{
+  def RemoveClusterCfg(clusterCfgId: String): String = {
+    try {
       MdMgr.GetMdMgr.RemoveClusterCfg(clusterCfgId)
       val key = "ClusterCfgInfo." + clusterCfgId
-      DeleteObject(key.toLowerCase,configStore)
+      DeleteObject(key.toLowerCase, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCLusterCfg", null, ErrorCodeConstants.Remove_Cluster_Config_Successful + ":" + clusterCfgId)
       apiResult.toString()
-    } catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveCLusterCfg", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Cluster_Config_Failed + ":" + clusterCfgId)
         apiResult.toString()
       }
-    } 
+    }
   }
-
 
   def RemoveConfig(cfgStr: String, userid: Option[String], cobjects: String): String = {
     var keyList = new Array[String](0)
-    logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.REMOVECONFIG,cfgStr,AuditConstants.SUCCESS,"",cobjects)    
+    logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.REMOVECONFIG, cfgStr, AuditConstants.SUCCESS, "", cobjects)
     try {
       // extract config objects
-      val cfg = JsonSerializer.parseEngineConfig(cfgStr)
+      val map = JsonSerializer.parseEngineConfig(cfgStr)
       // process clusterInfo object if it exists
-      val clusters = cfg.Clusters
-      if ( clusters != None ){
-  val ciList = clusters.get
-  ciList.foreach(c1 => {
-    MdMgr.GetMdMgr.RemoveCluster(c1.ClusterId.toLowerCase)
-    var key = "ClusterInfo." + c1.ClusterId
-    keyList   = keyList :+ key.toLowerCase
-    MdMgr.GetMdMgr.RemoveClusterCfg(c1.ClusterId.toLowerCase)
-    key = "ClusterCfgInfo." + c1.ClusterId
-    keyList   = keyList :+ key.toLowerCase
-    val nodes = c1.Nodes
-    nodes.foreach(n => {
-      MdMgr.GetMdMgr.RemoveNode(n.NodeId.toLowerCase)
-      key = "NodeInfo." + n.NodeId
-      keyList   = keyList :+ key.toLowerCase
-    })
-  })
+      if (map.contains("Clusters")) {
+        var globalAdaptersCollected = false // to support previous versions
+        val clustersList = map.get("Clusters").get.asInstanceOf[List[_]] //BUGBUG:: Do we need to check the type before converting
+        logger.debug("Found " + clustersList.length + " cluster objects ")
+        clustersList.foreach(clustny => {
+          val cluster = clustny.asInstanceOf[Map[String, Any]] //BUGBUG:: Do we need to check the type before converting
+          val ClusterId = cluster.getOrElse("ClusterId", "").toString.trim.toLowerCase
+
+          MdMgr.GetMdMgr.RemoveCluster(ClusterId)
+          var key = "ClusterInfo." + ClusterId
+          keyList = keyList :+ key.toLowerCase
+          MdMgr.GetMdMgr.RemoveClusterCfg(ClusterId)
+          key = "ClusterCfgInfo." + ClusterId
+          keyList = keyList :+ key.toLowerCase
+
+          if (cluster.contains("Nodes")) {
+            val nodes = cluster.get("Nodes").get.asInstanceOf[List[_]]
+            nodes.foreach(n => {
+              val node = n.asInstanceOf[Map[String, Any]]
+              val nodeId = node.getOrElse("NodeId", "").toString.trim.toLowerCase
+              if (nodeId.size > 0) {
+                MdMgr.GetMdMgr.RemoveNode(nodeId.toLowerCase)
+                key = "NodeInfo." + nodeId
+                keyList = keyList :+ key.toLowerCase
+              }
+            })
+          }
+
+          if (cluster.contains("Adapters") || (globalAdaptersCollected == false && map.contains("Adapters"))) {
+            val adapters = if (cluster.contains("Adapters") && (globalAdaptersCollected == false && map.contains("Adapters"))) {
+              map.get("Adapters").get.asInstanceOf[List[_]] ++ cluster.get("Adapters").get.asInstanceOf[List[_]]
+            } else if (cluster.contains("Adapters")) {
+              cluster.get("Adapters").get.asInstanceOf[List[_]]
+            } else if (globalAdaptersCollected == false && map.contains("Adapters")) {
+              map.get("Adapters").get.asInstanceOf[List[_]]
+            } else {
+              List[Any]()
+            }
+
+            globalAdaptersCollected = true // to support previous versions
+
+            adapters.foreach(a => {
+              val adap = a.asInstanceOf[Map[String, Any]]
+              val nm = adap.getOrElse("Name", "").toString.trim.toLowerCase
+              if (nm.size > 0) {
+                MdMgr.GetMdMgr.RemoveAdapter(nm)
+                val key = "AdapterInfo." + nm
+                keyList = keyList :+ key.toLowerCase
+              }
+            })
+          }
+        })
       }
-      val aiList = cfg.Adapters
-      if ( aiList != None ){
-  val adapters = aiList.get
-  adapters.foreach(a => {
-    MdMgr.GetMdMgr.RemoveAdapter(a.Name.toLowerCase)
-    val key = "AdapterInfo." + a.Name
-    keyList   = keyList :+ key.toLowerCase
-  })
-      }
-      RemoveObjectList(keyList,configStore)
+      if (keyList.size > 0)
+        RemoveObjectList(keyList, configStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConfig", null, ErrorCodeConstants.Remove_Config_Successful + ":" + cfgStr)
       apiResult.toString()
-    }catch {
+    } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConfig", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Config_Failed + ":" + cfgStr)
         apiResult.toString()
       }
     }
   }
 
-  def UploadConfig(cfgStr: String, userid:Option[String], objectList: String): String = {
+  def getModelDependencies(modelConfigName: String, userid: Option[String]): List[String] = {
+    var config: scala.collection.immutable.Map[String, List[String]] = MdMgr.GetMdMgr.GetModelConfig(modelConfigName)
+    config.getOrElse(ModelCompilationConstants.DEPENDENCIES, List[String]())
+  }
+
+  def getModelMessagesContainers(modelConfigName: String, userid: Option[String]): List[String] = {
+    var config: scala.collection.immutable.Map[String, List[String]] = MdMgr.GetMdMgr.GetModelConfig(modelConfigName)
+    config.getOrElse(ModelCompilationConstants.TYPES_DEPENDENCIES, List[String]())
+  }
+
+  def getModelConfigNames(): Array[String] = {
+    MdMgr.GetMdMgr.GetModelConfigKeys
+  }
+
+  /**
+   *
+   */
+  private var cfgmap: Map[String, Any] = null
+  def UploadModelsConfig(cfgStr: String, userid: Option[String], objectList: String, isFromNotify: Boolean = false): String = {
     var keyList = new Array[String](0)
     var valueList = new Array[Array[Byte]](0)
+    val tranId = GetNewTranId
+    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String, Any]]
+    var i = 0
+    // var objectsAdded: scala.collection.mutable.MutableList[Map[String, List[String]]] = scala.collection.mutable.MutableList[Map[String, List[String]]]()
+    var baseElems: Array[BaseElemDef] = new Array[BaseElemDef](cfgmap.keys.size)
+    cfgmap.keys.foreach(key => {
+      var mdl = cfgmap(key).asInstanceOf[Map[String, List[String]]]
+
+      // wrap the config objet in Element Def
+      var confElem: ConfigDef = new ConfigDef
+      confElem.tranId = tranId
+      confElem.nameSpace = userid.get
+      confElem.contents = JsonSerializer.SerializeMapToJsonString(mdl)
+      confElem.name = key
+      baseElems(i) = confElem
+      i = i + 1
+
+      // Prepare KEY/VALUE for persistent insertion
+      var modelKey = userid.getOrElse("_") + "." + key
+      var value = serializer.SerializeObjectToByteArray(mdl)
+      keyList = keyList :+ modelKey.toLowerCase
+      valueList = valueList :+ value
+      // Save in memory
+      AddConfigObjToCache(tranId, modelKey, mdl, MdMgr.GetMdMgr)
+    })
+    // Save in Databae
+    SaveObjectList(keyList, valueList, modelConfigStore)
+    if (!isFromNotify) {
+      val operations = for (op <- baseElems) yield "Add"
+      NotifyEngine(baseElems, operations)
+    }
+
+    // return reuslts
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", null, "Upload of model config successful")
+    apiResult.toString()
+  }
+
+  private def getStringFromJsonNode(v: Any): String = {
+    if (v == null) return ""
+
+    if (v.isInstanceOf[String]) return v.asInstanceOf[String]
+
+    implicit val jsonFormats: Formats = DefaultFormats
+    val lst = List(v)
+    val str = Serialization.write(lst)
+    if (str.size > 2) {
+      return str.substring(1, str.size - 1)
+    }
+    return ""
+  }
+
+  /*
+  private def getJsonNodeFromString(s: String): Any = {
+    if (s.size == 0) return s
+
+    val s1 = "[" + s + "]"
     
-    logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,cfgStr,AuditConstants.SUCCESS,"",objectList)
-    
+    implicit val jsonFormats: Formats = DefaultFormats
+    val list = Serialization.read[List[_]](s1)
+
+    return list(0)
+  }
+*/
+
+  /**
+   *
+   */
+  def UploadConfig(cfgStr: String, userid: Option[String], objectList: String): String = {
+    var keyList = new Array[String](0)
+    var valueList = new Array[Array[Byte]](0)
+
+    logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTCONFIG, cfgStr, AuditConstants.SUCCESS, "", objectList)
+
     try {
       // extract config objects
-      val cfg = JsonSerializer.parseEngineConfig(cfgStr)
+      val map = JsonSerializer.parseEngineConfig(cfgStr)
       // process clusterInfo object if it exists
-      val clusters = cfg.Clusters
-
-      if ( clusters == None ){
+      if (map.contains("Clusters") == false) {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", null, ErrorCodeConstants.Upload_Config_Failed + ":" + cfgStr)
         apiResult.toString()
-      }
-      else{
-  val ciList = clusters.get
-  logger.debug("Found " + ciList.length + " cluster objects ")
-  ciList.foreach(c1 => {
-    logger.debug("Processing the cluster => " + c1.ClusterId)
-    // save in memory
-    var ci = MdMgr.GetMdMgr.MakeCluster(c1.ClusterId,null,null)
-    MdMgr.GetMdMgr.AddCluster(ci)
-    var key = "ClusterInfo." + ci.clusterId
-    var value = serializer.SerializeObjectToByteArray(ci)
-    keyList   = keyList :+ key.toLowerCase
-    valueList = valueList :+ value
+      } else {
+        if (map.contains("Clusters")) {
+          var globalAdaptersCollected = false // to support previous versions
+          val clustersList = map.get("Clusters").get.asInstanceOf[List[_]] //BUGBUG:: Do we need to check the type before converting
+          logger.debug("Found " + clustersList.length + " cluster objects ")
+          clustersList.foreach(clustny => {
+            val cluster = clustny.asInstanceOf[Map[String, Any]] //BUGBUG:: Do we need to check the type before converting
+            val ClusterId = cluster.getOrElse("ClusterId", "").toString.trim.toLowerCase
+            logger.debug("Processing the cluster => " + ClusterId)
+            // save in memory
+            var ci = MdMgr.GetMdMgr.MakeCluster(ClusterId, null, null)
+            MdMgr.GetMdMgr.AddCluster(ci)
+            var key = "ClusterInfo." + ci.clusterId
+            var value = serializer.SerializeObjectToByteArray(ci)
+            keyList = keyList :+ key.toLowerCase
+            valueList = valueList :+ value
+            // gather config name-value pairs
+            val cfgMap = new scala.collection.mutable.HashMap[String, String]
+            if (cluster.contains("DataStore"))
+              cfgMap("DataStore") = getStringFromJsonNode(cluster.getOrElse("DataStore", null))
+            if (cluster.contains("StatusInfo"))
+              cfgMap("StatusInfo") = getStringFromJsonNode(cluster.getOrElse("StatusInfo", null))
+            if (cluster.contains("ZooKeeperInfo"))
+              cfgMap("ZooKeeperInfo") = getStringFromJsonNode(cluster.getOrElse("ZooKeeperInfo", null))
+            if (cluster.contains("EnvironmentContext"))
+              cfgMap("EnvironmentContext") = getStringFromJsonNode(cluster.getOrElse("EnvironmentContext", null))
+            if (cluster.contains("Config")) {
+              val config = cluster.get("Config").get.asInstanceOf[Map[String, Any]] //BUGBUG:: Do we need to check the type before converting
+              if (config.contains("DataStore"))
+                cfgMap("DataStore") = getStringFromJsonNode(config.get("DataStore"))
+              if (config.contains("StatusInfo"))
+                cfgMap("StatusInfo") = getStringFromJsonNode(config.get("StatusInfo"))
+              if (config.contains("ZooKeeperInfo"))
+                cfgMap("ZooKeeperInfo") = getStringFromJsonNode(config.get("ZooKeeperInfo"))
+              if (config.contains("EnvironmentContext"))
+                cfgMap("EnvironmentContext") = getStringFromJsonNode(config.get("EnvironmentContext"))
+            }
 
-    // gather config name-value pairs
-    val cfgMap = new scala.collection.mutable.HashMap[String,String] 
-    cfgMap("DataStore") = c1.Config.DataStore
-    cfgMap("StatusInfo") = c1.Config.StatusInfo
-    cfgMap("ZooKeeperInfo") = c1.Config.ZooKeeperInfo
-    cfgMap("EnvironmentContext") = c1.Config.EnvironmentContext
+            // save in memory
+            val cic = MdMgr.GetMdMgr.MakeClusterCfg(ClusterId, cfgMap, null, null)
+            MdMgr.GetMdMgr.AddClusterCfg(cic)
+            key = "ClusterCfgInfo." + cic.clusterId
+            value = serializer.SerializeObjectToByteArray(cic)
+            keyList = keyList :+ key.toLowerCase
+            valueList = valueList :+ value
 
-    // save in memory
-    val cic = MdMgr.GetMdMgr.MakeClusterCfg(c1.ClusterId,cfgMap,null,null)
-    MdMgr.GetMdMgr.AddClusterCfg(cic)
-    key = "ClusterCfgInfo." + cic.clusterId
-    value = serializer.SerializeObjectToByteArray(cic)
-    keyList   = keyList :+ key.toLowerCase
-    valueList = valueList :+ value
+            if (cluster.contains("Nodes")) {
+              val nodes = cluster.get("Nodes").get.asInstanceOf[List[_]]
+              nodes.foreach(n => {
+                val node = n.asInstanceOf[Map[String, Any]]
+                val nodeId = node.getOrElse("NodeId", "").toString.trim.toLowerCase
+                val nodePort = node.getOrElse("NodePort", "0").toString.trim.toInt
+                val nodeIpAddr = node.getOrElse("NodeIpAddr", "").toString.trim
+                val scala_home = node.getOrElse("Scala_home", "").toString.trim
+                val java_home = node.getOrElse("Java_home", "").toString.trim
+                val classpath = node.getOrElse("Classpath", "").toString.trim
+                val jarPaths = if (node.contains("JarPaths")) node.get("JarPaths").get.asInstanceOf[List[String]] else List[String]()
+                val roles = if (node.contains("Roles")) node.get("Roles").get.asInstanceOf[List[String]] else List[String]()
 
-    val nodes = c1.Nodes
-    nodes.foreach(n => {
-            val validRoles = NodeRole.ValidRoles.map(r => r.toLowerCase).toSet
-            val givenRoles = if (n.Roles == None) null else n.Roles.get
-            var foundRoles = ArrayBuffer[String]()
-            var notfoundRoles = ArrayBuffer[String]()
-            if (givenRoles != null) {
-              val gvnRoles = givenRoles.foreach(r => {
-                if (validRoles.contains(r.toLowerCase))
-                  foundRoles += r
-                else
-                  notfoundRoles += r
+                val validRoles = NodeRole.ValidRoles.map(r => r.toLowerCase).toSet
+                val givenRoles = roles
+                var foundRoles = ArrayBuffer[String]()
+                var notfoundRoles = ArrayBuffer[String]()
+                if (givenRoles != null) {
+                  val gvnRoles = givenRoles.foreach(r => {
+                    if (validRoles.contains(r.toLowerCase))
+                      foundRoles += r
+                    else
+                      notfoundRoles += r
+                  })
+                  if (notfoundRoles.size > 0) {
+                    logger.error("Found invalid node roles:%s for nodeid: %d".format(notfoundRoles.mkString(","), nodeId))
+                  }
+                }
+
+                val ni = MdMgr.GetMdMgr.MakeNode(nodeId, nodePort, nodeIpAddr, jarPaths,
+                  scala_home, java_home, classpath, ClusterId, 0, foundRoles.toArray, null)
+                MdMgr.GetMdMgr.AddNode(ni)
+                val key = "NodeInfo." + ni.nodeId
+                val value = serializer.SerializeObjectToByteArray(ni)
+                keyList = keyList :+ key.toLowerCase
+                valueList = valueList :+ value
               })
-              if (notfoundRoles.size > 0) {
-                logger.error("Found invalid node roles:%s for nodeid: %d".format(notfoundRoles.mkString(","), n.NodeId))
-              }
             }
 
-            val ni = MdMgr.GetMdMgr.MakeNode(n.NodeId, n.NodePort, n.NodeIpAddr, n.JarPaths,
-              n.Scala_home, n.Java_home, n.Classpath, c1.ClusterId, 0, foundRoles.toArray, null)
-      MdMgr.GetMdMgr.AddNode(ni)
-      val key = "NodeInfo." + ni.nodeId
-      val value = serializer.SerializeObjectToByteArray(ni)
-      keyList   = keyList :+ key.toLowerCase
-      valueList = valueList :+ value
-    })
-  })
-  val aiList = cfg.Adapters
-  if ( aiList != None ){
-    val adapters = aiList.get
-    adapters.foreach(a => {
-      var depJars:List[String] = null
-      if(a.DependencyJars != None ){
-        depJars = a.DependencyJars.get
-      }
-      var ascfg:String = null
-      if(a.AdapterSpecificCfg != None ){
-        ascfg = a.AdapterSpecificCfg.get
-      }
-      var inputAdapterToVerify: String = null
-      if(a.InputAdapterToVerify != None ){
-        inputAdapterToVerify = a.InputAdapterToVerify.get
-      }
-      var dataFormat: String = null
-      if(a.DataFormat != None ){
-        dataFormat = a.DataFormat.get
-      }
-            var delimiterString: String = null
-            var associatedMsg: String = null
-            if (a.DelimiterString != None) {
-              delimiterString = a.DelimiterString.get
+            if (cluster.contains("Adapters") || (globalAdaptersCollected == false && map.contains("Adapters"))) {
+              val adapters = if (cluster.contains("Adapters") && (globalAdaptersCollected == false && map.contains("Adapters"))) {
+                map.get("Adapters").get.asInstanceOf[List[_]] ++ cluster.get("Adapters").get.asInstanceOf[List[_]]
+              } else if (cluster.contains("Adapters")) {
+                cluster.get("Adapters").get.asInstanceOf[List[_]]
+              } else if (globalAdaptersCollected == false && map.contains("Adapters")) {
+                map.get("Adapters").get.asInstanceOf[List[_]]
+              } else {
+                List[Any]()
+              }
+
+              globalAdaptersCollected = true // to support previous versions
+
+              adapters.foreach(a => {
+                val adap = a.asInstanceOf[Map[String, Any]]
+                val nm = adap.getOrElse("Name", "").toString.trim
+                val jarnm = adap.getOrElse("JarName", "").toString.trim
+                val typStr = adap.getOrElse("TypeString", "").toString.trim
+                val clsNm = adap.getOrElse("ClassName", "").toString.trim
+
+                var depJars: List[String] = null
+                if (adap.contains("DependencyJars")) {
+                  depJars = adap.get("DependencyJars").get.asInstanceOf[List[String]]
+                }
+                var ascfg: String = null
+                if (adap.contains("AdapterSpecificCfg")) {
+                  ascfg = getStringFromJsonNode(adap.get("AdapterSpecificCfg"))
+                }
+                var inputAdapterToVerify: String = null
+                if (adap.contains("InputAdapterToVerify")) {
+                  inputAdapterToVerify = adap.get("InputAdapterToVerify").get.asInstanceOf[String]
+                }
+                var dataFormat: String = null
+                if (adap.contains("DataFormat")) {
+                  dataFormat = adap.get("DataFormat").get.asInstanceOf[String]
+                }
+                var delimiterString: String = null
+                var associatedMsg: String = null
+                if (adap.contains("DelimiterString")) {
+                  delimiterString = adap.get("DelimiterString").get.asInstanceOf[String]
+                }
+                if (adap.contains("AssociatedMessage")) {
+                  associatedMsg = adap.get("AssociatedMessage").get.asInstanceOf[String]
+                }
+                // save in memory
+                val ai = MdMgr.GetMdMgr.MakeAdapter(nm, typStr, dataFormat, clsNm, jarnm, depJars, ascfg, inputAdapterToVerify, delimiterString, associatedMsg)
+                MdMgr.GetMdMgr.AddAdapter(ai)
+                val key = "AdapterInfo." + ai.name
+                val value = serializer.SerializeObjectToByteArray(ai)
+                keyList = keyList :+ key.toLowerCase
+                valueList = valueList :+ value
+              })
+            } else {
+              logger.debug("Found no adapater objects in the config file")
             }
-            if (a.AssociatedMessage != None) {
-              associatedMsg = a.AssociatedMessage.get
+
+            // Now see if there are any other User Defined Properties in this cluster, if there are any, create a container
+            // like we did for adapters and noteds, etc....
+            var userDefinedProps: Map[String, Any] = cluster.filter(x => { !excludeList.contains(x._1) })
+            if (userDefinedProps.size > 0) {
+              val upProps: UserPropertiesInfo = MdMgr.GetMdMgr.MakeUPProps(ClusterId)
+              userDefinedProps.keys.foreach(key => {
+                upProps.Props(key) = userDefinedProps(key).toString
+              })
+              MdMgr.GetMdMgr.AddUserProperty(upProps)
+              val upKey = "userProperties." + upProps.clusterId
+              val upValue = serializer.SerializeObjectToByteArray(upProps)
+              keyList = keyList :+ upKey.toLowerCase
+              valueList = valueList :+ upValue
+
             }
-      // save in memory
-            val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name, a.TypeString, dataFormat, a.ClassName, a.JarName, depJars, ascfg, inputAdapterToVerify, delimiterString, associatedMsg)
-      MdMgr.GetMdMgr.AddAdapter(ai)
-      val key = "AdapterInfo." + ai.name
-      val value = serializer.SerializeObjectToByteArray(ai)
-      keyList   = keyList :+ key.toLowerCase
-      valueList = valueList :+ value
-    })
-  }
-  else{
-    logger.debug("Found no adapater objects in the config file")
-  }
-  SaveObjectList(keyList,valueList,configStore)
-  var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadConfig", cfgStr, ErrorCodeConstants.Upload_Config_Successful)
-  apiResult.toString()
+          })
+
+        } else {
+          logger.debug("Found no adapater objects in the config file")
+        }
+
+        SaveObjectList(keyList, valueList, configStore)
+        var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadConfig", cfgStr, ErrorCodeConstants.Upload_Config_Successful)
+        apiResult.toString()
       }
-    }catch {
+    } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", cfgStr, "Error :" + e.toString() + ErrorCodeConstants.Upload_Config_Failed)
         apiResult.toString()
       }
     }
   }
 
+  def getUP(ci: String, key: String): String = {
+    MdMgr.GetMdMgr.GetUserProperty(ci, key)
+  }
+
+  def getNodeList1: Array[NodeInfo] = { MdMgr.GetMdMgr.Nodes.values.toArray }
   // All available nodes(format JSON) as a String
-  def GetAllNodes(formatType: String,userid: Option[String]): String = {
+  def GetAllNodes(formatType: String, userid: Option[String]): String = {
     try {
       val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
-      logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"","nodes")
-      if ( nodes.length == 0 ){
-          logger.debug("No Nodes found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllNodes", null, ErrorCodeConstants.Get_All_Nodes_Failed_Not_Available)
-          apiResult.toString()
-      }
-      else{
+      logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.SUCCESS, "", "nodes")
+      if (nodes.length == 0) {
+        logger.debug("No Nodes found ")
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllNodes", null, ErrorCodeConstants.Get_All_Nodes_Failed_Not_Available)
+        apiResult.toString()
+      } else {
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllNodes", JsonSerializer.SerializeCfgObjectListToJson("Nodes", nodes), ErrorCodeConstants.Get_All_Nodes_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllNodes", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Nodes_Failed)
         apiResult.toString()
       }
     }
   }
 
-
   // All available adapters(format JSON) as a String
   def GetAllAdapters(formatType: String, userid: Option[String]): String = {
     try {
       val adapters = MdMgr.GetMdMgr.Adapters.values.toArray
-      logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"","adapters")
-      if ( adapters.length == 0 ){
-          logger.debug("No Adapters found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllAdapters", null, ErrorCodeConstants.Get_All_Adapters_Failed_Not_Available)
-          apiResult.toString()
-      }
-      else{
+      logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.FAIL, "", "adapters")
+      if (adapters.length == 0) {
+        logger.debug("No Adapters found ")
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllAdapters", null, ErrorCodeConstants.Get_All_Adapters_Failed_Not_Available)
+        apiResult.toString()
+      } else {
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllAdapters", JsonSerializer.SerializeCfgObjectListToJson("Adapters", adapters), ErrorCodeConstants.Get_All_Adapters_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllAdapters", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Adapters_Failed)
 
         apiResult.toString()
@@ -5570,18 +5184,19 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetAllClusters(formatType: String, userid: Option[String]): String = {
     try {
       val clusters = MdMgr.GetMdMgr.Clusters.values.toArray
-      logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"","Clusters")
-      if ( clusters.length == 0 ){
-          logger.debug("No Clusters found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusters", null, ErrorCodeConstants.Get_All_Clusters_Failed_Not_Available)
-          apiResult.toString()
-      }
-      else{
+      logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.SUCCESS, "", "Clusters")
+      if (clusters.length == 0) {
+        logger.debug("No Clusters found ")
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusters", null, ErrorCodeConstants.Get_All_Clusters_Failed_Not_Available)
+        apiResult.toString()
+      } else {
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllClusters", JsonSerializer.SerializeCfgObjectListToJson("Clusters", clusters), ErrorCodeConstants.Get_All_Clusters_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusters", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Clusters_Failed)
         apiResult.toString()
       }
@@ -5589,22 +5204,23 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // All available clusterCfgs(format JSON) as a String
-  def GetAllClusterCfgs(formatType: String,userid:Option[String]): String = {
+  def GetAllClusterCfgs(formatType: String, userid: Option[String]): String = {
     try {
-      logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"","ClusterCfg")
+      logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.SUCCESS, "", "ClusterCfg")
       val clusterCfgs = MdMgr.GetMdMgr.ClusterCfgs.values.toArray
-      if ( clusterCfgs.length == 0 ){
-          logger.debug("No ClusterCfgs found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusterCfgs", null, ErrorCodeConstants.Get_All_Cluster_Configs_Failed_Not_Available)
-          apiResult.toString()
-      }
-      else{
+      if (clusterCfgs.length == 0) {
+        logger.debug("No ClusterCfgs found ")
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusterCfgs", null, ErrorCodeConstants.Get_All_Cluster_Configs_Failed_Not_Available)
+        apiResult.toString()
+      } else {
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllClusterCfgs", JsonSerializer.SerializeCfgObjectListToJson("ClusterCfgs", clusterCfgs), ErrorCodeConstants.Get_All_Cluster_Configs_Successful)
 
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusterCfgs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Cluster_Configs_Failed)
 
         apiResult.toString()
@@ -5612,66 +5228,65 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-
   // All available config objects(format JSON) as a String
-  def GetAllCfgObjects(formatType: String,userid: Option[String]): String = {
+  def GetAllCfgObjects(formatType: String, userid: Option[String]): String = {
     var cfgObjList = new Array[Object](0)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"","all")
-    var jsonStr:String = ""
-    var jsonStr1:String = ""
+    logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.SUCCESS, "", "all")
+    var jsonStr: String = ""
+    var jsonStr1: String = ""
     try {
       val clusters = MdMgr.GetMdMgr.Clusters.values.toArray
-      if ( clusters.length != 0 ){
-  cfgObjList = cfgObjList :+ clusters
-  jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Clusters", clusters)
-  jsonStr1 = jsonStr1.substring(1)
-  jsonStr1 = JsonSerializer.replaceLast(jsonStr1,"}",",")
+      if (clusters.length != 0) {
+        cfgObjList = cfgObjList :+ clusters
+        jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Clusters", clusters)
+        jsonStr1 = jsonStr1.substring(1)
+        jsonStr1 = JsonSerializer.replaceLast(jsonStr1, "}", ",")
         jsonStr = jsonStr + jsonStr1
       }
       val clusterCfgs = MdMgr.GetMdMgr.ClusterCfgs.values.toArray
-      if ( clusterCfgs.length != 0 ){
+      if (clusterCfgs.length != 0) {
         cfgObjList = cfgObjList :+ clusterCfgs
-  jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("ClusterCfgs", clusterCfgs)
-  jsonStr1 = jsonStr1.substring(1)
-  jsonStr1 = JsonSerializer.replaceLast(jsonStr1,"}",",")
+        jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("ClusterCfgs", clusterCfgs)
+        jsonStr1 = jsonStr1.substring(1)
+        jsonStr1 = JsonSerializer.replaceLast(jsonStr1, "}", ",")
         jsonStr = jsonStr + jsonStr1
       }
       val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
-      if ( nodes.length != 0 ){
+      if (nodes.length != 0) {
         cfgObjList = cfgObjList :+ nodes
-  jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Nodes", nodes)
-  jsonStr1 = jsonStr1.substring(1)
-  jsonStr1 = JsonSerializer.replaceLast(jsonStr1,"}",",")
+        jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Nodes", nodes)
+        jsonStr1 = jsonStr1.substring(1)
+        jsonStr1 = JsonSerializer.replaceLast(jsonStr1, "}", ",")
         jsonStr = jsonStr + jsonStr1
       }
       val adapters = MdMgr.GetMdMgr.Adapters.values.toArray
-      if ( adapters.length != 0 ){
-  cfgObjList = cfgObjList :+ adapters
-  jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Adapters", adapters)
-  jsonStr1 = jsonStr1.substring(1)
-  jsonStr1 = JsonSerializer.replaceLast(jsonStr1,"}",",")
+      if (adapters.length != 0) {
+        cfgObjList = cfgObjList :+ adapters
+        jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Adapters", adapters)
+        jsonStr1 = jsonStr1.substring(1)
+        jsonStr1 = JsonSerializer.replaceLast(jsonStr1, "}", ",")
         jsonStr = jsonStr + jsonStr1
       }
 
-      jsonStr = "{" + JsonSerializer.replaceLast(jsonStr,",","") + "}"
+      jsonStr = "{" + JsonSerializer.replaceLast(jsonStr, ",", "") + "}"
 
-      if ( cfgObjList.length == 0 ){
-          logger.debug("No Config Objects found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllCfgObjects", null, ErrorCodeConstants.Get_All_Configs_Failed_Not_Available)
-          apiResult.toString()
-      }
-      else{
+      if (cfgObjList.length == 0) {
+        logger.debug("No Config Objects found ")
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllCfgObjects", null, ErrorCodeConstants.Get_All_Configs_Failed_Not_Available)
+        apiResult.toString()
+      } else {
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllCfgObjects", jsonStr, ErrorCodeConstants.Get_All_Configs_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllCfgObjects", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Configs_Failed)
         apiResult.toString()
       }
     }
   }
-
 
   def dumpMetadataAPIConfig {
     val e = metadataAPIConfig.propertyNames()
@@ -5681,59 +5296,59 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.debug("Key : " + key + ", Value : " + value)
     }
   }
-  
+
   /**
    * setPropertyFromConfigFile - convert a specific KEY:VALUE pair in the config file into the
    * KEY:VALUE pair in the  Properties object
    */
-  private def setPropertyFromConfigFile(key:String, value:String) {  
+  private def setPropertyFromConfigFile(key: String, value: String) {
     var finalKey = key
     var finalValue = value
-    
+
     // JAR_PATHs need to be trimmed 
     if (key.equalsIgnoreCase("JarPaths") || key.equalsIgnoreCase("JAR_PATHS")) {
       val jp = value
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
       finalValue = j_paths.mkString(",")
       finalKey = "JAR_PATHS"
-    } 
-    
+    }
+
     // Special case 1. for config.  if JAR_PATHS is never set, then it should default to JAR_TARGET_DIR..
     // so we set the JAR_PATH if it was never set.. no worries, if JAR_PATH comes later, it willsimply
     // overwrite the value.
-    if (key.equalsIgnoreCase("JAR_TARGET_DIR") && (metadataAPIConfig.getProperty("JAR_PATHS")==null)) {
+    if (key.equalsIgnoreCase("JAR_TARGET_DIR") && (metadataAPIConfig.getProperty("JAR_PATHS") == null)) {
       metadataAPIConfig.setProperty("JAR_PATHS", finalValue)
       logger.debug("JAR_PATHS = " + finalValue)
       pList = pList - "JAR_PATHS"
     }
-    
+
     // Special case 2.. MetadataLocation must set 2 properties in the config object.. 1. prop set by DATABASE_HOST,
     // 2. prop set by DATABASE_LOCATION.  MetadataLocation will overwrite those values, but not the other way around.
     if (key.equalsIgnoreCase("MetadataLocation")) {
       metadataAPIConfig.setProperty("DATABASE_LOCATION", finalValue)
       metadataAPIConfig.setProperty("DATABASE_HOST", finalValue)
       logger.debug("DATABASE_LOCATION  = " + finalValue)
-       pList = pList - "DATABASE_LOCATION"
+      pList = pList - "DATABASE_LOCATION"
       logger.debug("DATABASE_HOST  = " + finalValue)
-       pList = pList - "DATABASE_HOST"
+      pList = pList - "DATABASE_HOST"
       return
     }
-    
+
     // SSL_PASSWORD will not be saved in the Config object, since that object is printed out for debugging purposes.
     if (key.equalsIgnoreCase("SSL_PASSWD")) {
-      setSSLCertificatePasswd(value) 
+      setSSLCertificatePasswd(value)
       return
     }
-    
+
     // Special case 2a.. DATABASE_HOST should not override METADATA_LOCATION
-    if (key.equalsIgnoreCase("DATABASE_HOST") && (metadataAPIConfig.getProperty(key.toUpperCase)!=null)) {
+    if (key.equalsIgnoreCase("DATABASE_HOST") && (metadataAPIConfig.getProperty(key.toUpperCase) != null)) {
       return
     }
     // Special case 2b.. DATABASE_LOCATION should not override METADATA_LOCATION
-    if (key.equalsIgnoreCase("DATABASE_LOCATION") && (metadataAPIConfig.getProperty(key.toUpperCase)!=null)) {
+    if (key.equalsIgnoreCase("DATABASE_LOCATION") && (metadataAPIConfig.getProperty(key.toUpperCase) != null)) {
       return
     }
-    
+
     // Special case 3: SCHEMA_NAME can come it under several keys, but we store it as DATABASE SCHEMA
     if (key.equalsIgnoreCase("MetadataSchemaName")) {
       finalKey = "DATABASE_SCHEMA"
@@ -5747,12 +5362,16 @@ object MetadataAPIImpl extends MetadataAPI {
     if (key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType")) {
       finalKey = "DATABASE"
     }
-    
+
     // Special case 5: NodeId or Node_ID is possible
     if (key.equalsIgnoreCase("NODE_ID") || key.equalsIgnoreCase("NODEID")) {
       finalKey = "NODE_ID"
     }
-  
+
+    if (key.equalsIgnoreCase("MetadataDataStore")) {
+      finalKey = "METADATA_DATASTORE"
+    }
+
     // Store the Key/Value pair
     metadataAPIConfig.setProperty(finalKey.toUpperCase, finalValue)
     logger.debug(finalKey.toUpperCase + " = " + finalValue)
@@ -5760,6 +5379,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def RefreshApiConfigForGivenNode(nodeId: String): Boolean = {
+
     val nd = mdMgr.Nodes.getOrElse(nodeId, null)
     if (nd == null) {
       logger.error("Node %s not found in metadata".format(nodeId))
@@ -5774,23 +5394,30 @@ object MetadataAPIImpl extends MetadataAPI {
       return false
     }
 
+    logger.debug("Configurations for the clusterId:" + clusterId)
+    cluster.cfgMap.foreach(kv => {
+      logger.debug("Key: %s, Value: %s".format(kv._1, kv._2))
+    })
+
     val zooKeeperInfo = cluster.cfgMap.getOrElse("ZooKeeperInfo", null)
     if (zooKeeperInfo == null) {
       logger.error("ZooKeeperInfo not found for Node %s  & ClusterId : %s".format(nodeId, nd.ClusterId))
       return false
     }
-
     val jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
     if (jarPaths.size == 0) {
       logger.error("Not found valid JarPaths.")
       return false
-    }
-    else{
+    } else {
       metadataAPIConfig.setProperty("JAR_PATHS", jarPaths.mkString(","))
-      logger.debug("JarPaths Based on node(%s) => %s".format(nodeId,jarPaths))
+      logger.debug("JarPaths Based on node(%s) => %s".format(nodeId, jarPaths))
       val jarDir = compact(render(jarPaths(0))).replace("\"", "").trim
-      metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
-      logger.debug("Jar_target_dir Based on node(%s) => %s".format(nodeId,jarDir))
+
+      // If JAR_TARGET_DIR is unset.. set it ot the first value of the the JAR_PATH.. whatever it is... ????? I think we should error on start up.. this seems like wrong
+      // user behaviour not to set a variable vital to MODEL compilation.
+      if (metadataAPIConfig.getProperty("JAR_TARGET_DIR") == null || (metadataAPIConfig.getProperty("JAR_TARGET_DIR") != null && metadataAPIConfig.getProperty("JAR_TARGET_DIR").length == 0))
+        metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
+      logger.debug("Jar_target_dir Based on node(%s) => %s".format(nodeId, jarDir))
     }
 
     implicit val jsonFormats: Formats = DefaultFormats
@@ -5799,7 +5426,6 @@ object MetadataAPIImpl extends MetadataAPI {
     val zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
     metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING", zkConnectString)
     logger.debug("ZOOKEEPER_CONNECT_STRING(based on nodeId) => " + zkConnectString)
-
 
     val zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
     metadataAPIConfig.setProperty("ZNODE_PATH", zkNodeBasePath)
@@ -5828,7 +5454,7 @@ object MetadataAPIImpl extends MetadataAPI {
         return ;
       }
 
-      val (prop, failStr) = Utils.loadConfiguration(configFile.toString, true)
+      val (prop, failStr) = com.ligadata.Utils.Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
         logger.error(failStr)
         return
@@ -5837,26 +5463,57 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.error("Failed to load configuration")
         return
       }
-      
+
       // some zookeper vals can be safely defaulted to.
-      setPropertyFromConfigFile("NODE_ID","Undefined")
-      setPropertyFromConfigFile("API_LEADER_SELECTION_ZK_NODE","/ligadata")
-      setPropertyFromConfigFile("ZK_SESSION_TIMEOUT_MS","3000")
-      setPropertyFromConfigFile("ZK_CONNECTION_TIMEOUT_MS","3000")
+      setPropertyFromConfigFile("NODE_ID", "Undefined")
+      setPropertyFromConfigFile("API_LEADER_SELECTION_ZK_NODE", "/ligadata")
+      setPropertyFromConfigFile("ZK_SESSION_TIMEOUT_MS", "3000")
+      setPropertyFromConfigFile("ZK_CONNECTION_TIMEOUT_MS", "3000")
 
       // Loop through and set the rest of the values.
       val eProps1 = prop.propertyNames();
       while (eProps1.hasMoreElements()) {
         val key = eProps1.nextElement().asInstanceOf[String]
         val value = prop.getProperty(key);
-        setPropertyFromConfigFile(key,value)
+        setPropertyFromConfigFile(key, value)
       }
-      pList.map(v => logger.warn(v+" remains unset"))
+      val mdDataStore = GetMetadataAPIConfig.getProperty("METADATA_DATASTORE")
+
+      if (mdDataStore == null) {
+        // Prepare from
+        val dbType = GetMetadataAPIConfig.getProperty("DATABASE")
+        val dbHost = if (GetMetadataAPIConfig.getProperty("DATABASE_HOST") != null) GetMetadataAPIConfig.getProperty("DATABASE_HOST") else GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+        val dbSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
+        val dbAdapterSpecific = GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG")
+
+        val dbType1 = if (dbType == null) "" else dbType.trim
+        val dbHost1 = if (dbHost == null) "" else dbHost.trim
+        val dbSchema1 = if (dbSchema == null) "" else dbSchema.trim
+
+        if (dbAdapterSpecific != null) {
+          val json = ("StoreType" -> dbType1) ~
+            ("SchemaName" -> dbSchema1) ~
+            ("Location" -> dbHost1) ~
+            ("AdapterSpecificConfig" -> dbAdapterSpecific)
+          val jsonStr = pretty(render(json))
+          setPropertyFromConfigFile("METADATA_DATASTORE", jsonStr)
+        } else {
+          val json = ("StoreType" -> dbType1) ~
+            ("SchemaName" -> dbSchema1) ~
+            ("Location" -> dbHost1)
+          val jsonStr = pretty(render(json))
+          setPropertyFromConfigFile("METADATA_DATASTORE", jsonStr)
+        }
+      }
+
+      pList.map(v => logger.warn(v + " remains unset"))
       propertiesAlreadyLoaded = true;
 
     } catch {
       case e: Exception =>
-        logger.error("Failed to load configuration: " + e.getMessage)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+        logger.error("Failed to load configuration: " + e.getMessage + "\nStackTrace:" + stackTrace)
         sys.exit(1)
     }
   }
@@ -5908,7 +5565,8 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.debug("DatabaseHost => " + databaseHost + ", DatabaseLocation(applicable to treemap or hashmap databases only) => " + databaseLocation)
 
       var databaseAdapterSpecificConfig = ""
-/*
+      var metadataDataStore = ""
+      /*
       var tmpMdAdapSpecCfg = configMap.APIConfigParameters.MetadataAdapterSpecificConfig
       if (tmpMdAdapSpecCfg != null && tmpMdAdapSpecCfg != None) {
         databaseAdapterSpecificConfig = tmpMdAdapSpecCfg
@@ -5934,8 +5592,7 @@ object MetadataAPIImpl extends MetadataAPI {
         throw new MissingPropertyException("The property JarPaths must be defined in the config file " + configFile)
       }
       logger.debug("JarPaths => " + jarPaths)
-      
-      
+
       var scalaHome = configMap.APIConfigParameters.ScalaHome
       if (scalaHome == null) {
         throw new MissingPropertyException("The property ScalaHome must be defined in the config file " + configFile)
@@ -5981,7 +5638,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var MODEL_FILES_DIR = ""
       val MODEL_FILES_DIR1 = configMap.APIConfigParameters.MODEL_FILES_DIR
       if (MODEL_FILES_DIR1 == None) {
-        MODEL_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        MODEL_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
       } else
         MODEL_FILES_DIR = MODEL_FILES_DIR1.get
       logger.debug("MODEL_FILES_DIR => " + MODEL_FILES_DIR)
@@ -5989,7 +5646,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var TYPE_FILES_DIR = ""
       val TYPE_FILES_DIR1 = configMap.APIConfigParameters.TYPE_FILES_DIR
       if (TYPE_FILES_DIR1 == None) {
-        TYPE_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        TYPE_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
       } else
         TYPE_FILES_DIR = TYPE_FILES_DIR1.get
       logger.debug("TYPE_FILES_DIR => " + TYPE_FILES_DIR)
@@ -5997,7 +5654,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var FUNCTION_FILES_DIR = ""
       val FUNCTION_FILES_DIR1 = configMap.APIConfigParameters.FUNCTION_FILES_DIR
       if (FUNCTION_FILES_DIR1 == None) {
-        FUNCTION_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+        FUNCTION_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
       } else
         FUNCTION_FILES_DIR = FUNCTION_FILES_DIR1.get
       logger.debug("FUNCTION_FILES_DIR => " + FUNCTION_FILES_DIR)
@@ -6005,7 +5662,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var CONCEPT_FILES_DIR = ""
       val CONCEPT_FILES_DIR1 = configMap.APIConfigParameters.CONCEPT_FILES_DIR
       if (CONCEPT_FILES_DIR1 == None) {
-        CONCEPT_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+        CONCEPT_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
       } else
         CONCEPT_FILES_DIR = CONCEPT_FILES_DIR1.get
       logger.debug("CONCEPT_FILES_DIR => " + CONCEPT_FILES_DIR)
@@ -6013,7 +5670,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var MESSAGE_FILES_DIR = ""
       val MESSAGE_FILES_DIR1 = configMap.APIConfigParameters.MESSAGE_FILES_DIR
       if (MESSAGE_FILES_DIR1 == None) {
-        MESSAGE_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+        MESSAGE_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
       } else
         MESSAGE_FILES_DIR = MESSAGE_FILES_DIR1.get
       logger.debug("MESSAGE_FILES_DIR => " + MESSAGE_FILES_DIR)
@@ -6021,7 +5678,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var CONTAINER_FILES_DIR = ""
       val CONTAINER_FILES_DIR1 = configMap.APIConfigParameters.CONTAINER_FILES_DIR
       if (CONTAINER_FILES_DIR1 == None) {
-        CONTAINER_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+        CONTAINER_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
       } else
         CONTAINER_FILES_DIR = CONTAINER_FILES_DIR1.get
 
@@ -6045,13 +5702,13 @@ object MetadataAPIImpl extends MetadataAPI {
 
       logger.debug("MODEL_EXEC_FLAG => " + MODEL_EXEC_FLAG)
 
-      val CONFIG_FILES_DIR = gitRootDir + "/Fatafat/trunk/SampleApplication/Medical/Configs"
+      val CONFIG_FILES_DIR = gitRootDir + "/Kamanja/trunk/SampleApplication/Medical/Configs"
       logger.debug("CONFIG_FILES_DIR => " + CONFIG_FILES_DIR)
 
       var OUTPUTMESSAGE_FILES_DIR = ""
       val OUTPUTMESSAGE_FILES_DIR1 = configMap.APIConfigParameters.OUTPUTMESSAGE_FILES_DIR
       if (OUTPUTMESSAGE_FILES_DIR1 == None) {
-        OUTPUTMESSAGE_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
+        OUTPUTMESSAGE_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
       } else
         OUTPUTMESSAGE_FILES_DIR = OUTPUTMESSAGE_FILES_DIR1.get
       logger.debug("OUTPUTMESSAGE_FILES_DIR => " + OUTPUTMESSAGE_FILES_DIR)
@@ -6063,6 +5720,7 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("DATABASE_SCHEMA", databaseSchema)
       metadataAPIConfig.setProperty("DATABASE_LOCATION", databaseLocation)
       metadataAPIConfig.setProperty("ADAPTER_SPECIFIC_CONFIG", databaseAdapterSpecificConfig)
+      metadataAPIConfig.setProperty("METADATA_DATASTORE", metadataDataStore)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarTargetDir)
       val jp = if (jarPaths != null) jarPaths else jarTargetDir
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
@@ -6089,15 +5747,20 @@ object MetadataAPIImpl extends MetadataAPI {
 
     } catch {
       case e: MappingException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw LoadAPIConfigException("Failed to load configuration: " + e.getMessage())
       }
     }
   }
 
-  def InitMdMgr(configFile: String) {
+  def InitMdMgr(configFile: String, startHB: Boolean) {
+
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
     mdLoader.initialize
@@ -6106,14 +5769,18 @@ object MetadataAPIImpl extends MetadataAPI {
     } else {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
-    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
+    val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+    val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
+    MetadataAPIImpl.OpenDbStore(jarPaths, GetMetadataAPIConfig.getProperty("METADATA_DATASTORE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
     MetadataAPIImpl.InitSecImpl
-    initZkListener   
+    if (startHB) InitHearbeat
+    initZkListeners
   }
 
-  def InitMdMgrFromBootStrap(configFile: String) {
+  def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean) {
+
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
     mdLoader.initialize
@@ -6123,22 +5790,42 @@ object MetadataAPIImpl extends MetadataAPI {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
 
-    initZkListener
-    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
+    initZkListeners
+    val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+    val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
+    MetadataAPIImpl.OpenDbStore(jarPaths, GetMetadataAPIConfig.getProperty("METADATA_DATASTORE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.InitSecImpl
+    if (startHB) InitHearbeat
     isInitilized = true
     logger.debug("Metadata synching is now available.")
-    
+
   }
-  
+
+  private def InitHearbeat: Unit = {
+    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + metadataAPIConfig.getProperty("NODE_ID").toString
+    if (zkHeartBeatNodePath.size > 0) {
+      heartBeat = new HeartBeatUtil
+      heartBeat.Init("Metadata", metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING"), zkHeartBeatNodePath, 3000, 3000, 5000) // for every 5 secs
+      heartBeat.SetMainData(metadataAPIConfig.getProperty("NODE_ID").toString)
+      MonitorAPIImpl.startMetadataHeartbeat
+    }
+
+  }
+
   /**
    * Create a listener to monitor Meatadata Cache
    */
-  def initZkListener: Unit = {
-     // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
+  def initZkListeners: Unit = {
+    // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
     var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH")
-    if (znodePath != null) znodePath = znodePath.trim + "/metadataupdate" else return
+    var hbPathEngine = znodePath
+    var hbPathMetadata = znodePath
+    if (znodePath != null) {
+      znodePath = znodePath.trim + "/metadataupdate"
+      hbPathEngine = hbPathEngine.trim + "/monitor/engine"
+      hbPathMetadata = hbPathMetadata + "/monitor/metadata"
+    } else return
     var zkConnectString = metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
     if (zkConnectString != null) zkConnectString = zkConnectString.trim else return
 
@@ -6147,15 +5834,17 @@ object MetadataAPIImpl extends MetadataAPI {
         CreateClient.CreateNodeIfNotExists(zkConnectString, znodePath)
         zkListener = new ZooKeeperListener
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000)
+        zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathEngine, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
+        zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathMetadata, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
       } catch {
         case e: Exception => {
           logger.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
           throw e
         }
       }
-    }   
+    }
   }
-  
+
   /**
    * shutdownZkListener - should be called by application using MetadataAPIImpl directly to disable synching of Metadata cache.
    */
@@ -6166,30 +5855,43 @@ object MetadataAPIImpl extends MetadataAPI {
         zkListener.Shutdown
       }
     } catch {
-        case e: Exception => {
-          logger.error("Error trying to shutdown zookeeper listener.  ")
-          throw e
-        }
+      case e: Exception => {
+        logger.error("Error trying to shutdown zookeeper listener.  ")
+        throw e
       }
+    }
   }
-  
-  
+
+  private def shutdownHeartbeat: Unit = {
+    try {
+      MonitorAPIImpl.shutdownMonitor
+      if (heartBeat != null)
+        heartBeat.Shutdown
+      heartBeat = null
+    } catch {
+      case e: Exception => {
+        logger.error("Error trying to shutdown Hearbbeat. ")
+        throw e
+      }
+    }
+  }
+
   /**
-   * shutdown - call this method to release various resources held by 
+   * shutdown - call this method to release various resources held by
    */
   def shutdown: Unit = {
+    shutdownHeartbeat
     CloseDbStore
     shutdownZkListener
     shutdownAuditAdapter
   }
-  
- /**
-  * UpdateMetadata - This is a callback function for the Zookeeper Listener.  It will get called when we detect Metadata being updated from
-  *                  a different metadataImpl service.
-  */
+
+  /**
+   * UpdateMetadata - This is a callback function for the Zookeeper Listener.  It will get called when we detect Metadata being updated from
+   *                  a different metadataImpl service.
+   */
   def UpdateMetadata(receivedJsonStr: String): Unit = {
     logger.debug("Process ZooKeeper notification " + receivedJsonStr)
-
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || !isInitilized) {
       // nothing to do
       logger.debug("Metadata synching is not available.")
@@ -6197,25 +5899,24 @@ object MetadataAPIImpl extends MetadataAPI {
     }
 
     val zkTransaction = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
-    MetadataAPIImpl.UpdateMdMgr(zkTransaction)        
+    MetadataAPIImpl.UpdateMdMgr(zkTransaction)
   }
 
   /**
-   *  InitMdMgr - 
+   *  InitMdMgr -
    */
-  def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String, databaseAdapterSpecificConfig: String) {
+  def InitMdMgr(mgr: MdMgr, jarPathsInfo: String, databaseInfo: String) {
 
-    SetLoggerLevel(Level.TRACE)
+    SetLoggerLevel(Level.INFO)
     val mdLoader = new MetadataLoad(mgr, "", "", "", "")
     mdLoader.initialize
 
-    metadataAPIConfig.setProperty("DATABASE", database)
-    metadataAPIConfig.setProperty("DATABASE_HOST", databaseHost)
-    metadataAPIConfig.setProperty("DATABASE_SCHEMA", databaseSchema)
-    metadataAPIConfig.setProperty("DATABASE_LOCATION", databaseLocation)
-    metadataAPIConfig.setProperty("ADAPTER_SPECIFIC_CONFIG", databaseAdapterSpecificConfig)
+    metadataAPIConfig.setProperty("JAR_PATHS", jarPathsInfo)
+    metadataAPIConfig.setProperty("METADATA_DATASTORE", databaseInfo)
 
-    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
+    val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+    val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
+    MetadataAPIImpl.OpenDbStore(jarPaths, GetMetadataAPIConfig.getProperty("METADATA_DATASTORE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
   }
 }

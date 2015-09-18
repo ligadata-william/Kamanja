@@ -1,0 +1,10 @@
+custId,branchId,accNo,minBalanceAlertOptOut,overdraftLimit,multiDayMinBalanceAlertOptout
+1,1,1,false,10000,false
+2,1,2,false,10000,false
+3,1,3,false,10000,false
+4,1,4,false,10000,false
+5,1,5,false,10000,false
+6,1,6,false,10000,false
+7,1,7,false,10000,false
+8,1,8,false,10000,false
+9,1,9,false,10000,false

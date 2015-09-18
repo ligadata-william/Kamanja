@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.keyvaluestore.hbase
 
 import com.ligadata.keyvaluestore._
@@ -23,6 +39,8 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*
@@ -106,6 +124,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -118,6 +138,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
     connection = HConnectionManager.createConnection(config);
   } catch {
     case e: Exception => {
+      val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.debug("StackTrace:"+stackTrace)
       throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
     }
   }
@@ -131,6 +153,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
         ugi.checkTGTAndReloginFromKeytab
     } catch {
       case e: Exception => {
+        
         logger.error("Failed to relogin into HBase. Message:" + e.getMessage())
         // Not throwing exception from here
       }
@@ -207,6 +230,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       handler(value)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new KeyNotFoundException(e.getMessage())
       }
     }
@@ -230,6 +255,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       target.Construct(key, value)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new KeyNotFoundException(e.getMessage())
       }
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // An early implementation of authentication module using Apache-Shiro
 // We have lot more work to do.
 package com.ligadata.Security
@@ -11,8 +27,9 @@ import org.apache.shiro.subject.Subject
 import org.apache.shiro.util.Factory
 import org.apache.log4j._
 
-import com.ligadata.fatafat.metadata.SecurityAdapter
+import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import java.util.Properties
+import com.ligadata.Exceptions.StackTrace
 
 class SimpleApacheShiroAdapter extends SecurityAdapter{
 
@@ -81,22 +98,24 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
           return false
         } 
         case ice:IncorrectCredentialsException => {
+          
           log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!");
           return false
         } 
         case lae:LockedAccountException => {
+          
           log.error("SimpleApacheShiroAdapter: The account for username " + token.getPrincipal() + " is locked.  " +
                     "Please contact your administrator to unlock it.");
           return false
         }
         // ... catch more exceptions here, maybe custom ones specific to your application?
         case ae: AuthenticationException => {
-          ae.printStackTrace()
+          
           log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage())
           return false
         }
         case e: Exception => {
-          e.printStackTrace()
+          
           log.error("SimpleApacheShiroAdapter: Unexpected  exception " + e.getMessage())
           return false
         }

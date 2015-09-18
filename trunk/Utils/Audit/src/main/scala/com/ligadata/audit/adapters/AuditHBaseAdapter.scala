@@ -1,7 +1,23 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.audit.adapters
 
-import com.ligadata.keyvaluestore._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.StorageBase.{ Key, Value }
+import com.ligadata.AuditAdapterInfo._
 
 import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.HBaseConfiguration
@@ -25,6 +41,8 @@ import java.io.IOException
 
 import java.util.Date
 import java.util.Calendar
+import com.ligadata.Exceptions._
+
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*
@@ -76,6 +94,8 @@ class AuditHBaseAdapter extends AuditAdapter
       }
       catch{
         case e:Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.debug("Stacktrace:"+stackTrace)
           throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
         }
       }
@@ -131,6 +151,8 @@ class AuditHBaseAdapter extends AuditAdapter
       tableHBase.put(p)
     } catch {
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
 	      throw new Exception("Failed to save an object in HBase table " + table + ":" + e.getMessage())
       }
     }
@@ -223,6 +245,8 @@ class AuditHBaseAdapter extends AuditAdapter
       auditRecords
     } catch {
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
 	throw new Exception("Failed to fetch audit records: " + e.getMessage())
       }
     }
@@ -242,7 +266,58 @@ class AuditHBaseAdapter extends AuditAdapter
     }
   }
   
-  
+  private def getAllKeys(handler: (Key) => Unit): Unit = {
+    var p = new Scan()
+
+    val tableHBase = connection.getTable(table);
+    try {
+      val iter = tableHBase.getScanner(p)
+
+      try {
+        var fContinue = true
+
+        do {
+          val row = iter.next()
+          if (row != null) {
+            val v = row.getRow()
+            val key = new Key
+            key ++= v
+
+            handler(key)
+          } else {
+            fContinue = false;
+          }
+        } while (fContinue)
+
+      } finally {
+        iter.close()
+      }
+    } catch {
+      case e: Exception => throw e
+    } finally {
+      if (tableHBase != null)
+        tableHBase.close
+    }
+  }
+
+  private def del(key: Key): Unit = {
+    val p = new Delete(key.toArray[Byte])
+
+    val tableHBase = connection.getTable(table);
+    try {
+      val result = tableHBase.delete(p)
+    } catch {
+      case e: Exception => throw e
+    } finally {
+      if (tableHBase != null)
+        tableHBase.close
+    }
+  }
+
+  override def TruncateStore(): Unit = {
+    getAllKeys({ (key: Key) => del(key) })
+  }
+
   private def initPropertiesFromFile(parmFile: String): Unit = {  
     try {
        scala.io.Source.fromFile(parmFile).getLines.foreach(line => {
@@ -251,6 +326,8 @@ class AuditHBaseAdapter extends AuditAdapter
        })
     } catch {
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Failed to read Audit Configuration: " + e.getMessage())
       }     
     }

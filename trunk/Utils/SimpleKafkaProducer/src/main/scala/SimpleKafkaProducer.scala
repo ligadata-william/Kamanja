@@ -1,4 +1,20 @@
 
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import org.json4s.jackson.JsonMethods._
 
 import scala.actors.threadpool.{ Executors, TimeUnit }
@@ -11,6 +27,8 @@ import java.util.zip.GZIPInputStream
 import java.nio.file.{Files, Paths }
 import kafka.utils.VerifiableProperties
 import com.ligadata.Utils.KeyHasher
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 object ProducerSimpleStats {
 
@@ -53,6 +71,8 @@ class  ExtractKey {
 }
 
 class CustPartitioner(props: VerifiableProperties) extends Partitioner {
+   val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
   def partition(key: Any, a_numPartitions: Int): Int = {
 
     if (key == null) return 0
@@ -70,6 +90,8 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
     } catch {
       case e: Exception =>
         {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.debug("StackTrace:"+stackTrace)
         }
         // println("Exception found, so , Bucket : 0")
         return 0
@@ -101,6 +123,9 @@ object SimpleKafkaProducer {
   val requestRequiredAcks: Integer = 1
 
   val codec = if (compress) DefaultCompressionCodec.codec else NoCompressionCodec.codec
+  
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
 
   def send(producer: Producer[AnyRef, AnyRef], topic: String, message: String, partIdx: String): Unit = send(producer, topic, message.getBytes("UTF8"), partIdx.getBytes("UTF8"))
 
@@ -110,7 +135,8 @@ object SimpleKafkaProducer {
       //producer.send(new KeyedMessage(topic, message))
     } catch {
       case e: Exception =>
-        e.printStackTrace
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         sys.exit(1)
     }
   }
@@ -152,7 +178,10 @@ object SimpleKafkaProducer {
         throw new Exception("Only following formats are supported: CSV,JSON")
       }
     } catch {
-      case e: Exception => {println("Error reading from a file " + e.printStackTrace())}
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+        println("Error reading from a file ")}
     } finally {
       if (bis != null) bis.close
     }
@@ -587,7 +616,8 @@ object SimpleKafkaProducer {
       try {
         executor.awaitTermination(Long.MaxValue, TimeUnit.NANOSECONDS);
       } catch {
-        case e: Exception => {}
+        case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.debug("StackTrace:"+stackTrace)}
       }
     }
 

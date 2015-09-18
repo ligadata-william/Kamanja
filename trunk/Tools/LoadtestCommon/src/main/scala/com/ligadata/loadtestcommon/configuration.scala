@@ -1,8 +1,23 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.loadtestcommon
 
 import java.util.concurrent._
 import scala.concurrent.duration.Duration
-import com.ligadata.keyvaluestore.PropertyMap
 import akka.serialization._
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -28,12 +43,9 @@ class Configuration extends scala.Serializable
 	var nMsgDelayMSec : Long = 1
 	var nStatusEverySec : Long = 10
 	
-	var connectinfo = new PropertyMap
-	connectinfo+= ("connectiontype" -> "cassandra")
-	connectinfo+= ("hostlist" -> "localhost") 
-	connectinfo+= ("schema" -> "default")
-	connectinfo+= ("table" -> "default")
-
+	var connectinfo = "{\"connectiontype\": \"cassandra\", \"hostlist\": \"localhost\", \"schema\": \"default\"}"
+	var tablename = "default"
+	
 	def Dump()
 	{
 		println("Workers=" + nWorkers)
@@ -47,9 +59,8 @@ class Configuration extends scala.Serializable
 		println("MsgDelayMSec=" + nMsgDelayMSec)
 		println("StatusEverySec=" + nStatusEverySec)
 		
-		println("Connection info")
-		connectinfo foreach ( (t) => println(t._1 + "=" + t._2))
-		
+		println("Connection info:" + connectinfo)
+		println("Table Name:" + tablename)
 	}
 	
 	def DumpJson() : String =
@@ -89,6 +100,7 @@ class Configuration extends scala.Serializable
 		clone.nStatusEverySec = nStatusEverySec
 		
 		clone.connectinfo = connectinfo
+		clone.tablename = tablename
 		
 		return clone
 	}

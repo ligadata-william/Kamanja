@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #!/bin/bash
 exec scala "$0" "$@"
 !#
@@ -104,7 +120,7 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
 
     def testPaths : String = { 
 """
-[info] List(Attributed(/home/rich/github/Med/Fatafat/trunk/Pmml/PmmlUdfs/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Fatafat/trunk/Metadata/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Fatafat/trunk/Pmml/PmmlRuntime/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Fatafat/trunk/FatafatBase/target/scala-2.10/classes), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.4.jar), Attributed(/home/rich/.ivy2/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar), Attributed(/home/rich/.ivy2/cache/joda-time/joda-time/jars/joda-time-2.3.jar), Attributed(/home/rich/.ivy2/cache/log4j/log4j/bundles/log4j-1.2.17.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.6.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scalap/jars/scalap-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.10.0.jar))
+[info] List(Attributed(/home/rich/github/Med/Kamanja/trunk/Pmml/PmmlUdfs/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Kamanja/trunk/Metadata/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Kamanja/trunk/Pmml/PmmlRuntime/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Kamanja/trunk/KamanjaBase/target/scala-2.10/classes), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.4.jar), Attributed(/home/rich/.ivy2/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar), Attributed(/home/rich/.ivy2/cache/joda-time/joda-time/jars/joda-time-2.3.jar), Attributed(/home/rich/.ivy2/cache/log4j/log4j/bundles/log4j-1.2.17.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.6.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scalap/jars/scalap-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.10.0.jar))
 """
     }
       

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.keyvaluestore.mapdb
 
 import org.mapdb._;
@@ -5,6 +21,9 @@ import com.ligadata.keyvaluestore._
 import java.io.File;
 import java.nio.ByteBuffer
 import org.apache.log4j._
+import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
+
 /*
 
 No schema setup
@@ -145,9 +164,11 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
 	map.close();
       }catch{
 	case e:NullPointerException =>{
+    
 	  logger.error("Unexpected Null pointer exception when closing hashmap, seems like internal bug related to mapdb ")
 	}
 	case e:Exception =>{
+    
 	  logger.error("Unexpected error when closing hashmap " + e.getMessage())
 	}
       }

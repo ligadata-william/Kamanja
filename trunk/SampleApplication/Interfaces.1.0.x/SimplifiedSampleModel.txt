@@ -1,0 +1,23 @@
+object ${ModelName}_${ModelVersion} extends ModelBaseObj {
+  override def IsValidMessage(msg: MessageContainerBase): Boolean = ...
+} 
+
+class ${ModelName}_${ModelVersion}(val gCtx : EnvContext, val msg : BaseMsg, val modelName:String, val modelVersion:String, val tenantId: String, val tempTransId: Long) extends ModelBase {
+  override def execute(emitAllResults : Boolean) : ModelResult = {
+    val custInfo = ${System.CustomerInfo}.GetRecentRDDForCurrentPartitionKey
+    if (custInfo.isEmpty || custInfo.last.get.minbalancealertoptout != "N")
+      return null
+    val currentDate = current_date
+    val custAlertHistory = ${System.CustomerAlertHistory}.GetRecentRDDForCurrentPartitionKey
+    if (custAlertHistory.isEmpty && currentDate <= custAlertHistory.last.get.lastalertdate) // today
+      return null
+    val rcntTxn = ${System.TransactionMsg}.GetRecentRDDForCurrentPartitionKey
+    if (rcntTxn.isEmpty || txn.balance >= 100)
+      return null
+
+    // ... Prepare results here ...
+    // Update ${System.CustomerAlertHistory} and set it back
+    new ModelResult(dateMillis, nowStr, getModelName, getModelVersion, results) 
+  }
+}
+

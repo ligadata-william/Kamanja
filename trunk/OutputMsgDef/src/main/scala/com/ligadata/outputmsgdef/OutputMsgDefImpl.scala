@@ -1,14 +1,32 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.outputmsgdef
 
 import scala.collection.mutable.{ Map, HashMap, MultiMap, Set, SortedSet, ArrayBuffer }
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.Exceptions._
 import org.apache.log4j.Logger
 import scala.collection.mutable.ListBuffer
+import com.ligadata.Exceptions.StackTrace
 
 class OutputMessage(var NameSpace: String, var Name: String, var Version: String, var Description: String, var Queue: String, var PartitionKey: List[String], var Defaults: List[scala.collection.mutable.Map[String, String]], var DataDeclaration: List[scala.collection.mutable.Map[String, String]], var OutputFormat: String)
 
@@ -39,13 +57,13 @@ object OutputMsgDefImpl {
       if (outputMessageDef == null)
         throw new Exception("output message definition info do not exists")
 
-      println("Name " + outputMessageDef.Name)
-      println("NameSpace " + outputMessageDef.NameSpace)
-      println("Version " + outputMessageDef.Version)
-      println("Queue" + outputMessageDef.Queue)
-      println("OutputFormat " + outputMessageDef.OutputFormat)
-      outputMessageDef.DataDeclaration.foreach(f => println("f " + f))
-      outputMessageDef.Defaults.foreach(f => println("f " + f))
+      log.debug("Name " + outputMessageDef.Name)
+      log.debug("NameSpace " + outputMessageDef.NameSpace)
+      log.debug("Version " + outputMessageDef.Version)
+      log.debug("Queue" + outputMessageDef.Queue)
+      log.debug("OutputFormat " + outputMessageDef.OutputFormat)
+      outputMessageDef.DataDeclaration.foreach(f =>  log.debug("f " + f))
+      outputMessageDef.Defaults.foreach(f =>  log.debug("f " + f))
 
       val outputQ = outputMessageDef.Queue.toLowerCase()
       val paritionKeys = outputMessageDef.PartitionKey
@@ -137,8 +155,6 @@ object OutputMsgDefImpl {
             valueVal += ((fldInfo, defaultValue))
             Fields((fullname, typeOf)) = (valueVal)
           }
-          //  value += ((fldInfo, defaultValue))
-          //   Fields ((fullname, typeOf)) = (value)
         })
       }
 
@@ -146,13 +162,12 @@ object OutputMsgDefImpl {
 
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: " + e.getMessage)
         throw e
-
       }
       case e: Exception => {
-        e.printStackTrace()
-        log.trace("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.trace("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
         throw e
       }
     }
@@ -181,10 +196,8 @@ object OutputMsgDefImpl {
       val partionKeyParts = fullpartionkey.split("\\.")
       if (partionKeyParts.size < 3)
         throw new Exception("Please provide the fiels in format of Namespace.Name.fieldname")
-      val namespace = partionKeyParts(0).toLowerCase()
-      val name = partionKeyParts(1).toLowerCase()
-      val field = partionKeyParts(2).toLowerCase()
-
+      
+      val(namespace, name, field) = com.ligadata.kamanja.metadata.Utils.parseNameToken(fullpartionkey)
       val (containerDef, messageDef, modelDef) = getModelMsgContainer(namespace, name)
       val (childs, typeOf) = getModelMsgContainerChilds(containerDef, messageDef, modelDef)
       typeof = typeOf
@@ -209,12 +222,12 @@ object OutputMsgDefImpl {
 
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: "+ e.getMessage)
         throw e
       }
       case e: Exception => {
-        // e.printStackTrace()
-        log.trace("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.trace("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
     (fullname, fieldsInfo.toArray, typeof, fullpartionkey.toLowerCase())
@@ -235,12 +248,12 @@ object OutputMsgDefImpl {
       })
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: "+ e.getMessage)
         throw e
       }
       case e: Exception => {
-        // e.printStackTrace()
-        log.trace("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.trace("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
     fldtype.toLowerCase()
@@ -284,11 +297,11 @@ object OutputMsgDefImpl {
       }
     } catch {
       case e: ObjectNolongerExistsException => {
-        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        log.error(s"Either Model or Message or Container do not exists in Metadata. Error: "+ e.getMessage)
         throw e
       }
       case e: Exception => {
-        //  e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         log.trace("Error " + e.getMessage())
       }
     }
@@ -301,6 +314,7 @@ object OutputMsgDefImpl {
     var modelObj: ModelDef = null
     var prevVerMsgObjstr: String = ""
     var childs: ArrayBuffer[(String, String)] = ArrayBuffer[(String, String)]()
+    
     if (namespace == null || namespace.trim() == "")
       throw new Exception("Proper Namespace do not exists in message/container definition")
     if (name == null || name.trim() == "")
@@ -394,7 +408,8 @@ object OutputMsgDefImpl {
       }
     } catch {
       case e: Exception => {
-        log.debug("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.debug("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
         throw e
       }
     }
@@ -415,7 +430,7 @@ object OutputMsgDefImpl {
 
     if (map.contains(outputKey)) {
       val outputmsg = map.get(outputKey).get.asInstanceOf[scala.collection.immutable.Map[String, Any]]
-      println("outputmsg 1 : " + outputmsg)
+      log.debug("outputmsg 1 : " + outputmsg)
 
       if (outputmsg != null) {
         if (outputmsg.getOrElse("NameSpace", null) == null)

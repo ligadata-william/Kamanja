@@ -1,0 +1,2 @@
+PrefType,overDraftLimit,minAlertBalance,minAlertDurationInHrs,numLookbackDaysForMultiDayMinBalanceAlert,maxNumDaysAllowedWithMinBalance
+Type1,10000,1000,24,30,3

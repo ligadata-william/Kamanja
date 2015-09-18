@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 ligaDATA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ligadata.loadtest
 
 import akka.actor.Actor
@@ -13,14 +29,17 @@ import scala.util.Random
 import java.util.concurrent._
 import akka.actor._
 import com.ligadata._
-import com.ligadata.keyvaluestore._
+import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
 import com.ligadata.loadtest._
+import com.ligadata.keyvaluestore.KeyValueManager
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalStub = null)
 {  
 	///////////////////////////////////////////////////////////////////////////
-  
-	val store = KeyValueManager.Get(config.connectinfo)
+	val store = KeyValueManager.Get(collection.immutable.Set[String](), config.connectinfo, config.tablename)
+  private val LOG = Logger.getLogger(getClass)
 
 	// We create an byte array of nRequests * nMaxSize
 	// Create the resources
@@ -91,7 +110,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception  => println("Caught exception")
+					case e: Exception  => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -107,7 +129,11 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")
+            }
 				}
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -123,7 +149,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}					
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -139,7 +168,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}					
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -158,7 +190,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}
 
 				context.system.scheduler.scheduleOnce(config.nMsgDelay) 
@@ -185,7 +220,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}
 				
 				sender ! Result()
