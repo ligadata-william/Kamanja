@@ -70,9 +70,13 @@ import com.ligadata.Exceptions.StackTrace
  *
  */
 
+object UdfExtractGlobalLogger {
+    val loggerName = this.getClass.getName()
+    val logger = Logger.getLogger(loggerName)
+}
+
 trait LogTrait {
-  val loggerName = this.getClass.getName()
-  val logger = Logger.getLogger(loggerName)
+  val logger = UdfExtractGlobalLogger.logger
 }
 
 object MethodExtract extends App with LogTrait {
