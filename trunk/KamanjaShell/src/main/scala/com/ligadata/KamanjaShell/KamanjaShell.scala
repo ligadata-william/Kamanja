@@ -4,12 +4,33 @@ import java.util.logging.Logger
 import java.net.Socket
 import java.io.File
 import java.util.Properties
+import java.util.List
 import java.io.InputStream
 import scala.actors.threadpool.{ Executors, ExecutorService }
+import scala.collection.mutable
 import sys.process._
-//import scala.tools.jline_embedded._
+import jline._
+import scala.collection.mutable._
 
+/*class MyStringsCompleter(v1: String, v2: String, v3: String, v4: String) extends jline.Completor {
 
+  var strings: Set[String] = Set[String]()
+
+  def complete(buffer: String, cursor: Int, candidates: java.util.List[_]): Int = {
+    println("\nTABBED DETECTED "+ buffer + " xxx " + cursor)
+   // var testList = mutable.MutableList[String] = mutable.MutableList[String]()
+    var tokens = buffer.split(" ")
+    tokens.foreach(x => {println(x)})
+    //testList.asJava
+    //val x = testList.asJava
+    candidates.append("blah")
+
+    //testList.foreach(x=>{candidates.add(_)})
+   // candidates.add("string".asInstanceOf[T])
+    return -1
+  }*/
+
+//}
 /**
  * The main entry point for the "kamanja" script to start up all the necessary processes required for 
  * Kamanja Engine deployment and execution
@@ -77,7 +98,10 @@ object KamanjaShell {
   // TO keep or not to keep.
   private[this] var _exec: ExecutorService = null
   private var opts: InstanceContext = null
- // var console: scala.tools.jline_embedded.console.ConsoleReader = new scala.tools.jline_embedded.console.ConsoleReader
+  var console: ConsoleReader = new ConsoleReader
+  KamanjaShellCommand.init();
+  var kc: KamanjaCompleter = new KamanjaCompleter();
+  console.addCompletor(kc);
   
 
   /**
@@ -105,7 +129,8 @@ object KamanjaShell {
       opts.setUserid("shellLocal")
       
       // set up Console prompt
-     // console.setPrompt("Kamanja Instance: NODE_" + opts.getIName + ">")
+      console.setDefaultPrompt("Kamanja Instance: NODE_" + opts.getIName + ">")
+      //console.setPrompt("Kamanja Instance: NODE_" + opts.getIName + ">")
       // print("Kamanja Instance: NODE_" + opts.getIName + ">")
       
       // See if the directory already exists or not, if it needs to be created, create it along with the basic
@@ -148,22 +173,25 @@ object KamanjaShell {
         
    //     println("??????")
   //    }
-      
-  //    while ((line = console.readLine()) != null) {
-   //     console.println(line);
- //     }
+      var keepProcessing: Boolean = true
+      while (keepProcessing) {
+        println("-->" + line)
+        line = console.readLine
+        if (line.equalsIgnoreCase(EXIT)) keepProcessing = false
+        kc.commandCompleted()
+      }
       
       // cleanup and bail
       cleanup
       return
     } catch {
       case e: Exception => {
-          e.printStackTrace()
+          e.printStackTrace
           cleanup
           sys.exit
         }
       case t: Throwable => {
-        t.printStackTrace()
+        t.printStackTrace
       }
     }
     

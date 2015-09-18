@@ -211,6 +211,45 @@ object KShellComandProcessor {
       
     }
 
+    //*****************************************
+    // UPDATE Commands (container, message, model)
+    //*****************************************
+    if (verb.equalsIgnoreCase(UPDATE_VERB)) {
+      // -Add Model
+      if (subject.equalsIgnoreCase(MODEL)) {
+        var makeFilePath: String = ""
+        var modelPath = constructPath(cOptions, opts, MODEL)
+        val tokenizedPath = modelPath.split('.')
+
+        // is this a Java model
+        if (tokenizedPath(tokenizedPath.size - 1).equalsIgnoreCase(JAVA)) {
+          makeFilePath = cOptions.getOrElse(MODEL_CONFIG, "")
+          MetadataProxy.addNativeModel(opts, modelPath, makeFilePath,"java")
+        }
+        // is this a scala Model
+        else if (tokenizedPath(tokenizedPath.size - 1).equalsIgnoreCase(SCALA)) {
+          makeFilePath = cOptions.getOrElse(MODEL_CONFIG, "")
+          MetadataProxy.addNativeModel(opts, modelPath, makeFilePath, "scala")
+        }
+        // nope, must be a PMML one...
+        else {
+          MetadataProxy.addPmmlModel(opts, modelPath)
+        }
+      }
+
+      // -Add container
+      if (subject.equalsIgnoreCase(CONTAINER)) {
+        var containerPath = constructPath(cOptions, opts, CONTAINER)
+        MetadataProxy.addContainer(opts, containerPath)
+      }
+
+      // -Add message
+      if (subject.equalsIgnoreCase(MESSAGE)) {
+        var messagePath =  constructPath(cOptions, opts, MESSAGE)
+        MetadataProxy.addMessage(opts, messagePath)
+      }
+    }
+
     
     return ""
   }

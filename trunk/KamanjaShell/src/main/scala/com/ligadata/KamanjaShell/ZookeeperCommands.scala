@@ -8,7 +8,7 @@ import sys.process._
  */
 object ZookeeperCommands {
   
-  val tmpZKPath = "/tmp/zookeeper-3.4.6" 
+  val tmpZKPath = "/tmp/zookeeper-3.4.6"
   var tmpZKPath2 = ""
   /**
    * Start an internal Zookeeper PROCESS.  Need to figure out the port available, then 
