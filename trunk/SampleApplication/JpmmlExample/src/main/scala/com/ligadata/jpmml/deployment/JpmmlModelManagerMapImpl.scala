@@ -4,6 +4,7 @@ import java.io.InputStream
 import javax.xml.bind.{ValidationEvent, ValidationEventHandler}
 import javax.xml.transform.sax.SAXSource
 
+import com.ligadata.jpmml.timer.TimerHelper
 import org.dmg.pmml.PMML
 import org.jpmml.evaluator.{ModelEvaluator, ModelEvaluatorFactory}
 import org.jpmml.model.{ImportFilter, JAXBUtil}
@@ -15,13 +16,13 @@ import scala.collection.concurrent.TrieMap
 /**
  * Use a map to store model evaluators
  */
-trait JpmmlModelManagerMapImpl extends JpmmlModelManager {
+trait JpmmlModelManagerMapImpl extends JpmmlModelManager with TimerHelper {
 
   private case class ModelNameAndVersion(name: String, version: String)
 
   private val evaluatorMap = TrieMap.empty[ModelNameAndVersion, ModelEvaluator[_]]
 
-  override def deployModel(name: String, version: String, is: InputStream): Unit = {
+  override def deployModel(name: String, version: String, is: InputStream): Unit = timed {
     val reader = XMLReaderFactory.createXMLReader()
     reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
     val filter = new ImportFilter(reader)

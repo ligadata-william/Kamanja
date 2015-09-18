@@ -4,7 +4,7 @@ import java.io.{DataOutputStream, DataInputStream}
 
 import com.ligadata.KamanjaBase.{ModelResultBase, TransactionContext, ModelContext}
 import com.ligadata.SimpleEnvContextImpl.SimpleEnvContextImpl
-import com.ligadata.jpmml.concrete.JpmmlModelEvaluatorConcrete
+import com.ligadata.jpmml.concrete.JpmmlModelEvaluatorWired
 import com.ligadata.jpmml.message.JpmmlMessage
 import org.scalatest.FlatSpec
 import scala.language.reflectiveCalls
@@ -13,6 +13,7 @@ import scala.language.reflectiveCalls
  * Tests
  */
 class JpmmlModelEvaluatorFileReaderTest extends FlatSpec {
+  object JpmmlModelEvaluatorConcrete extends JpmmlModelEvaluatorWired with NoopTimerHelper
 
   def fixture = new {
     val singleIrisFilePath = createFileNodeList("single_iris_dectree.xml")
