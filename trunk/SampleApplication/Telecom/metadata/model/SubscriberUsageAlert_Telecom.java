@@ -84,9 +84,12 @@ public ModelResultBase execute(boolean emitAllResults) {
 	 long indLimit = planInfo.individuallimit() * 1024;
 	 System.out.println("plan limit:"+planLimit);
 	 
-	 // if the usage doesn't belong to this month, we ignore it
-	  if( txnMonth != currentMonth )
-	    return null;
+	 // we are supposed to check whether the usage belongs to current month
+	 // if the usage doesn't belong to this month, we are supposed to ignore it
+	 // Here we let all the data pass through just to generate sample alerts no matter
+	 // what the actual usage data is
+	 // if( txnMonth != currentMonth )
+	 //   return null;
 	
 	  //aggregate account uasage
 	  long actMonthlyUsage = actAggrUsage.thismonthusage() + rcntTxn.usage();
@@ -156,7 +159,7 @@ public ModelResultBase execute(boolean emitAllResults) {
 	private void dumpAppLog(String logStr) throws IOException{
 		FileWriter fw = null;
 		try {
-		 fw = new FileWriter("/Users/eshanhaval/Desktop/SubscriberUsageAlertAppLog.txt",true);
+		 fw = new FileWriter("SubscriberUsageAlertAppLog.txt",true);
 		
 		      fw.write(logStr + "\n");
 		    }
