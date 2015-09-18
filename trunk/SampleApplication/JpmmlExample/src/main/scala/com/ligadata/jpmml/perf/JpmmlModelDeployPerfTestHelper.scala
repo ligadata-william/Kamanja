@@ -1,4 +1,4 @@
-package com.ligadata.jpmml.deployment
+package com.ligadata.jpmml.perf
 
 import com.ligadata.jpmml.concrete.JpmmlModelEvaluatorWired
 import com.ligadata.jpmml.timer.TimerHelper

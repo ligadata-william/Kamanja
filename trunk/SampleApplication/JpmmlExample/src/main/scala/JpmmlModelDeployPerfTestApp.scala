@@ -1,4 +1,4 @@
-package com.ligadata.jpmml.deployment
+import com.ligadata.jpmml.perf.JpmmlModelDeployPerfTestHelper
 
 /**
  *
@@ -8,6 +8,6 @@ object JpmmlModelDeployPerfTestApp extends App {
   val pmmlPath =  args(0)
   val count = if (args.length == 2) args(1).toInt else 1000
 
-  val testHelper = new JpmmlModelDeployPerfTestHelper
-  testHelper.runTest(count, pmmlPath)
+  val perfTester = new JpmmlModelDeployPerfTestHelper
+  perfTester.runTest(count, pmmlPath)
 }
