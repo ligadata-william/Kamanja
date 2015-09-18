@@ -19,7 +19,7 @@ class JpmmlModelDeployPerfTestHelper extends JpmmlModelEvaluatorWired with Timer
     val name = "Dummy"
     val version = "1.0"
     deployModelTimes.clear()
-    for (_ <- 0 until count) yield deployModelFromFileSystem(name, version, path)
+    for (i <- 0 until count) yield deployModelFromFileSystem(name, version, path)
     printStats(deployModelTimes)
   }
 
@@ -28,7 +28,9 @@ class JpmmlModelDeployPerfTestHelper extends JpmmlModelEvaluatorWired with Timer
       println("Count - 0")
     }
     else {
-      println(s"Avg - ${deployTimes.sum / deployTimes.size} millis, Count - ${deployTimes.size}, Max - ${deployTimes.max}")
+      println(s"First deploy time - ${deployTimes.head} millis\nSkipping first value\n")
+      val rest = deployTimes.tail
+      println(s"Avg - ${rest.sum / rest.size} millis, Count - ${rest.size}, Max - ${rest.max}. Min - ${rest.min}")
     }
   }
 }
