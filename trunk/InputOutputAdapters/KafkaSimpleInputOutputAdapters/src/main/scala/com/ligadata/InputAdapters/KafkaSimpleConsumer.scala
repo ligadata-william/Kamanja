@@ -27,6 +27,7 @@ import kafka.consumer.{ SimpleConsumer }
 import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
+import scala.collection.breakOut
 import com.ligadata.Exceptions.StackTrace
 
 object KafkaSimpleConsumer extends InputAdapterObj {
@@ -57,6 +58,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
   private var replicaBrokers: Set[String] = Set()
   private var readExecutor: ExecutorService = _
   private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordValue)]()
+  private val kvs_per_threads = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordValue)]]()
   private var clientName: String = _
 
   // Heartbeat monitor related variables.
@@ -101,6 +103,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       return
     }
 
+    // See how many cores there are on the system.
+    var numOfCores = Runtime.getRuntime.availableProcessors;
+
     // Get the data about the request and set the instancePartition list.
     val partitionInfo = partitionIds.map(quad => {
       (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey],
@@ -117,154 +122,188 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     }
 
     // Figure out the size of the thread pool to use and create that pool
-    var threads = 0
-    if (threads == 0) {
-      if (qc.instancePartitions.size == 0)
-        threads = 1
-      else
-        threads = qc.instancePartitions.size
-    }
+    var threads = numOfCores
+    // var threads = 0
+    //if (threads == 0) {
+    //  if (qc.instancePartitions.size == 0)
+    //    threads = 1
+    //  else
+    //    threads = qc.instancePartitions.size
+   // }
 
     readExecutor = Executors.newFixedThreadPool(threads)
 
     // Create a Map of all the partiotion Ids.
     kvs.clear
+    kvs_per_threads.clear
     partitionInfo.foreach(quad => {
       kvs(quad._1.PartitionId) = quad
+    })
+
+
+    // Partition the incoming sack of Partitions into buckets.  For now assume the number of threads executing these will
+    // be the number of logical processors available to the JVM
+    for (idnx <- 1 to threads) {
+      kvs_per_threads(idnx) = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordValue)]()
+      println("Creating Bucket")
+    }
+
+    kvs.foreach(quad => {
+      var bucket = (quad._1 % threads) + 1
+      var temp = kvs_per_threads.get(bucket).get
+      temp(quad._1) = quad._2
     })
 
     // Enable the adapter to process
     isQuiesced = false
     LOG.debug("KAFKA-ADAPTER: Starting " + kvs.size + " threads to process partitions")
 
+
+
     // Schedule a task to perform a read from a give partition.
-    kvs.foreach(kvsElement => {
+    kvs_per_threads.foreach(kvsThreadElements => {
       readExecutor.execute(new Runnable() {
         override def run() {
-          val partitionId = kvsElement._1
-          val partition = kvsElement._2
 
-          // if the offset is -1, then the server wants to start from the begining, else, it means that the server
-          // knows what its doing and we start from that offset.
-          var readOffset: Long = -1
-          val uniqueRecordValue = if (ignoreFirstMsg) partition._3.Offset else partition._3.Offset - 1
-
+          // Initialize partition scope variables.
           var sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
-          var messagesProcessed: Long = 0
           var execThread: ExecContext = null
-          val uniqueKey = new KafkaPartitionUniqueRecordKey
-          val uniqueVal = new KafkaPartitionUniqueRecordValue
+          val threadPartitions = kvsThreadElements._2
 
-          clientName = "Client" + qc.Name + "/" + partitionId
-          uniqueKey.Name = qc.Name
-          uniqueKey.TopicName = qc.topic
-          uniqueKey.PartitionId = partitionId
+          // Initizlise message processed.
+          var messagesProcessed:  scala.collection.mutable.Map[Int,Long] = (threadPartitions.map(part => (part._1,0.toLong)).toMap).map(identity)(breakOut)
 
-          // Figure out which of the hosts is the leader for the given partition
-          val leadBroker: String = getKafkaConfigId(findLeader(qc.hosts, partitionId))
+          // Initialize all the offset to -1... meaning assume that unless specified, we start reading from the
+          // beginning.
+          var readOffsets: scala.collection.mutable.Map[Int,Long] = (threadPartitions.map(part => (part._1, -1.toLong)).toMap).map(identity)(breakOut)
 
-          // Start processing from either a beginning or a number specified by the KamanjaMananger
-          readOffset = getKeyValueForPartition(leadBroker, partitionId, kafka.api.OffsetRequest.EarliestTime)
-          if (partition._2.Offset > readOffset) {
-            readOffset = partition._2.Offset
-          }
+          //Initialzie the LEAD BROKERS for each Partition in this subset.
+          var leadBrokers: scala.collection.mutable.Map[Int,String] = (threadPartitions.map(part => (part._1,"")).toMap).map(identity)(breakOut)
 
-          // See if we can determine the right offset, bail if we can't
-          if (readOffset == -1) {
-            LOG.error("KAFKA-ADAPTER: Unable to initialize new reader thread for partition {" + partitionId + "} starting at offset " + readOffset + " on server - " + leadBroker + ", Invalid OFFSET")
-            return
-          }
+          // List of already initialized Partitions.
+          var initializedPartitions: scala.collection.mutable.Set[Int] = scala.collection.mutable.Set[Int]()
 
-          LOG.debug("KAFKA-ADAPTER: Initializing new reader thread for partition {" + partitionId + "} starting at offset " + readOffset + " on server - " + leadBroker)
+          // Map of consumer ojbects... per Kafka Broker.  no need to have one per partitions, since a number of partitions
+          // will go to the same broker
+          var consumers: scala.collection.mutable.Map[String,SimpleConsumer] = scala.collection.mutable.Map[String,SimpleConsumer]()
 
-          // If we are forced to retry in case of a failure, get the new Leader.
-          //val consumer = brokerConfiguration(leadBroker)
-          val brokerId = convertIp(leadBroker)
-          val brokerName = brokerId.split(":")
-          val consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-                                            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                            KafkaSimpleConsumer.FETCHSIZE,
-                                            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
-
-          // Keep processing until you fail enough times.
+          // Run through all partitions assigned to this thread...  run until the thread is stopped.
           while (!isQuiesced) {
-            val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.topic, partitionId, readOffset, KafkaSimpleConsumer.FETCHSIZE).build();
+            // Process each partition
+            threadPartitions.foreach(kvsElement => {
+              val partitionId = kvsElement._1
+              val partitionInfo = kvsElement._2
+              val uniqueRecordValue = if (ignoreFirstMsg) partitionInfo._3.Offset else partitionInfo._3.Offset - 1
 
-            // Call the broker and get a response.
-            val fetchResp = consumer.fetch(fetchReq)
+              val uniqueKey = new KafkaPartitionUniqueRecordKey
+              val uniqueVal = new KafkaPartitionUniqueRecordValue
 
-            // Check for errors
-            if (fetchResp.hasError) {
-              LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " +
-                fetchResp.errorCode(qc.topic, partitionId))
-              numberOfErrors = numberOfErrors + 1
+              // Prepare the call to Kafka.
+              clientName = "Client" + qc.Name + "/" + partitionId
+              uniqueKey.Name = qc.Name
+              uniqueKey.TopicName = qc.topic
+              uniqueKey.PartitionId = partitionId
 
-              if (numberOfErrors > KafkaSimpleConsumer.MAX_FAILURES) {
-                LOG.error("KAFKA-ADAPTER: Too many failures reading from kafka adapters.")
-                if (consumer != null) {
-                  consumer.close
+              // Do we need to initialize this partion information.. leadborker, offset, etc....
+              if (!initializedPartitions.contains(partitionId)) {
+                // Get LeadBroker.
+                leadBrokers(partitionId) = getKafkaConfigId(findLeader(qc.hosts, partitionId))
+                // Start processing from either a beginning or a number specified by the KamanjaMananger
+                readOffsets(partitionId) = getKeyValueForPartition(leadBrokers(partitionId), partitionId, kafka.api.OffsetRequest.EarliestTime)
+                if (partitionInfo._2.Offset > readOffsets(partitionId)) {
+                  readOffsets(partitionId) = partitionInfo._2.Offset
                 }
-                return
-              }
-            }
-
-            val ignoreTillOffset = if (ignoreFirstMsg) partition._2.Offset else partition._2.Offset - 1
-            // Successfuly read from the Kafka Adapter - Process messages
-            fetchResp.messageSet(qc.topic, partitionId).foreach(msgBuffer => {
-              val bufferPayload = msgBuffer.message.payload
-              val message: Array[Byte] = new Array[Byte](bufferPayload.limit)
-              readOffset = msgBuffer.nextOffset
-              breakable {
-                val readTmNs = System.nanoTime
-                val readTmMs = System.currentTimeMillis
-                messagesProcessed = messagesProcessed + 1
-
-                // Engine in interested in message at OFFSET + 1, Because I cannot guarantee that offset for a partition
-                // is increasing by one, and I cannot simple set the offset to offset++ since that can cause our of
-                // range errors on the read, we simple ignore the message by with the offset specified by the engine.
-                if (msgBuffer.offset <= ignoreTillOffset) {
-                  LOG.debug("KAFKA-ADAPTER: skipping a message at  Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " " + new String(message, "UTF-8") + " - previously processed! ")
-                  break
+                // See if we can determine the right offset, bail if we can't
+                if (readOffsets(partitionId) == -1) {
+                  LOG.error("KAFKA-ADAPTER: Unable to initialize new reader thread for partition {" + partitionId + "} starting at offset " + readOffsets(partitionId) + " on server - " + leadBrokers(partitionId) + ", Invalid OFFSET")
+                  return
                 }
+                LOG.debug("KAFKA-ADAPTER: Initializing new reader thread for partition {" + partitionId + "} starting at offset " + readOffsets(partitionId) + " on server - " + leadBrokers(partitionId))
 
-                // OK, present this message to the Engine.
-                bufferPayload.get(message)
-                LOG.debug("KAFKA-ADAPTER: Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
-
-                // Create a new EngineMessage and call the engine.
-                if (execThread == null) {
-                  execThread = execCtxtObj.CreateExecContext(input, uniqueKey, callerCtxt)
+                val brokerId = convertIp(leadBrokers(partitionId))
+                val brokerName = brokerId.split(":")
+                if (!consumers.contains(brokerId)) {
+                  consumers(leadBrokers(partitionId)) = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
+                                                            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                                            KafkaSimpleConsumer.FETCHSIZE,
+                                                            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
                 }
-
-                uniqueVal.Offset = msgBuffer.offset
-                val dontSendOutputToOutputAdap = uniqueVal.Offset <= uniqueRecordValue
-                execThread.execute(message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, qc.associatedMsg, qc.delimiterString)
-
-                val key = Category + "/" + qc.Name + "/evtCnt"
-                cntrAdapter.addCntr(key, 1) // for now adding each row
               }
 
-            })
+              // This partition has been initiazlised... issue a call to fetch messages.
+              val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.topic, partitionId, readOffsets(partitionId), KafkaSimpleConsumer.FETCHSIZE).build();
+              val fetchResp = consumers(leadBrokers(partitionId)).fetch(fetchReq)
+              // Check for errors
+              if (fetchResp.hasError) {
+                LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBrokers(partitionId) + " " + ", error code is " + fetchResp.errorCode(qc.topic, partitionId))
+                numberOfErrors = numberOfErrors + 1
+                if (numberOfErrors > KafkaSimpleConsumer.MAX_FAILURES) {
+                  LOG.error("KAFKA-ADAPTER: Too many failures reading from kafka adapters.")
+                  if (consumers.contains(leadBrokers(partitionId))) consumers(leadBrokers(partitionId)).close
+                  return
+                }
+              }
 
+              val ignoreTillOffset = if (ignoreFirstMsg) partitionInfo._2.Offset else partitionInfo._2.Offset - 1
+
+              // Pull the individual messages out
+              fetchResp.messageSet(qc.topic, partitionId).foreach (msgBuffer => {
+                val bufferPayload = msgBuffer.message.payload
+                val message: Array[Byte] = new Array[Byte](bufferPayload.limit)
+                readOffsets(partitionId) = msgBuffer.nextOffset
+                breakable {
+                  val readTmNs = System.nanoTime
+                  val readTmMs = System.currentTimeMillis
+                  messagesProcessed(partitionId) = messagesProcessed(partitionId) + 1
+
+                  // Engine in interested in message at OFFSET + 1, Because I cannot guarantee that offset for a partition
+                  // is increasing by one, and I cannot simple set the offset to offset++ since that can cause our of
+                  // range errors on the read, we simple ignore the message by with the offset specified by the engine.
+                  if (msgBuffer.offset <= ignoreTillOffset) {
+                    LOG.debug("KAFKA-ADAPTER: skipping a message at  Broker: " + leadBrokers(partitionId) + "_" + partitionId + " OFFSET " + msgBuffer.offset + " " + new String(message, "UTF-8") + " - previously processed! ")
+                    break
+                  }
+
+                  // OK, present this message to the Engine. - May need to create a execution context.
+                  bufferPayload.get(message)
+                  LOG.debug("KAFKA-ADAPTER: Broker: " + leadBrokers(partitionId) + "_" + partitionId + " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
+
+
+                  // Create a new EngineMessage and call the engine.
+                  if (execThread == null) {
+                    execThread = execCtxtObj.CreateExecContext(input, uniqueKey, callerCtxt)
+                  }
+                  uniqueVal.Offset = msgBuffer.offset
+                  val dontSendOutputToOutputAdap = uniqueVal.Offset <= uniqueRecordValue
+                  execThread.execute(message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, qc.associatedMsg, qc.delimiterString)
+                  val key = Category + "/" + qc.Name + "/evtCnt"
+                  cntrAdapter.addCntr(key, 1) // for now adding each row
+
+                }
+              })
+            })  // Process each partition
+
+
+            // Ok, we have been throught the partitions once... see if we need to suspend a bit if there aren't any
+            //
             try {
               // Sleep here, only if input parm for sleep is set and we haven't gotten any messages on the previous kafka call.
-              if ((qc.noDataSleepTimeInMs > 0) && (messagesProcessed == 0)) {
-                Thread.sleep(qc.noDataSleepTimeInMs)
-              }
-              messagesProcessed = 0
+              if ((qc.noDataSleepTimeInMs > 0) && (messagesProcessed.filter(id => id._2 > 0).toSet.size == 0)) Thread.sleep(qc.noDataSleepTimeInMs)
+              messagesProcessed = (threadPartitions.map(part => (part._1,0.toLong)).toMap).map(identity)(breakOut)
             } catch {
               case e: java.lang.InterruptedException =>
-                {
-                  val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.debug("KAFKA ADAPTER: Forcing down the Consumer Reader thread"+"\nStackTrace:"+stackTrace)
-                }
+              {
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("KAFKA ADAPTER: Forcing down the Consumer Reader thread"+"\nStackTrace:"+stackTrace)
+              }
             }
-          }
-          if (consumer != null) { consumer.close }
-        }
-      })
-    })
+          } // while(quiesce) loop
 
+          // we are out of subpartition "infinite loop"  clean up the resources... Consumers that is.
+          consumers.foreach(consumer => {consumer._2.close})
+        }  // RUN - the executable thread for each sub-partition
+      })
+    })  // Process all subpartition.
   }
 
   /**
