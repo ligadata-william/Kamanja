@@ -7,6 +7,10 @@ Kamanja&#8482; is a big data real-time decisioning product. It is built natively
 Kamanja is licensed under Apache 2.0 license. It also uses following components under separate licenses from respective creators/owners:
 
 <table>
+<tr>
+<th>Project name</th>
+<th>License name</th>
+</tr>
 <tbody>
 <tr>
 <td>Apache Commons Configuration</td>
