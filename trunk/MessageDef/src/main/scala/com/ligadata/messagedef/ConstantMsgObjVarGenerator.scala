@@ -171,7 +171,7 @@ class ConstantMsgObjVarGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -242,16 +242,50 @@ class ConstantMsgObjVarGenerator {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getFullName + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getDatePartitioninfo(msg.datePartition) + newline + getFullName + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getFullName + newline + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + getDatePartitioninfo(msg.datePartition) + newline + newline + getFullName + newline + cbrace + newline)
 
     }
     cobj
+  }
+
+  //DatePartitionInfo method in message Object
+
+  private def getDatePartitioninfo(datePatition: DatePartition): String = {
+    var dateParitionInfoStr = new StringBuilder(8 * 1024)
+    var datePatitionKey: String = ""
+    var datePatitionFormat: String = ""
+    var datePatitionDType: String = ""
+
+    if (datePatition == null) {
+      dateParitionInfoStr = dateParitionInfoStr.append("""     
+    def getDatePartitionInfo: (String, String, String) = { // Column, Format & Types	
+		return(null, null, null)	
+	}""")
+
+    } else {
+
+      if (datePatition.Format == null) {
+        dateParitionInfoStr = dateParitionInfoStr.append("""     
+    def getDatePartitionInfo: (String, String, String) = { // Column, Format & Types	
+		return("""" + datePatition.Key + """" , null, """" + datePatition.DType + """")	
+	}""")
+      } else {
+
+        dateParitionInfoStr = dateParitionInfoStr.append("""     
+    def getDatePartitionInfo: (String, String, String) = { // Column, Format & Types	
+		return("""" + datePatition.Key + """" , """" + datePatition.Format + """", """" + datePatition.DType + """")		
+	}""")
+
+      }
+    }
+
+    return dateParitionInfoStr.toString
   }
 
   def getName(msg: Message) = {
@@ -395,7 +429,7 @@ class ConstantMsgObjVarGenerator {
       imprt = "import com.ligadata.KamanjaBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     else if (msg.msgtype.equals("Container"))
       imprt = "import com.ligadata.KamanjaBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
-    var nonVerPkg = "package " + msg.pkg +";\n"
+    var nonVerPkg = "package " + msg.pkg + ";\n"
     var verPkg = "package " + msg.pkg + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
 
     var otherImprts = """
@@ -748,12 +782,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   }
 
-  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String, fromFuncBaeTypes:String): String = {
+  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String, fromFuncBaeTypes: String): String = {
     var fromFnc: String = ""
     if (fromFunc != null) fromFnc = fromFunc
     """ 
      private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
-     """+ fromFuncBaeTypes+ """
+     """ + fromFuncBaeTypes + """
 	""" + fromFnc + """
      	return this
     }
@@ -774,7 +808,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
           if(key != "transactionid"){
           ofield._2._1 match {
            """ + fromFuncBaseTypesStr +
-           """
+      """
             case _ => {} // could be -1
           }
         }
@@ -817,12 +851,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
   
   """
   }
-  
-   def logStackTrace = {
+
+  def logStackTrace = {
     """
     private val LOG = Logger.getLogger(getClass)
     """
-    
+
   }
 
 }
