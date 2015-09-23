@@ -68,6 +68,8 @@ object KeyValueManager {
       case "treemap" => return KeyValueTreeMap.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
       case "hashmap" => return KeyValueHashMap.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
       case "redis" => return KeyValueRedis.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
+      // Other relational stores such as sqlserver, mysql
+      case "sqlserver" => return SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, datastoreConfig)
 
       // Default, Load it from Class
       case _ => {

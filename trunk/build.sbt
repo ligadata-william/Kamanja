@@ -113,6 +113,8 @@ lazy val StorageTreeMap = project.in(file("Storage/TreeMap")) dependsOn(StorageB
 
 lazy val StorageVoldemort = project.in(file("Storage/Voldemort")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
+lazy val StorageSqlServer = project.in(file("Storage/SqlServer")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+
 lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, StorageCassandra, StorageHashMap, StorageHBase, StorageTreeMap, StorageRedis, KamanjaBase, KamanjaUtils)
 
 lazy val AuditAdapterBase = project.in(file("AuditAdapters/AuditAdapterBase")) dependsOn(Exceptions)
