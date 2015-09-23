@@ -155,4 +155,154 @@ Kamanja is licensed under Apache 2.0 license. It also uses following components 
 </tbody>
 </table>
 
+<table>
+<tr>
+<th>Project name</th>
+<th>License name</th>
+</tr>
+<tbody>
+<tr>
+<td>Apache Commons Configuration</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Apache Commons Lang</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Apache ZooKeeper</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Bootstrap (Twitter)</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>bootstrap-slider</td>
+<td> Apache License 2.0</td>
+</tr>
+<tr>
+<td>commons-collections</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>commons-logging</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Curator Client</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Curator Framework</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Curator Recipes</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>DataStax Java Driver for Apache Cassandra - Core</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>DataStax Java Driver for Apache Cassandra - DataStax Enterprise Module</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>DataStax Java Driver for Apache Cassandra Examples - Stress</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>DeepLearning4j</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Flexjson</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Google GCM Library</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Guava: Google Core Libraries for Java</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Java Message Service</td>
+<td>Sun Java Message Service 1.1 License</td>
+</tr>
+<tr>
+<td>Joda convert</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Joda time/td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>json-simple</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>kafka</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>log4j</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Log4j (for Apache Directory Studio)</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Metrics Core Library</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>scoobi</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>zkclient</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
+<td>Bootstrap Flat</td>
+<td>MIT license</td>
+</tr>
+<tr>
+<td>jquery-counter</td>
+<td>MIT License</td>
+</tr>
+<tr>
+<td>jruby-win32ole</td>
+<td>MIT License</td>
+</tr>
+<tr>
+<td>slf4j-log4j</td>
+<td>MIT License</td>
+</tr>
+<tr>
+<td>slf4j-simple</td>
+<td>MIT License</td>
+</tr>
+<tr>
+<td>SLF4J API Module</td>
+<td>MIT License</td>
+</tr>
+<tr>
+<td>PostgreSQL JDBC Driver</td>
+<td>BSD 3-clause "New" or "Revised" License</td>
+</tr>
+<tr>
+<td>scala-actors</td>
+<td>BSD 3-clause "New" or "Revised" License</td>
+</tr>
+</tbody>
+</table>
+
+
 
