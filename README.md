@@ -226,10 +226,6 @@ Kamanja is licensed under Apache 2.0 license. It also uses following components 
 <td>Apache License 2.0</td>
 </tr>
 <tr>
-<td>Java Message Service</td>
-<td>Sun Java Message Service 1.1 License</td>
-</tr>
-<tr>
 <td>Joda convert</td>
 <td>Apache License 2.0</td>
 </tr>
@@ -300,6 +296,10 @@ Kamanja is licensed under Apache 2.0 license. It also uses following components 
 <tr>
 <td>scala-actors</td>
 <td>BSD 3-clause "New" or "Revised" License</td>
+</tr>
+<tr>
+<td>Java Message Service</td>
+<td>Sun Java Message Service 1.1 License</td>
 </tr>
 </tbody>
 </table>
