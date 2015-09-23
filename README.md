@@ -6,312 +6,62 @@ Kamanja&#8482; is a big data real-time decisioning product. It is built natively
 
 Kamanja is licensed under the Apache License, Version 2.0.  However, Kamanja uses certain open-source software (OSS), which such OSS is instead licensed under the license applicable to such OSS.  This document identifies the OSS components used in Kamanja, the OSS licenses that ligaData  believes governs those OSS components, and copyright and license notices associated with ligaData’s use of the OSS. While ligaData has sought to provide complete and accurate licensing information for each OSS component, ligaData  does not represent or warrant that the licensing information provided herein is correct or error-free. Recipients of the product should investigate the identified OSS components to confirm the accuracy of the licensing information provided herein. Recipients are also encouraged to notify ligaData of any inaccurate information or errors found in these notices. ligaData may make changes to this document from time to time, without notice.
 
-1. the following components are licensed under the Apache License 2.0
+1. The following components are licensed under the Apache License 2.0:
+
+<ul>
+<li>Apache Commons Configuration</li>
+<li>Apache Commons Lang</li>
+<li>Apache ZooKeeper</li>
+<li>Bootstrap (Twitter)</li>
+<li>bootstrap-slider</li>
+<li>commons-collections</li>
+<li>commons-logging</li>
+<li>Curator Client</li>
+<li>Curator Framework</li>
+<li>Curator Recipes</li>
+<li>DataStax Java Driver for Apache Cassandra - Core</li>
+<li>DataStax Java Driver for Apache Cassandra - DataStax Enterprise Module</li>
+<li>DeepLearning4j</li>
+<li>Flexjson</li>
+<li>Google GCM Library</li>
+<li>Guava: Google Core Libraries for Java</li>
+<li>Joda convert</li>
+<li>Joda time</li>
+<li>json-simple</li>
+<li>kafka</li>
+<li>log4j</li>
+<li>Log4j (for Apache Directory Studio)</li>
+<li>Metrics Core Library</li>
+<li>scoobi</li>
+<li>zkclient</li>
+</ul>
 
 
-2. the following components are licensed under the MIT License
+2. The following components are licensed under the MIT License:
+
+<ul>
+<li>Bootstrap Flat</li>
+<li>jquery-counter</li>
+<li>jruby-win32ole</li>
+<li>slf4j-log4j</li>
+<li>slf4j-simple</li>
+<li>SLF4J API Module</li>
+</ul>
 
 
-3. the following components are licensed under the BSD 3-clause "New" or "Revised" License
+3. The following components are licensed under the BSD 3-clause "New" or "Revised" License:
+
+<ul>
+<liPostgreSQL JDBC Driver</li>
+<li>scala-actors</li>
+</ul>
 
 
-4. the following components are licensed under the Sun Java Message Service 1.1 License
+4. The following components are licensed under the Sun Java Message Service 1.1 License:
+ 
+<ul>
+<li>Java Message Service</li>
+</ul>
 
 
-<table>
-<tr>
-<th>Project name</th>
-<th>License name</th>
-</tr>
-<tbody>
-<tr>
-<td>Apache Commons Configuration</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Apache Commons Lang</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Apache ZooKeeper</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Bootstrap (Twitter)</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Bootstrap Flat</td>
-<td>MIT license</td>
-</tr>
-<tr>
-<td>bootstrap-slider</td>
-<td> Apache License 2.0</td>
-</tr>
-<tr>
-<td>commons-collections</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>commons-logging</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Curator Client</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Curator Framework</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Curator Recipes</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DataStax Java Driver for Apache Cassandra - Core</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DataStax Java Driver for Apache Cassandra - DataStax Enterprise Module</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DataStax Java Driver for Apache Cassandra Examples - Stress</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DeepLearning4j</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Flexjson</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Google GCM Library</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Guava: Google Core Libraries for Java</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Java Message Service</td>
-<td>Sun Java Message Service 1.1 License</td>
-</tr>
-<tr>
-<td>Joda convert</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Joda time/td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>jquery-counter</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>jruby-win32ole</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>json-simple</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>kafka</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>log4j</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Log4j (for Apache Directory Studio)</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Metrics Core Library</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>PostgreSQL JDBC Driver</td>
-<td>BSD 3-clause "New" or "Revised" License</td>
-</tr>
-<tr>
-<td>scala-actors</td>
-<td>BSD 3-clause "New" or "Revised" License</td>
-</tr>
-<tr>
-<td>scoobi</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>SLF4J API Module</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>slf4j-log4j</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>slf4j-simple</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>zkclient</td>
-<td>Apache License 2.0</td>
-</tr>
-</tbody>
-</table>
 
-<table>
-<tr>
-<th>Project name</th>
-<th>License name</th>
-</tr>
-<tbody>
-<tr>
-<td>Apache Commons Configuration</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Apache Commons Lang</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Apache ZooKeeper</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Bootstrap (Twitter)</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>bootstrap-slider</td>
-<td> Apache License 2.0</td>
-</tr>
-<tr>
-<td>commons-collections</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>commons-logging</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Curator Client</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Curator Framework</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Curator Recipes</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DataStax Java Driver for Apache Cassandra - Core</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DataStax Java Driver for Apache Cassandra - DataStax Enterprise Module</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DataStax Java Driver for Apache Cassandra Examples - Stress</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>DeepLearning4j</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Flexjson</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Google GCM Library</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Joda convert</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Joda time/td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>json-simple</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>kafka</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>log4j</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Log4j (for Apache Directory Studio)</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Metrics Core Library</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>scoobi</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>zkclient</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Guava: Google Core Libraries for Java</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
-<td>Bootstrap Flat</td>
-<td>MIT license</td>
-</tr>
-<tr>
-<td>jquery-counter</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>jruby-win32ole</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>slf4j-log4j</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>slf4j-simple</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>SLF4J API Module</td>
-<td>MIT License</td>
-</tr>
-<tr>
-<td>PostgreSQL JDBC Driver</td>
-<td>BSD 3-clause "New" or "Revised" License</td>
-</tr>
-<tr>
-<td>scala-actors</td>
-<td>BSD 3-clause "New" or "Revised" License</td>
-</tr>
-<tr>
-<td>Java Message Service</td>
-<td>Sun Java Message Service 1.1 License</td>
-</tr>
-</tbody>
-</table>
