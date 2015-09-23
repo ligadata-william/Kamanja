@@ -318,7 +318,7 @@ trait ModelBaseObj {
   def CreateResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
 }
 
-class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
+class ModelInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
 class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
