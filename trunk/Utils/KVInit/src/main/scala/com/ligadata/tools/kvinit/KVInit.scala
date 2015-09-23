@@ -113,6 +113,12 @@ Sample uses:
           nextOption(map ++ Map('keyfields -> value), tail)
         case "--delimiter" :: value :: tail =>
           nextOption(map ++ Map('delimiter -> value), tail)
+        case "--keyandvaluedelimiter" :: value :: tail =>
+          nextOption(map ++ Map('keyandvaluedelimiter -> value), tail)
+        case "--fielddelimiter" :: value :: tail =>
+          nextOption(map ++ Map('fielddelimiter -> value), tail)
+        case "--valuedelimiter" :: value :: tail =>
+          nextOption(map ++ Map('valuedelimiter -> value), tail)
         case "--ignoreerrors" :: value :: tail =>
           nextOption(map ++ Map('ignoreerrors -> value), tail)
         case "--ignorerecords" :: value :: tail =>
@@ -494,7 +500,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       delimiters.valueDelimiter = valueDelimiter
       val inputData = new KvData(inputStr, delimiters)
 
-      val dataMap = scala.collection.mutable.Map[String, Any]()
+      val dataMap = scala.collection.mutable.Map[String, String]()
 
       val str_arr = inputData.dataInput.split(delimiters.fieldDelimiter, -1)
 

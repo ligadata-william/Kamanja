@@ -157,7 +157,7 @@ class TransformMessageData {
 
     val str_arr = inputData.split(delimiters.fieldDelimiter, -1)
     val inpData = new KvData(inputData, delimiters)
-    val dataMap = scala.collection.mutable.Map[String, Any]()
+    val dataMap = scala.collection.mutable.Map[String, String]()
 
     if (delimiters.fieldDelimiter.compareTo(delimiters.keyAndValueDelimiter) == 0) {
       if (str_arr.size % 2 != 0) {

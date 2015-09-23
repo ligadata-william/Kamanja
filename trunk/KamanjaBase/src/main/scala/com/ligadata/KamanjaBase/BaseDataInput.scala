@@ -37,6 +37,6 @@ class XmlData(val dataInput: String) extends InputData {
 }
 
 class KvData(val dataInput: String, val delimiters: DataDelimiters) extends InputData {
-  var dataMap: scala.collection.immutable.Map[String, Any] = _
+  var dataMap: scala.collection.immutable.Map[String, String] = _
 }
 
