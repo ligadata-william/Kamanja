@@ -226,10 +226,6 @@ Kamanja is licensed under Apache 2.0 license. It also uses following components 
 <td>Apache License 2.0</td>
 </tr>
 <tr>
-<td>Guava: Google Core Libraries for Java</td>
-<td>Apache License 2.0</td>
-</tr>
-<tr>
 <td>Java Message Service</td>
 <td>Sun Java Message Service 1.1 License</td>
 </tr>
@@ -270,6 +266,10 @@ Kamanja is licensed under Apache 2.0 license. It also uses following components 
 <td>Apache License 2.0</td>
 </tr>
 <tr>
+<td>Guava: Google Core Libraries for Java</td>
+<td>Apache License 2.0</td>
+</tr>
+<tr>
 <td>Bootstrap Flat</td>
 <td>MIT license</td>
 </tr>
@@ -303,6 +303,3 @@ Kamanja is licensed under Apache 2.0 license. It also uses following components 
 </tr>
 </tbody>
 </table>
-
-
-
