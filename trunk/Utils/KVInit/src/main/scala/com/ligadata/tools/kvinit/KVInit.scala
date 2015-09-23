@@ -132,9 +132,14 @@ Sample uses:
     var tmpdatafiles = if (options.contains('datafiles)) options.apply('datafiles) else if (options.contains('csvpath)) options.apply('csvpath) else null
     val tmpkeyfieldnames = if (options.contains('keyfields)) options.apply('keyfields) else if (options.contains('keyfieldname)) options.apply('keyfieldname) else null
     val delimiterString = if (options.contains('delimiter)) options.apply('delimiter) else null
+    val keyAndValueDelimiter = if (options.contains('keyandvaluedelimiter)) options.apply('keyandvaluedelimiter) else null
+    val fieldDelimiter1 = if (options.contains('fielddelimiter)) options.apply('fielddelimiter) else null
+    val valueDelimiter = if (options.contains('valuedelimiter)) options.apply('valuedelimiter) else null
     var ignoreerrors = (if (options.contains('ignoreerrors)) options.apply('ignoreerrors) else "0").trim
     val format = (if (options.contains('format)) options.apply('format) else "delimited").trim.toLowerCase()
 
+    val fieldDelimiter = if (fieldDelimiter1 != null) fieldDelimiter1 else delimiterString
+    
     if (!(format.equals("delimited") || format.equals("json"))) {
       logger.error("Supported formats are only delimited & json")
       return
@@ -173,7 +178,8 @@ Sample uses:
       }
 
       KvInitConfiguration.configFile = cfgfile.toString
-      val kvmaker: KVInit = new KVInit(loadConfigs, typename.toLowerCase, dataFiles, keyfieldnames, delimiterString, ignoreerrors, ignoreRecords, format)
+
+      val kvmaker: KVInit = new KVInit(loadConfigs, typename.toLowerCase, dataFiles, keyfieldnames, keyAndValueDelimiter, fieldDelimiter, valueDelimiter, ignoreerrors, ignoreRecords, format)
       if (kvmaker.isOk) {
         val dstore = kvmaker.GetDataStoreHandle(KvInitConfiguration.jarPaths, kvmaker.dataDataStoreInfo, "AllData")
         if (dstore != null) {
@@ -186,9 +192,9 @@ Sample uses:
             }
           } finally {
             if (dstore != null)
-          dstore.Shutdown()
+              dstore.Shutdown()
+          }
         }
-      }
       }
       MetadataAPIImpl.CloseDbStore
 
@@ -205,14 +211,18 @@ object KvInitConfiguration {
   var jarPaths: collection.immutable.Set[String] = _
 }
 
-class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: Array[String], val keyfieldnames: Array[String], delimiterString: String, ignoreerrors: String, ignoreRecords: Int, format: String) extends LogTrait {
+class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: Array[String], val keyfieldnames: Array[String], keyAndValueDelimiter1: String,
+  fieldDelimiter1: String, valueDelimiter1: String, ignoreerrors: String, ignoreRecords: Int, format: String) extends LogTrait {
+  val fieldDelimiter = if (fieldDelimiter1 != null && fieldDelimiter1.size > 0) fieldDelimiter1 else ","
+  val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\u0001"
+  val valueDelimiter = if (valueDelimiter1 != null && valueDelimiter1.size > 0) valueDelimiter1 else "~"
 
-  val dataDelim = if (delimiterString != null && delimiterString.size > 0) delimiterString else ","
   var ignoreErrsCount = if (ignoreerrors != null && ignoreerrors.size > 0) ignoreerrors.toInt else 0
   if (ignoreErrsCount < 0) ignoreErrsCount = 0
   var isOk: Boolean = true
   val isDelimited = format.equals("delimited")
   val isJson = format.equals("json")
+  val isKv = format.equals("kv")
 
   val kvInitLoader = new KamanjaLoaderInfo
 
@@ -461,11 +471,53 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
   private def prepareInputData(inputStr: String): InputData = {
     /** if we can make one ... we add the data to the store. This will crash if the data is bad */
     if (isDelimited) {
-      val inputData = new DelimitedData(inputStr, dataDelim)
-      inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
+      val fieldDelimiter = if (fieldDelimiter1 != null && fieldDelimiter1.size > 0) fieldDelimiter1 else ","
+      val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\u0001"
+      val valueDelimiter = if (valueDelimiter1 != null && valueDelimiter1.size > 0) valueDelimiter1 else "~"
+      val delimiters = new DataDelimiters()
+      delimiters.keyAndValueDelimiter = keyAndValueDelimiter
+      delimiters.fieldDelimiter = fieldDelimiter
+      delimiters.valueDelimiter = valueDelimiter
+      val inputData = new DelimitedData(inputStr, delimiters)
+      inputData.tokens = inputData.dataInput.split(inputData.delimiters.fieldDelimiter, -1)
       inputData.curPos = 0
       return inputData
+    }
+
+    if (isKv) {
+      val fieldDelimiter = if (fieldDelimiter1 != null && fieldDelimiter1.size > 0) fieldDelimiter1 else ","
+      val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\u0001"
+      val valueDelimiter = if (valueDelimiter1 != null && valueDelimiter1.size > 0) valueDelimiter1 else "~"
+      val delimiters = new DataDelimiters()
+      delimiters.keyAndValueDelimiter = keyAndValueDelimiter
+      delimiters.fieldDelimiter = fieldDelimiter
+      delimiters.valueDelimiter = valueDelimiter
+      val inputData = new KvData(inputStr, delimiters)
+
+      val dataMap = scala.collection.mutable.Map[String, Any]()
+
+      val str_arr = inputData.dataInput.split(delimiters.fieldDelimiter, -1)
+
+      if (delimiters.fieldDelimiter.compareTo(delimiters.keyAndValueDelimiter) == 0) {
+        if (str_arr.size % 2 != 0) {
+          throw new Exception("Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched")
+        }
+        for (i <- 0 until str_arr.size by 2) {
+          dataMap(str_arr(i).trim) = str_arr(i + 1)
+        }
+      } else {
+        str_arr.foreach(kv => {
+          val kvpair = kv.split(delimiters.keyAndValueDelimiter)
+          if (kvpair.size != 2) {
+            throw new Exception("Expecting Key & Value pair only")
           }
+          dataMap(kvpair(0).trim) = kvpair(1)
+        })
+      }
+
+      inputData.dataMap = dataMap.toMap
+      return inputData
+    }
 
     if (isJson) {
       try {
@@ -480,12 +532,12 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
           inputData.root_json = Option(parsed_json)
           inputData.cur_json = Option(parsed_json)
           return inputData
-      }
+        }
       } catch {
         case e: Exception => {
           logger.error("Invalid JSON data:%s, Reason:%s, Message:%s".format(inputStr, e.getCause, e.getMessage()))
           return null
-  }
+        }
       }
     }
 
@@ -524,49 +576,49 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       val alldata: List[String] = fileData(fl, format)
 
       if (alldata.size > ignoreRecords && zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
-      try {
-        com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
-        val transService = new com.ligadata.transactions.SimpleTransService
-        transService.init(1)
-        transId = transService.getNextTransId
-      } catch {
-        case e: Exception => throw e
-      } finally {
-        com.ligadata.transactions.NodeLevelTransService.Shutdown
+        try {
+          com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
+          val transService = new com.ligadata.transactions.SimpleTransService
+          transService.init(1)
+          transId = transService.getNextTransId
+        } catch {
+          case e: Exception => throw e
+        } finally {
+          com.ligadata.transactions.NodeLevelTransService.Shutdown
+        }
       }
-    }
 
       for (i <- ignoreRecords until alldata.size) {
         val inputStr = alldata(i)
         if (inputStr.size > 0) {
           logger.debug("Record:" + inputStr)
 
-        /** if we can make one ... we add the data to the store. This will crash if the data is bad */
+          /** if we can make one ... we add the data to the store. This will crash if the data is bad */
           val inputData = prepareInputData(inputStr)
 
           if (inputData != null) {
-        var messageOrContainer: MessageContainerBase = null
+            var messageOrContainer: MessageContainerBase = null
 
-        if (isMsg) {
-          messageOrContainer = messageObj.CreateNewMessage
-        } else if (isContainer) {
-          messageOrContainer = containerObj.CreateNewContainer
-        } else { // This should not happen
+            if (isMsg) {
+              messageOrContainer = messageObj.CreateNewMessage
+            } else if (isContainer) {
+              messageOrContainer = containerObj.CreateNewContainer
+            } else { // This should not happen
               throw new Exception("Handling only message or container")
-        }
-
-        if (messageOrContainer != null) {
-          try {
-            messageOrContainer.TransactionId(transId)
-            messageOrContainer.populate(inputData)
-          } catch {
-            case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              logger.debug("Failed to populate message/container." + "\nStackTrace:" + stackTrace)
-              errsCnt += 1
             }
-          }
-          try {
+
+            if (messageOrContainer != null) {
+              try {
+                messageOrContainer.TransactionId(transId)
+                messageOrContainer.populate(inputData)
+              } catch {
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("Failed to populate message/container." + "\nStackTrace:" + stackTrace)
+                  errsCnt += 1
+                }
+              }
+              try {
                 // If we have external Partition Key, we are taking the key stuff from value, otherwise we are taking it from messageOrContainer.PartitionKeyData
                 // BUGBUG:: For now we are using messageOrContainer.get and converting it to String. It may not always convert properly (if we have complex type etc). So, we need to get String for the given key from message/container itself.
                 val keyData =
@@ -608,29 +660,29 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
                 if (foundKey == false) {
                   datarec = new KamanjaData
-            datarec.SetKey(keyData)
-            datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
+                  datarec.SetKey(keyData)
+                  datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
                   kamanjaData += datarec
                 }
 
-            datarec.AddMessageContainerBase(messageOrContainer, true, true)
-            processedRows += 1
-          } catch {
-            case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              logger.debug("Failed to serialize/write data." + "\nStackTrace:" + stackTrace)
-              errsCnt += 1
+                datarec.AddMessageContainerBase(messageOrContainer, true, true)
+                processedRows += 1
+              } catch {
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("Failed to serialize/write data." + "\nStackTrace:" + stackTrace)
+                  errsCnt += 1
+                }
+              }
             }
           }
         }
-      }
-        }
 
-      if (errsCnt > ignoreErrsCount) {
-        val errStr = "Populate/Serialize errors (%d) exceed the given count(%d)." format (errsCnt, ignoreErrsCount)
-        logger.error(errStr)
-        throw new Exception(errStr)
-      }
+        if (errsCnt > ignoreErrsCount) {
+          val errStr = "Populate/Serialize errors (%d) exceed the given count(%d)." format (errsCnt, ignoreErrsCount)
+          logger.error(errStr)
+          throw new Exception(errStr)
+        }
       }
     })
 
@@ -802,10 +854,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     try {
       if (isDelimited) {
-    var line: String = ""
-    while ({ line = br.readLine(); line != null }) {
-      fileContentsArray += line
-    }
+        var line: String = ""
+        while ({ line = br.readLine(); line != null }) {
+          fileContentsArray += line
+        }
       } else if (isJson) {
         var buf = new ArrayBuffer[Int]()
         var ch = br.read()
