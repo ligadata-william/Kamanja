@@ -4,7 +4,7 @@ Kamanja&#8482; is a big data real-time decisioning product. It is built natively
 
 [For more information, go to the project homepage www.kamanja.org](http://www.kamanja.org)
 
-Kamanja is licensed under Apache 2.0 license. It also uses following components under separate licenses from respective creators/owners:
+Kamanja is licensed under the Apache License, Version 2.0.  However, Kamanja uses certain open-source software (OSS), which such OSS is instead licensed under the license applicable to such OSS.  This document identifies the OSS components used in Kamanja, the OSS licenses that ligaData  believes governs those OSS components, and copyright and license notices associated with ligaData’s use of the OSS. While ligaData has sought to provide complete and accurate licensing information for each OSS component, ligaData  does not represent or warrant that the licensing information provided herein is correct or error-free. Recipients of the product should investigate the identified OSS components to confirm the accuracy of the licensing information provided herein. Recipients are also encouraged to notify ligaData of any inaccurate information or errors found in these notices. ligaData may make changes to this document from time to time, without notice:
 
 <table>
 <tr>
