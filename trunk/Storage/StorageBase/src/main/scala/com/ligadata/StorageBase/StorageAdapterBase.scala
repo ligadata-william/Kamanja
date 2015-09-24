@@ -6,33 +6,47 @@
  */
 package com.ligadata.StorageBase
 
-import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import java.util.Date
 
-trait DataStoreOperations {
-  type ByteArray = Array[Byte]
+class Key {
+  var date_part: Date = _
+  var bucket_key: Array[String] = _
+  var transactionId: Long = _
+}
 
+class Value {
+  var serializerType: String = _
+  var serializedInfo: Array[Byte] = _
+}
+
+class TimeRange {
+  var begin_time: Date = _
+  var end_time: Date = _
+}
+
+trait DataStoreOperations {
   // update operations, add & update semantics are different for relational databases
-  def put(containerName: String, part_date: Date, key: Array[String], transactionId: Long, value: ByteArray): Unit
-  def putBatch(data_list: Array[(String, Array[(Date, Array[String], Long, ByteArray)])]): Unit // data_list has List of container names, and each container has list of part_date, key, transactionid, value
+  def put(containerName: String, key: Key, value: Value): Unit
+  // def put(containerName: String, data_list: Array[(Key, Value)]): Unit
+  def put(data_list: Array[(String, Array[(Key, Value)])]): Unit // data_list has List of container names, and each container has list of key & value
 
   // delete operations
-  def del(containerName: String, begin_time: Date, end_time: Date, transactionId: Long, key: Array[String]): Unit
-  //def delBatch(del_data: Array[(String, Array[(Date, Date, Long, Array[Array[String]])])]): Unit // Begine Time Range, End Time Range, Array of Keys.
-
-  def del(containerName: String, begin_time: Date, end_time: Date, key: Array[String]): Unit
-  def delBatch(del_data: Array[(String, Array[(Date, Date, Array[Array[String]])])]): Unit // Begine Time Range, End Time Range, Array of Keys.
+  def del(containerName: String, key: Key): Unit
+  def delRange(containerName: String, time: TimeRange, bucket_key: Array[String]): Unit // For the given bucket_key, delete the values with in given date range
 
   // get operations
-  def get(containerName: String, callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit
-  def get(containerName: String, begin_time: Date, end_time: Date, callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit
-  def get(containerName: String, date_range: Array[(Date, Date)], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit
-  def get(containerName: String, begin_time: Date, end_time: Date, key: Array[String], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit
-  def get(containerName: String, begin_time: Date, end_time: Date, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit
-  def get(containerName: String, key: Array[String], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit
-  def get(containerName: String, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit
-  // def get(containerName: String, begin_time: Date, end_time: Date, key: Array[String], filterFunction: (Date, Array[String], Long, Value) => Boolean, callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit
+  def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit
+  def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit // Range of dates
+  def get(containerName: String, time_ranges: Array[TimeRange], bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
+  def get(containerName: String, bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
+/*
+  // Passing filter to storage
+  def get(containerName: String, filterFunction: (Key, Value) => Boolean, callbackFunction: (Key, Value) => Unit): Unit
+  def get(containerName: String, time_ranges: Array[TimeRange], filterFunction: (Key, Value) => Boolean, callbackFunction: (Key, Value) => Unit): Unit // Range of dates
+  def get(containerName: String, time_ranges: Array[TimeRange], bucket_keys: Array[Array[String]], filterFunction: (Key, Value) => Boolean, callbackFunction: (Key, Value) => Unit): Unit
+  def get(containerName: String, bucket_keys: Array[Array[String]], filterFunction: (Key, Value) => Boolean, callbackFunction: (Key, Value) => Unit): Unit
+*/
 }
 
 trait DataStore extends DataStoreOperations {
