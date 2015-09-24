@@ -29,25 +29,36 @@ import sys.process._
 import org.apache.log4j._
 
 import com.ligadata.keyvaluestore._
+import com.ligadata.StorageBase._
+import com.ligadata.Serialize._
+import com.ligadata.Utils.Utils._
+import com.ligadata.Utils.{ KamanjaClassLoader, KamanjaLoaderInfo }
+import com.ligadata.StorageBase.StorageAdapterObj
+
+case class Customer(name:String, address: String, homePhone: String)
 
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
-  var adatapter:SqlServerAdapter = null
+  var adapter:DataStore = null
+  var serializer:Serializer = null
 
   private val loggerName = this.getClass.getName
   private val logger = Logger.getLogger(loggerName)
   logger.setLevel(Level.INFO)
 
+  private val kvManagerLoader = new KamanjaLoaderInfo
+
   override def beforeAll = {
     try {
-
       logger.info("starting...");
 
+      serializer = SerializerManager.GetSerializer("kryo")
       logger.info("Initialize SqlServerAdapter")
       val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","database": "bofa","user":"bofauser","password":"bofauser"}"""
-      // adatapter = KeyValueManager.Get(jarPaths, dataStoreInfo)
+      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","database": "bofa","user":"bofauser","password":"bofauser","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""
+      adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
+      //adapter = KeyValueManager.Get(jarPaths, dataStoreInfo)
    }
     catch {
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
@@ -57,13 +68,37 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   describe("Unit Tests for all sqlserveradapter operations") {
 
     // validate property setup
-    it ("Validate ") {
-      val tableName = "customer"
+    it ("Validate api operations") {
+      val containerName = "customer1"
 
-      val currentTime = new Date()
-      var key = new Array[String](0)
-      key = key :+ "cust1" 
+      And("Test create container")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.CreateContainer(containers)
+      }
+
       And("Test Put api")
+      val currentTime = new Date()
+      var keyArray = new Array[String](0)
+      keyArray = keyArray :+ "cust1" 
+      var key = new Key(currentTime,keyArray,1)
+      val obj = new Customer("cust1","1000 Main St, Redmond WA 98052","4256667777")
+      var v = serializer.SerializeObjectToByteArray(obj)
+      var value = new Value("kryo",v)
+
+      noException should be thrownBy {
+	adapter.put(containerName,key,value)
+      }
+
+      // validate using a get operation
+
+      And("Test drop container")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.DropContainer(containers)
+      }
     }
   }
   override def afterAll = {

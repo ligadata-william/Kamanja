@@ -113,7 +113,7 @@ lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSample
 
 // lazy val StorageVoldemort = project.in(file("Storage/Voldemort")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageSqlServer = project.in(file("Storage/SqlServer")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+lazy val StorageSqlServer = project.in(file("Storage/SqlServer")) dependsOn(StorageBase, Serialize, Exceptions, KamanjaUtils)
 
 lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, KamanjaBase, KamanjaUtils, StorageSqlServer)
 
