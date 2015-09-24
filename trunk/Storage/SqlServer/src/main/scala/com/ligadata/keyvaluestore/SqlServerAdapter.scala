@@ -250,7 +250,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     logger.info("not implemented yet")
   }
 
-  override def delRange(containerName: String, time: StorageTimeRange, bucket_key: Array[String]): Unit = {
+  override def del(containerName: String, time: StorageTimeRange, keys: Array[Key]): Unit = {
     logger.info("not implemented yet")
   }
 
@@ -398,7 +398,7 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
     logger.info("not implemented yet")
   }
 
-  override def delRange(containerName: String, time: StorageTimeRange, bucket_key: Array[String]): Unit = {
+  override def del(containerName: String, time: StorageTimeRange, keys: Array[Key]): Unit = {
     logger.info("not implemented yet")
   }
 
