@@ -20,8 +20,8 @@ trait DataStoreOperations {
   def put(data_list: Array[(String, Array[(Key, Value)])]): Unit // data_list has List of container names, and each container has list of key & value
 
   // delete operations
-  def del(containerName: String, key: Key): Unit
-  def del(containerName: String, time: StorageTimeRange, keys: Array[Key]): Unit // For the given Keys, delete the values with in given date range
+  def del(containerName: String, keys: Array[Key]): Unit // For the given keys, delete the values
+  def del(containerName: String, time: StorageTimeRange, keys: Array[Array[String]]): Unit // For the given multiple bucket key strings, delete the values with in given date range
 
   // get operations
   def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit

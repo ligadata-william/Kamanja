@@ -101,7 +101,8 @@ object MetadataAPIImpl extends MetadataAPI {
   // system name space
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  lazy val serializer = SerializerManager.GetSerializer("kryo")
+  lazy val serializerType = "kryo"
+  lazy val serializer = SerializerManager.GetSerializer(serializerType)
   lazy val metadataAPIConfig = new Properties()
   var zkc: CuratorFramework = null
   private var authObj: SecurityAdapter = null
@@ -116,6 +117,8 @@ object MetadataAPIImpl extends MetadataAPI {
   private var compileCfg: String = ""
   private var heartBeat: HeartBeatUtil = null
   var zkHeartBeatNodePath = ""
+  private val storageDefaultTime = new Date(0)
+  private val storageDefaultTxnId = 0L
 
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -132,7 +135,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private[this] val lock = new Object
   var startup = false
 
-  private var tableStoreMap: Map[String, DataStore] = Map()
+  private var tableStoreMap: Map[String, (String, DataStore)] = Map()
 
   def CloseZKSession: Unit = lock.synchronized {
     if (zkc != null) {
@@ -559,47 +562,21 @@ object MetadataAPIImpl extends MetadataAPI {
   def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
   }
-
   private var metadataStore: DataStore = _
   private var transStore: DataStore = _
-  private var modelStore: DataStore = _
-  private var messageStore: DataStore = _
-  private var containerStore: DataStore = _
-  private var functionStore: DataStore = _
-  private var conceptStore: DataStore = _
-  private var typeStore: DataStore = _
-  private var otherStore: DataStore = _
   private var jarStore: DataStore = _
   private var configStore: DataStore = _
-  private var outputmsgStore: DataStore = _
   private var modelConfigStore: DataStore = _
 
-  def oStore = otherStore
-
-  def GetFunctionStore: DataStore = functionStore
-  def GetJarStore: DataStore = jarStore
-
-  /*
-  def GetObject(key: Key, store: DataStore): IStorage = {
+  def GetObject(bucket_key_str: String, store: DataStore, containerName: String): Value = {
+    var objs = new Array[Value](1)
+    val getObjFn = (k: Key, v: Value) => {
+      objs(0) = v
+    }
     try {
-      object o extends IStorage {
-        var key = new Key;
-        var value = new Value
-
-        def Key = key
-
-        def Value = value
-        def Construct(k: Key, v: Value) =
-          {
-            key = k;
-            value = v;
-          }
-      }
-
-      var k = key
-      logger.debug("Get the object from store, key => " + KeyAsStr(k))
-      store.get(k, o)
-      o
+      objs(0) = null
+      store.get(containerName, Array(StorageTimeRange(storageDefaultTime, storageDefaultTime)), Array(Array(bucket_key_str)), getObjFn)
+      objs(0)
     } catch {
       case e: KeyNotFoundException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -614,35 +591,20 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def GetObject(key: String, store: DataStore): IStorage = {
-    var k = new Key
-    for (c <- key) {
-      k += c.toByte
-    }
-    GetObject(k, store)
-  }
-*/
-
-  val storageDefaultTime = new Date(0)
-  val storageDefaultTxnId = 0L
-
-  def SaveObject(bucket_key_str: String, value: Array[Byte], store: DataStore, containerName: String) {
+  def SaveObject(bucket_key_str: String, value: Array[Byte], store: DataStore, containerName: String, serializerTyp: String) {
     val k = Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)
-    val v = Value("", value)
-    val t = store.beginTx
+    val v = Value(serializerTyp, value)
     try {
       store.put(containerName, k, v)
-      store.commitTx(t)
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update object for : " + bucket_key_str + ", Reason:" + e.getCause + ", Message:" + e.getMessage)
-        store.rollbackTx(t)
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + bucket_key_str)
       }
     }
   }
 
-  def SaveObjectList(keyList: Array[String], valueList: Array[Array[Byte]], store: DataStore, containerName: String) {
+  def SaveObjectList(keyList: Array[String], valueList: Array[Array[Byte]], store: DataStore, containerName: String, serializerTyp: String) {
     var i = 0
     /*
     keyList.foreach(key => {
@@ -657,19 +619,16 @@ object MetadataAPIImpl extends MetadataAPI {
     keyList.foreach(bucket_key_str => {
       var value = valueList(i)
       val k = Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)
-      val v = Value("", value)
+      val v = Value(serializerTyp, value)
       storeObjects(i) = (k, v)
       i = i + 1
     })
 
-    val t = store.beginTx
     try {
       store.put(Array((containerName, storeObjects)))
-      store.commitTx(t)
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update objects for : " + keyList.mkString(",") + ", Reason:" + e.getCause + ", Message:" + e.getMessage)
-        store.rollbackTx(t)
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
       }
     }
@@ -684,22 +643,19 @@ object MetadataAPIImpl extends MetadataAPI {
       delKeys(i) = k
       i = i + 1
     })
-    
-    val t = store.beginTx
+
     try {
-      store.del(containerName, StorageTimeRange(storageDefaultTime, storageDefaultTime), delKeys)
-      store.commitTx(t)
+      store.del(containerName, delKeys)
     } catch {
       case e: Exception => {
         logger.error("Failed to delete object batch for : " + keyList.mkString(","))
-        store.rollbackTx(t)
         throw new UpdateStoreFailedException("Failed to delete object batch for : " + keyList.mkString(","))
       }
     }
   }
 
   // If tables are different, an internal utility function
-  def getTable(obj: BaseElemDef): String = {
+  def getMdElemTypeName(obj: BaseElemDef): String = {
     obj match {
       case o: ModelDef => {
         "models"
@@ -716,12 +672,15 @@ object MetadataAPIImpl extends MetadataAPI {
       case o: AttributeDef => {
         "concepts"
       }
+      case o: OutputMsgDef => {
+        "outputmsgs"
+      }
       case o: BaseTypeDef => {
         "types"
       }
       case _ => {
-        logger.error("getTable is not implemented for objects of type " + obj.getClass.getName)
-        throw new InternalErrorException("getTable is not implemented for objects of type " + obj.getClass.getName)
+        logger.error("getMdElemTypeName is not implemented for objects of type " + obj.getClass.getName)
+        throw new InternalErrorException("getMdElemTypeName is not implemented for objects of type " + obj.getClass.getName)
       }
     }
   }
@@ -737,7 +696,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // database connection( which itself can be mean different things depending on the type
   // of datastore, such as cassandra, hbase, etc..)
   // 
-  def SaveObjectList(objList: Array[BaseElemDef], store: DataStore) {
+  def SaveObjectList(objList: Array[BaseElemDef], store: DataStore, containerName: String) {
     logger.debug("Save " + objList.length + " objects in a single transaction ")
     val tranId = GetNewTranId
     var keyList = new Array[String](objList.length)
@@ -752,7 +711,7 @@ object MetadataAPIImpl extends MetadataAPI {
         valueList(i) = value
         i = i + 1
       })
-      SaveObjectList(keyList, valueList, store)
+      SaveObjectList(keyList, valueList, store, containerName, serializerType)
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update object for : " + keyList.mkString(","))
@@ -768,79 +727,78 @@ object MetadataAPIImpl extends MetadataAPI {
   def SaveObjectList(objList: Array[BaseElemDef]) {
     logger.debug("Save " + objList.length + " objects in a single transaction ")
     val tranId = GetNewTranId
-    var keyList = new Array[String](objList.length)
-    var valueList = new Array[Array[Byte]](objList.length)
-    var tableList = new Array[String](objList.length)
+    var saveDataMap = scala.collection.mutable.Map[String, ArrayBuffer[(Key, Value)]]()
+
     try {
       var i = 0;
       objList.foreach(obj => {
         obj.tranId = tranId
         val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
         var value = serializer.SerializeObjectToByteArray(obj)
-        keyList(i) = key
-        valueList(i) = value
-        tableList(i) = getTable(obj)
-        i = i + 1
-      })
-      i = 0
-      var storeObjects = new Array[IStorage](keyList.length)
-      keyList.foreach(key => {
-        var value = valueList(i)
-        object obj extends IStorage {
-          var k = new Key
-          var v = new Value
-          for (c <- key) {
-            k += c.toByte
-          }
-          for (c <- value) {
-            v += c
-          }
+        val tblName = getMdElemTypeName(obj)
 
-          def Key = k
+        val k = Key(storageDefaultTime, Array(key), storageDefaultTxnId)
+        val v = Value(serializerType, value)
 
-          def Value = v
-          def Construct(Key: Key, Value: Value) = {}
+        val ab = saveDataMap.getOrElse(tblName, null)
+        if (ab != null) {
+          ab += ((k, v))
+          saveDataMap(tblName) = ab
+        } else {
+          val newab = ArrayBuffer[(Key, Value)]()
+          newab += ((k, v))
+          saveDataMap(tblName) = newab
         }
-        storeObjects(i) = obj
         i = i + 1
       })
 
-      {
-        var i = 0
-        tableList.foreach(table => {
-          val store = tableStoreMap(table)
-          val t = store.beginTx
-          store.put(storeObjects(i))
-          store.commitTx(t)
-          i = i + 1
-        })
-      }
+      var storeData = scala.collection.mutable.Map[String, (DataStore, ArrayBuffer[(String, Array[(Key, Value)])])]()
 
-      /*
-      val store = tableStoreMap(tableList(0))
-      val t = store.beginTx
-      store.putBatch(storeObjects)
-      store.commitTx(t)
-*/
+      saveDataMap.foreach(tblData => {
+        val storeInfo = tableStoreMap(tblData._1)
+        val oneStoreData = storeData.getOrElse(storeInfo._1, null)
+        if (oneStoreData != null) {
+          oneStoreData._2 += ((tblData._1, tblData._2.toArray))
+          storeData(storeInfo._1) = ((oneStoreData._1, oneStoreData._2))
+        } else {
+          val ab = ArrayBuffer[(String, Array[(Key, Value)])]()
+          ab += ((tblData._1, tblData._2.toArray))
+          storeData(storeInfo._1) = ((storeInfo._2, ab))
+        }
+      })
+
+      storeData.foreach(oneStoreData => {
+        try {
+          oneStoreData._2._1.put(oneStoreData._2._2.toArray)
+        } catch {
+          case e: Exception => {
+            logger.error("Failed to insert/update objects in : " + oneStoreData._1 + ", Reason:" + e.getCause + ", Message:" + e.getMessage)
+            throw new UpdateStoreFailedException("Failed to insert/update object for : " + oneStoreData._1)
+          }
+        }
+      })
     } catch {
       case e: Exception => {
-        logger.error("Failed to insert/update object for : " + keyList.mkString(","))
-        throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
+        logger.error("Failed to insert/update objects")
+        throw new UpdateStoreFailedException("Failed to insert/update objects")
       }
     }
   }
 
   def SaveOutputMsObjectList(objList: Array[BaseElemDef]) {
-    SaveObjectList(objList, outputmsgStore)
+    val storeInfo = tableStoreMap("outputmsgs")
+    SaveObjectList(objList, storeInfo._2, storeInfo._1)
   }
 
-  def SaveObject(key: String, value: String, store: DataStore) {
-    var ba = serializer.SerializeObjectToByteArray(value)
-    SaveObject(key, ba, store)
+  /*
+  def SaveObject(key: String, value: String, store: DataStore, containerName: String) {
+    val ba = serializer.SerializeObjectToByteArray(value)
+    SaveObject(key, ba, store, containerName, serializerType)
   }
+*/
 
-  def UpdateObject(key: String, value: Array[Byte], store: DataStore) {
-    SaveObject(key, value, store)
+  def UpdateObject(key: String, value: Array[Byte], store: DataStore, containerName: String, serializerTyp: String) {
+    SaveObject(key, value, store, containerName, serializerTyp)
   }
 
   def ZooKeeperMessage(objList: Array[BaseElemDef], operations: Array[String]): Array[Byte] = {
@@ -899,9 +857,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetNewTranId: Long = {
     try {
-      val key = "transaction_id"
-      val obj = GetObject(key, transStore)
-      val idStr = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
+      val obj = GetObject("transaction_id", transStore, "transaction_id")
+      val idStr = new String(obj.serializedInfo)
       idStr.toLong + 1
     } catch {
       case e: ObjectNotFoundException => {
@@ -920,9 +877,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetTranId: Long = {
     try {
-      val key = "transaction_id"
-      val obj = GetObject(key, transStore)
-      val idStr = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
+      val obj = GetObject("transaction_id", transStore, "transaction_id")
+      val idStr = new String(obj.serializedInfo)
       idStr.toLong
     } catch {
       case e: ObjectNotFoundException => {
@@ -941,9 +897,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def PutTranId(tId: Long) = {
     try {
-      val key = "transaction_id"
-      val value = tId.toString
-      SaveObject(key, value, transStore)
+      SaveObject("transaction_id", tId.toString.getBytes, transStore, "transaction_id", "")
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -958,104 +912,111 @@ object MetadataAPIImpl extends MetadataAPI {
       val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       val dispkey = (getObjectType(obj) + "." + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version)).toLowerCase
       obj.tranId = GetNewTranId
+
       //val value = JsonSerializer.SerializeObjectToJson(obj)
       logger.debug("Serialize the object: name of the object => " + dispkey)
       var value = serializer.SerializeObjectToByteArray(obj)
+
+      val saveObjFn = () => {
+        val storeInfo = tableStoreMap(getMdElemTypeName(obj)) // Make sure getMdElemTypeName is success full all types we handle here
+        SaveObject(key, value, storeInfo._2, storeInfo._1, serializerType)
+      }
+
       obj match {
         case o: ModelDef => {
           logger.debug("Adding the model to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, modelStore)
+          saveObjFn()
           mdMgr.AddModelDef(o, false)
         }
         case o: MessageDef => {
           logger.debug("Adding the message to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, messageStore)
+          saveObjFn()
           mdMgr.AddMsg(o)
         }
         case o: ContainerDef => {
           logger.debug("Adding the container to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, containerStore)
+          saveObjFn()
           mdMgr.AddContainer(o)
         }
         case o: FunctionDef => {
           val funcKey = (obj.getClass().getName().split("\\.").last + "." + o.typeString).toLowerCase
           logger.debug("Adding the function to the cache: name of the object =>  " + funcKey)
-          SaveObject(funcKey, value, functionStore)
+          saveObjFn()
           mdMgr.AddFunc(o)
         }
         case o: AttributeDef => {
           logger.debug("Adding the attribute to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, conceptStore)
+          saveObjFn()
           mdMgr.AddAttribute(o)
         }
         case o: ScalarTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddScalar(o)
         }
         case o: ArrayTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddArray(o)
         }
         case o: ArrayBufTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddArrayBuffer(o)
         }
         case o: ListTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddList(o)
         }
         case o: QueueTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddQueue(o)
         }
         case o: SetTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddSet(o)
         }
         case o: TreeSetTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddTreeSet(o)
         }
         case o: SortedSetTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddSortedSet(o)
         }
         case o: MapTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddMap(o)
         }
         case o: ImmutableMapTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddImmutableMap(o)
         }
         case o: HashMapTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddHashMap(o)
         }
         case o: TupleTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddTupleType(o)
         }
         case o: ContainerTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, typeStore)
+          saveObjFn()
           mdMgr.AddContainerType(o)
         }
         case o: OutputMsgDef => {
           logger.trace("Adding the Output Message to the cache: name of the object =>  " + dispkey)
-          SaveObject(key, value, outputmsgStore)
+          saveObjFn()
           mdMgr.AddOutputMsg(o)
         }
         case _ => {
@@ -1084,83 +1045,89 @@ object MetadataAPIImpl extends MetadataAPI {
 
       logger.debug("Serialize the object: name of the object => " + dispkey)
       var value = serializer.SerializeObjectToByteArray(obj)
+
+      val updObjFn = () => {
+        val storeInfo = tableStoreMap(getMdElemTypeName(obj)) // Make sure getMdElemTypeName is success full all types we handle here
+        UpdateObject(key, value, storeInfo._2, storeInfo._1, serializerType)
+      }
+
       obj match {
         case o: ModelDef => {
           logger.debug("Updating the model in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, modelStore)
+          updObjFn()
         }
         case o: MessageDef => {
           logger.debug("Updating the message in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, messageStore)
+          updObjFn()
         }
         case o: ContainerDef => {
           logger.debug("Updating the container in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, containerStore)
+          updObjFn()
         }
         case o: FunctionDef => {
           val funcKey = (obj.getClass().getName().split("\\.").last + "." + o.typeString).toLowerCase
           logger.debug("Updating the function in the DB: name of the object =>  " + funcKey)
-          UpdateObject(funcKey, value, functionStore)
+          updObjFn()
         }
         case o: AttributeDef => {
           logger.debug("Updating the attribute in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, conceptStore)
+          updObjFn()
         }
         case o: ScalarTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: ArrayTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: ArrayBufTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: ListTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: QueueTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: SetTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: TreeSetTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: SortedSetTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: MapTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: ImmutableMapTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: HashMapTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: TupleTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: ContainerTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, typeStore)
+          updObjFn()
         }
         case o: OutputMsgDef => {
           logger.debug("Updating the output message in the DB: name of the object =>  " + dispkey)
-          UpdateObject(key, value, outputmsgStore)
+          updObjFn()
         }
         case _ => {
           logger.error("UpdateObject is not implemented for objects of type " + obj.getClass.getName)
@@ -1241,9 +1208,9 @@ object MetadataAPIImpl extends MetadataAPI {
         if (forceUploadMainJar) {
           loadObject = true
         } else {
-          var mObj: IStorage = null
+          var mObj: Value = null
           try {
-            mObj = GetObject(obj.jarName, jarStore)
+            mObj = GetObject(obj.jarName, jarStore, "jar_store")
           } catch {
             case e: ObjectNotFoundException => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1253,7 +1220,7 @@ object MetadataAPIImpl extends MetadataAPI {
           }
 
           if (loadObject == false) {
-            val ba = mObj.Value.toArray[Byte]
+            val ba = mObj.serializedInfo
             val fs = ba.length
             if (fs != value.length) {
               logger.debug("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
@@ -1279,9 +1246,9 @@ object MetadataAPIImpl extends MetadataAPI {
             var loadObject = false
             val jarName = com.ligadata.Utils.Utils.GetValidJarFile(jarPaths, j)
             val value = GetJarAsArrayOfBytes(jarName)
-            var mObj: IStorage = null
+            var mObj: Value = null
             try {
-              mObj = GetObject(j, jarStore)
+              mObj = GetObject(j, jarStore, "jar_store")
             } catch {
               case e: ObjectNotFoundException => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1291,7 +1258,7 @@ object MetadataAPIImpl extends MetadataAPI {
             }
 
             if (loadObject == false) {
-              val ba = mObj.Value.toArray[Byte]
+              val ba = mObj.serializedInfo
               val fs = ba.length
               if (fs != value.length) {
                 logger.debug("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
@@ -1312,7 +1279,7 @@ object MetadataAPIImpl extends MetadataAPI {
         })
       }
       if (keyList.length > 0) {
-        SaveObjectList(keyList.toArray, valueList.toArray, jarStore)
+        SaveObjectList(keyList.toArray, valueList.toArray, jarStore, "jar_store", "")
       }
     } catch {
       case e: Exception => {
@@ -1330,7 +1297,7 @@ object MetadataAPIImpl extends MetadataAPI {
         var key = f.getName()
         var value = GetJarAsArrayOfBytes(jarName)
         logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
-        SaveObject(key, value, jarStore)
+        SaveObject(key, value, jarStore, "jar_store", "")
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
         apiResult.toString()
 
@@ -1351,7 +1318,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var value = byteArray
       logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
       logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTJAR, jarName, AuditConstants.SUCCESS, "", jarName)
-      SaveObject(key, value, jarStore)
+      SaveObject(key, value, jarStore, "jar_store", "")
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
       apiResult.toString()
     } catch {
@@ -1376,8 +1343,8 @@ object MetadataAPIImpl extends MetadataAPI {
       val f = new File(jarName)
       if (f.exists()) {
         val key = jar
-        val mObj = GetObject(key, jarStore)
-        val ba = mObj.Value.toArray[Byte]
+        val mObj = GetObject(key, jarStore, "jar_store")
+        val ba = mObj.serializedInfo
         val fs = f.length()
         if (fs != ba.length) {
           logger.debug("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
@@ -1458,8 +1425,8 @@ object MetadataAPIImpl extends MetadataAPI {
             val b = IsDownloadNeeded(jar, obj)
             if (b == true) {
               val key = jar
-              val mObj = GetObject(key, jarStore)
-              val ba = mObj.Value.toArray[Byte]
+              val mObj = GetObject(key, jarStore, "jar_store")
+              val ba = mObj.serializedInfo
               val jarName = dirPath + "/" + jar
               PutArrayOfBytesToJar(ba, jarName)
             }
@@ -1701,14 +1668,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def DeleteObject(key: String, store: DataStore) {
-    var k = new Key
-    for (c <- key) {
-      k += c.toByte
-    }
-    val t = store.beginTx
-    store.del(k)
-    store.commitTx(t)
+  def DeleteObject(bucket_key_str: String, store: DataStore, containerName: String) {
+    store.del(containerName, Array(Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)))
   }
 
   def DeleteObject(obj: BaseElemDef) {
@@ -1784,7 +1745,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
     try {
       logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
-      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
+      return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1803,27 +1764,18 @@ object MetadataAPIImpl extends MetadataAPI {
       transStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "transaction_id")
       modelConfigStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "model_config_objects")
 
-      modelStore = metadataStore
-      messageStore = metadataStore
-      containerStore = metadataStore
-      functionStore = metadataStore
-      conceptStore = metadataStore
-      typeStore = metadataStore
-      otherStore = metadataStore
-      outputmsgStore = metadataStore
-      tableStoreMap = Map("models" -> modelStore,
-        "messages" -> messageStore,
-        "containers" -> containerStore,
-        "functions" -> functionStore,
-        "concepts" -> conceptStore,
-        "types" -> typeStore,
-        "others" -> otherStore,
-        "jar_store" -> jarStore,
-        "config_objects" -> configStore,
-        "transaction_id" -> transStore,
-        "outputmsgs" -> outputmsgStore,
-        "model_config_objects" -> modelConfigStore,
-        "transaction_id" -> transStore)
+      tableStoreMap = Map("models" -> ("metadata_objects", metadataStore),
+        "messages" -> ("metadata_objects", metadataStore),
+        "containers" -> ("metadata_objects", metadataStore),
+        "functions" -> ("metadata_objects", metadataStore),
+        "concepts" -> ("metadata_objects", metadataStore),
+        "types" -> ("metadata_objects", metadataStore),
+        "others" -> ("metadata_objects", metadataStore),
+        "jar_store" -> ("jar_store", jarStore),
+        "config_objects" -> ("config_objects", configStore),
+        "outputmsgs" -> ("metadata_objects", metadataStore),
+        "model_config_objects" -> ("model_config_objects", modelConfigStore),
+        "transaction_id" -> ("transaction_id", transStore))
     } catch {
       case e: CreateStoreFailedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
