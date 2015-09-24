@@ -9,21 +9,9 @@ package com.ligadata.StorageBase
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import java.util.Date
 
-class Key {
-  var date_part: Date = _
-  var bucket_key: Array[String] = _
-  var transactionId: Long = _
-}
-
-class Value {
-  var serializerType: String = _
-  var serializedInfo: Array[Byte] = _
-}
-
-class TimeRange {
-  var begin_time: Date = _
-  var end_time: Date = _
-}
+case class Key(date_part: Date, bucket_key: Array[String], transactionId: Long)
+case class Value(serializerType: String, serializedInfo: Array[Byte])
+case class StorageTimeRange(begin_time: Date, end_time: Date)
 
 trait DataStoreOperations {
   // update operations, add & update semantics are different for relational databases
@@ -33,12 +21,12 @@ trait DataStoreOperations {
 
   // delete operations
   def del(containerName: String, key: Key): Unit
-  def delRange(containerName: String, time: TimeRange, bucket_key: Array[String]): Unit // For the given bucket_key, delete the values with in given date range
+  def delRange(containerName: String, time: StorageTimeRange, bucket_key: Array[String]): Unit // For the given bucket_key, delete the values with in given date range
 
   // get operations
   def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit
-  def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit // Range of dates
-  def get(containerName: String, time_ranges: Array[TimeRange], bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
+  def get(containerName: String, time_ranges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit // Range of dates
+  def get(containerName: String, time_ranges: Array[StorageTimeRange], bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
   def get(containerName: String, bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
 /*
   // Passing filter to storage
