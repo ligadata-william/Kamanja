@@ -456,7 +456,8 @@ class ConstantMethodGenerator {
 				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
 				var """ + fname + """  = new """ + typ + """
-				""" + funcName + """   = (-1, arr.split(kvData.delimiters.valueDelimiter, -1).foreach(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)}))
+				arr.split(kvData.delimiters.valueDelimiter, -1).foreach(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)})
+				""" + funcName + """   = (-1, """ + fname + """)
 				}else 
 				""" + funcName + """   = (-1, new """ + typ + """(0))
 	    }
