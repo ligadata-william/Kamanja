@@ -28,6 +28,7 @@ trait DataStoreOperations {
   def get(containerName: String, time_ranges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit // Range of dates
   def get(containerName: String, time_ranges: Array[StorageTimeRange], bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
   def get(containerName: String, bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
+
 /*
   // Passing filter to storage
   def get(containerName: String, filterFunction: (Key, Value) => Boolean, callbackFunction: (Key, Value) => Unit): Unit
@@ -35,6 +36,8 @@ trait DataStoreOperations {
   def get(containerName: String, time_ranges: Array[TimeRange], bucket_keys: Array[Array[String]], filterFunction: (Key, Value) => Boolean, callbackFunction: (Key, Value) => Unit): Unit
   def get(containerName: String, bucket_keys: Array[Array[String]], filterFunction: (Key, Value) => Boolean, callbackFunction: (Key, Value) => Unit): Unit
 */
+
+  def getAllKeys(containerName: String, callbackFunction: (Key) => Unit): Unit
 }
 
 trait DataStore extends DataStoreOperations {
