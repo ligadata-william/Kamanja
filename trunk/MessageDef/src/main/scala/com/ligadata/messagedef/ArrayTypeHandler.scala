@@ -39,6 +39,7 @@ class ArrayTypeHandler {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
+    var assignKvdata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
     var addMsg = new StringBuilder(8 * 1024)
     var getMsg = new StringBuilder(8 * 1024)
@@ -104,6 +105,7 @@ class ArrayTypeHandler {
           fromFuncBuf.append(getPrimitivesFromFunc(f.Name, arrayType.elemDef.implementationName, msg.Fixed, false, typ.get.typeString))
         }
         assignJsondata.append(methodGen.assignJsonForArray(f.Name, fname, msg, typ.get.typeString))
+        assignKvdata.append(methodGen.assignKvDataForArray(f.Name, fname, msg, typ.get.typeString))
 
       } else {
         if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer")) {
@@ -186,11 +188,12 @@ class ArrayTypeHandler {
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
       returnAB += fromFuncBuf.toString
+      returnAB += assignKvdata.toString
 
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -205,6 +208,7 @@ class ArrayTypeHandler {
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
+    var assignKvData = new StringBuilder(8 * 1024)
     var addMsg = new StringBuilder(8 * 1024)
     var getMsg = new StringBuilder(8 * 1024)
     var list = List[(String, String)]()
@@ -272,6 +276,7 @@ class ArrayTypeHandler {
 
         }
         assignJsondata.append(methodGen.assignJsonForPrimArrayBuffer(f.Name, fname, msg, typ.get.typeString))
+        assignKvData.append(methodGen.assignKvForPrimArrayBuffer(f.Name, fname, msg, typ.get.typeString))
 
       } else {
         if (msg.NameSpace != null)
@@ -391,11 +396,12 @@ class ArrayTypeHandler {
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
       returnAB += fromFuncBuf.toString
+      returnAB += assignKvData.toString
 
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -445,8 +451,9 @@ class ArrayTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
 
     return serializedBuf.toString()
@@ -505,10 +512,11 @@ class ArrayTypeHandler {
         deserializedBuf.append("%s%s fields(\"%s\") = (-1, %s)}%s".format(newline, pad2, f.Name, f.Name, newline))
       }
     } catch {
-      case e: Exception =>{ 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
     return deserializedBuf.toString
   }
@@ -633,8 +641,9 @@ class ArrayTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString)
