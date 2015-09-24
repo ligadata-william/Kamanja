@@ -64,7 +64,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
           xformedMsgCntr += 1
-          var output = engine.execute(transId, xformed._1, xformed._2, xformed._3, kamanjaCallerCtxt.envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, ignoreOutput)
+          var output = engine.execute(transId, data, xformed._1, xformed._2, xformed._3, kamanjaCallerCtxt.envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, ignoreOutput)
           if (output != null) {
             outputResults ++= output
           }
