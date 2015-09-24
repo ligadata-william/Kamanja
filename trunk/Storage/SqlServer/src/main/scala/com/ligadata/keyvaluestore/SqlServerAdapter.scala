@@ -18,7 +18,7 @@ package com.ligadata.keyvaluestore
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import java.sql.Connection
-import com.ligadata.StorageBase.{ Key,Value,DataStoreOperationsV2,DataStoreV2,TransactionV2,StorageAdapterObjV2 }
+import com.ligadata.StorageBase.{ ByteArray, DataStore, Transaction, StorageAdapterObj }
 import java.nio.ByteBuffer
 import org.apache.log4j._
 import com.ligadata.Exceptions._
@@ -28,7 +28,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import java.util.Date
 
-class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStoreV2 {
+class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
 
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
@@ -113,7 +113,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   Class.forName("com.mysql.jdbc.Driver");
 
 
-  override def put(containerName:String, part_date: Date,key: Array[String], transactionId: Long, value: Value): Unit = {
+  override def put(containerName:String, part_date: Date,key: Array[String], transactionId: Long, value: ByteArray): Unit = {
     var con:Connection = null
     var stmt:PreparedStatement = null
     try{
@@ -137,7 +137,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     }
   }
 
-  override def putBatch(data_list: Array[(String, Array[(Date, Array[String], Long, Value)])]): Unit = {
+  override def putBatch(data_list: Array[(String, Array[(Date, Array[String], Long, ByteArray)])]): Unit = {
     logger.info("not implemented yet")
   }
 
@@ -164,67 +164,70 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   // get operations
-  override def get(containerName: String, callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
     
-  override def get(containerName: String, begin_time: Date, end_time: Date, callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, begin_time: Date, end_time: Date, callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, date_range: Array[(Date, Date)], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, date_range: Array[(Date, Date)], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, begin_time: Date, end_time: Date, key: Array[String], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, begin_time: Date, end_time: Date, key: Array[String], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, begin_time: Date, end_time: Date, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, begin_time: Date, end_time: Date, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, key: Array[String], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, key: Array[String], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def beginTx(): TransactionV2 = { 
+  override def beginTx(): Transaction = { 
     new SqlServerAdapterTx(this)
   }
 
-  override def endTx(tx: TransactionV2): Unit = {}
+  override def endTx(tx: Transaction): Unit = {}
 
-  override def commitTx(tx: TransactionV2): Unit = {}
+  override def commitTx(tx: Transaction): Unit = {}
 
-  override def rollbackTx(tx: TransactionV2): Unit = {}
+  override def rollbackTx(tx: Transaction): Unit = {}
 
   override def Shutdown(): Unit = {
    logger.info("close the connection pool") 
   }
 
-  override def TruncateStore(containerName: String): Unit = {
-   logger.info("Truncate the container table") 
+  override def TruncateContainer(containerNames: Array[String]): Unit = {
+   logger.info("Truncate the container tables") 
   }
-  override def DropStore(containerName: String): Unit = {
-   logger.info("drop the container table") 
+  override def DropContainer(containerNames: Array[String]): Unit = {
+   logger.info("drop the container tables") 
+  }
+  override def CreateContainer(containerNames: Array[String]): Unit = {
+   logger.info("create the container tables") 
   }
 }
 
 
-class SqlServerAdapterTx(val parent: DataStoreV2) extends TransactionV2 {
+class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
 
-  override def put(containerName:String, part_date: Date,key: Array[String], transactionId: Long, value: Value): Unit = {
+  override def put(containerName:String, part_date: Date,key: Array[String], transactionId: Long, value: ByteArray): Unit = {
     parent.put(containerName,part_date,key,transactionId,value)
   }
 
-  override def putBatch(data_list: Array[(String, Array[(Date, Array[String], Long, Value)])]): Unit = {
+  override def putBatch(data_list: Array[(String, Array[(Date, Array[String], Long, ByteArray)])]): Unit = {
     logger.info("not implemented yet")
   }
 
@@ -251,36 +254,36 @@ class SqlServerAdapterTx(val parent: DataStoreV2) extends TransactionV2 {
   }
 
   // get operations
-  override def get(containerName: String, callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
     
-  override def get(containerName: String, begin_time: Date, end_time: Date, callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, begin_time: Date, end_time: Date, callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, date_range: Array[(Date, Date)], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, date_range: Array[(Date, Date)], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, begin_time: Date, end_time: Date, key: Array[String], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, begin_time: Date, end_time: Date, key: Array[String], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, begin_time: Date, end_time: Date, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, begin_time: Date, end_time: Date, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, key: Array[String], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, key: Array[String], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit = {
+  override def get(containerName: String, keys: Array[Array[String]], callbackFunction: (Date, Array[String], Long, ByteArray) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 }
 
 // To create SqlServer Datastore instance
-object SqlServerAdapter extends StorageAdapterObjV2 {
-  override def CreateStorageAdapter(kvManagerLoader: KamanjaLoaderInfo, datastoreConfig: String): DataStoreV2 = new SqlServerAdapter(kvManagerLoader, datastoreConfig)
+object SqlServerAdapter extends StorageAdapterObj {
+  override def CreateStorageAdapter(kvManagerLoader: KamanjaLoaderInfo, datastoreConfig: String): DataStore = new SqlServerAdapter(kvManagerLoader, datastoreConfig)
 }

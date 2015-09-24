@@ -20,7 +20,7 @@ import com.ligadata._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.StorageBase.{ DataStoreV2 }
+import com.ligadata.StorageBase.{ DataStore }
 import org.apache.log4j._
 import com.ligadata.keyvaluestore._
 import com.ligadata.Utils.Utils._
@@ -34,7 +34,7 @@ object KeyValueManager {
   // We will add more implementations here 
   // so we can test  the system characteristics
   //
-  def Get(jarPaths: collection.immutable.Set[String], datastoreConfig: String, tableName: String): DataStoreV2 = {
+  def Get(jarPaths: collection.immutable.Set[String], datastoreConfig: String): DataStore = {
     val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
 
     if (adapterConfig.size == 0) {
