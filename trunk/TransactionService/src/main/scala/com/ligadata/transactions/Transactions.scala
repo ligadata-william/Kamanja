@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework.CuratorFramework
 import org.apache.curator.framework.recipes.locks.InterProcessMutex
-import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
+import com.ligadata.StorageBase.{ DataStoreV2, TransactionV2, IStorage, Key, Value, StorageAdapterObj }
 import com.ligadata.keyvaluestore.KeyValueManager
 import com.ligadata.KamanjaData.{ KamanjaData }
 
@@ -48,10 +48,10 @@ object NodeLevelTransService {
   private[this] var jarPaths: collection.immutable.Set[String] = null
   private[this] var _serInfoBufBytes = 32
 
-  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStoreV2 = {
     try {
       LOG.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
-      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
+      return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
       case e: Exception => {
         e.printStackTrace()

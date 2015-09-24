@@ -101,21 +101,21 @@ lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata,
 
 lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSamples")) dependsOn(Metadata, KamanjaBase, KamanjaData, MetadataBootstrap, MetadataAPI, StorageBase, Exceptions)
 
-lazy val StorageCassandra = project.in(file("Storage/Cassandra")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+// lazy val StorageCassandra = project.in(file("Storage/Cassandra")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageHashMap = project.in(file("Storage/HashMap")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+// lazy val StorageHashMap = project.in(file("Storage/HashMap")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageHBase = project.in(file("Storage/HBase")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+// lazy val StorageHBase = project.in(file("Storage/HBase")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageRedis = project.in(file("Storage/Redis")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+// lazy val StorageRedis = project.in(file("Storage/Redis")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageTreeMap = project.in(file("Storage/TreeMap")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+// lazy val StorageTreeMap = project.in(file("Storage/TreeMap")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageVoldemort = project.in(file("Storage/Voldemort")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+// lazy val StorageVoldemort = project.in(file("Storage/Voldemort")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
 lazy val StorageSqlServer = project.in(file("Storage/SqlServer")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, StorageCassandra, StorageHashMap, StorageHBase, StorageTreeMap, StorageRedis, KamanjaBase, KamanjaUtils)
+lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, KamanjaBase, KamanjaUtils, StorageSqlServer)
 
 lazy val AuditAdapterBase = project.in(file("AuditAdapters/AuditAdapterBase")) dependsOn(Exceptions)
 

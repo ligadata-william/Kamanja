@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import java.util.Date
 
-trait DataStoreOperationsV2 {
+trait DataStoreOperations {
 
   type ByteArray = Array[Byte]
   type Value = ByteArray
@@ -37,11 +37,11 @@ trait DataStoreOperationsV2 {
   // def get(containerName: String, begin_time: Date, end_time: Date, key: Array[String], filterFunction: (Date, Array[String], Long, Value) => Boolean, callbackFunction: (Date, Array[String], Long, Value) => Unit): Unit
 }
 
-trait DataStoreV2 extends DataStoreOperationsV2 {
-  def beginTx(): TransactionV2
-  def endTx(tx: TransactionV2): Unit // Same as commit
-  def commitTx(tx: TransactionV2): Unit
-  def rollbackTx(tx: TransactionV2): Unit
+trait DataStore extends DataStoreOperations {
+  def beginTx(): Transaction
+  def endTx(tx: Transaction): Unit // Same as commit
+  def commitTx(tx: Transaction): Unit
+  def rollbackTx(tx: Transaction): Unit
 
   // clean up operations
   def Shutdown(): Unit
@@ -49,11 +49,11 @@ trait DataStoreV2 extends DataStoreOperationsV2 {
   def DropStore(containerName: String): Unit
 }
 
-trait TransactionV2 extends DataStoreOperationsV2 {
-  val parent: DataStoreV2 // Parent Data Store
+trait Transaction extends DataStoreOperations {
+  val parent: DataStore // Parent Data Store
 }
 
 // Storage Adapter Object to create storage adapter
-trait StorageAdapterObjV2 {
-  def CreateStorageAdapter(kvManagerLoader: KamanjaLoaderInfo, datastoreConfig: String): DataStoreV2
+trait StorageAdapterObj {
+  def CreateStorageAdapter(kvManagerLoader: KamanjaLoaderInfo, datastoreConfig: String): DataStore
 }

@@ -46,8 +46,8 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       logger.info("Initialize SqlServerAdapter")
       val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = {"StoreType": "sqlserver","hostname": "192.168.56.1","database": "bofa","user":"bofauser","password":"bofauser"}
-      adapter = KeyValueManager.Get(jarPaths, dataStoreInfo)
+      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","database": "bofa","user":"bofauser","password":"bofauser"}"""
+      // adatapter = KeyValueManager.Get(jarPaths, dataStoreInfo)
    }
     catch {
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
