@@ -21,46 +21,23 @@ import scala.collection.mutable.ArrayBuffer;
 import scala.collection.JavaConversions._
 import scala.util.control.Breaks._
 import com.ligadata.KamanjaBase._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions.StackTrace
 import org.apache.log4j._
-
-case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
+import java.util.Date
 
 object KamanjaData {
   def Version = 1 // Current Version
-  def PrepareKey(typName: String, partitionkey: List[String], StartDateRange: Int, EndDateRange: Int): String = {
-    /*
-    return "T:%s|K:%s|D:%d,%d|V:%d".format(typName.toLowerCase, partitionkey.toList.map(k => k.toLowerCase).mkString(","), StartDateRange, EndDateRange, Version).getBytes("UTF8")
-    val a1 = typName.toLowerCase
-    val a2 =  partitionkey.toList.map(k => k.toLowerCase).mkString(",") // "abc12345671234567890" // partitionkey.toList.map(k => k.toLowerCase).mkString(",")
-    return s"T:${a1}|K:{a2}|D:${StartDateRange},${EndDateRange}|V:${Version}".getBytes("UTF8")
-    return x
-*/
-
-    val key = KamanjaDataKey(typName.toLowerCase, partitionkey.map(k => k.toLowerCase), List(StartDateRange, EndDateRange), Version)
-    val json =
-      ("T" -> key.T) ~
-        ("K" -> key.K) ~
-        ("D" -> key.D) ~
-        ("V" -> key.V)
-    return compact(render(json))
-  }
+  val defaultTime = new Date(0)
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
 }
 
 class KamanjaData {
-  private val ver = KamanjaData.Version // Version
   private var typName: String = "" // Type name (Message, container)
   private var key = ArrayBuffer[String]() // Partition Key
-  private var StartDateRange: Int = 0 // Start Date Range
-  private var EndDateRange: Int = 0 // End Date Range
+  private var time: Date = KamanjaData.defaultTime // Start Time Range. Default is used if nothing is set
   private var data = ArrayBuffer[MessageContainerBase]() // Messages/Containers for this key & with in this date range. 
-  val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
-
-  def Version = ver // Current Version
+  private val logger = KamanjaData.logger
 
   // Getting Key information
   def GetKey = key.toArray
@@ -84,12 +61,11 @@ class KamanjaData {
   }
 
   // Getting Date Range
-  def GetDateRange: (Int, Int) = (StartDateRange, EndDateRange)
+  def GetTime = time
 
   // Setting Date Range
-  def SetDateRange(stDateRange: Int, edDateRange: Int): Unit = {
-    StartDateRange = stDateRange
-    EndDateRange = edDateRange
+  def SetTime(tm: Date): Unit = {
+    time = tm
   }
 
   // Getting All Data
@@ -192,16 +168,11 @@ class KamanjaData {
     }
   }
 
-  def SerializeKey: String = return KamanjaData.PrepareKey(typName, key.toList, StartDateRange, EndDateRange)
-
   def SerializeData: Array[Byte] = {
     val bos: ByteArrayOutputStream = new ByteArrayOutputStream(1024 * 1024)
     val dos = new DataOutputStream(bos)
 
     try {
-      // Serializing Version
-      dos.writeInt(ver)
-
       // Serializing Type Name
       dos.writeUTF(typName)
 
@@ -211,9 +182,8 @@ class KamanjaData {
         dos.writeUTF(key(i))
       }
 
-      // Serializing Date Range
-      dos.writeInt(StartDateRange)
-      dos.writeInt(EndDateRange)
+      // Serializing Time
+      dos.writeLong(time.getTime())
 
       // Serializing types (all messages & containers with this key)
       dos.writeInt(data.size)
@@ -249,9 +219,6 @@ class KamanjaData {
     data.clear
 
     try {
-      // DeSerializing Version
-      val tmpVer = dis.readInt
-
       // DeSerializing Type Name
       typName = dis.readUTF
 
@@ -261,9 +228,8 @@ class KamanjaData {
         key += dis.readUTF
       }
 
-      // DeSerializing Date Range
-      StartDateRange = dis.readInt
-      EndDateRange = dis.readInt
+      // DeSerializing Time
+      time = new Date(dis.readLong)
 
       // DeSerializing types (all messages & containers with this key)
       val typeVals = dis.readInt

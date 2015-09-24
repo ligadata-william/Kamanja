@@ -35,9 +35,6 @@ import com.ligadata.Exceptions.StackTrace
 import com.ligadata.KamanjaData.{ KamanjaData }
 import com.ligadata.keyvaluestore.KeyValueManager
 
-case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
-case class InMemoryKeyData(K: List[String])
-
 trait LogTrait {
   val loggerName = this.getClass.getName()
   val logger = Logger.getLogger(loggerName)
@@ -400,8 +397,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
   private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
-  private[this] var _serInfoBufBytes = 32
-
   private[this] var _kryoSer: com.ligadata.Serialize.Serializer = null
   private[this] var _classLoader: java.lang.ClassLoader = null
   private[this] var _allDataDataStore: DataStore = null
@@ -436,17 +431,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private[this] def InMemoryKeyDataInJson(keyData: List[String]): String = {
-    val json = ("K" -> keyData)
-    return compact(render(json))
-  }
-
-  private[this] def KeyFromInMemoryJson(keyData: String): List[String] = {
-    implicit val jsonFormats: Formats = DefaultFormats
-    val parsed_key = parse(keyData).extract[InMemoryKeyData]
-    return parsed_key.K
-  }
-
   /**
    * For the current container, load the values for each key, coercing it to the appropriate MessageContainerBase, and storing
    * each in the supplied map.
@@ -457,17 +441,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    * @param dstore : the mapdb handle
    * @param map : the map to be updated with key/MessageContainerBase pairs.
    */
-  private def loadMap(keys: Array[KamanjaDataKey], msgOrCont: MsgContainerInfo): Unit = {
+  private def loadMap(containerName:String, keys: Array[Key], msgOrCont: MsgContainerInfo): Unit = {
     var objs: Array[KamanjaData] = new Array[KamanjaData](1)
     var notFoundKeys = 0
-    val buildOne = (tupleBytes: Value) => {
-      buildObject(tupleBytes, objs, msgOrCont.containerType)
+    val buildOne = (k:Key, v: Value) => {
+      buildObject(k, v, objs, msgOrCont.containerType)
     }
     keys.foreach(key => {
       try {
-        val StartDateRange = if (key.D.size == 2) key.D(0) else 0
-        val EndDateRange = if (key.D.size == 2) key.D(1) else 0
-        _allDataDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
+        _allDataDataStore.get(key, buildOne)
         msgOrCont.synchronized {
           msgOrCont.data(InMemoryKeyDataInJson(key.K)) = (false, objs(0))
         }
@@ -503,33 +485,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     logger.info("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
   }
 
-  private def getSerializeInfo(tupleBytes: Value): String = {
-    if (tupleBytes.size < _serInfoBufBytes) return ""
-    val serInfoBytes = new Array[Byte](_serInfoBufBytes)
-    tupleBytes.copyToArray(serInfoBytes, 0, _serInfoBufBytes)
-    return (new String(serInfoBytes)).trim
-  }
-
-  private def getValueInfo(tupleBytes: Value): Array[Byte] = {
-    if (tupleBytes.size < _serInfoBufBytes) return null
-    val valInfoBytes = new Array[Byte](tupleBytes.size - _serInfoBufBytes)
-    Array.copy(tupleBytes.toArray, _serInfoBufBytes, valInfoBytes, 0, tupleBytes.size - _serInfoBufBytes)
-    valInfoBytes
-  }
-
-  private def buildObject(tupleBytes: Value, objs: Array[KamanjaData], containerType: BaseTypeDef): Unit = {
-    // Get first _serInfoBufBytes bytes
-    if (tupleBytes.size < _serInfoBufBytes) {
-      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
-      logger.error(errMsg)
-      throw new Exception(errMsg)
-    }
-
-    val serInfo = getSerializeInfo(tupleBytes)
-
-    serInfo.toLowerCase match {
+  private def buildObject(k:Key, v: Value, objs: Array[KamanjaData], containerType: BaseTypeDef): Unit = {
+    v.serializerType.toLowerCase match {
       case "kryo" => {
-        val valInfo = getValueInfo(tupleBytes)
         if (_kryoSer == null) {
           _kryoSer = SerializerManager.GetSerializer("kryo")
           if (_kryoSer != null && _classLoader != null) {
@@ -537,17 +495,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           }
         }
         if (_kryoSer != null) {
-          objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[KamanjaData]
+          objs(0) = _kryoSer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[KamanjaData]
         }
       }
       case "manual" => {
-        val valInfo = getValueInfo(tupleBytes)
         val datarec = new KamanjaData
-        datarec.DeserializeData(valInfo, _mdres, _classLoader)
+        datarec.DeserializeData(v.serializedInfo, _mdres, _classLoader)
         objs(0) = datarec
       }
       case _ => {
-        throw new Exception("Found un-handled Serializer Info: " + serInfo)
+        throw new Exception("Found un-handled Serializer Info: " + v.serializerType)
       }
     }
   }
@@ -564,58 +521,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def makeKey(key: String): Key = {
-    var k = new Key
-    k ++= key.getBytes("UTF8")
-    k
-  }
-
-  private def makeValue(value: String, serializerInfo: String): Value = {
-    var v = new Value
-    v ++= serializerInfo.getBytes("UTF8")
-
-    // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
-    if (v.size < _serInfoBufBytes) {
-      val spacebyte = ' '.toByte
-      for (c <- v.size to _serInfoBufBytes)
-        v += spacebyte
-    }
-
-    // Trim if it is more than _serInfoBufBytes bytes
-    if (v.size > _serInfoBufBytes) {
-      v.reduceToSize(_serInfoBufBytes)
-    }
-
-    // Saving Value
-    v ++= value.getBytes("UTF8")
-
-    v
-  }
-
-  private def makeValue(value: Array[Byte], serializerInfo: String): Value = {
-    var v = new Value
-    v ++= serializerInfo.getBytes("UTF8")
-
-    // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
-    if (v.size < _serInfoBufBytes) {
-      val spacebyte = ' '.toByte
-      for (c <- v.size to _serInfoBufBytes)
-        v += spacebyte
-    }
-
-    // Trim if it is more than _serInfoBufBytes bytes
-    if (v.size > _serInfoBufBytes) {
-      v.reduceToSize(_serInfoBufBytes)
-    }
-
-    // Saving Value
-    v ++= value
-
-    v
-  }
-
   private def buildAdapterUniqueValue(tupleBytes: Value, objs: Array[(Long, String, List[(String, String)])]) {
-    // Get first _serInfoBufBytes bytes
     if (tupleBytes.size < _serInfoBufBytes) {
       val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
       logger.error(errMsg)

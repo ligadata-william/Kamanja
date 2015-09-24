@@ -21,7 +21,7 @@ trait DataStoreOperations {
 
   // delete operations
   def del(containerName: String, key: Key): Unit
-  def delRange(containerName: String, time: StorageTimeRange, bucket_key: Array[String]): Unit // For the given bucket_key, delete the values with in given date range
+  def del(containerName: String, time: StorageTimeRange, keys: Array[Key]): Unit // For the given Keys, delete the values with in given date range
 
   // get operations
   def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit
