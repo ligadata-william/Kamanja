@@ -565,7 +565,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   private var mainDS: DataStore = _
 
-  def GetObject(bucket_key_str: String, typeName: String): Value = {
+  def GetObject(bucketKeyStr: String, typeName: String): Value = {
     val (containerName, store) = tableStoreMap(typeName)
     var objs = new Array[Value](1)
     val getObjFn = (k: Key, v: Value) => {
@@ -573,7 +573,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
     try {
       objs(0) = null
-      store.get(containerName, Array(StorageTimeRange(storageDefaultTime, storageDefaultTime)), Array(Array(bucket_key_str)), getObjFn)
+      store.get(containerName, Array(StorageTimeRange(storageDefaultTime, storageDefaultTime)), Array(Array(bucketKeyStr)), getObjFn)
       objs(0)
     } catch {
       case e: KeyNotFoundException => {
@@ -589,16 +589,16 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def SaveObject(bucket_key_str: String, value: Array[Byte], typeName: String, serializerTyp: String) {
+  def SaveObject(bucketKeyStr: String, value: Array[Byte], typeName: String, serializerTyp: String) {
     val (containerName, store) = tableStoreMap(typeName)
-    val k = Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)
+    val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)
     val v = Value(serializerTyp, value)
     try {
       store.put(containerName, k, v)
     } catch {
       case e: Exception => {
-        logger.error("Failed to insert/update object for : " + bucket_key_str + ", Reason:" + e.getCause + ", Message:" + e.getMessage)
-        throw new UpdateStoreFailedException("Failed to insert/update object for : " + bucket_key_str)
+        logger.error("Failed to insert/update object for : " + bucketKeyStr + ", Reason:" + e.getCause + ", Message:" + e.getMessage)
+        throw new UpdateStoreFailedException("Failed to insert/update object for : " + bucketKeyStr)
       }
     }
   }
@@ -616,9 +616,9 @@ object MetadataAPIImpl extends MetadataAPI {
 */
     var storeObjects = new Array[(Key, Value)](keyList.length)
     i = 0
-    keyList.foreach(bucket_key_str => {
+    keyList.foreach(bucketKeyStr => {
       var value = valueList(i)
-      val k = Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)
+      val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)
       val v = Value(serializerTyp, value)
       storeObjects(i) = (k, v)
       i = i + 1
@@ -639,8 +639,8 @@ object MetadataAPIImpl extends MetadataAPI {
     var i = 0
     var delKeys = new Array[(Key)](keyList.length)
     i = 0
-    keyList.foreach(bucket_key_str => {
-      val k = Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)
+    keyList.foreach(bucketKeyStr => {
+      val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)
       delKeys(i) = k
       i = i + 1
     })
@@ -1666,9 +1666,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def DeleteObject(bucket_key_str: String, typeName: String) {
+  def DeleteObject(bucketKeyStr: String, typeName: String) {
     val (containerName, store) = tableStoreMap(typeName)
-    store.del(containerName, Array(Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)))
+    store.del(containerName, Array(Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)))
   }
 
   def DeleteObject(obj: BaseElemDef) {
@@ -3758,7 +3758,7 @@ object MetadataAPIImpl extends MetadataAPI {
           processedContainersSet += storeInfo._1
           storeInfo._2.getAllKeys(storeInfo._1, { (key: Key) =>
             {
-              val strKey = key.bucket_key(0)
+              val strKey = key.bucketKey(0)
               val i = strKey.indexOf(".")
               val objType = strKey.substring(0, i)
               val typeName = strKey.substring(i + 1)
@@ -3826,7 +3826,7 @@ object MetadataAPIImpl extends MetadataAPI {
       storeInfo._2.get(storeInfo._1, { (k: Key, v: Value) =>
         {
           //logger.debug("key => " + KeyAsStr(key))
-          val strKey = k.bucket_key(0)
+          val strKey = k.bucketKey(0)
           val i = strKey.indexOf(".")
           val objType = strKey.substring(0, i)
           val typeName = strKey.substring(i + 1)
@@ -3885,7 +3885,7 @@ object MetadataAPIImpl extends MetadataAPI {
       {
         processed += 1
         val conf = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[Map[String, List[String]]]
-        MdMgr.GetMdMgr.AddModelConfig(k.bucket_key(0), conf)
+        MdMgr.GetMdMgr.AddModelConfig(k.bucketKey(0), conf)
       }
     })
 
@@ -3935,7 +3935,7 @@ object MetadataAPIImpl extends MetadataAPI {
                     logger.debug("The transaction id of the object => " + mObj.tranId)
                     AddObjectToCache(mObj, MdMgr.GetMdMgr)
                     DownloadJarFromDB(mObj)
-                    logger.error("Transaction is incomplete with the object " + k.bucket_key.mkString(",") + ",we may not have notified engine, attempt to do it now...")
+                    logger.error("Transaction is incomplete with the object " + k.bucketKey.mkString(",") + ",we may not have notified engine, attempt to do it now...")
                     objectsChanged = objectsChanged :+ mObj
                     if (mObj.IsActive) {
                       operations = for (op <- objectsChanged) yield "Add"
