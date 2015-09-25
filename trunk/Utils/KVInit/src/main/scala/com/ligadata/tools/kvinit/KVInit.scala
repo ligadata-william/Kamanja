@@ -220,7 +220,7 @@ object KvInitConfiguration {
 class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: Array[String], val keyfieldnames: Array[String], keyAndValueDelimiter1: String,
   fieldDelimiter1: String, valueDelimiter1: String, ignoreerrors: String, ignoreRecords: Int, format: String) extends LogTrait {
   val fieldDelimiter = if (fieldDelimiter1 != null && fieldDelimiter1.size > 0) fieldDelimiter1 else ","
-  val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\u0001"
+  val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\\x01"
   val valueDelimiter = if (valueDelimiter1 != null && valueDelimiter1.size > 0) valueDelimiter1 else "~"
 
   var ignoreErrsCount = if (ignoreerrors != null && ignoreerrors.size > 0) ignoreerrors.toInt else 0
@@ -478,7 +478,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     /** if we can make one ... we add the data to the store. This will crash if the data is bad */
     if (isDelimited) {
       val fieldDelimiter = if (fieldDelimiter1 != null && fieldDelimiter1.size > 0) fieldDelimiter1 else ","
-      val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\u0001"
+      val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\\x01"
       val valueDelimiter = if (valueDelimiter1 != null && valueDelimiter1.size > 0) valueDelimiter1 else "~"
       val delimiters = new DataDelimiters()
       delimiters.keyAndValueDelimiter = keyAndValueDelimiter
@@ -492,7 +492,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     if (isKv) {
       val fieldDelimiter = if (fieldDelimiter1 != null && fieldDelimiter1.size > 0) fieldDelimiter1 else ","
-      val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\u0001"
+      val keyAndValueDelimiter = if (keyAndValueDelimiter1 != null && keyAndValueDelimiter1.size > 0) keyAndValueDelimiter1 else "\\x01"
       val valueDelimiter = if (valueDelimiter1 != null && valueDelimiter1.size > 0) valueDelimiter1 else "~"
       val delimiters = new DataDelimiters()
       delimiters.keyAndValueDelimiter = keyAndValueDelimiter

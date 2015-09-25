@@ -153,7 +153,7 @@ class TransformMessageData {
 
     if (delimiters.fieldDelimiter == null) delimiters.fieldDelimiter = ","
     if (delimiters.valueDelimiter == null) delimiters.valueDelimiter = "~"
-    if (delimiters.keyAndValueDelimiter == null) delimiters.keyAndValueDelimiter = "\u0001"
+    if (delimiters.keyAndValueDelimiter == null) delimiters.keyAndValueDelimiter = "\\x01"
 
     val str_arr = inputData.split(delimiters.fieldDelimiter, -1)
     val inpData = new KvData(inputData, delimiters)
@@ -161,7 +161,9 @@ class TransformMessageData {
 
     if (delimiters.fieldDelimiter.compareTo(delimiters.keyAndValueDelimiter) == 0) {
       if (str_arr.size % 2 != 0) {
-        throw new Exception("Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched")
+        val errStr = "Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched. We got %d tokens from input string %s".format(str_arr.size, inputData)
+        LOG.error(errStr)
+        throw new Exception(errStr)
       }
       for (i <- 0 until str_arr.size by 2) {
         dataMap(str_arr(i).trim) = str_arr(i + 1)
