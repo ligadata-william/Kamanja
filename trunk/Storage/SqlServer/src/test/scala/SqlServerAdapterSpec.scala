@@ -67,7 +67,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   }
 
   def readCallBack(key:Key, value: Value){
-    logger.info("datePartition => " + key.datePartition)
+    logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
     logger.info("serializerType => " + value.serializerType)
@@ -75,7 +75,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   }
 
   def readCallBack(key:Key){
-    logger.info("datePartition => " + key.datePartition)
+    logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
   }

@@ -234,16 +234,16 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       // Ideally a merge should be implemented as stored procedure
       // I am having some trouble in implementing stored procedure
       // We are implementing this as delete followed by insert for lack of time
-      var deleteSql = "delete from " + tableName + " where datePartition = ? and bucketKey = ? and transactionid = ? "
+      var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? "
       pstmt = con.prepareStatement(deleteSql)
-      pstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+      pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
       pstmt.setString(2,key.bucketKey.mkString(","))
       pstmt.setLong(3,key.transactionId)
       pstmt.executeUpdate();
 
-      var insertSql = "insert into " + tableName + "(datePartition,bucketKey,transactionId,serializedInfo) values(?,?,?,?)"
+      var insertSql = "insert into " + tableName + "(timePartition,bucketKey,transactionId,serializedInfo) values(?,?,?,?)"
       pstmt = con.prepareStatement(insertSql)
-      pstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+      pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
       pstmt.setString(2,key.bucketKey.mkString(","))
       pstmt.setLong(3,key.transactionId)
       pstmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
@@ -252,7 +252,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       /*
       var proc = "\"{call PROC_UPSERT_" + tableName + "(?,?,?,?)}\""
       cstmt = con.prepareCall(proc)
-      cstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+      cstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
       cstmt.setString(2,key.bucketKey.mkString(","))
       cstmt.setLong(3,key.transactionId)
       cstmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
@@ -290,13 +290,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var tableName = toTable(containerName)
     try{
       con = DriverManager.getConnection(jdbcUrl);
-      var deleteSql = "delete from " + tableName + " where datePartition = ? and bucketKey = ? and transactionid = ? "
+      var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? "
       pstmt = con.prepareStatement(deleteSql)
       // we need to commit entire batch
       con.setAutoCommit(false)
 
       keys.foreach( key => {
-	pstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+	pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
 	pstmt.setString(2,key.bucketKey.mkString(","))
 	pstmt.setLong(3,key.transactionId)
 	// Add it to the batch
@@ -339,12 +339,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
       while(rs.next()){
-	var datePartition = new java.util.Date(rs.getDate(1).getTime())
+	var timePartition = new java.util.Date(rs.getDate(1).getTime())
 	var keyStr = rs.getString(2)
 	var tId = rs.getLong(3)
 	var ba = rs.getBytes(4)
 	val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
-	var key = new Key(datePartition,bucketKey,tId)
+	var key = new Key(timePartition,bucketKey,tId)
 	// yet to understand how split serializerType and serializedInfo from ba
 	// so hard coding serializerType to "kryo" for now
 	var value = new Value("kryo",ba)
@@ -379,11 +379,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
       while(rs.next()){
-	var datePartition = new java.util.Date(rs.getDate(1).getTime())
+	var timePartition = new java.util.Date(rs.getDate(1).getTime())
 	var keyStr = rs.getString(2)
 	var tId = rs.getLong(3)
 	val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
-	var key = new Key(datePartition,bucketKey,tId)
+	var key = new Key(timePartition,bucketKey,tId)
 	(callbackFunction)(key)
       }
     } catch{
@@ -450,6 +450,10 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     getData(tableName,query,callbackFunction)
   }
 
+  override def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
+    logger.info("not implemented yet")
+  }    
+
   override def get(containerName: String, time_ranges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
@@ -463,7 +467,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
   def getAllKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
     var tableName = toTable(containerName)
-    var query = "select datePartition,bucketKey,transactionId from " + tableName
+    var query = "select timePartition,bucketKey,transactionId from " + tableName
     getKeys(tableName,query,callbackFunction)
   }
 
@@ -573,12 +577,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	logger.debug("The table " + tableName + " already exists ")
       }
       else{
-	var query = "create table " + tableName + "(datePartition date,bucketKey varchar(100), transactionId bigint, serializedInfo varbinary(max))"
+	var query = "create table " + tableName + "(timePartition date,bucketKey varchar(100), transactionId bigint, serializedInfo varbinary(max))"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
 	stmt.close
 	var clustered_index_name = "ix_" + tableName 
-	query = "create clustered index " + clustered_index_name + " on " + tableName + "(datePartition,bucketKey,transactionId)"
+	query = "create clustered index " + clustered_index_name + " on " + tableName + "(timePartition,bucketKey,transactionId)"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
 	stmt.close
@@ -642,6 +646,10 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
   override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
+
+  override def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
+    logger.info("not implemented yet")
+  }    
 
   override def get(containerName: String, time_ranges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
