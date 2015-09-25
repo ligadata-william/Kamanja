@@ -109,7 +109,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
             }
           }
         }
-        
+
         val sendOutStartTime = System.nanoTime
         if (outputResults != null && kamanjaCallerCtxt.outputAdapters != null) {
           // Not yet checking for Adapter Name matches
@@ -133,7 +133,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
             }
           }
         }
-                
+
         kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNanoSecs, sendOutStartTime))
 
@@ -141,7 +141,10 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
           val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
               ("C" -> kv._1) ~
-                ("K" -> kv._2)))
+                ("K" -> kv._2.map(k =>
+                  ("tm" -> k._1) ~
+                    ("bk" -> k._2) ~
+                    ("tx" -> k._3)))))
           val sendJson = compact(render(datachangedata))
           // Do we need to log this?
           KamanjaLeader.SetNewDataToZkc(KamanjaConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))

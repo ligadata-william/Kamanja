@@ -36,7 +36,8 @@ class KamanjaData {
   private var typName: String = "" // Type name of Message/container
   private var bucketKey = ArrayBuffer[String]() // Partition Key/Bucket Key
   private var time: Date = KamanjaData.defaultTime // Start Time Range. Default is used if nothing is set
-  private var data = ArrayBuffer[MessageContainerBase]() // Messages/Containers for this key & with in this date range. 
+  private var data = ArrayBuffer[MessageContainerBase]() // Messages/Containers for this key & with in this date range.
+  private var transactionId = 0L
   private val logger = KamanjaData.logger
 
   // Getting Key information
@@ -67,6 +68,12 @@ class KamanjaData {
   def SetTime(tm: Date): Unit = {
     time = tm
   }
+
+  def SetTransactionId(txnId: Long): Unit = {
+    transactionId = txnId
+  }
+
+  def GetTransactionId = transactionId
 
   // Getting All Data
   def GetAllData: Array[MessageContainerBase] = data.toArray

@@ -53,7 +53,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
-import com.ligadata.StorageBase.{ Key, Value, IStorage, DataStoreOperations, DataStore, Transaction, StorageAdapterObj }
+import com.ligadata.StorageBase.{ Key, Value, DataStore, Transaction }
 import com.ligadata.Exceptions.StackTrace
 
 trait LogTrait {
@@ -186,9 +186,9 @@ Sample uses:
             }
           } finally {
             if (dstore != null)
-          dstore.Shutdown()
+              dstore.Shutdown()
+          }
         }
-      }
       }
       MetadataAPIImpl.CloseDbStore
 
@@ -465,7 +465,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
       inputData.curPos = 0
       return inputData
-          }
+    }
 
     if (isJson) {
       try {
@@ -480,12 +480,12 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
           inputData.root_json = Option(parsed_json)
           inputData.cur_json = Option(parsed_json)
           return inputData
-      }
+        }
       } catch {
         case e: Exception => {
           logger.error("Invalid JSON data:%s, Reason:%s, Message:%s".format(inputStr, e.getCause, e.getMessage()))
           return null
-  }
+        }
       }
     }
 
@@ -524,49 +524,49 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       val alldata: List[String] = fileData(fl, format)
 
       if (alldata.size > ignoreRecords && zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
-      try {
-        com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
-        val transService = new com.ligadata.transactions.SimpleTransService
-        transService.init(1)
-        transId = transService.getNextTransId
-      } catch {
-        case e: Exception => throw e
-      } finally {
-        com.ligadata.transactions.NodeLevelTransService.Shutdown
+        try {
+          com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
+          val transService = new com.ligadata.transactions.SimpleTransService
+          transService.init(1)
+          transId = transService.getNextTransId
+        } catch {
+          case e: Exception => throw e
+        } finally {
+          com.ligadata.transactions.NodeLevelTransService.Shutdown
+        }
       }
-    }
 
       for (i <- ignoreRecords until alldata.size) {
         val inputStr = alldata(i)
         if (inputStr.size > 0) {
           logger.debug("Record:" + inputStr)
 
-        /** if we can make one ... we add the data to the store. This will crash if the data is bad */
+          /** if we can make one ... we add the data to the store. This will crash if the data is bad */
           val inputData = prepareInputData(inputStr)
 
           if (inputData != null) {
-        var messageOrContainer: MessageContainerBase = null
+            var messageOrContainer: MessageContainerBase = null
 
-        if (isMsg) {
-          messageOrContainer = messageObj.CreateNewMessage
-        } else if (isContainer) {
-          messageOrContainer = containerObj.CreateNewContainer
-        } else { // This should not happen
+            if (isMsg) {
+              messageOrContainer = messageObj.CreateNewMessage
+            } else if (isContainer) {
+              messageOrContainer = containerObj.CreateNewContainer
+            } else { // This should not happen
               throw new Exception("Handling only message or container")
-        }
-
-        if (messageOrContainer != null) {
-          try {
-            messageOrContainer.TransactionId(transId)
-            messageOrContainer.populate(inputData)
-          } catch {
-            case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              logger.debug("Failed to populate message/container." + "\nStackTrace:" + stackTrace)
-              errsCnt += 1
             }
-          }
-          try {
+
+            if (messageOrContainer != null) {
+              try {
+                messageOrContainer.TransactionId(transId)
+                messageOrContainer.populate(inputData)
+              } catch {
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("Failed to populate message/container." + "\nStackTrace:" + stackTrace)
+                  errsCnt += 1
+                }
+              }
+              try {
                 // If we have external Partition Key, we are taking the key stuff from value, otherwise we are taking it from messageOrContainer.PartitionKeyData
                 // BUGBUG:: For now we are using messageOrContainer.get and converting it to String. It may not always convert properly (if we have complex type etc). So, we need to get String for the given key from message/container itself.
                 val keyData =
@@ -593,6 +593,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                     messageOrContainer.PartitionKeyData
                   }
 
+                //??????????????????????? BUGBUG:: Need to integrate with time partition information message and get the stuff here ???????????????????????
+                messageOrContainer.getTimePartitionInfo
+                val timeVal = KamanjaData.defaultTime
+
                 var foundKey = false
                 var i = 0
 
@@ -600,7 +604,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
                 val keyDataLst = keyData.toList
                 while (foundKey == false && i < kamanjaData.size) {
-                  foundKey = IsSameKey(keyDataLst, kamanjaData(i).GetKey.toList)
+                  foundKey = (transId == kamanjaData(i).GetTransactionId && timeVal.equals(kamanjaData(i).GetTime) && IsSameKey(keyDataLst, kamanjaData(i).GetBucketKey.toList))
                   if (foundKey)
                     datarec = kamanjaData(i)
                   i += 1
@@ -608,47 +612,41 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
                 if (foundKey == false) {
                   datarec = new KamanjaData
-            datarec.SetKey(keyData)
-            datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
+                  datarec.SetBucketKey(keyData)
+                  datarec.SetTime(timeVal)
+                  datarec.SetTransactionId(transId)
+                  datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
                   kamanjaData += datarec
                 }
 
-            datarec.AddMessageContainerBase(messageOrContainer, true, true)
-            processedRows += 1
-          } catch {
-            case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              logger.debug("Failed to serialize/write data." + "\nStackTrace:" + stackTrace)
-              errsCnt += 1
+                datarec.AddMessageContainerBase(messageOrContainer, true, true)
+                processedRows += 1
+              } catch {
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("Failed to serialize/write data." + "\nStackTrace:" + stackTrace)
+                  errsCnt += 1
+                }
+              }
             }
           }
         }
-      }
-        }
 
-      if (errsCnt > ignoreErrsCount) {
-        val errStr = "Populate/Serialize errors (%d) exceed the given count(%d)." format (errsCnt, ignoreErrsCount)
-        logger.error(errStr)
-        throw new Exception(errStr)
-      }
+        if (errsCnt > ignoreErrsCount) {
+          val errStr = "Populate/Serialize errors (%d) exceed the given count(%d)." format (errsCnt, ignoreErrsCount)
+          logger.error(errStr)
+          throw new Exception(errStr)
+        }
       }
     })
 
-    val storeObjects = ArrayBuffer[IStorage]()
+    val storeObjects = new ArrayBuffer[(Key, Value)](kamanjaData.size)
 
     kamanjaData.foreach(d => {
       try {
-        object obj extends IStorage {
-          val k = makeKey(d.SerializeKey)
-          val v = makeValue(d.SerializeData, "manual")
-
-          def Key = k
-
-          def Value = v
-
-          def Construct(Key: Key, Value: Value) = {}
-        }
-        storeObjects += obj
+        val k = Key(d.GetTime, d.GetBucketKey, d.GetTransactionId)
+        val v = Value("manual", d.SerializeData)
+        storeObjects += ((k, v))
       } catch {
         case e: Exception => {
           logger.error("Failed to serialize/write data.")
@@ -660,10 +658,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     val txn = kvstore.beginTx()
     try {
       logger.debug("Going to save " + storeObjects.size + " objects")
-      storeObjects.foreach(o => {
-        logger.debug("ObjKey:" + new String(o.Key.toArray) + " Value Size: " + o.Value.toArray.size)
+      storeObjects.foreach(kv => {
+        logger.debug("ObjKey:(" + kv._1.timePartition.getTime() + ":" + kv._1.bucketKey.mkString(",") + ":" + kv._1.transactionId + ") Value Size: " + kv._2.serializedInfo.size)
       })
-      kvstore.putBatch(storeObjects.toArray)
+      kvstore.put(Array((objFullName, storeObjects.toArray)))
       kvstore.commitTx(txn)
     } catch {
       case e: Exception => {
@@ -673,7 +671,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       }
     }
 
-    val savedKeys = kamanjaData.map(d => d.GetKey.toList)
+    val savedKeys = storeObjects.map(kv => kv._1)
 
     logger.info("Processed %d records and Inserted %d keys for Type %s".format(processedRows, storeObjects.size, typename))
     println("Processed %d records and Inserted %d keys for Type %s".format(processedRows, storeObjects.size, typename))
@@ -685,12 +683,15 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
         val dataChangeZkNodePath = zkNodeBasePath + "/datachange"
         CreateClient.CreateNodeIfNotExists(zkConnectString, dataChangeZkNodePath) // Creating 
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
-        val changedContainersData = Map[String, List[List[String]]]()
+        val changedContainersData = Map[String, List[Key]]()
         changedContainersData(typename) = savedKeys.toList
         val datachangedata = ("txnid" -> transId.toString) ~
           ("changeddatakeys" -> changedContainersData.map(kv =>
             ("C" -> kv._1) ~
-              ("K" -> kv._2)))
+              ("K" -> kv._2.map(k =>
+                ("tm" -> k.timePartition.getDate()) ~
+                  ("bk" -> k.bucketKey.toList) ~
+                  ("tx" -> k.transactionId)))))
         val sendJson = compact(render(datachangedata))
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {
@@ -704,25 +705,6 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     } else {
       logger.error("Failed to send update notification to engine.")
     }
-  }
-
-  private def getSerializeInfo(tupleBytes: Value): String = {
-    if (tupleBytes.size < _serInfoBufBytes) return ""
-    val serInfoBytes = new Array[Byte](_serInfoBufBytes)
-    tupleBytes.copyToArray(serInfoBytes, 0, _serInfoBufBytes)
-    return (new String(serInfoBytes)).trim
-  }
-
-  private def SaveObject(key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {
-    object i extends IStorage {
-      var k = makeKey(key)
-      var v = makeValue(value, serializerInfo)
-
-      def Key = k
-      def Value = v
-      def Construct(Key: Key, Value: Value) = {}
-    }
-    store.put(i)
   }
 
   private def fileData(inputeventfile: String, format: String): List[String] = {
@@ -743,10 +725,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     try {
       if (isDelimited) {
-    var line: String = ""
-    while ({ line = br.readLine(); line != null }) {
-      fileContentsArray += line
-    }
+        var line: String = ""
+        while ({ line = br.readLine(); line != null }) {
+          fileContentsArray += line
+        }
       } else if (isJson) {
         var buf = new ArrayBuffer[Int]()
         var ch = br.read()

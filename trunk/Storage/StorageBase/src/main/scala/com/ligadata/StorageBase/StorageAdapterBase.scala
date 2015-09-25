@@ -9,7 +9,7 @@ package com.ligadata.StorageBase
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import java.util.Date
 
-case class Key(datePartition: Date, bucketKey: Array[String], transactionId: Long)
+case class Key(timePartition: Date, bucketKey: Array[String], transactionId: Long)
 case class Value(serializerType: String, serializedInfo: Array[Byte])
 case class StorageTimeRange(beginTime: Date, endTime: Date)
 
@@ -25,6 +25,7 @@ trait DataStoreOperations {
 
   // get operations
   def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit
+  def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit
   def get(containerName: String, timeRanges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit // Range of dates
   def get(containerName: String, timeRanges: Array[StorageTimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
   def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
