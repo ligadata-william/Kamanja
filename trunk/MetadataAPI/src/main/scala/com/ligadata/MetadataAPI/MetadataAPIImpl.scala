@@ -1741,9 +1741,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String): DataStore = {
     try {
-      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
+      logger.debug("Getting DB Connection for dataStoreInfo:%s".format(dataStoreInfo))
       return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
       case e: Exception => {
@@ -1757,7 +1757,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def OpenDbStore(jarPaths: collection.immutable.Set[String], dataStoreInfo: String) {
     try {
       logger.debug("Opening datastore")
-      mainDS = GetDataStoreHandle(jarPaths, dataStoreInfo, "metadata_objects")
+      mainDS = GetDataStoreHandle(jarPaths, dataStoreInfo)
 
       tableStoreMap = Map("metadata_objects" -> ("metadata_objects", mainDS),
         "models" -> ("metadata_objects", mainDS),
