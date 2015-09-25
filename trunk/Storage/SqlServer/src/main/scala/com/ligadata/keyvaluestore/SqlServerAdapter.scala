@@ -16,7 +16,7 @@
 
 package com.ligadata.keyvaluestore
 import java.sql.DriverManager
-import java.sql.{Statement,PreparedStatement,DatabaseMetaData,ResultSet}
+import java.sql.{Statement,PreparedStatement,CallableStatement,DatabaseMetaData,ResultSet}
 import java.sql.Connection
 import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj, Key, Value, StorageTimeRange }
 import java.nio.ByteBuffer
@@ -216,28 +216,65 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     }
   }
 
+  private def toTable(containerName: String) : String = {
+    // we need to check for other restrictions as well
+    // such as length of the table, special characters etc
+    containerName.replace('.','_')
+  }
+
   override def put(containerName:String, key: Key, value: Value): Unit = {
     var con:Connection = null
-    var stmt:PreparedStatement = null
+    var pstmt:PreparedStatement = null
+    var cstmt:CallableStatement = null
+    var tableName = toTable(containerName)
     try{
       con = DriverManager.getConnection(jdbcUrl);
-      var insertSql = "insert into " + containerName + "(part_date,key_str,transactionId,value) values(?,?,?,?)"
-      stmt = con.prepareStatement(insertSql)
-      stmt.setDate(1,new java.sql.Date(key.date_part.getTime))
-      stmt.setString(2,key.bucket_key.mkString(":"))
-      stmt.setLong(3,key.transactionId)
-      stmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
+      // put is sematically an upsert. An upsert is implemented using a merge
+      // statement in sqlserver
+      // Ideally a merge should be implemented as stored procedure
+      // I am having some trouble in implementing stored procedure
+      // We are implementing this as delete followed by insert for lack of time
+      var deleteSql = "delete from " + tableName + " where date_part = ? and key_str = ? and transactionid = ? "
+      pstmt = con.prepareStatement(deleteSql)
+      pstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
+      pstmt.setString(2,key.bucket_key.mkString(":"))
+      pstmt.setLong(3,key.transactionId)
+      pstmt.executeUpdate();
+
+      var insertSql = "insert into " + tableName + "(date_part,key_str,transactionId,serialized_value) values(?,?,?,?)"
+      pstmt = con.prepareStatement(insertSql)
+      pstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
+      pstmt.setString(2,key.bucket_key.mkString(":"))
+      pstmt.setLong(3,key.transactionId)
+      pstmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
 			   value.serializedInfo.length)
-      stmt.executeUpdate();
+      pstmt.executeUpdate();
+      /*
+      var proc = "\"{call PROC_UPSERT_" + tableName + "(?,?,?,?)}\""
+      cstmt = con.prepareCall(proc)
+      cstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
+      cstmt.setString(2,key.bucket_key.mkString(":"))
+      cstmt.setLong(3,key.transactionId)
+      cstmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
+			   value.serializedInfo.length)
+      cstmt.execute();
+      */
     } catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:"+stackTrace)
-	throw new Exception("Failed to save an object in the table " + containerName + ":" + e.getMessage())
+	throw new Exception("Failed to save an object in the table " + tableName + ":" + e.getMessage())
       }
     } finally {
-      stmt.close
-      con.close
+      if(cstmt != null){
+	cstmt.close
+      }
+      if(pstmt != null){
+	pstmt.close
+      }
+      if( con != null ){
+	con.close
+      }
     }
   }
 
@@ -246,11 +283,48 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   // delete operations
-  override def del(containerName: String, key: Key): Unit = {
-    logger.info("not implemented yet")
+  override def del(containerName: String, keys: Array[Key]): Unit = {
+    var con:Connection = null
+    var pstmt:PreparedStatement = null
+    var cstmt:CallableStatement = null
+    var tableName = toTable(containerName)
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      var deleteSql = "delete from " + tableName + " where date_part = ? and key_str = ? and transactionid = ? "
+      pstmt = con.prepareStatement(deleteSql)
+      // we need to commit entire batch
+      con.setAutoCommit(false)
+
+      keys.foreach( key => {
+	pstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
+	pstmt.setString(2,key.bucket_key.mkString(":"))
+	pstmt.setLong(3,key.transactionId)
+	// Add it to the batch
+	pstmt.addBatch()
+      })
+      var deleteCount = pstmt.executeBatch();
+      con.commit()
+      logger.info("Deleted " + deleteCount + " rows from " + tableName)
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to delete object(s) from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(cstmt != null){
+	cstmt.close
+      }
+      if(pstmt != null){
+	pstmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }
   }
 
-  override def del(containerName: String, time: StorageTimeRange, keys: Array[Key]): Unit = {
+  override def del(containerName: String, time: StorageTimeRange, keys: Array[Array[String]]): Unit = {
     logger.info("not implemented yet")
   }
 
@@ -293,16 +367,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var con:Connection = null
     var stmt:Statement = null
     var rs: ResultSet = null
+    var tableName = toTable(containerName)
     try{
       con = DriverManager.getConnection(jdbcUrl);
       // check if the container already dropped
       val dbm = con.getMetaData();
-      rs = dbm.getTables(null, null, containerName, null);
+      rs = dbm.getTables(null, null, tableName, null);
       if (!rs.next()) {
-	logger.warn("The table " + containerName + " may have beem dropped already ")
+	logger.debug("The table " + tableName + " may have beem dropped already ")
       }
       else{
-	var query = "drop table " + containerName
+	var query = "drop table " + tableName
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
       }
@@ -310,7 +385,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:"+stackTrace)
-	throw new Exception("Failed to drop the table " + containerName + ":" + e.getMessage())
+	throw new Exception("Failed to drop the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if(rs != null) {
@@ -333,21 +408,31 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     })
   }
 
-
   private def CreateContainer(containerName: String) : Unit = {
     var con:Connection = null
     var stmt:Statement = null
     var rs: ResultSet = null
+    var tableName = toTable(containerName)
     try{
       con = DriverManager.getConnection(jdbcUrl);
       // check if the container already exists
       val dbm = con.getMetaData();
-      rs = dbm.getTables(null, null, containerName, null);
+      rs = dbm.getTables(null, null, tableName, null);
       if (rs.next()) {
-	logger.warn("The table " + containerName + " already exists ")
+	logger.debug("The table " + tableName + " already exists ")
       }
       else{
-	var query = "create table " + containerName + "(part_date date,key_str varchar(100), transactionId bigint, value varbinary(max))"
+	var query = "create table " + tableName + "(date_part date,key_str varchar(100), transactionId bigint, serialized_value varbinary(max))"
+	stmt = con.createStatement()
+	stmt.executeUpdate(query);
+	stmt.close
+	var clustered_index_name = "ix_" + tableName 
+	query = "create clustered index " + clustered_index_name + " on " + tableName + "(date_part,key_str,transactionId)"
+	stmt = con.createStatement()
+	stmt.executeUpdate(query);
+	stmt.close
+	var index_name = "ix1_" + tableName 
+	query = "create index " + index_name + " on " + tableName + "(key_str,transactionId)"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
       }
@@ -355,7 +440,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:"+stackTrace)
-	throw new Exception("Failed to create the table " + containerName + ":" + e.getMessage())
+	throw new Exception("Failed to create the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if(rs != null) {
@@ -394,11 +479,11 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
   }
 
   // delete operations
-  override def del(containerName: String, key: Key): Unit = {
+  override def del(containerName: String, keys: Array[Key]): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def del(containerName: String, time: StorageTimeRange, keys: Array[Key]): Unit = {
+  override def del(containerName: String, time: StorageTimeRange, keys: Array[Array[String]]): Unit = {
     logger.info("not implemented yet")
   }
 

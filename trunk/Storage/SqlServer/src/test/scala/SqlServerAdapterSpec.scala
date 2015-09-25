@@ -69,7 +69,14 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
     // validate property setup
     it ("Validate api operations") {
-      val containerName = "customer1"
+      val containerName = "sys.customer1"
+
+      And("Test drop container")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.DropContainer(containers)
+      }
 
       And("Test create container")
       noException should be thrownBy {
@@ -79,25 +86,35 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Test Put api")
-      val currentTime = new Date()
-      var keyArray = new Array[String](0)
-      keyArray = keyArray :+ "cust1" 
-      var key = new Key(currentTime,keyArray,1)
-      val obj = new Customer("cust1","1000 Main St, Redmond WA 98052","4256667777")
-      var v = serializer.SerializeObjectToByteArray(obj)
-      var value = new Value("kryo",v)
 
-      noException should be thrownBy {
-	adapter.put(containerName,key,value)
+      for( i <- 1 to 10 ){
+	var currentTime = new Date()
+	var keyArray = new Array[String](0)
+	var custName = "customer-" + i
+	keyArray = keyArray :+ custName
+	var key = new Key(currentTime,keyArray,i)
+	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
+	var custNumber = "4256667777" + i
+	var obj = new Customer(custName,custAddress,custNumber)
+	var v = serializer.SerializeObjectToByteArray(obj)
+	var value = new Value("kryo",v)
+	noException should be thrownBy {
+	  adapter.put(containerName,key,value)
+	}
       }
 
-      // validate using a get operation
-
-      And("Test drop container")
+      And("Test Del api")
+      var keys = new Array[Key](0)
+      for( i <- 1 to 10 ){
+	var currentTime = new Date()
+	var keyArray = new Array[String](0)
+	var custName = "customer-" + i
+	keyArray = keyArray :+ custName
+	var key = new Key(currentTime,keyArray,i)
+	keys = keys :+ key
+      }
       noException should be thrownBy {
-	var containers = new Array[String](0)
-	containers = containers :+ containerName
-	adapter.DropContainer(containers)
+	adapter.del(containerName,keys)
       }
     }
   }
