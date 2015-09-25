@@ -256,7 +256,6 @@ cp $ivyPath/cache/org.codehaus.jackson/jackson-jaxrs/jars/jackson-jaxrs-1.8.3.ja
 cp $ivyPath/cache/net.debasishg/redisclient_2.10/jars/redisclient_2.10-2.13.jar $systemlib
 cp $ivyPath/cache/com.typesafe.akka/akka-testkit_2.10/jars/akka-testkit_2.10-2.3.0.jar $systemlib
 cp $srcPath/Exceptions/target/scala-2.10/exceptions_2.10-1.0.jar $systemlib
-cp $srcPath/DataDelimiters/target/scala-2.10/datadelimiters_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.zookeeper/zookeeper/jars/zookeeper-3.3.4.jar $systemlib
 cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.7.5.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/servlet-api/jars/servlet-api-2.5.20110712.jar $systemlib
