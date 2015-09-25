@@ -518,11 +518,13 @@ class CompilerProxy {
       modDef
     } catch {
       case e: AlreadyExistsException => {
-        logger.error("Failed to compile the model definition " + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Failed to compile the model definition:%s.\nStackTrace:%s".format(e.toString, stackTrace))
         throw e
       }
       case e: Exception => {
-        logger.error("Failed to compile the model definition " + e.toString)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Failed to compile the model definition:%s.\nStackTrace:%s".format(e.toString, stackTrace))
         throw new ModelCompilationFailedException(e.getMessage())
       }
     }
@@ -538,9 +540,9 @@ class CompilerProxy {
     var inVars: List[(String, String, String, String, Boolean, String)] = List[(String, String, String, String, Boolean, String)]()
     elements.foreach(elem => {
       if (elem.asInstanceOf[ContainerDef].containerType.isInstanceOf[StructTypeDef]) {
-        elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[StructTypeDef].memberDefs.foreach(attr => { inVars = (attr.NameSpace, attr.Name, elem.NameSpace, elem.Name, false, null) :: inVars })
+        elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[StructTypeDef].memberDefs.foreach(attr => { inVars = (attr.NameSpace, attr.Name, attr.typeDef.NameSpace, attr.typeDef.Name, false, null) :: inVars })
       } else if (elem.asInstanceOf[ContainerDef].containerType.isInstanceOf[MappedMsgTypeDef]) {
-        elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[MappedMsgTypeDef].attrMap.foreach(attr => { inVars = (elem.NameSpace, elem.Name, attr._2.NameSpace, attr._2.Name, false, null) :: inVars })
+        elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[MappedMsgTypeDef].attrMap.foreach(attr => { inVars = (attr._2.NameSpace, attr._2.Name, attr._2.typeDef.NameSpace, attr._2.typeDef.Name, false, null) :: inVars })
       }
     })
     inVars
