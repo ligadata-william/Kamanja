@@ -282,8 +282,9 @@ trait EnvContext {
   // Clear Intermediate results After updating them on different node or different component (like KVInit), etc
   def clearIntermediateResults(unloadMsgsContainers: Array[String]): Unit
 
-  def getChangedData(tempTransId: Long, includeMessages:Boolean, includeContainers:Boolean): scala.collection.immutable.Map[String, List[List[String]]]
-  def ReloadKeys(tempTransId: Long, containerName: String, keys: List[List[String]]): Unit
+  // Changed Data & Reloading data are Time in MS, Bucket Key & TransactionId
+  def getChangedData(tempTransId: Long, includeMessages:Boolean, includeContainers:Boolean): scala.collection.immutable.Map[String, List[(Long, List[String], Long)]]
+  def ReloadKeys(tempTransId: Long, containerName: String, keys: List[(Long, List[String], Long)]): Unit
   
   // Set Reload Flag
   def setReloadFlag(transId: Long, containerName: String): Unit

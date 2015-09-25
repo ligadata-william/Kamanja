@@ -750,15 +750,20 @@ object KamanjaLeader {
               val tmpKeys = contAndKeys.getOrElse("K", null)
               if (contName.size > 0 && tmpKeys != null) {
                 // Expecting List/Array of Keys
-                var keys: List[List[String]] = null
+                var keys: List[(String, Any)] = null
                 if (tmpKeys.isInstanceOf[List[_]]) {
                   try {
-                    keys = tmpKeys.asInstanceOf[List[List[String]]]
+                    keys = tmpKeys.asInstanceOf[List[(String, Any)]]
                   }
                 }
-                if (tmpKeys.isInstanceOf[Array[_]]) {
+                else if (tmpKeys.isInstanceOf[Array[_]]) {
                   try {
-                    keys = tmpKeys.asInstanceOf[Array[List[String]]].toList
+                    keys = tmpKeys.asInstanceOf[Array[(String, Any)]].toList
+                  }
+                }
+                else if (tmpKeys.isInstanceOf[Map[_, _]]) {
+                  try {
+                    keys = tmpKeys.asInstanceOf[Map[String, Any]]
                   }
                 }
 
