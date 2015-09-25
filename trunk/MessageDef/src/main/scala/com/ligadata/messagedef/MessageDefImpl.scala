@@ -45,11 +45,11 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long, var datePartition: DatePartition)
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long, var datePartition: TimePartition)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
-class DatePartition(var Key: String, var Format: String, var DType: String)
+class TimePartition(var Key: String, var Format: String, var DType: String)
 
 case class Concept(var NameSpace: Option[String], var Name: Option[String], var Type: Option[String])
 class ConceptList(var Concepts: List[Concept])
@@ -74,7 +74,7 @@ class MessageDefImpl {
   var methodGen = new ConstantMethodGenerator
   var messageFldsExtractor = new MessageFldsExtractor
   var cnstObjVar = new ConstantMsgObjVarGenerator
-  val dataPartitionTypeList: List[String] = List("daily", "monthly", "weekly", "30minutes", "60minutes", "15minutes", "5minutes", "1minute")
+  val timePartitionTypeList: List[String] = List("daily", "monthly", "weekly", "30minutes", "60minutes", "15minutes", "5minutes", "1minute")
 
   private def error[T](prefix: String): Option[T] =
     throw MessageException("%s must be specified".format(prefix))
@@ -717,7 +717,7 @@ class MessageDefImpl {
     var conceptsList: List[String] = null
     var msgVersion: String = ""
     var persistMsg: Boolean = false
-    var datePartition: DatePartition = null
+    var timePartition: TimePartition = null
     var fldList: Set[String] = Set[String]()
     try {
       if (message != null) {
@@ -794,8 +794,9 @@ class MessageDefImpl {
         }
 
         //DateParition Info
-        if (message.getOrElse("DatePartitionInfo", null) != null) {
-          datePartition = getDatePartitionInfo("DatePartitionInfo", message, fldList)
+        val timePartInfo: String = "TimePartitionInfo"
+        if (message.getOrElse(timePartInfo, null) != null) {
+          timePartition = getMsgTimePartitionInfo(timePartInfo, message, fldList)
         }
 
         if (message.get("Fixed").get.toString().toLowerCase == "true" && ele == null)
@@ -806,7 +807,7 @@ class MessageDefImpl {
         else
           ele = List(new Element("", "transactionId", "system.long", "", "Fields", null))
 
-       // ele.foreach(f => log.debug("====" + f.Name))
+        // ele.foreach(f => log.debug("====" + f.Name))
 
         if (recompile) {
           msgVersion = messageFldsExtractor.getRecompiledMsgContainerVersion(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), mdMgr)
@@ -828,33 +829,38 @@ class MessageDefImpl {
     val pkg = message.get("NameSpace").get.toString
     val physicalName: String = pkg + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()
 
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time, datePartition)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time, timePartition)
   }
 
   // Parse Date partition Info from the Message Definition
-  private def getDatePartitionInfo(key: String, message: Map[String, Any], fldList: Set[String]): DatePartition = {
-    var datePartitionKey: String = null
-    var datePartitionKeyFormat: String = null
-    var datePartitionType: String = null
+  private def getMsgTimePartitionInfo(key: String, message: Map[String, Any], fldList: Set[String]): TimePartition = {
+    var timePartitionKey: String = null
+    var timePartitionKeyFormat: String = null
+    var timePartitionType: String = null
     type sMap = Map[String, String]
     try {
 
       if (message.getOrElse(key, null) != null && message.get(key).get.isInstanceOf[sMap]) {
-        val datePartitionMap: sMap = message.get(key).get.asInstanceOf[sMap]
-        if (datePartitionMap.contains("Key") && (datePartitionMap.get("Key").get.isInstanceOf[String]))
-          datePartitionKey = datePartitionMap.get("Key").get.asInstanceOf[String].toLowerCase()
-      
-        if (!fldList.contains(datePartitionKey))
-          throw new Exception(datePartitionKey + " should be defined as the fields in the message definition");
+        val timePartitionMap: sMap = message.get(key).get.asInstanceOf[sMap]
+        println("timePartitionMap-Key" + timePartitionMap.contains("Key"))
 
-        if (datePartitionMap.contains("Format") && (datePartitionMap.get("Format").get.isInstanceOf[String]))
-          datePartitionKeyFormat = datePartitionMap.get("Format").get.asInstanceOf[String].toLowerCase()
+        if (timePartitionMap.contains("Key") && (timePartitionMap.get("Key").get.isInstanceOf[String])) {
+          timePartitionKey = timePartitionMap.get("Key").get.asInstanceOf[String].toLowerCase()
 
-        if (datePartitionMap.contains("Type") && (datePartitionMap.get("Type").get.isInstanceOf[String]))
-          datePartitionType = datePartitionMap.get("Type").get.asInstanceOf[String].toLowerCase()
+          if (!fldList.contains(timePartitionKey))
+            throw new Exception("Time Partition Key should be defined as one of the fields in the message definition");
 
-        if (!containsIgnoreCase(dataPartitionTypeList, datePartitionType))
-          throw new Exception(datePartitionType + " should be defined as the fields in the message definition");
+        } else throw new Exception("Time Partition Key should be defined in the message definition");
+
+        if (timePartitionMap.contains("Format") && (timePartitionMap.get("Format").get.isInstanceOf[String]))
+          timePartitionKeyFormat = timePartitionMap.get("Format").get.asInstanceOf[String].toLowerCase()
+
+        if (timePartitionMap.contains("Type") && (timePartitionMap.get("Type").get.isInstanceOf[String])) {
+          timePartitionType = timePartitionMap.get("Type").get.asInstanceOf[String].toLowerCase()
+
+          if (!containsIgnoreCase(timePartitionTypeList, timePartitionType))
+            throw new Exception(timePartitionType + " should be defined as the fields in the message definition");
+        } else throw new Exception("Time Partition Type should be defined in the message definition");
 
       }
     } catch {
@@ -865,7 +871,7 @@ class MessageDefImpl {
       }
     }
 
-    new DatePartition(datePartitionKey, datePartitionKeyFormat, datePartitionType);
+    new TimePartition(timePartitionKey, timePartitionKeyFormat, timePartitionType);
 
   }
 

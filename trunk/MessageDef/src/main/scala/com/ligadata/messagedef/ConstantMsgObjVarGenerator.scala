@@ -242,13 +242,13 @@ class ConstantMsgObjVarGenerator {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getDatePartitioninfo(msg.datePartition) + newline + getFullName + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getTimePartitioninfo(msg.datePartition) + newline + getFullName + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + getDatePartitioninfo(msg.datePartition) + newline + newline + getFullName + newline + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + getTimePartitioninfo(msg.datePartition) + newline + newline + getFullName + newline + cbrace + newline)
 
     }
     cobj
@@ -256,7 +256,7 @@ class ConstantMsgObjVarGenerator {
 
   //DatePartitionInfo method in message Object
 
-  private def getDatePartitioninfo(datePatition: DatePartition): String = {
+  private def getTimePartitioninfo(datePatition: TimePartition): String = {
     var dateParitionInfoStr = new StringBuilder(8 * 1024)
     var datePatitionKey: String = ""
     var datePatitionFormat: String = ""
@@ -264,7 +264,7 @@ class ConstantMsgObjVarGenerator {
 
     if (datePatition == null) {
       dateParitionInfoStr = dateParitionInfoStr.append("""     
-    def getDatePartitionInfo: (String, String, String) = { // Column, Format & Types	
+    def getTimePartitionInfo: (String, String, String) = { // Column, Format & Types	
 		return(null, null, null)	
 	}""")
 
@@ -272,13 +272,13 @@ class ConstantMsgObjVarGenerator {
 
       if (datePatition.Format == null) {
         dateParitionInfoStr = dateParitionInfoStr.append("""     
-    def getDatePartitionInfo: (String, String, String) = { // Column, Format & Types	
+    def getTimePartitionInfo: (String, String, String) = { // Column, Format & Types	
 		return("""" + datePatition.Key + """" , null, """" + datePatition.DType + """")	
 	}""")
       } else {
 
         dateParitionInfoStr = dateParitionInfoStr.append("""     
-    def getDatePartitionInfo: (String, String, String) = { // Column, Format & Types	
+    def getTimePartitionInfo: (String, String, String) = { // Column, Format & Types	
 		return("""" + datePatition.Key + """" , """" + datePatition.Format + """", """" + datePatition.DType + """")		
 	}""")
 
