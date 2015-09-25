@@ -33,20 +33,20 @@ object KamanjaData {
 }
 
 class KamanjaData {
-  private var typName: String = "" // Type name (Message, container)
-  private var key = ArrayBuffer[String]() // Partition Key
+  private var typName: String = "" // Type name of Message/container
+  private var bucketKey = ArrayBuffer[String]() // Partition Key/Bucket Key
   private var time: Date = KamanjaData.defaultTime // Start Time Range. Default is used if nothing is set
   private var data = ArrayBuffer[MessageContainerBase]() // Messages/Containers for this key & with in this date range. 
   private val logger = KamanjaData.logger
 
   // Getting Key information
-  def GetKey = key.toArray
+  def GetBucketKey = bucketKey.toArray
 
   // Setting Key information
-  def SetKey(partitionkey: Array[String]): Unit = {
-    key.clear
+  def SetBucketKey(partitionkey: Array[String]): Unit = {
+    bucketKey.clear
     if (partitionkey != null)
-      key ++= partitionkey
+      bucketKey ++= partitionkey
   }
 
   // Getting Type Name
@@ -120,7 +120,7 @@ class KamanjaData {
 
   // BUGBUG:: Order of containers/messages are not guaranteed here. Because we don't know which one comes first in this. For now expecting this is old and appending collection is latest.
   def appendWithCheck(collection: KamanjaData): Unit = {
-    if (key.sameElements(collection.key)) {
+    if (bucketKey.sameElements(collection.bucketKey)) {
       try {
         collection.data.foreach(typ => {
           var replaced = false
@@ -147,13 +147,13 @@ class KamanjaData {
         }
       }
     } else {
-      throw new Exception("We can merge PartitionKeyMessages with same key only. %s != %s".format(key.mkString(","), collection.key.mkString(",")))
+      throw new Exception("We can merge PartitionKeyMessages with same key only. %s != %s".format(bucketKey.mkString(","), collection.bucketKey.mkString(",")))
     }
   }
 
   // Here are not checking for duplicates existance. Thinking that collection always has new messages/containers.
   def appendNoDupCheck(collection: KamanjaData): Unit = {
-    if (key.sameElements(collection.key)) {
+    if (bucketKey.sameElements(collection.bucketKey)) {
       try {
         data ++= collection.data
       } catch {
@@ -164,7 +164,7 @@ class KamanjaData {
         }
       }
     } else {
-      throw new Exception("We can append PartitionKeyMessages with same key only. %s != %s".format(key.mkString(","), collection.key.mkString(",")))
+      throw new Exception("We can append PartitionKeyMessages with same key only. %s != %s".format(bucketKey.mkString(","), collection.bucketKey.mkString(",")))
     }
   }
 
@@ -177,9 +177,9 @@ class KamanjaData {
       dos.writeUTF(typName)
 
       // Serializing Partition Key
-      dos.writeInt(key.size)
-      for (i <- 0 until key.size) {
-        dos.writeUTF(key(i))
+      dos.writeInt(bucketKey.size)
+      for (i <- 0 until bucketKey.size) {
+        dos.writeUTF(bucketKey(i))
       }
 
       // Serializing Time
@@ -215,7 +215,7 @@ class KamanjaData {
 
     // Clear key & types before de-serialize.
     // BUGBUG:: In case of exception while de-serializing, it would loose the previous state at this moment. Do we need to make a copy to persist the state???
-    key.clear
+    bucketKey.clear
     data.clear
 
     try {
@@ -225,7 +225,7 @@ class KamanjaData {
       // DeSerializing Partition Key
       val ksz = dis.readInt
       for (i <- 0 until ksz) {
-        key += dis.readUTF
+        bucketKey += dis.readUTF
       }
 
       // DeSerializing Time
