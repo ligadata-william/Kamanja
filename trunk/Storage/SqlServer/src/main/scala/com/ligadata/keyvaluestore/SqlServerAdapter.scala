@@ -234,17 +234,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       // Ideally a merge should be implemented as stored procedure
       // I am having some trouble in implementing stored procedure
       // We are implementing this as delete followed by insert for lack of time
-      var deleteSql = "delete from " + tableName + " where date_part = ? and key_str = ? and transactionid = ? "
+      var deleteSql = "delete from " + tableName + " where datePartition = ? and bucketKey = ? and transactionid = ? "
       pstmt = con.prepareStatement(deleteSql)
-      pstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
-      pstmt.setString(2,key.bucket_key.mkString(":"))
+      pstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+      pstmt.setString(2,key.bucketKey.mkString(","))
       pstmt.setLong(3,key.transactionId)
       pstmt.executeUpdate();
 
-      var insertSql = "insert into " + tableName + "(date_part,key_str,transactionId,serialized_value) values(?,?,?,?)"
+      var insertSql = "insert into " + tableName + "(datePartition,bucketKey,transactionId,serializedInfo) values(?,?,?,?)"
       pstmt = con.prepareStatement(insertSql)
-      pstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
-      pstmt.setString(2,key.bucket_key.mkString(":"))
+      pstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+      pstmt.setString(2,key.bucketKey.mkString(","))
       pstmt.setLong(3,key.transactionId)
       pstmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
 			   value.serializedInfo.length)
@@ -252,8 +252,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       /*
       var proc = "\"{call PROC_UPSERT_" + tableName + "(?,?,?,?)}\""
       cstmt = con.prepareCall(proc)
-      cstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
-      cstmt.setString(2,key.bucket_key.mkString(":"))
+      cstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+      cstmt.setString(2,key.bucketKey.mkString(","))
       cstmt.setLong(3,key.transactionId)
       cstmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
 			   value.serializedInfo.length)
@@ -290,21 +290,23 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var tableName = toTable(containerName)
     try{
       con = DriverManager.getConnection(jdbcUrl);
-      var deleteSql = "delete from " + tableName + " where date_part = ? and key_str = ? and transactionid = ? "
+      var deleteSql = "delete from " + tableName + " where datePartition = ? and bucketKey = ? and transactionid = ? "
       pstmt = con.prepareStatement(deleteSql)
       // we need to commit entire batch
       con.setAutoCommit(false)
 
       keys.foreach( key => {
-	pstmt.setDate(1,new java.sql.Date(key.date_part.getTime))
-	pstmt.setString(2,key.bucket_key.mkString(":"))
+	pstmt.setDate(1,new java.sql.Date(key.datePartition.getTime))
+	pstmt.setString(2,key.bucketKey.mkString(","))
 	pstmt.setLong(3,key.transactionId)
 	// Add it to the batch
 	pstmt.addBatch()
       })
       var deleteCount = pstmt.executeBatch();
       con.commit()
-      logger.info("Deleted " + deleteCount + " rows from " + tableName)
+      var totalRowsDeleted = 0;
+      deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
+      logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
     } catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -328,21 +330,141 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     logger.info("not implemented yet")
   }
 
+  private def getData(tableName:String, query:String,callbackFunction: (Key, Value) => Unit): Unit = {
+    var con:Connection = null
+    var stmt:Statement = null
+    var rs: ResultSet = null
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      stmt = con.createStatement()
+      rs = stmt.executeQuery(query);
+      while(rs.next()){
+	var datePartition = new java.util.Date(rs.getDate(1).getTime())
+	var keyStr = rs.getString(2)
+	var tId = rs.getLong(3)
+	var ba = rs.getBytes(4)
+	val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
+	var key = new Key(datePartition,bucketKey,tId)
+	// yet to understand how split serializerType and serializedInfo from ba
+	// so hard coding serializerType to "kryo" for now
+	var value = new Value("kryo",ba)
+	(callbackFunction)(key,value)
+      }
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(rs != null) {
+	rs.close
+      }
+      if(stmt != null){
+	stmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }    
+  }
+
+
+  private def getKeys(tableName:String, query:String,callbackFunction: (Key) => Unit): Unit = {
+    var con:Connection = null
+    var stmt:Statement = null
+    var rs: ResultSet = null
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      stmt = con.createStatement()
+      rs = stmt.executeQuery(query);
+      while(rs.next()){
+	var datePartition = new java.util.Date(rs.getDate(1).getTime())
+	var keyStr = rs.getString(2)
+	var tId = rs.getLong(3)
+	val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
+	var key = new Key(datePartition,bucketKey,tId)
+	(callbackFunction)(key)
+      }
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(rs != null) {
+	rs.close
+      }
+      if(stmt != null){
+	stmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }    
+  }
+
   // get operations
+  def getRowCount(containerName:String, whereClause:String): Int = {
+    var con:Connection = null
+    var stmt:Statement = null
+    var rs: ResultSet = null
+    var rowCount = 0
+    var tableName = ""
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      tableName = toTable(containerName)
+      var query = "select count(*) from " + tableName
+      if( whereClause != null ){
+	query = query + whereClause
+      }
+      stmt = con.createStatement()
+      rs = stmt.executeQuery(query);
+      while(rs.next()){
+	rowCount = rs.getInt(1)
+      }
+      rowCount
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(rs != null) {
+	rs.close
+      }
+      if(stmt != null){
+	stmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }    
+  }
+
   override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
-    
-    logger.info("not implemented yet")
+    var tableName = toTable(containerName)
+    var query = "select * from " + tableName
+    getData(tableName,query,callbackFunction)
   }
 
   override def get(containerName: String, time_ranges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, time_ranges: Array[StorageTimeRange], bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, time_ranges: Array[StorageTimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
-  override def get(containerName: String, bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
+  }
+
+  def getAllKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
+    var tableName = toTable(containerName)
+    var query = "select datePartition,bucketKey,transactionId from " + tableName
+    getKeys(tableName,query,callbackFunction)
   }
 
   override def beginTx(): Transaction = { 
@@ -359,8 +481,37 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
    logger.info("close the connection pool") 
   }
 
+  private def TruncateContainer(containerName: String): Unit = {
+    var con:Connection = null
+    var stmt:Statement = null
+    var tableName = toTable(containerName)
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      var query = "truncate table " + tableName
+      stmt = con.createStatement()
+      stmt.executeUpdate(query);
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to truncate table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(stmt != null){
+	stmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }
+  }
+
   override def TruncateContainer(containerNames: Array[String]): Unit = {
-   logger.info("Truncate the container tables") 
+    logger.info("truncate the container tables") 
+    containerNames.foreach( cont => {
+      logger.info("truncate the container " + cont)
+      TruncateContainer(cont)
+    })
   }
 
   private def DropContainer(containerName: String) : Unit = {
@@ -422,17 +573,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	logger.debug("The table " + tableName + " already exists ")
       }
       else{
-	var query = "create table " + tableName + "(date_part date,key_str varchar(100), transactionId bigint, serialized_value varbinary(max))"
+	var query = "create table " + tableName + "(datePartition date,bucketKey varchar(100), transactionId bigint, serializedInfo varbinary(max))"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
 	stmt.close
 	var clustered_index_name = "ix_" + tableName 
-	query = "create clustered index " + clustered_index_name + " on " + tableName + "(date_part,key_str,transactionId)"
+	query = "create clustered index " + clustered_index_name + " on " + tableName + "(datePartition,bucketKey,transactionId)"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
 	stmt.close
 	var index_name = "ix1_" + tableName 
-	query = "create index " + index_name + " on " + tableName + "(key_str,transactionId)"
+	query = "create index " + index_name + " on " + tableName + "(bucketKey,transactionId)"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
       }
@@ -496,10 +647,14 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, time_ranges: Array[StorageTimeRange], bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, time_ranges: Array[StorageTimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
-  override def get(containerName: String, bucket_keys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+    logger.info("not implemented yet")
+  }
+
+  def getAllKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 }

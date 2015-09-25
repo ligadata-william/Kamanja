@@ -34,6 +34,7 @@ import com.ligadata.Serialize._
 import com.ligadata.Utils.Utils._
 import com.ligadata.Utils.{ KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.StorageBase.StorageAdapterObj
+import com.ligadata.keyvaluestore.SqlServerAdapter
 
 case class Customer(name:String, address: String, homePhone: String)
 
@@ -63,6 +64,34 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     catch {
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
     }
+  }
+
+  def readCallBack(key:Key, value: Value){
+    logger.info("datePartition => " + key.datePartition)
+    logger.info("bucketKey => " + key.bucketKey.mkString(","))
+    logger.info("transactionId => " + key.transactionId)
+    logger.info("serializerType => " + value.serializerType)
+    logger.info("serializedInfo length => " + value.serializedInfo.length)
+  }
+
+  def readCallBack(key:Key){
+    logger.info("datePartition => " + key.datePartition)
+    logger.info("bucketKey => " + key.bucketKey.mkString(","))
+    logger.info("transactionId => " + key.transactionId)
+  }
+
+  @throws(classOf[FileNotFoundException])
+  def deleteFile(path:File):Boolean = {
+    if(!path.exists()){
+      throw new FileNotFoundException(path.getAbsolutePath)
+    }
+    var ret = true
+    if (path.isDirectory){
+      for(f <- path.listFiles) {
+        ret = ret && deleteFile(f)
+      }
+    }
+    return ret && path.delete()
   }
 
   describe("Unit Tests for all sqlserveradapter operations") {
@@ -103,6 +132,22 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	}
       }
 
+      And("Get all the rows that were just added")
+      noException should be thrownBy {
+	adapter.get(containerName,readCallBack)
+      }
+
+      val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
+
+      And("Check the row count after adding a bunch")
+      var cnt = sqlServerAdapter.getRowCount(containerName,null)
+      assert(cnt == 10)
+
+      And("Get all the keys for the rows that were just added")
+      noException should be thrownBy {
+	adapter.getAllKeys(containerName,readCallBack)
+      }
+
       And("Test Del api")
       var keys = new Array[Key](0)
       for( i <- 1 to 10 ){
@@ -116,8 +161,54 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       noException should be thrownBy {
 	adapter.del(containerName,keys)
       }
+      And("Check the row count after deleting a bunch")
+      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      assert(cnt == 0)
+
+      for( i <- 1 to 100 ){
+	var currentTime = new Date()
+	var keyArray = new Array[String](0)
+	var custName = "customer-" + i
+	keyArray = keyArray :+ custName
+	var key = new Key(currentTime,keyArray,i)
+	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
+	var custNumber = "4256667777" + i
+	var obj = new Customer(custName,custAddress,custNumber)
+	var v = serializer.SerializeObjectToByteArray(obj)
+	var value = new Value("kryo",v)
+	noException should be thrownBy {
+	  adapter.put(containerName,key,value)
+	}
+      }
+
+      And("Check the row count after adding a hundred rows")
+      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      assert(cnt == 100)
+
+      And("Test truncate container")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.TruncateContainer(containers)
+      }
+
+      And("Check the row count after truncating the container")
+      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      assert(cnt == 0)
+
+      And("Test drop container again, cleanup")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.DropContainer(containers)
+      }
+
     }
   }
   override def afterAll = {
+    var logFile = new java.io.File("logs")
+    if( logFile != null ){
+      deleteFile(logFile)
+    }
   }
 }
