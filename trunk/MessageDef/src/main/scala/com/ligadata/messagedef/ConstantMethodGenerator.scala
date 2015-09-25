@@ -52,7 +52,7 @@ class ConstantMethodGenerator {
     """
   private def populateCSV(inputdata:DelimitedData): Unit = {
 	val list = inputdata.tokens
-    val arrvaldelim = "~"
+    val arrvaldelim = inputdata.delimiters.valueDelimiter
 	try{
 """ + "\t\tif(list.size < " + (count - 1) + ") throw new Exception(\"Incorrect input data size\")" + """
   """ + assignCsvdata +
