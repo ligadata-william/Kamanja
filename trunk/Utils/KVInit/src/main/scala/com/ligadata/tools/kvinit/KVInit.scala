@@ -175,7 +175,7 @@ Sample uses:
       KvInitConfiguration.configFile = cfgfile.toString
       val kvmaker: KVInit = new KVInit(loadConfigs, typename.toLowerCase, dataFiles, keyfieldnames, delimiterString, ignoreerrors, ignoreRecords, format)
       if (kvmaker.isOk) {
-        val dstore = kvmaker.GetDataStoreHandle(KvInitConfiguration.jarPaths, kvmaker.dataDataStoreInfo, "AllData")
+        val dstore = kvmaker.GetDataStoreHandle(KvInitConfiguration.jarPaths, kvmaker.dataDataStoreInfo)
         if (dstore != null) {
           try {
             kvmaker.buildContainerOrMessage(dstore)
@@ -444,10 +444,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     true
   }
 
-  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String): DataStore = {
     try {
-      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
-      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
+      logger.debug("Getting DB Connection for dataStoreInfo:%s".format(dataStoreInfo))
+      return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -711,65 +711,6 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     val serInfoBytes = new Array[Byte](_serInfoBufBytes)
     tupleBytes.copyToArray(serInfoBytes, 0, _serInfoBufBytes)
     return (new String(serInfoBytes)).trim
-  }
-
-  private def getValueInfo(tupleBytes: Value): Array[Byte] = {
-    if (tupleBytes.size < _serInfoBufBytes) return null
-    val valInfoBytes = new Array[Byte](tupleBytes.size - _serInfoBufBytes)
-    Array.copy(tupleBytes.toArray, _serInfoBufBytes, valInfoBytes, 0, tupleBytes.size - _serInfoBufBytes)
-    valInfoBytes
-  }
-
-  private def makeKey(key: String): Key = {
-    var k = new Key
-    k ++= key.getBytes("UTF8")
-    k
-  }
-
-  private[this] var _serInfoBufBytes = 32
-
-  private def makeValue(value: String, serializerInfo: String): Value = {
-    var v = new Value
-    v ++= serializerInfo.getBytes("UTF8")
-
-    // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
-    if (v.size < _serInfoBufBytes) {
-      val spacebyte = ' '.toByte
-      for (c <- v.size to _serInfoBufBytes)
-        v += spacebyte
-    }
-
-    // Trim if it is more than _serInfoBufBytes bytes
-    if (v.size > _serInfoBufBytes) {
-      v.reduceToSize(_serInfoBufBytes)
-    }
-
-    // Saving Value
-    v ++= value.getBytes("UTF8")
-
-    v
-  }
-
-  private def makeValue(value: Array[Byte], serializerInfo: String): Value = {
-    var v = new Value
-    v ++= serializerInfo.getBytes("UTF8")
-
-    // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
-    if (v.size < _serInfoBufBytes) {
-      val spacebyte = ' '.toByte
-      for (c <- v.size to _serInfoBufBytes)
-        v += spacebyte
-    }
-
-    // Trim if it is more than _serInfoBufBytes bytes
-    if (v.size > _serInfoBufBytes) {
-      v.reduceToSize(_serInfoBufBytes)
-    }
-
-    // Saving Value
-    v ++= value
-
-    v
   }
 
   private def SaveObject(key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {

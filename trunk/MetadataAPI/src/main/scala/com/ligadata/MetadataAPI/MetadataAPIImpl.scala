@@ -562,13 +562,11 @@ object MetadataAPIImpl extends MetadataAPI {
   def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
   }
-  private var metadataStore: DataStore = _
-  private var transStore: DataStore = _
-  private var jarStore: DataStore = _
-  private var configStore: DataStore = _
-  private var modelConfigStore: DataStore = _
 
-  def GetObject(bucket_key_str: String, store: DataStore, containerName: String): Value = {
+  private var mainDS: DataStore = _
+
+  def GetObject(bucket_key_str: String, typeName: String): Value = {
+    val (containerName, store) = tableStoreMap(typeName)
     var objs = new Array[Value](1)
     val getObjFn = (k: Key, v: Value) => {
       objs(0) = v
@@ -591,7 +589,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def SaveObject(bucket_key_str: String, value: Array[Byte], store: DataStore, containerName: String, serializerTyp: String) {
+  def SaveObject(bucket_key_str: String, value: Array[Byte], typeName: String, serializerTyp: String) {
+    val (containerName, store) = tableStoreMap(typeName)
     val k = Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)
     val v = Value(serializerTyp, value)
     try {
@@ -604,7 +603,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def SaveObjectList(keyList: Array[String], valueList: Array[Array[Byte]], store: DataStore, containerName: String, serializerTyp: String) {
+  def SaveObjectList(keyList: Array[String], valueList: Array[Array[Byte]], typeName: String, serializerTyp: String) {
+    val (containerName, store) = tableStoreMap(typeName)
     var i = 0
     /*
     keyList.foreach(key => {
@@ -634,7 +634,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def RemoveObjectList(keyList: Array[String], store: DataStore, containerName: String) {
+  def RemoveObjectList(keyList: Array[String], typeName: String) {
+    val (containerName, store) = tableStoreMap(typeName)
     var i = 0
     var delKeys = new Array[(Key)](keyList.length)
     i = 0
@@ -696,7 +697,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // database connection( which itself can be mean different things depending on the type
   // of datastore, such as cassandra, hbase, etc..)
   // 
-  def SaveObjectList(objList: Array[BaseElemDef], store: DataStore, containerName: String) {
+  def SaveObjectList(objList: Array[BaseElemDef], typeName: String) {
     logger.debug("Save " + objList.length + " objects in a single transaction ")
     val tranId = GetNewTranId
     var keyList = new Array[String](objList.length)
@@ -711,7 +712,7 @@ object MetadataAPIImpl extends MetadataAPI {
         valueList(i) = value
         i = i + 1
       })
-      SaveObjectList(keyList, valueList, store, containerName, serializerType)
+      SaveObjectList(keyList, valueList, typeName, serializerType)
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update object for : " + keyList.mkString(","))
@@ -735,34 +736,34 @@ object MetadataAPIImpl extends MetadataAPI {
         obj.tranId = tranId
         val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
         var value = serializer.SerializeObjectToByteArray(obj)
-        val tblName = getMdElemTypeName(obj)
+        val elemTyp = getMdElemTypeName(obj)
 
         val k = Key(storageDefaultTime, Array(key), storageDefaultTxnId)
         val v = Value(serializerType, value)
 
-        val ab = saveDataMap.getOrElse(tblName, null)
+        val ab = saveDataMap.getOrElse(elemTyp, null)
         if (ab != null) {
           ab += ((k, v))
-          saveDataMap(tblName) = ab
+          saveDataMap(elemTyp) = ab
         } else {
           val newab = ArrayBuffer[(Key, Value)]()
           newab += ((k, v))
-          saveDataMap(tblName) = newab
+          saveDataMap(elemTyp) = newab
         }
         i = i + 1
       })
 
       var storeData = scala.collection.mutable.Map[String, (DataStore, ArrayBuffer[(String, Array[(Key, Value)])])]()
 
-      saveDataMap.foreach(tblData => {
-        val storeInfo = tableStoreMap(tblData._1)
+      saveDataMap.foreach(elemTypData => {
+        val storeInfo = tableStoreMap(elemTypData._1)
         val oneStoreData = storeData.getOrElse(storeInfo._1, null)
         if (oneStoreData != null) {
-          oneStoreData._2 += ((tblData._1, tblData._2.toArray))
+          oneStoreData._2 += ((elemTypData._1, elemTypData._2.toArray))
           storeData(storeInfo._1) = ((oneStoreData._1, oneStoreData._2))
         } else {
           val ab = ArrayBuffer[(String, Array[(Key, Value)])]()
-          ab += ((tblData._1, tblData._2.toArray))
+          ab += ((elemTypData._1, elemTypData._2.toArray))
           storeData(storeInfo._1) = ((storeInfo._2, ab))
         }
       })
@@ -786,19 +787,18 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def SaveOutputMsObjectList(objList: Array[BaseElemDef]) {
-    val storeInfo = tableStoreMap("outputmsgs")
-    SaveObjectList(objList, storeInfo._2, storeInfo._1)
+    SaveObjectList(objList, "outputmsgs")
   }
 
   /*
-  def SaveObject(key: String, value: String, store: DataStore, containerName: String) {
+  def SaveObject(key: String, value: String, typeName: String) {
     val ba = serializer.SerializeObjectToByteArray(value)
     SaveObject(key, ba, store, containerName, serializerType)
   }
 */
 
-  def UpdateObject(key: String, value: Array[Byte], store: DataStore, containerName: String, serializerTyp: String) {
-    SaveObject(key, value, store, containerName, serializerTyp)
+  def UpdateObject(key: String, value: Array[Byte], typeName: String, serializerTyp: String) {
+    SaveObject(key, value, typeName, serializerTyp)
   }
 
   def ZooKeeperMessage(objList: Array[BaseElemDef], operations: Array[String]): Array[Byte] = {
@@ -857,7 +857,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetNewTranId: Long = {
     try {
-      val obj = GetObject("transaction_id", transStore, "transaction_id")
+      val obj = GetObject("transaction_id", "transaction_id")
       val idStr = new String(obj.serializedInfo)
       idStr.toLong + 1
     } catch {
@@ -877,7 +877,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetTranId: Long = {
     try {
-      val obj = GetObject("transaction_id", transStore, "transaction_id")
+      val obj = GetObject("transaction_id", "transaction_id")
       val idStr = new String(obj.serializedInfo)
       idStr.toLong
     } catch {
@@ -897,7 +897,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def PutTranId(tId: Long) = {
     try {
-      SaveObject("transaction_id", tId.toString.getBytes, transStore, "transaction_id", "")
+      SaveObject("transaction_id", tId.toString.getBytes, "transaction_id", "")
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -918,8 +918,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var value = serializer.SerializeObjectToByteArray(obj)
 
       val saveObjFn = () => {
-        val storeInfo = tableStoreMap(getMdElemTypeName(obj)) // Make sure getMdElemTypeName is success full all types we handle here
-        SaveObject(key, value, storeInfo._2, storeInfo._1, serializerType)
+        SaveObject(key, value, getMdElemTypeName(obj), serializerType) // Make sure getMdElemTypeName is success full all types we handle here
       }
 
       obj match {
@@ -1047,8 +1046,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var value = serializer.SerializeObjectToByteArray(obj)
 
       val updObjFn = () => {
-        val storeInfo = tableStoreMap(getMdElemTypeName(obj)) // Make sure getMdElemTypeName is success full all types we handle here
-        UpdateObject(key, value, storeInfo._2, storeInfo._1, serializerType)
+        UpdateObject(key, value, getMdElemTypeName(obj), serializerType) // Make sure getMdElemTypeName is success full all types we handle here
       }
 
       obj match {
@@ -1210,7 +1208,7 @@ object MetadataAPIImpl extends MetadataAPI {
         } else {
           var mObj: Value = null
           try {
-            mObj = GetObject(obj.jarName, jarStore, "jar_store")
+            mObj = GetObject(obj.jarName, "jar_store")
           } catch {
             case e: ObjectNotFoundException => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1248,7 +1246,7 @@ object MetadataAPIImpl extends MetadataAPI {
             val value = GetJarAsArrayOfBytes(jarName)
             var mObj: Value = null
             try {
-              mObj = GetObject(j, jarStore, "jar_store")
+              mObj = GetObject(j, "jar_store")
             } catch {
               case e: ObjectNotFoundException => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1279,7 +1277,7 @@ object MetadataAPIImpl extends MetadataAPI {
         })
       }
       if (keyList.length > 0) {
-        SaveObjectList(keyList.toArray, valueList.toArray, jarStore, "jar_store", "")
+        SaveObjectList(keyList.toArray, valueList.toArray, "jar_store", "")
       }
     } catch {
       case e: Exception => {
@@ -1297,7 +1295,7 @@ object MetadataAPIImpl extends MetadataAPI {
         var key = f.getName()
         var value = GetJarAsArrayOfBytes(jarName)
         logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
-        SaveObject(key, value, jarStore, "jar_store", "")
+        SaveObject(key, value, "jar_store", "")
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
         apiResult.toString()
 
@@ -1318,7 +1316,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var value = byteArray
       logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
       logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTJAR, jarName, AuditConstants.SUCCESS, "", jarName)
-      SaveObject(key, value, jarStore, "jar_store", "")
+      SaveObject(key, value, "jar_store", "")
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
       apiResult.toString()
     } catch {
@@ -1343,7 +1341,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val f = new File(jarName)
       if (f.exists()) {
         val key = jar
-        val mObj = GetObject(key, jarStore, "jar_store")
+        val mObj = GetObject(key, "jar_store")
         val ba = mObj.serializedInfo
         val fs = f.length()
         if (fs != ba.length) {
@@ -1425,7 +1423,7 @@ object MetadataAPIImpl extends MetadataAPI {
             val b = IsDownloadNeeded(jar, obj)
             if (b == true) {
               val key = jar
-              val mObj = GetObject(key, jarStore, "jar_store")
+              val mObj = GetObject(key, "jar_store")
               val ba = mObj.serializedInfo
               val jarName = dirPath + "/" + jar
               PutArrayOfBytesToJar(ba, jarName)
@@ -1668,7 +1666,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def DeleteObject(bucket_key_str: String, store: DataStore, containerName: String) {
+  def DeleteObject(bucket_key_str: String, typeName: String) {
+    val (containerName, store) = tableStoreMap(typeName)
     store.del(containerName, Array(Key(storageDefaultTime, Array(bucket_key_str), storageDefaultTxnId)))
   }
 
@@ -1742,9 +1741,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String): DataStore = {
     try {
-      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
+      logger.debug("Getting DB Connection for dataStoreInfo:%s".format(dataStoreInfo))
       return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
       case e: Exception => {
@@ -1758,24 +1757,21 @@ object MetadataAPIImpl extends MetadataAPI {
   def OpenDbStore(jarPaths: collection.immutable.Set[String], dataStoreInfo: String) {
     try {
       logger.debug("Opening datastore")
-      metadataStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "metadata_objects")
-      configStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "config_objects")
-      jarStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "jar_store")
-      transStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "transaction_id")
-      modelConfigStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "model_config_objects")
+      mainDS = GetDataStoreHandle(jarPaths, dataStoreInfo)
 
-      tableStoreMap = Map("models" -> ("metadata_objects", metadataStore),
-        "messages" -> ("metadata_objects", metadataStore),
-        "containers" -> ("metadata_objects", metadataStore),
-        "functions" -> ("metadata_objects", metadataStore),
-        "concepts" -> ("metadata_objects", metadataStore),
-        "types" -> ("metadata_objects", metadataStore),
-        "others" -> ("metadata_objects", metadataStore),
-        "jar_store" -> ("jar_store", jarStore),
-        "config_objects" -> ("config_objects", configStore),
-        "outputmsgs" -> ("metadata_objects", metadataStore),
-        "model_config_objects" -> ("model_config_objects", modelConfigStore),
-        "transaction_id" -> ("transaction_id", transStore))
+      tableStoreMap = Map("metadata_objects" -> ("metadata_objects", mainDS),
+        "models" -> ("metadata_objects", mainDS),
+        "messages" -> ("metadata_objects", mainDS),
+        "containers" -> ("metadata_objects", mainDS),
+        "functions" -> ("metadata_objects", mainDS),
+        "concepts" -> ("metadata_objects", mainDS),
+        "types" -> ("metadata_objects", mainDS),
+        "others" -> ("metadata_objects", mainDS),
+        "outputmsgs" -> ("metadata_objects", mainDS),
+        "jar_store" -> ("jar_store", mainDS),
+        "config_objects" -> ("config_objects", mainDS),
+        "model_config_objects" -> ("model_config_objects", mainDS),
+        "transaction_id" -> ("transaction_id", mainDS))
     } catch {
       case e: CreateStoreFailedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1793,30 +1789,10 @@ object MetadataAPIImpl extends MetadataAPI {
   def CloseDbStore: Unit = lock.synchronized {
     try {
       logger.debug("Closing datastore")
-      if (metadataStore != null) {
-        metadataStore.Shutdown()
-        metadataStore = null
-        logger.debug("metdatastore closed")
-      }
-      if (transStore != null) {
-        transStore.Shutdown()
-        transStore = null
-        logger.debug("transStore closed")
-      }
-      if (jarStore != null) {
-        jarStore.Shutdown()
-        jarStore = null
-        logger.debug("jarStore closed")
-      }
-      if (configStore != null) {
-        configStore.Shutdown()
-        configStore = null
-        logger.debug("configStore closed")
-      }
-      if (modelConfigStore != null) {
-        modelConfigStore.Shutdown()
-        modelConfigStore = null
-        logger.debug("modelConfigStore closed")
+      if (mainDS != null) {
+        mainDS.Shutdown()
+        mainDS = null
+        logger.debug("main datastore closed")
       }
     } catch {
       case e: Exception => {
@@ -1829,12 +1805,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def TruncateDbStore: Unit = lock.synchronized {
     try {
-      logger.debug("Truncating datastore")
-      metadataStore.TruncateStore
-      transStore.TruncateStore
-      jarStore.TruncateStore
-      configStore.TruncateStore
-      modelConfigStore.TruncateStore
+      logger.debug("Not allowing to truncate the whole datastore")
+      // mainDS.TruncateStore
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1947,7 +1919,7 @@ object MetadataAPIImpl extends MetadataAPI {
       UploadJarsToDB(contDef)
       var objectsAdded = AddMessageTypes(contDef, MdMgr.GetMdMgr, recompile)
       objectsAdded = objectsAdded :+ contDef
-      SaveObjectList(objectsAdded, metadataStore)
+      SaveObjectList(objectsAdded, "containers")
       val operations = for (op <- objectsAdded) yield "Add"
       NotifyEngine(objectsAdded, operations)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddContainerDef", null, ErrorCodeConstants.Add_Container_Successful + ":" + dispkey)
@@ -1969,7 +1941,7 @@ object MetadataAPIImpl extends MetadataAPI {
       UploadJarsToDB(msgDef)
       var objectsAdded = AddMessageTypes(msgDef, MdMgr.GetMdMgr, recompile)
       objectsAdded = objectsAdded :+ msgDef
-      SaveObjectList(objectsAdded, metadataStore)
+      SaveObjectList(objectsAdded, "messages")
       val operations = for (op <- objectsAdded) yield "Add"
       NotifyEngine(objectsAdded, operations)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddMessageDef", null, ErrorCodeConstants.Add_Message_Successful + ":" + dispkey)
@@ -3747,8 +3719,8 @@ object MetadataAPIImpl extends MetadataAPI {
     val dispkey = "ModelDef" + "." + nameSpace + '.' + objectName + "." + MdMgr.Pad0s2Version(version.toLong)
     if (userid != None) logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.GETOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS, "", dispkey)
     try {
-      var obj = GetObject(key.toLowerCase, modelStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", ValueAsStr(obj.Value), ErrorCodeConstants.Get_Model_From_DB_Successful + ":" + dispkey)
+      var obj = GetObject(key.toLowerCase, "models")
+      var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", new String(obj.serializedInfo), ErrorCodeConstants.Get_Model_From_DB_Successful + ":" + dispkey)
       apiResult.toString()
     } catch {
       case e: Exception => {
@@ -3774,56 +3746,69 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetAllKeys(objectType: String, userid: Option[String]): Array[String] = {
     try {
       var keys = scala.collection.mutable.Set[String]()
-      typeStore.getAllKeys({ (key: Key) =>
-        {
-          val strKey = KeyAsStr(key)
-          val i = strKey.indexOf(".")
-          val objType = strKey.substring(0, i)
-          val typeName = strKey.substring(i + 1)
-          objectType match {
-            case "TypeDef" => {
-              if (IsTypeObject(objType)) {
-                keys.add(typeName)
+
+      // get keys for types "types", "functions", "messages", "containers", "concepts", "models"
+      val reqTypes = Array("types", "functions", "messages", "containers", "concepts", "models")
+      val processedContainersSet = Set[String]()
+
+      reqTypes.foreach(typ => {
+        val storeInfo = tableStoreMap(typ)
+
+        if (processedContainersSet(storeInfo._1) == false) {
+          processedContainersSet += storeInfo._1
+          storeInfo._2.getAllKeys(storeInfo._1, { (key: Key) =>
+            {
+              val strKey = key.bucket_key(0)
+              val i = strKey.indexOf(".")
+              val objType = strKey.substring(0, i)
+              val typeName = strKey.substring(i + 1)
+              objectType match {
+                case "TypeDef" => {
+                  if (IsTypeObject(objType)) {
+                    keys.add(typeName)
+                  }
+                  if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.TYPE, AuditConstants.SUCCESS, "", AuditConstants.TYPE)
+                }
+                case "FunctionDef" => {
+                  if (objType == "functiondef") {
+                    keys.add(typeName)
+                  }
+                  if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
+                }
+                case "MessageDef" => {
+                  if (objType == "messagedef") {
+                    keys.add(typeName)
+                  }
+                  if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
+                }
+                case "ContainerDef" => {
+                  if (objType == "containerdef") {
+                    keys.add(typeName)
+                  }
+                  if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
+                }
+                case "Concept" => {
+                  if (objType == "attributedef") {
+                    keys.add(typeName)
+                  }
+                  if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONCEPT, AuditConstants.SUCCESS, "", AuditConstants.CONCEPT)
+                }
+                case "ModelDef" => {
+                  if (objType == "modeldef") {
+                    keys.add(typeName)
+                  }
+                  if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
+                }
+                case _ => {
+                  logger.error("Unknown object type " + objectType + " in GetAllKeys function")
+                  throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
+                }
               }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.TYPE, AuditConstants.SUCCESS, "", AuditConstants.TYPE)
             }
-            case "FunctionDef" => {
-              if (objType == "functiondef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.FUNCTION, AuditConstants.SUCCESS, "", AuditConstants.FUNCTION)
-            }
-            case "MessageDef" => {
-              if (objType == "messagedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MESSAGE, AuditConstants.SUCCESS, "", AuditConstants.MESSAGE)
-            }
-            case "ContainerDef" => {
-              if (objType == "containerdef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONTAINER, AuditConstants.SUCCESS, "", AuditConstants.CONTAINER)
-            }
-            case "Concept" => {
-              if (objType == "attributedef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.CONCEPT, AuditConstants.SUCCESS, "", AuditConstants.CONCEPT)
-            }
-            case "ModelDef" => {
-              if (objType == "modeldef") {
-                keys.add(typeName)
-              }
-              if (userid != None) logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.MODEL, AuditConstants.SUCCESS, "", AuditConstants.MODEL)
-            }
-            case _ => {
-              logger.error("Unknown object type " + objectType + " in GetAllKeys function")
-              throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
-            }
-          }
+          })
         }
       })
+
       keys.toArray
     } catch {
       case e: Exception => {
@@ -3836,46 +3821,49 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllConfigObjectsIntoCache: Boolean = {
     try {
-      var keys = scala.collection.mutable.Set[Key]()
-      configStore.getAllKeys({ (key: Key) => keys.add(key) })
-      val keyArray = keys.toArray
-      if (keyArray.length == 0) {
-        logger.debug("No config objects available in the Database")
-        return false
-      }
-      keyArray.foreach(key => {
-        //logger.debug("key => " + KeyAsStr(key))
-        val obj = GetObject(key, configStore)
-        val strKey = KeyAsStr(key)
-        val i = strKey.indexOf(".")
-        val objType = strKey.substring(0, i)
-        val typeName = strKey.substring(i + 1)
-        objType match {
-          case "nodeinfo" => {
-            val ni = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[NodeInfo]
-            MdMgr.GetMdMgr.AddNode(ni)
-          }
-          case "adapterinfo" => {
-            val ai = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[AdapterInfo]
-            MdMgr.GetMdMgr.AddAdapter(ai)
-          }
-          case "clusterinfo" => {
-            val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterInfo]
-            MdMgr.GetMdMgr.AddCluster(ci)
-          }
-          case "clustercfginfo" => {
-            val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterCfgInfo]
-            MdMgr.GetMdMgr.AddClusterCfg(ci)
-          }
-          case "userproperties" => {
-            val up = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[UserPropertiesInfo]
-            MdMgr.GetMdMgr.AddUserProperty(up)
-          }
-          case _ => {
-            throw InternalErrorException("LoadAllConfigObjectsIntoCache: Unknown objectType " + objType)
+      var processed: Long = 0L
+      val storeInfo = tableStoreMap("config_objects")
+      storeInfo._2.get(storeInfo._1, { (k: Key, v: Value) =>
+        {
+          //logger.debug("key => " + KeyAsStr(key))
+          val strKey = k.bucket_key(0)
+          val i = strKey.indexOf(".")
+          val objType = strKey.substring(0, i)
+          val typeName = strKey.substring(i + 1)
+          processed += 1
+          objType match {
+            case "nodeinfo" => {
+              val ni = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[NodeInfo]
+              MdMgr.GetMdMgr.AddNode(ni)
+            }
+            case "adapterinfo" => {
+              val ai = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[AdapterInfo]
+              MdMgr.GetMdMgr.AddAdapter(ai)
+            }
+            case "clusterinfo" => {
+              val ci = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[ClusterInfo]
+              MdMgr.GetMdMgr.AddCluster(ci)
+            }
+            case "clustercfginfo" => {
+              val ci = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[ClusterCfgInfo]
+              MdMgr.GetMdMgr.AddClusterCfg(ci)
+            }
+            case "userproperties" => {
+              val up = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[UserPropertiesInfo]
+              MdMgr.GetMdMgr.AddUserProperty(up)
+            }
+            case _ => {
+              throw InternalErrorException("LoadAllConfigObjectsIntoCache: Unknown objectType " + objType)
+            }
           }
         }
       })
+
+      if (processed == 0) {
+        logger.debug("No config objects available in the Database")
+        return false
+      }
+
       return true
     } catch {
       case e: Exception => {
@@ -3890,18 +3878,21 @@ object MetadataAPIImpl extends MetadataAPI {
     val maxTranId = GetTranId
     currentTranLevel = maxTranId
     logger.debug("Max Transaction Id => " + maxTranId)
-    var keys = scala.collection.mutable.Set[Key]()
-    modelConfigStore.getAllKeys({ (key: Key) => keys.add(key) })
-    val keyArray = keys.toArray
-    if (keyArray.length == 0) {
+
+    var processed: Long = 0L
+    val storeInfo = tableStoreMap("model_config_objects")
+    storeInfo._2.get(storeInfo._1, { (k: Key, v: Value) =>
+      {
+        processed += 1
+        val conf = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[Map[String, List[String]]]
+        MdMgr.GetMdMgr.AddModelConfig(k.bucket_key(0), conf)
+      }
+    })
+
+    if (processed == 0) {
       logger.debug("No model config objects available in the Database")
       return
     }
-    keyArray.foreach(key => {
-      val obj = GetObject(key, modelConfigStore)
-      val conf = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[Map[String, List[String]]]
-      MdMgr.GetMdMgr.AddModelConfig(KeyAsStr(key), conf)
-    })
     MdMgr.GetMdMgr.DumpModelConfigs
   }
 
@@ -3921,40 +3912,52 @@ object MetadataAPIImpl extends MetadataAPI {
       val maxTranId = currentTranLevel
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
-      var keys = scala.collection.mutable.Set[Key]()
-      metadataStore.getAllKeys({ (key: Key) => keys.add(key) })
-      val keyArray = keys.toArray
-      if (keyArray.length == 0) {
-        logger.debug("No objects available in the Database")
-        return
-      }
-      keyArray.foreach(key => {
-        val obj = GetObject(key, metadataStore)
-        val mObj = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[BaseElemDef]
-        if (mObj != null) {
-          if (mObj.tranId <= maxTranId) {
-            AddObjectToCache(mObj, MdMgr.GetMdMgr)
-            DownloadJarFromDB(mObj)
-          } else {
-            if (mObj.isInstanceOf[FunctionDef]) {
-              // BUGBUG:: Not notifying functions at this moment. This may cause inconsistance between different instances of the metadata.
-            } else {
-              logger.debug("The transaction id of the object => " + mObj.tranId)
-              AddObjectToCache(mObj, MdMgr.GetMdMgr)
-              DownloadJarFromDB(mObj)
-              logger.error("Transaction is incomplete with the object " + KeyAsStr(key) + ",we may not have notified engine, attempt to do it now...")
-              objectsChanged = objectsChanged :+ mObj
-              if (mObj.IsActive) {
-                operations = for (op <- objectsChanged) yield "Add"
+
+      val reqTypes = Array("types", "functions", "messages", "containers", "concepts", "models")
+      val processedContainersSet = Set[String]()
+      var processed: Long = 0L
+
+      reqTypes.foreach(typ => {
+        val storeInfo = tableStoreMap(typ)
+        if (processedContainersSet(storeInfo._1) == false) {
+          processedContainersSet += storeInfo._1
+          storeInfo._2.get(storeInfo._1, { (k: Key, v: Value) =>
+            {
+              val mObj = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[BaseElemDef]
+              if (mObj != null) {
+                if (mObj.tranId <= maxTranId) {
+                  AddObjectToCache(mObj, MdMgr.GetMdMgr)
+                  DownloadJarFromDB(mObj)
+                } else {
+                  if (mObj.isInstanceOf[FunctionDef]) {
+                    // BUGBUG:: Not notifying functions at this moment. This may cause inconsistance between different instances of the metadata.
+                  } else {
+                    logger.debug("The transaction id of the object => " + mObj.tranId)
+                    AddObjectToCache(mObj, MdMgr.GetMdMgr)
+                    DownloadJarFromDB(mObj)
+                    logger.error("Transaction is incomplete with the object " + k.bucket_key.mkString(",") + ",we may not have notified engine, attempt to do it now...")
+                    objectsChanged = objectsChanged :+ mObj
+                    if (mObj.IsActive) {
+                      operations = for (op <- objectsChanged) yield "Add"
+                    } else {
+                      operations = for (op <- objectsChanged) yield "Remove"
+                    }
+                  }
+                }
               } else {
-                operations = for (op <- objectsChanged) yield "Remove"
+                throw InternalErrorException("serializer.Deserialize returned a null object")
               }
             }
-          }
-        } else {
-          throw InternalErrorException("serializer.Deserialize returned a null object")
+            processed += 1
+          })
         }
       })
+
+      if (processed == 0) {
+        logger.debug("No metadata objects available in the Database")
+        return
+      }
+
       if (objectsChanged.length > 0) {
         NotifyEngine(objectsChanged, operations)
       }
@@ -3967,6 +3970,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  /*
+ * // Unused
   def LoadAllTypesIntoCache {
     try {
       val typeKeys = GetAllKeys("TypeDef", None)
@@ -3976,7 +3981,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       typeKeys.foreach(key => {
         val obj = GetObject(key.toLowerCase, typeStore)
-        val typ = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        val typ = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
         if (typ != null) {
           AddObjectToCache(typ, MdMgr.GetMdMgr)
         }
@@ -3998,7 +4003,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       conceptKeys.foreach(key => {
         val obj = GetObject(key.toLowerCase, conceptStore)
-        val concept = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        val concept = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
         AddObjectToCache(concept.asInstanceOf[AttributeDef], MdMgr.GetMdMgr)
       })
     } catch {
@@ -4018,7 +4023,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       functionKeys.foreach(key => {
         val obj = GetObject(key.toLowerCase, functionStore)
-        val function = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        val function = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
         AddObjectToCache(function.asInstanceOf[FunctionDef], MdMgr.GetMdMgr)
       })
     } catch {
@@ -4038,7 +4043,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       msgKeys.foreach(key => {
         val obj = GetObject(key.toLowerCase, messageStore)
-        val msg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        val msg = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
         AddObjectToCache(msg.asInstanceOf[MessageDef], MdMgr.GetMdMgr)
       })
     } catch {
@@ -4048,13 +4053,58 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
+
+  def LoadAllContainersIntoCache {
+    try {
+      val contKeys = GetAllKeys("ContainerDef", None)
+      if (contKeys.length == 0) {
+        logger.debug("No containers available in the Database")
+        return
+      }
+      contKeys.foreach(key => {
+        val obj = GetObject(key.toLowerCase, containerStore)
+        val contDef = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
+        AddObjectToCache(contDef.asInstanceOf[ContainerDef], MdMgr.GetMdMgr)
+      })
+    } catch {
+      case e: Exception => {
+
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+      }
+    }
+  }
+
+  def LoadAllModelsIntoCache {
+    try {
+      val modKeys = GetAllKeys("ModelDef", None)
+      if (modKeys.length == 0) {
+        logger.debug("No models available in the Database")
+        return
+      }
+      modKeys.foreach(key => {
+        val obj = GetObject(key.toLowerCase, modelStore)
+        val modDef = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
+        AddObjectToCache(modDef.asInstanceOf[ModelDef], MdMgr.GetMdMgr)
+      })
+    } catch {
+      case e: Exception => {
+
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+      }
+    }
+  }
+  
+*/
 
   def LoadMessageIntoCache(key: String) {
     try {
       logger.debug("Fetch the object " + key + " from database ")
-      val obj = GetObject(key.toLowerCase, messageStore)
+      val obj = GetObject(key.toLowerCase, "messages")
       logger.debug("Deserialize the object " + key)
-      val msg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+      val msg = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
       logger.debug("Get the jar from database ")
       val msgDef = msg.asInstanceOf[MessageDef]
       DownloadJarFromDB(msgDef)
@@ -4071,9 +4121,9 @@ object MetadataAPIImpl extends MetadataAPI {
   def LoadTypeIntoCache(key: String) {
     try {
       logger.debug("Fetch the object " + key + " from database ")
-      val obj = GetObject(key.toLowerCase, typeStore)
+      val obj = GetObject(key.toLowerCase, "types")
       logger.debug("Deserialize the object " + key)
-      val typ = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+      val typ = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
       if (typ != null) {
         logger.debug("Add the object " + key + " to the cache ")
         AddObjectToCache(typ, MdMgr.GetMdMgr)
@@ -4089,9 +4139,9 @@ object MetadataAPIImpl extends MetadataAPI {
   def LoadModelIntoCache(key: String) {
     try {
       logger.debug("Fetch the object " + key + " from database ")
-      val obj = GetObject(key.toLowerCase, modelStore)
+      val obj = GetObject(key.toLowerCase, "models")
       logger.debug("Deserialize the object " + key)
-      val model = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+      val model = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
       logger.debug("Get the jar from database ")
       val modDef = model.asInstanceOf[ModelDef]
       DownloadJarFromDB(modDef)
@@ -4107,8 +4157,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadContainerIntoCache(key: String) {
     try {
-      val obj = GetObject(key.toLowerCase, containerStore)
-      val cont = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+      val obj = GetObject(key.toLowerCase, "containers")
+      val cont = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
       logger.debug("Get the jar from database ")
       val contDef = cont.asInstanceOf[ContainerDef]
       DownloadJarFromDB(contDef)
@@ -4123,8 +4173,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAttributeIntoCache(key: String) {
     try {
-      val obj = GetObject(key.toLowerCase, conceptStore)
-      val cont = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+      val obj = GetObject(key.toLowerCase, "concepts")
+      val cont = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
       AddObjectToCache(cont.asInstanceOf[AttributeDef], MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
@@ -4310,9 +4360,9 @@ object MetadataAPIImpl extends MetadataAPI {
   def LoadOutputMsgIntoCache(key: String) {
     try {
       logger.debug("Fetch the object " + key + " from database ")
-      val obj = GetObject(key.toLowerCase, outputmsgStore)
+      val obj = GetObject(key.toLowerCase, "outputmsgs")
       logger.debug("Deserialize the object " + key)
-      val outputMsg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+      val outputMsg = serializer.DeserializeObjectFromByteArray(obj.serializedInfo)
       val outputMsgDef = outputMsg.asInstanceOf[OutputMsgDef]
       logger.debug("Add the output msg def object " + key + " to the cache ")
       AddObjectToCache(outputMsgDef, MdMgr.GetMdMgr)
@@ -4355,48 +4405,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def LoadAllContainersIntoCache {
-    try {
-      val contKeys = GetAllKeys("ContainerDef", None)
-      if (contKeys.length == 0) {
-        logger.debug("No containers available in the Database")
-        return
-      }
-      contKeys.foreach(key => {
-        val obj = GetObject(key.toLowerCase, containerStore)
-        val contDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        AddObjectToCache(contDef.asInstanceOf[ContainerDef], MdMgr.GetMdMgr)
-      })
-    } catch {
-      case e: Exception => {
-
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-      }
-    }
-  }
-
-  def LoadAllModelsIntoCache {
-    try {
-      val modKeys = GetAllKeys("ModelDef", None)
-      if (modKeys.length == 0) {
-        logger.debug("No models available in the Database")
-        return
-      }
-      modKeys.foreach(key => {
-        val obj = GetObject(key.toLowerCase, modelStore)
-        val modDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        AddObjectToCache(modDef.asInstanceOf[ModelDef], MdMgr.GetMdMgr)
-      })
-    } catch {
-      case e: Exception => {
-
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-      }
-    }
-  }
-
+  /*
+ * // Unused
   def LoadObjectsIntoCache {
     LoadAllModelsIntoCache
     LoadAllMessagesIntoCache
@@ -4405,6 +4415,7 @@ object MetadataAPIImpl extends MetadataAPI {
     LoadAllConceptsIntoCache
     LoadAllTypesIntoCache
   }
+*/
 
   // Specific messages (format JSON or XML) as a String using messageName(without version) as the key
   def GetMessageDef(objectName: String, formatType: String): String = {
@@ -4543,7 +4554,7 @@ object MetadataAPIImpl extends MetadataAPI {
       // save in database
       val key = "NodeInfo." + nodeId
       val value = serializer.SerializeObjectToByteArray(ni)
-      SaveObject(key.toLowerCase, value, configStore)
+      SaveObject(key.toLowerCase, value, "config_objects", serializerType)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddNode", null, ErrorCodeConstants.Add_Node_Successful + ":" + nodeId)
       apiResult.toString()
     } catch {
@@ -4570,7 +4581,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       MdMgr.GetMdMgr.RemoveNode(nodeId)
       val key = "NodeInfo." + nodeId
-      DeleteObject(key.toLowerCase, configStore)
+      DeleteObject(key.toLowerCase, "config_objects")
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveNode", null, ErrorCodeConstants.Remove_Node_Successful + ":" + nodeId)
       apiResult.toString()
     } catch {
@@ -4592,7 +4603,7 @@ object MetadataAPIImpl extends MetadataAPI {
       // save in database
       val key = "AdapterInfo." + name
       val value = serializer.SerializeObjectToByteArray(ai)
-      SaveObject(key.toLowerCase, value, configStore)
+      SaveObject(key.toLowerCase, value, "config_objects", serializerType)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddAdapter", null, ErrorCodeConstants.Add_Adapter_Successful + ":" + name)
       apiResult.toString()
     } catch {
@@ -4615,7 +4626,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       MdMgr.GetMdMgr.RemoveAdapter(name)
       val key = "AdapterInfo." + name
-      DeleteObject(key.toLowerCase, configStore)
+      DeleteObject(key.toLowerCase, "config_objects")
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveAdapter", null, ErrorCodeConstants.Remove_Adapter_Successful + ":" + name)
       apiResult.toString()
     } catch {
@@ -4636,7 +4647,7 @@ object MetadataAPIImpl extends MetadataAPI {
       // save in database
       val key = "ClusterInfo." + clusterId
       val value = serializer.SerializeObjectToByteArray(ci)
-      SaveObject(key.toLowerCase, value, configStore)
+      SaveObject(key.toLowerCase, value, "config_objects", serializerType)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddCluster", null, ErrorCodeConstants.Add_Cluster_Successful + ":" + clusterId)
       apiResult.toString()
     } catch {
@@ -4657,7 +4668,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       MdMgr.GetMdMgr.RemoveCluster(clusterId)
       val key = "ClusterInfo." + clusterId
-      DeleteObject(key.toLowerCase, configStore)
+      DeleteObject(key.toLowerCase, "config_objects")
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCluster", null, ErrorCodeConstants.Remove_Cluster_Successful + ":" + clusterId)
       apiResult.toString()
     } catch {
@@ -4679,7 +4690,7 @@ object MetadataAPIImpl extends MetadataAPI {
       // save in database
       val key = "ClusterCfgInfo." + clusterCfgId
       val value = serializer.SerializeObjectToByteArray(ci)
-      SaveObject(key.toLowerCase, value, configStore)
+      SaveObject(key.toLowerCase, value, "config_objects", serializerType)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddClusterCfg", null, ErrorCodeConstants.Add_Cluster_Config_Successful + ":" + clusterCfgId)
       apiResult.toString()
     } catch {
@@ -4701,7 +4712,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       MdMgr.GetMdMgr.RemoveClusterCfg(clusterCfgId)
       val key = "ClusterCfgInfo." + clusterCfgId
-      DeleteObject(key.toLowerCase, configStore)
+      DeleteObject(key.toLowerCase, "config_objects")
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCLusterCfg", null, ErrorCodeConstants.Remove_Cluster_Config_Successful + ":" + clusterCfgId)
       apiResult.toString()
     } catch {
@@ -4775,7 +4786,7 @@ object MetadataAPIImpl extends MetadataAPI {
         })
       }
       if (keyList.size > 0)
-        RemoveObjectList(keyList, configStore)
+        RemoveObjectList(keyList, "config_objects")
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConfig", null, ErrorCodeConstants.Remove_Config_Successful + ":" + cfgStr)
       apiResult.toString()
     } catch {
@@ -4835,7 +4846,7 @@ object MetadataAPIImpl extends MetadataAPI {
       AddConfigObjToCache(tranId, modelKey, mdl, MdMgr.GetMdMgr)
     })
     // Save in Databae
-    SaveObjectList(keyList, valueList, modelConfigStore)
+    SaveObjectList(keyList, valueList, "model_config_objects", serializerType)
     if (!isFromNotify) {
       val operations = for (op <- baseElems) yield "Add"
       NotifyEngine(baseElems, operations)
@@ -5051,7 +5062,7 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.debug("Found no adapater objects in the config file")
         }
 
-        SaveObjectList(keyList, valueList, configStore)
+        SaveObjectList(keyList, valueList, "config_objects", serializerType)
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadConfig", cfgStr, ErrorCodeConstants.Upload_Config_Successful)
         apiResult.toString()
       }
