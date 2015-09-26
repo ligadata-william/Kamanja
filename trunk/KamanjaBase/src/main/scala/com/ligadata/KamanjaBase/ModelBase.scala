@@ -321,7 +321,10 @@ trait ModelBaseObj {
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
-class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
+class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase, val msgData: Array[Byte]) {
+  def InputMessageData: Array[Byte] = msgData
+  def Message: MessageContainerBase = msg
+  def TransactionContext: TransactionContext = txnContext
   def getPropertyValue(clusterId: String, key:String): String = (txnContext.getPropertyValue(clusterId, key))
 }
 
