@@ -394,14 +394,16 @@ object OutputMsgDefImpl {
 
     try {
       if (container != null) {
-        if (container.containerType.isInstanceOf[StructTypeDef]) {
+        val isFixed = container.containerType.asInstanceOf[ContainerTypeDef].IsFixed
+
+        if (isFixed) {
           val memberDefs = container.containerType.asInstanceOf[StructTypeDef].memberDefs
           if (memberDefs != null) {
             log.info("==== fixedcontainer")
             childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef])).map(a => (a.Name, a))
           }
           typeOf = "fixedcontainer"
-        } else if (container.containerType.isInstanceOf[MappedMsgTypeDef]) { // Mapped
+        } else { // Mapped
           val attrMap = container.containerType.asInstanceOf[MappedMsgTypeDef].attrMap
           if (attrMap != null) {
             childs ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef])).map(a => (a._2.Name, a._2))
@@ -410,14 +412,16 @@ object OutputMsgDefImpl {
           log.info(typeOf)
         }
       } else if (message != null) {
-        if (message.containerType.isInstanceOf[StructTypeDef]) {
+        val isFixed = message.containerType.asInstanceOf[ContainerTypeDef].IsFixed
+
+        if (isFixed) {
           val memberDefs = message.containerType.asInstanceOf[StructTypeDef].memberDefs
           if (memberDefs != null) {
             childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef])).map(a => (a.Name, a))
           }
           typeOf = "fixedmessage"
           log.info(typeOf)
-        } else if (message.containerType.isInstanceOf[MappedMsgTypeDef]) {
+        } else {
           val attrMap = message.containerType.asInstanceOf[MappedMsgTypeDef].attrMap
           if (attrMap != null) {
             childs ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef])).map(a => (a._2.Name, a._2))

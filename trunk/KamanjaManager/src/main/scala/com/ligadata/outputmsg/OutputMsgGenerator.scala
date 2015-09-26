@@ -54,7 +54,7 @@ class OutputMsgGenerator {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         log.error("\nStackTrace:"+stackTrace)
-        throw new Exception(e.getMessage())
+        throw e
       }
     }
   }
@@ -93,7 +93,7 @@ class OutputMsgGenerator {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         log.error("\nStackTrace:"+stackTrace)
-        throw new Exception(e.getMessage())
+        throw e
       }
     }
     output.toArray
@@ -176,7 +176,7 @@ class OutputMsgGenerator {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         log.error("\nStackTrace:"+stackTrace)
-        throw new Exception(e.getMessage())
+        throw e
       }
     }
   }
@@ -300,7 +300,7 @@ class OutputMsgGenerator {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         log.error("\nStackTrace:"+stackTrace)
-        throw new Exception(e.getMessage())
+        throw e
       }
     }
     return null
