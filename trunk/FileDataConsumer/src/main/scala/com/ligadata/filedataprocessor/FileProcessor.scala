@@ -33,6 +33,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var bufferQ: scala.collection.mutable.Queue[BufferToChunk] = scala.collection.mutable.Queue[BufferToChunk]()
   private var blg = new BufferLeftoversArea(-1, null, -1)
   private var fileOffsetTracker: scala.collection.mutable.Map[String,Int] = scala.collection.mutable.Map[String,Int]()
+  private var bufferingQ_map: scala.collection.mutable.Map[String,Long] = scala.collection.mutable.Map[String,Long]()
 
   // Locks used for Q synchronization.
   private var fileQLock = new Object
@@ -40,6 +41,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var bufferQLock = new Object
   private var beeLock = new Object
   private var trackerLock = new Object
+  private var bufferingQLock = new Object
 
   private var msgCount = 0
 
@@ -64,10 +66,15 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     maxlen = props("workerbuffersize").toInt * 1024 * 1024
     kml = new KafkaMessageLoader (props("kafkaBroker"), props("topic"))
     partitionSelectionNumber = props("fileConsumers").toInt
-
   }
 
-  private def getKnowOffset(file: String): Int = {
+  private def enQBufferedFile(file: String, code: Int): Unit = {
+    bufferingQLock.synchronized {
+      bufferingQ_map(file) = new File(file).length
+    }
+  }
+
+  private def getKnownOffset(file: String): Int = {
     trackerLock.synchronized {
       return fileOffsetTracker.getOrElse(file,0)
     }
@@ -306,7 +313,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         // EnqMsg here.. but only if there is something in there.
         if (myLeftovers.leftovers.size > 0) {
           var messages: scala.collection.mutable.LinkedHashSet[KafkaMessage] = scala.collection.mutable.LinkedHashSet[KafkaMessage]()
-          messages.add(new KafkaMessage(myLeftovers.leftovers, getKnowOffset(fileName) + 1, fileName))
+          messages.add(new KafkaMessage(myLeftovers.leftovers, getKnownOffset(fileName) + 1, fileName))
           enQMsg(messages.toArray, 1000)
         }
         foundRelatedLeftovers = true
@@ -360,13 +367,33 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
       }
     }
   }
+
+
+  private def monitorBufferingFiles: Unit = {
+    while (isCosuming) {
+      // Scan all the files that we are buffering, if there is not difference in their file size.. move them onto
+      // the FileQ, they are ready to process.
+      bufferingQLock.synchronized {
+        bufferingQ_map.foreach(fileTuple => {
+          val d = new File(fileTuple._1)
+          if (fileTuple._2 == d.length) {
+            enQFile(fileTuple._1, 69)
+            bufferingQ_map.remove(fileTuple._1)
+          }
+        })
+      }
+      // Give all the files a 1 second to add a few bytes to the contents
+      Thread.sleep(1000)
+    }
+  }
+
   /**
    * The main directory watching thread
    */
   override def run(): Unit = {
     try {
       // Initialize and launch the File Processor thread(s), and kafka producers
-      var fileConsumers: ExecutorService = Executors.newFixedThreadPool(2)
+      var fileConsumers: ExecutorService = Executors.newFixedThreadPool(3)
       fileConsumers.execute(new Runnable() {
         override def run() = {
           doSomeConsuming
@@ -379,13 +406,19 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         }
       })
 
+      fileConsumers.execute(new Runnable() {
+        override def run() = {
+          monitorBufferingFiles
+        }
+      })
+
       // Register a listener on a watch directory.
       register(path)
 
       // Process all the existing files in the directory that are not marked complete.
       val d = new File(dirToWatch)
       if (d.exists && d.isDirectory) {
-        val files = d.listFiles.filter(_.isFile).sortWith(_ .lastModified < _.lastModified).toList
+        val files = d.listFiles.filter(_.isFile).sortWith(_.lastModified < _.lastModified).toList
         files.foreach(file => {
             if (isValidFile(file.toString)) {
           //    println(file + " last modified " + file.lastModified)
@@ -412,8 +445,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
                 var assignment =  scala.math.abs(fileName.hashCode) % partitionSelectionNumber
                 if ((assignment+ 1) == partitionId) {
-                        if (isValidFile(fileName)) {
-                    enQFile(fileName, 69)
+                  if (isValidFile(fileName)) {
+                    enQBufferedFile(fileName, 69)
                   }
                 }
               }
