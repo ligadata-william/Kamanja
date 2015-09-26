@@ -68,7 +68,7 @@ object OutputMsgDefImpl {
       val outputQ = outputMessageDef.Queue.toLowerCase()
       val paritionKeys = outputMessageDef.PartitionKey
       val dataDeclaration = outputMessageDef.DataDeclaration
-      val outputFormat = outputMessageDef.OutputFormat.toLowerCase()
+      val outputFormat = outputMessageDef.OutputFormat
       val defaults = outputMessageDef.Defaults
       val name = outputMessageDef.Name.toLowerCase()
       val nameSpace = outputMessageDef.NameSpace.toLowerCase()
@@ -177,7 +177,7 @@ object OutputMsgDefImpl {
   private def extractOutputFormat(outputformat: String): Array[String] = {
     val extractor = """\$\{([^}]+)\}""".r
     val finds = extractor.findAllIn(outputformat)
-    val allOutputFnds = finds.toArray
+    val allOutputFnds = finds.map(fld => fld.toLowerCase()).toArray
     allOutputFnds
   }
 
