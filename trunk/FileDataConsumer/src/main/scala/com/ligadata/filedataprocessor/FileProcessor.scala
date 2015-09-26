@@ -10,6 +10,9 @@ import util.control.Breaks._
 import java.io._
 import java.nio.file._
 import scala.actors.threadpool.{Executors, ExecutorService }
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
+import java.nio.file.Files.copy
+import java.nio.file.Paths.get
 
 case class BufferLeftoversArea (workerNumber: Int, leftovers: Array[Char], relatedChunk: Long)
 case class BufferToChunk(len: Int, payload: Array[Char], chunkNumber: Long, relatedFileName: String)
@@ -51,6 +54,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
   // Confugurable Properties
   private var dirToWatch: String = ""
+  private var moveToDir: String = ""
   private var message_separator: Char = _
   private var NUMBER_OF_BEES: Int = 2
   private var maxlen: Int = _
@@ -65,11 +69,12 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
    */
   def init(props: scala.collection.mutable.Map[String,String]): Unit = {
     message_separator = props("messageSeparator").toInt.toChar
-    dirToWatch = props("dirToWatch")
+    dirToWatch = props.getOrElse("dirToWatch","")
     NUMBER_OF_BEES = props("workerdegree").toInt
     maxlen = props("workerbuffersize").toInt * 1024 * 1024
     kml = new KafkaMessageLoader (props("kafkaBroker"), props("topic"))
     partitionSelectionNumber = props("fileConsumers").toInt
+    moveToDir = props.getOrElse("moveToDir","")
   }
 
   private def enQBufferedFile(file: String, code: Int): Unit = {
@@ -338,7 +343,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
    */
   private def doSomeConsuming(): Unit = {
     while (isCosuming) {
-      var fileToProcess = deQFile(99)
+      val fileToProcess = deQFile(99)
       var curTimeStart: Long = 0
       var curTimeEnd: Long = 0
       if (fileToProcess == null) {
@@ -346,16 +351,21 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         Thread.sleep(500)
       } else {
      //   println("CONSUMER - WAKE AND BACK .. processing new file " + fileToProcess)
-        println("Processing file "+fileToProcess)
+        println(partitionId + " Processing file "+fileToProcess)
         curTimeStart = System.currentTimeMillis
         readBytesChunksFromFile(fileToProcess)
         curTimeEnd = System.currentTimeMillis
         println(" TIME in miliseconds: " + (curTimeEnd - curTimeStart ))
         try {
           var fileStruct = fileToProcess.split("/")
-          //(new File(fileToProcess)).renameTo(new File("/tmp/watch/COMPLETE_" + fileStruct(fileStruct.size - 1)))
-          println("Renaming file "+ fileToProcess + " to " + fileToProcess + "_COMPLETE")
-          (new File(fileToProcess)).renameTo(new File(fileToProcess + "_COMPLETE"))
+          if (moveToDir.length != 0) {
+            println(partitionId + " Moving File" + fileToProcess + " to "+ moveToDir)
+            Files.copy(Paths.get(fileToProcess), Paths.get(moveToDir+"/"+ fileStruct(fileStruct.size - 1)),REPLACE_EXISTING)
+            Files.deleteIfExists(Paths.get(fileToProcess))
+          } else {
+            println(partitionId + " Renaming file "+ fileToProcess + " to " + fileToProcess + "_COMPLETE")
+            (new File(fileToProcess)).renameTo(new File(fileToProcess + "_COMPLETE"))
+          }
         } catch {
           case e: Exception => e.printStackTrace()
         }
