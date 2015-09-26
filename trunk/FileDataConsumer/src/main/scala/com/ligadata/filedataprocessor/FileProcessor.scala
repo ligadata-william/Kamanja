@@ -1,5 +1,9 @@
 package com.ligadata.filedataprocessor
 
+import java.util.zip.GZIPInputStream
+
+import com.ligadata.Exceptions.StackTrace
+
 import scala.collection.mutable.HashMap
 import scala.collection.JavaConverters._
 import util.control.Breaks._
@@ -289,7 +293,13 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     // Grab the InputStream from the file and start processing it.  Enqueue the chunks onto the BufferQ for the
     // worker bees to pick them up.
     //var bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)))
-    var bis = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)))
+    var bis: BufferedReader = null
+    if (isCompressed(fileName)) {
+      bis = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fileName))))
+    } else {
+      bis = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)))
+    }
+
     do {
       readlen = bis.read(buffer, 0, maxlen -1)
       if (readlen > 0) {
@@ -418,12 +428,14 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
       // Process all the existing files in the directory that are not marked complete.
       val d = new File(dirToWatch)
       if (d.exists && d.isDirectory) {
-        val files = d.listFiles.filter(_.isFile).sortWith(_.lastModified < _.lastModified).toList
+        val files = d.listFiles.filter(_.isFile).sortWith(_.toString < _.toString).toList
         files.foreach(file => {
+          var assignment =  scala.math.abs(file.toString.hashCode) % partitionSelectionNumber
+          if ((assignment+ 1) == partitionId) {
             if (isValidFile(file.toString)) {
-          //    println(file + " last modified " + file.lastModified)
-              enQFile(file.toString, 77)
+              enQBufferedFile(file.toString, 69)
             }
+          }
         })
       }
       println("Initialization complete for partition " + partitionId)
@@ -470,10 +482,48 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     }
   }
 
+  /**
+   *
+   * @param fileName
+   * @return
+   */
   private def isValidFile(fileName: String): Boolean = {
     if (!fileName.endsWith("_COMPLETE"))
       return true
     return false
+  }
+
+  /**
+   *
+   * @param inputfile
+   * @return
+   */
+  private def isCompressed(inputfile: String): Boolean = {
+    var is: FileInputStream = null
+    try {
+      is = new FileInputStream(inputfile)
+    } catch {
+      case e: Exception =>
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        e.printStackTrace()
+        return false
+    }
+
+    val maxlen = 2
+    val buffer = new Array[Byte](maxlen)
+    val readlen = is.read(buffer, 0, maxlen)
+
+    is.close() // Close before we really check and return the data
+
+    if (readlen < 2)
+      return false;
+
+    val b0: Int = buffer(0)
+    val b1: Int = buffer(1)
+
+    val head = (b0 & 0xff) | ((b1 << 8) & 0xff00)
+
+    return (head == GZIPInputStream.GZIP_MAGIC);
   }
 }
 
