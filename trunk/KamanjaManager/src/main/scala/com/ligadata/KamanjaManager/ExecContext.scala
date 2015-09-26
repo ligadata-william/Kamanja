@@ -17,7 +17,7 @@
 
 package com.ligadata.KamanjaManager
 
-import com.ligadata.KamanjaBase.{ EnvContext }
+import com.ligadata.KamanjaBase.{ EnvContext, DataDelimiters }
 import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, InputAdapterCallerContext }
 
 import org.apache.log4j.Logger
@@ -47,7 +47,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey)
   var cntr: Long = 0
-  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiters: DataDelimiters): Unit = {
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
@@ -58,7 +58,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
       try {
         val transformStartTime = System.nanoTime
-        val xformedmsgs = xform.execute(data, format, associatedMsg, delimiterString, uk, uv)
+        val xformedmsgs = xform.execute(data, format, associatedMsg, delimiters, uk, uv)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Transform", uv, readTmNanoSecs, transformStartTime))
         var xformedMsgCntr = 0
         val totalXformedMsgs = xformedmsgs.size
@@ -245,7 +245,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
     results.toArray
   }
 
-  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiters: DataDelimiters): Unit = {
     try {
       val transId = transService.getNextTransId
       try {

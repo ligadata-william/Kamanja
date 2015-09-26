@@ -25,6 +25,7 @@ import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, InputAdapter,
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 import com.ligadata.Exceptions.StackTrace
+import com.ligadata.KamanjaBase.DataDelimiters
 
 object FileConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new FileConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
@@ -71,6 +72,11 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
         return
     }
 
+    val delimiters = new DataDelimiters()
+    delimiters.keyAndValueDelimiter = fc.keyAndValueDelimiter
+    delimiters.fieldDelimiter = fc.fieldDelimiter
+    delimiters.valueDelimiter = fc.valueDelimiter
+
     val uniqueVal = new FilePartitionUniqueRecordValue
     uniqueVal.FileFullPath = sFileName
 
@@ -109,10 +115,11 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
                     try {
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-                      execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, fc.associatedMsg, fc.delimiterString)
+                      execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, fc.associatedMsg, delimiters)
                     } catch {
                       case e: Exception => {
-                        LOG.error("Failed with Message:" + e.getMessage)}
+                        LOG.error("Failed with Message:" + e.getMessage)
+                      }
                     }
 
                     st.totalSent += sendmsg.size
@@ -163,10 +170,11 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
           try {
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-            execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, fc.associatedMsg, fc.delimiterString)
+            execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, fc.associatedMsg, delimiters)
           } catch {
             case e: Exception => {
-              LOG.error("Failed with Message:" + e.getMessage)}
+              LOG.error("Failed with Message:" + e.getMessage)
+            }
           }
 
           st.totalSent += sendmsg.size
@@ -294,7 +302,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
-          
+
           LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
           throw e
         }
