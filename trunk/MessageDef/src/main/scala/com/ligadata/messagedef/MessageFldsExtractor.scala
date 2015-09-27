@@ -78,6 +78,8 @@ class MessageFldsExtractor {
     var withMethods = new StringBuilder(8 * 1024)
     var fromFuncBuf = new StringBuilder(8 * 1024)
     var fromFuncBaseTypesBuf = new StringBuilder(8 * 1024)
+    var nativeKeyMapBuf = new StringBuilder(8 * 1024)
+    var getNativeKeyValues = new StringBuilder(8 * 1024)
 
     var list = List[(String, String)]()
     var argsList = List[(String, String, String, String, Boolean, String)]()
@@ -202,6 +204,8 @@ class MessageFldsExtractor {
               withMethods = withMethods.append(arr_4(16))
               fromFuncBuf = fromFuncBuf.append(arr_4(17))
               assignKvData = assignKvData.append(arr_4(18))
+              nativeKeyMapBuf = nativeKeyMapBuf.append(arr_4(19))
+              getNativeKeyValues = getNativeKeyValues.append(arr_4(20))
 
               //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
             } else if (typ.get.tType.toString().equals("tArrayBuf")) {
@@ -231,6 +235,8 @@ class MessageFldsExtractor {
               withMethods = withMethods.append(arrayBuf_4(18))
               fromFuncBuf = fromFuncBuf.append(arrayBuf_4(19))
               assignKvData = assignKvData.append(arrayBuf_4(20))
+              nativeKeyMapBuf = nativeKeyMapBuf.append(arrayBuf_4(21))
+              getNativeKeyValues = getNativeKeyValues.append(arrayBuf_4(22))
 
             } else if (typ.get.tType.toString().equals("tHashMap")) {
 
@@ -276,6 +282,8 @@ class MessageFldsExtractor {
               withMethods = withMethods.append(baseTyp_6(15))
               fromFuncBaseTypesBuf = fromFuncBaseTypesBuf.append(baseTyp_6(16))
               assignKvData = assignKvData.append(baseTyp_6(17))
+              nativeKeyMapBuf = nativeKeyMapBuf.append(baseTyp_6(18))
+              getNativeKeyValues = getNativeKeyValues.append(baseTyp_6(19))
 
               if (paritionkeys != null && paritionkeys.size > 0) {
                 if (paritionkeys.contains(f.Name)) {
@@ -329,6 +337,8 @@ class MessageFldsExtractor {
                 withMethods = withMethods.append(arrayBuf_4(18))
                 fromFuncBuf = fromFuncBuf.append(arrayBuf_4(19))
                 assignKvData = assignKvData.append("// Not Handling Array of Container")
+                nativeKeyMapBuf = nativeKeyMapBuf.append(arrayBuf_4(19))
+                getNativeKeyValues = getNativeKeyValues.append(arrayBuf_4(20))
 
               } else if (typ.get.tType.toString().equals("tArray")) {
 
@@ -356,6 +366,8 @@ class MessageFldsExtractor {
                 withMethods = withMethods.append(arr_4(16))
                 fromFuncBuf = fromFuncBuf.append(arr_4(17))
                 assignKvData = assignKvData.append("// Not Handling Array of Container")
+                nativeKeyMapBuf = nativeKeyMapBuf.append(arr_4(18))
+                getNativeKeyValues = getNativeKeyValues.append(arr_4(19))
 
                 //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
               } else {
@@ -382,7 +394,9 @@ class MessageFldsExtractor {
 
                   withMethods = withMethods.append(cntnr_4(13))
                   fromFuncBuf = fromFuncBuf.append(cntnr_4(14))
+                  nativeKeyMapBuf = nativeKeyMapBuf.append(cntnr_4(15))
                   assignKvData = assignKvData.append("// Not Handling Container")
+                  getNativeKeyValues = getNativeKeyValues.append(cntnr_4(16))
                   //   mappedPrevVerMatchkeys
 
                 }
@@ -435,6 +449,8 @@ class MessageFldsExtractor {
 
       }
 
+      println(nativeKeyMapBuf.toString)
+      println(getNativeKeyValues.toString)
       var partitionKeys: String = ""
       var prmryKeys: String = ""
       if (message.Fixed.toLowerCase().equals("false")) {
@@ -506,6 +522,8 @@ class MessageFldsExtractor {
     returnClassStr += fromFuncBuf.toString
     returnClassStr += fromFuncBaseTypesBuf.toString
     returnClassStr += assignKvData.toString
+    returnClassStr += nativeKeyMapBuf.toString
+    returnClassStr += getNativeKeyValues.toString
 
     (returnClassStr.toArray, count, list, argsList, partitionPos, primaryPos)
 

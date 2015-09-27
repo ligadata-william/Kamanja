@@ -60,6 +60,7 @@ class BaseTypesHandler {
     var prevObjTypNotMatchDeserializedBuf = new StringBuilder(8 * 1024)
     var prevVerMsgBaseTypesIdxArry1: ArrayBuffer[String] = new ArrayBuffer[String]
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
+    var getNativeKeyValues = new StringBuilder(8 * 1024)
 
     var withMethod = new StringBuilder(8 * 1024)
     var fromFuncBaseTypesBuf = new StringBuilder(8 * 1024)
@@ -109,6 +110,10 @@ class BaseTypesHandler {
           withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
           withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
           withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+
+          getNativeKeyValues = getNativeKeyValues.append("%s if (nativeKeyMap.contains(\"%s\")) %s".format(pad1, f.Name, newline))
+          getNativeKeyValues = getNativeKeyValues.append("%s keyValues(\"%s\") = (nativeKeyMap(\"%s\"), %s); %s".format(pad1, f.Name, f.Name, f.Name, newline)) 
+
         }
 
       } else if (fixed.toLowerCase().equals("false")) {
@@ -152,6 +157,8 @@ class BaseTypesHandler {
       fixedMsgGetKeyStrBuf.append("%s if(key.equals(\"%s\")) return %s; %s".format(pad1, f.Name, f.Name, newline))
       fromFuncBaseTypesBuf.append(fromFunc(typ, fixed, f, baseTypId))
 
+      var nativeKeyMap: String = "(\"%s\", \"%s\"), ".format(f.Name, f.NativeName)
+
       returnAB += scalaclass.toString
       returnAB += assignCsvdata.toString
       returnAB += assignJsondata.toString
@@ -170,6 +177,8 @@ class BaseTypesHandler {
       returnAB += withMethod.toString
       returnAB += fromFuncBaseTypesBuf.toString
       returnAB += assignKvData.toString
+      returnAB += nativeKeyMap.toString
+      returnAB += getNativeKeyValues.toString
 
     } catch {
       case e: Exception => {

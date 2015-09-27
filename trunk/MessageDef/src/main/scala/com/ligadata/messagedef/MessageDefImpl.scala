@@ -48,7 +48,7 @@ trait Attrib {
 class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
-class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
+class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String, var NativeName: String)
 
 case class Concept(var NameSpace: Option[String], var Name: Option[String], var Type: Option[String])
 class ConceptList(var Concepts: List[Concept])
@@ -799,9 +799,9 @@ class MessageDefImpl {
           throw new Exception("Either Fields or Elements or Concepts  do not exist in the Fixed Message/Container " + message.get("Name").get.toString())
 
         if (ele != null)
-          ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null)
+          ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null, "")
         else
-          ele = List(new Element("", "transactionId", "system.long", "", "Fields", null))
+          ele = List(new Element("", "transactionId", "system.long", "", "Fields", null, ""))
 
         // ele.foreach(f => log.debug("====" + f.Name))
 
@@ -891,7 +891,7 @@ class MessageDefImpl {
     if (ccpts == null) throw new Exception("Concepts List is null")
     try {
       for (l <- ccpts)
-        lbuffer += new Element(null, l.toString(), l.toString(), null, key, null)
+        lbuffer += new Element(null, l.toString(), l.toString(), null, key, null, l.toString())
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1078,6 +1078,7 @@ class MessageDefImpl {
     var fld: Element = null
     var name: String = ""
     var fldTypeVer: String = null
+    var nativeName : String = ""
 
     var namespace: String = ""
     var ttype: String = ""
@@ -1088,8 +1089,10 @@ class MessageDefImpl {
       if (field.contains("NameSpace") && (field.get("NameSpace").get.isInstanceOf[string]))
         namespace = field.get("NameSpace").get.asInstanceOf[String]
 
-      if (field.contains("Name") && (field.get("Name").get.isInstanceOf[String]))
+      if (field.contains("Name") && (field.get("Name").get.isInstanceOf[String])){
         name = field.get("Name").get.asInstanceOf[String].toLowerCase()
+        nativeName = field.get("Name").get.asInstanceOf[String]
+      }
       else throw new Exception("Field Name do not exist in " + key)
 
       if (field.contains("Type") && (field.get("Type").get.isInstanceOf[string])) {
@@ -1108,7 +1111,7 @@ class MessageDefImpl {
 
       } else throw new Exception("Field Type do not exist in " + key)
       //log.debug("key========" + key)
-      fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer)
+      fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer, nativeName)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
