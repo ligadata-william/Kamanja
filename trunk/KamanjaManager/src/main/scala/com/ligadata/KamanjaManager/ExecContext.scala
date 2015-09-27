@@ -116,6 +116,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
         outputs.foreach(output => {
           val oadap = allOuAdapters.getOrElse(output._1, null)
+          LOG.debug("Sending data => " + output._2.map(o => o._1 + "~~~" + o._2 + "~~~" + o._3).mkString("###"))
           if (oadap != null) {
             oadap.send(output._2.map(out => out._3.getBytes("UTF8")).toArray, output._2.map(out => out._2.getBytes("UTF8")).toArray)
           }
