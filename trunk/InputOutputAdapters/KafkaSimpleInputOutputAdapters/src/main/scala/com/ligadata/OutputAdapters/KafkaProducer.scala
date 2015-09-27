@@ -77,7 +77,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
     try {
       val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
       for (i <- 0 until messages.size) {
-        keyMessages += new KeyedMessage(qc.topic, messages(i), partKeys(i))
+        keyMessages += new KeyedMessage(qc.topic, partKeys(i), messages(i))
       }
       producer.send(keyMessages: _*) // Thinking this op is atomic for (can write multiple partitions into one queue, but don't know whether it is atomic per partition in the queue).
       val key = Category + "/" + qc.Name + "/evtCnt"
