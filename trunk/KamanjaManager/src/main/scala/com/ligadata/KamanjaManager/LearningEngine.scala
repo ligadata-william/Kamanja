@@ -157,7 +157,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
             LOG.info(" outputMsgs.size" + outputMsgs.get.size)
             var outputGen = new OutputMsgGenerator()
             val resultedoutput = outputGen.generateOutputMsg(msg, resMap, outputMsgs.get.toArray)
-            returnOutput ++= resultedoutput.map(resout => (resout._3, resout._2.mkString(","), resout._3))
+            returnOutput ++= resultedoutput.map(resout => (resout._1, resout._2.mkString(","), resout._3))
           } else {
             val json = ("ModelsResult" -> results.toList.map(res => res.toJson))
             returnOutput ++= allOutputQueueNames.map(adapNm => (adapNm, cntr.toString, compact(render(json)))) // Sending the same result to all queues
