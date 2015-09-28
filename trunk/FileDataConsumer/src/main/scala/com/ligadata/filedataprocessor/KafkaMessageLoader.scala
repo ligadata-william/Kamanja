@@ -17,6 +17,8 @@ import kafka.producer.{KeyedMessage, ProducerConfig, Producer}
 class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, String]) {
   val pw = new PrintWriter(new File("/tmp/output.txt" ))
   var partIdx: Int = 0
+  var lastFileProcessing: String = ""
+  var lastOffsetProcessed: Int = 0
 
   var objInst: Any = null
   // Set up some properties for the Kafka Producer
@@ -76,9 +78,7 @@ class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, S
         // Trying Singleton Object
         val module = loaderInfo.mirror.staticModule(clsName)
         val obj = loaderInfo.mirror.reflectModule(module)
-
         objInst = obj.instance
-
       } catch {
         case e: java.lang.NoClassDefFoundError => {
           e.printStackTrace()
@@ -97,33 +97,30 @@ class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, S
   // create the producer object
   val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props))
 
-  def pushData(messages: Array[Array[Byte]]): Unit = {
-    //
-  }
 
   def pushData(messages: Array[KafkaMessage]): Unit = {
 
     messages.foreach(msg => {
-   //   pw.write(msg.msg)
-  //    pw.write('\n')
+
       println("\nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + "\n " + new String(msg.msg))
-      var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)   // new DelimitedData(new String(msg.msg), ",")
-      //inputData.tokens = new String(msg.msg).split(",")
+      var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
       println(inputData.asInstanceOf[KvData].dataMap.foreach(x => {println(x._1 + "<>" +x._2)}))  //mkString("*"))
       println(" PartitionKey is " + objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString("--"))
+
+      try {
+        producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+                                        objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
+                                        new String(msg.msg).getBytes("UTF8")))
+        
+        lastFileProcessing = msg.relatedFileName
+        lastOffsetProcessed = msg.offsetInFile
+      } catch {
+        case e: Exception =>
+          logger.error("Could not add to the queue due to an Exception "+ e.getMessage)
+          e.printStackTrace
+      }
     })
   //  pw.close
-  }
-
-  // Push the data into kafka
-  private def insertData(msg: String): Unit = {
-
-    if (send(producer, inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC), msg.getBytes("UTF8"), partIdx.toString.getBytes("UTF8"))) {
-      partIdx = partIdx + 1
-      //return "SUCCESS: Added message to Topic:"+topic
-    } else {
-      println("FAILURE: Failed to add message to Topic:"+inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC))
-    }
   }
 
   /**
