@@ -28,6 +28,7 @@ import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
 import com.ligadata.Exceptions.StackTrace
+import com.ligadata.KamanjaBase.DataDelimiters
 
 object KafkaSimpleConsumer extends InputAdapterObj {
   val METADATA_REQUEST_CORR_ID = 2
@@ -133,6 +134,11 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       kvs(quad._1.PartitionId) = quad
     })
 
+    val delimiters = new DataDelimiters()
+    delimiters.keyAndValueDelimiter = qc.keyAndValueDelimiter
+    delimiters.fieldDelimiter = qc.fieldDelimiter
+    delimiters.valueDelimiter = qc.valueDelimiter
+
     // Enable the adapter to process
     isQuiesced = false
     LOG.debug("KAFKA-ADAPTER: Starting " + kvs.size + " threads to process partitions")
@@ -182,9 +188,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           val brokerId = convertIp(leadBroker)
           val brokerName = brokerId.split(":")
           val consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-                                            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                            KafkaSimpleConsumer.FETCHSIZE,
-                                            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+            KafkaSimpleConsumer.FETCHSIZE,
+            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
 
           // Keep processing until you fail enough times.
           while (!isQuiesced) {
@@ -238,7 +244,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
                 uniqueVal.Offset = msgBuffer.offset
                 val dontSendOutputToOutputAdap = uniqueVal.Offset <= uniqueRecordValue
-                execThread.execute(message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, qc.associatedMsg, qc.delimiterString)
+                execThread.execute(message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, qc.associatedMsg, delimiters)
 
                 val key = Category + "/" + qc.Name + "/evtCnt"
                 cntrAdapter.addCntr(key, 1) // for now adding each row
@@ -256,7 +262,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               case e: java.lang.InterruptedException =>
                 {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.debug("KAFKA ADAPTER: Forcing down the Consumer Reader thread"+"\nStackTrace:"+stackTrace)
+                  LOG.debug("KAFKA ADAPTER: Forcing down the Consumer Reader thread" + "\nStackTrace:" + stackTrace)
                 }
             }
           }
@@ -296,15 +302,16 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             uniqueKey.PartitionId = partitionMeta.partitionId
             uniqueKey.Name = qc.Name
             uniqueKey.TopicName = qc.topic
-            if (!partitionRecord.contains(qc.topic+partitionMeta.partitionId.toString)) {
-              partitionNames = uniqueKey :: partitionNames 
-              partitionRecord = partitionRecord + (qc.topic+partitionMeta.partitionId.toString)
+            if (!partitionRecord.contains(qc.topic + partitionMeta.partitionId.toString)) {
+              partitionNames = uniqueKey :: partitionNames
+              partitionRecord = partitionRecord + (qc.topic + partitionMeta.partitionId.toString)
             }
           })
         })
       } catch {
-        case e: java.lang.InterruptedException =>{
-          LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")}
+        case e: java.lang.InterruptedException => {
+          LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")
+        }
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
@@ -398,9 +405,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               })
             })
           } catch {
-            case e: Exception => { 
+            case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
-              LOG.debug("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + stackTrace) }
+              LOG.debug("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + stackTrace)
+            }
           } finally {
             if (llConsumer != null) llConsumer.close()
           }
@@ -408,9 +416,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       }
 
     } catch {
-      case e: Exception => { 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("KAFKA ADAPTER - Fatal Error for FindLeader for partition " + inPartition+"\nStackTrace:"+stackTrace) }
+        LOG.debug("KAFKA ADAPTER - Fatal Error for FindLeader for partition " + inPartition + "\nStackTrace:" + stackTrace)
+      }
     }
     return leaderMetadata;
   }
@@ -469,8 +478,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       }
     } catch {
       case e: java.lang.Exception => {
-        
-        LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}") }
+
+        LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}")
+      }
     } finally {
       if (llConsumer != null) { llConsumer.close }
     }
@@ -496,7 +506,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       } catch {
         case e: InterruptedException => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.debug("Adapter terminated during findNewLeader"+"\nStackTrace:"+stackTrace) }
+          LOG.debug("Adapter terminated during findNewLeader" + "\nStackTrace:" + stackTrace)
+        }
       }
     }
     return null
@@ -520,7 +531,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     } catch {
       case e: java.lang.InterruptedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("Heartbeat terminated"+"\nStackTrace:"+stackTrace)}
+        LOG.debug("Heartbeat terminated" + "\nStackTrace:" + stackTrace)
+      }
     }
   }
 
@@ -574,13 +586,14 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             } catch {
               case e: java.lang.InterruptedException =>
                 val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.debug("Shutting down the Monitor heartbeat"+"\nStackTrace:"+stackTrace)
+                LOG.debug("Shutting down the Monitor heartbeat" + "\nStackTrace:" + stackTrace)
                 hbRunning = false
             }
           }
         } catch {
           case e: java.lang.Exception => {
-            LOG.error("Heartbeat forced down due to exception + ")}
+            LOG.error("Heartbeat forced down due to exception + ")
+          }
         } finally {
           hbConsumers.foreach({ case (key, consumer) => { consumer.close } })
           hbRunning = false
@@ -601,8 +614,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     val brokerId = brokerName(0) + ":" + brokerName(1)
     brokerId
   }
-  
-
 
   /**
    * combine the ip address and port number into a Kafka Configuratio ID
@@ -617,7 +628,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
   private def terminateHBTasks(): Unit = {
     if (hbExecutor == null) return
     hbExecutor.shutdownNow
-    while (hbExecutor.isTerminated == false ) {
+    while (hbExecutor.isTerminated == false) {
       Thread.sleep(100) // sleep 100ms and then check
     }
   }
@@ -634,7 +645,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     // Give the threads to gracefully stop their reading cycles, and then execute them with extreme prejudice.
     Thread.sleep(qc.noDataSleepTimeInMs + 1)
     readExecutor.shutdownNow
-    while (readExecutor.isTerminated == false ) {
+    while (readExecutor.isTerminated == false) {
       Thread.sleep(100)
     }
 
