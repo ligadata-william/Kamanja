@@ -2806,8 +2806,8 @@ class MdMgr {
   }
 
   def MakeAdapter(name: String, typeString: String, dataFormat: String, className: String,
-    jarName: String, dependencyJars: List[String],
-    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): AdapterInfo = {
+    jarName: String, dependencyJars: List[String], adapterSpecificCfg: String, inputAdapterToVerify: String, 
+    keyAndValueDelimiter: String, fieldDelimiter: String, valueDelimiter: String, associatedMsg: String): AdapterInfo = {
     val ai = new AdapterInfo
     ai.name = name
     ai.typeString = typeString
@@ -2817,7 +2817,9 @@ class MdMgr {
     if (dependencyJars != null) {
       ai.dependencyJars = dependencyJars.toArray
     }
-    ai.delimiterString = delimiterString // Delimiter String for CSV
+    ai.keyAndValueDelimiter = keyAndValueDelimiter // Delimiter String for keyAndValueDelimiter
+    ai.fieldDelimiter = fieldDelimiter // Delimiter String for fieldDelimiter
+    ai.valueDelimiter = valueDelimiter // Delimiter String for valueDelimiter
     ai.associatedMsg = associatedMsg // Queue Associated Message
     ai.adapterSpecificCfg = adapterSpecificCfg
     ai.inputAdapterToVerify = inputAdapterToVerify

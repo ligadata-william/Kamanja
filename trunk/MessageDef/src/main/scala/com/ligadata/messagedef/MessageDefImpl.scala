@@ -197,7 +197,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -237,7 +237,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -266,7 +266,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -295,7 +295,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -335,6 +335,7 @@ class MessageDefImpl {
       val withMethods = scalaReturnStrArray(14)
       val fromFunc = scalaReturnStrArray(15)
       val fromFuncBaseTypes = scalaReturnStrArray(16)
+      val assignKvData = scalaReturnStrArray(17)
 
       val fromFuncOfFixed = cnstObjVar.fromFuncOfFixedMsgs(message, fromFunc, fromFuncBaseTypes)
       val getSerializedFuncStr = methodGen.getSerializedFunction(serializedBuf)
@@ -342,6 +343,8 @@ class MessageDefImpl {
       // println("withMethods" + withMethods)
       val getDeserializedFuncStr = methodGen.getDeserializedFunction(true, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, recompile)
       val convertOldObjtoNewObj = methodGen.getConvertOldVertoNewVer(convertOldObjtoNewObjStr, prevVerMsgObjstr, message.PhysicalName)
+      val populateKvData = methodGen.populateKvData(assignKvData)
+
       list_msg = list
       argsList_msg = argsList
       addMsgStr = cnstObjVar.addMessage(addMsg, message)
@@ -352,18 +355,18 @@ class MessageDefImpl {
       val isFixed = cnstObjVar.getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = cnstObjVar.importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append( classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed +cnstObjVar.transactionIdFuncs(message)  + " \n}")
+      scalaclass = scalaclass.append(classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + populateKvData + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + cnstObjVar.transactionIdFuncs(message) + " \n}")
 
       verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
 
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + cnstObjVar.transactionIdFuncs(message) + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + populateKvData + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + cnstObjVar.transactionIdFuncs(message) + " \n}")
 
       nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -402,7 +405,8 @@ class MessageDefImpl {
       val withMethods = scalaReturnStrArray(14)
       val fromFunc = scalaReturnStrArray(15)
       val fromFuncBaseTypesMapped = scalaReturnStrArray(16)
-
+      val assignKvData = scalaReturnStrArray(17)
+     
       val fromFuncOfMapped = cnstObjVar.fromFuncOfMappedMsgs(message, fromFunc, fromFuncBaseTypesMapped)
 
       list_msg = list
@@ -425,19 +429,19 @@ class MessageDefImpl {
       val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = cnstObjVar.importStmts(message)
 
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + cnstObjVar.transactionIdFuncs(message) +" \n}") //cnstObjVar.fromFuncOfMappedMsg(message) 
+      scalaclass = scalaclass.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.populateMappedMsgKvData(assignKvData)+ methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + cnstObjVar.transactionIdFuncs(message) + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message) 
 
       verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
 
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped +cnstObjVar.transactionIdFuncs(message) + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message)
+      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.populateMappedMsgKvData(assignKvData) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + cnstObjVar.transactionIdFuncs(message) + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message)
 
       nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
 
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -467,7 +471,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -491,7 +495,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -514,7 +518,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -539,7 +543,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -616,7 +620,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -635,7 +639,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -660,7 +664,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -811,14 +815,14 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
 
     val cur_time = System.currentTimeMillis
     //  val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "." + message.get("Name").get.toString() + "." + MdMgr.ConvertVersionToLong(msgVersion).toString + "_" + cur_time
-    val pkg =  message.get("NameSpace").get.toString
+    val pkg = message.get("NameSpace").get.toString
     val physicalName: String = pkg + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()
 
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
@@ -872,7 +876,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -891,7 +895,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -912,7 +916,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -974,7 +978,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -1038,7 +1042,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -1063,7 +1067,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -1108,7 +1112,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }

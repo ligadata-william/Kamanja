@@ -33,7 +33,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import kafka.consumer.ConsoleConsumer
 import com.ligadata.Exceptions.StackTrace
-
+import com.ligadata.KamanjaBase.DataDelimiters
 
 object KafkaConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
@@ -105,10 +105,10 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("\nStackTrace:"+stackTrace)
+        LOG.debug("\nStackTrace:" + stackTrace)
       }
     }
-    
+
     val maxParts = GetAllPartitionsUniqueKeys.size
 
     consumerConnector = Consumer.create(consumerConfig)
@@ -142,6 +142,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
     kvs.foreach(kv => {
       LOG.debug("Key:%s => Val:%s".format(kv._2._1.Serialize, kv._2._2.Serialize))
     })
+
+    val delimiters = new DataDelimiters()
+    delimiters.keyAndValueDelimiter = qc.keyAndValueDelimiter
+    delimiters.fieldDelimiter = qc.fieldDelimiter
+    delimiters.valueDelimiter = qc.valueDelimiter
 
     try {
       LOG.debug("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.topic, maxParts, qc.instancePartitions.mkString(",")))
@@ -208,21 +213,22 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
                             }
 
                           }
-                          ignoreOff = if (ignoreFirstMsg) kv._3.Offset else kv._3.Offset - 1 
+                          ignoreOff = if (ignoreFirstMsg) kv._3.Offset else kv._3.Offset - 1
                         }
                       }
                       if (executeCurMsg) {
                         try {
                           // Creating new string to convert from Byte Array to string
                           uniqueVal.Offset = currentOffset
-                          execThread.execute(message.message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, qc.associatedMsg, qc.delimiterString)
+                          execThread.execute(message.message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, qc.associatedMsg, delimiters)
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"
                           cntrAdapter.addCntr(key, 1) // for now adding each row
                         } catch {
                           case e: Exception => {
-                            LOG.error("Failed with Message:" + e.getMessage)}
+                            LOG.error("Failed with Message:" + e.getMessage)
+                          }
                         }
                       } else {
                         LOG.debug("Ignoring Message:%s".format(new String(message.message)))
@@ -268,16 +274,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
     val dataAndStat = try {
       (Some(client.readData(path, stat)), stat)
     } catch {
-      case e: ZkNoNodeException =>{
-       val stackTrace = StackTrace.ThrowableTraceString(e)
-       LOG.debug("\nStackTrace:"+stackTrace)
+      case e: ZkNoNodeException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("\nStackTrace:" + stackTrace)
         (None, stat)
       }
       case e2: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e2)
-        LOG.debug("\nStackTrace:"+stackTrace)
+        LOG.debug("\nStackTrace:" + stackTrace)
         throw e2
-        }
+      }
     }
     dataAndStat
   }
