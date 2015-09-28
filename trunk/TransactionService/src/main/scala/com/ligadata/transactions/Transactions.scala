@@ -27,9 +27,10 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework.CuratorFramework
 import org.apache.curator.framework.recipes.locks.InterProcessMutex
-import com.ligadata.StorageBase.{ DataStore, Transaction, Key, Value, StorageTimeRange }
+import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.keyvaluestore.KeyValueManager
 import com.ligadata.KamanjaData.{ KamanjaData }
+import com.ligadata.KvBase.{ Key, Value, StorageTimeRange }
 
 object NodeLevelTransService {
   private[this] val LOG = Logger.getLogger(getClass);

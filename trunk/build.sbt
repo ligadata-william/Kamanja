@@ -43,7 +43,7 @@ lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/Fi
 
 lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(KamanjaBase, KamanjaData, StorageManager, Serialize, Exceptions)
 
-lazy val StorageBase = project.in(file("Storage/StorageBase")) dependsOn(Exceptions, KamanjaUtils)
+lazy val StorageBase = project.in(file("Storage/StorageBase")) dependsOn(Exceptions, KamanjaUtils, KvBase)
 
 lazy val Metadata = project.in(file("Metadata")) dependsOn(Exceptions)
 
@@ -113,9 +113,9 @@ lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSample
 
 // lazy val StorageVoldemort = project.in(file("Storage/Voldemort")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
-lazy val StorageSqlServer = project.in(file("Storage/SqlServer")) dependsOn(StorageBase, Serialize, Exceptions, KamanjaUtils)
+// lazy val StorageSqlServer = project.in(file("Storage/SqlServer")) dependsOn(StorageBase, Serialize, Exceptions, KamanjaUtils)
 
-lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, KamanjaBase, KamanjaUtils, StorageSqlServer)
+lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, KamanjaBase, KamanjaUtils)
 
 lazy val AuditAdapterBase = project.in(file("AuditAdapters/AuditAdapterBase")) dependsOn(Exceptions)
 
@@ -128,3 +128,5 @@ lazy val UtilityService = project.in(file("Utils/UtilitySerivce")) dependsOn(Exc
 lazy val HeartBeat = project.in(file("HeartBeat")) dependsOn(ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions)
 
 lazy val TransactionService = project.in(file("TransactionService")) dependsOn(Exceptions, KamanjaBase, ZooKeeperClient, StorageBase, StorageManager, KamanjaData)
+
+lazy val KvBase = project.in(file("KvBase"))

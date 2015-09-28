@@ -6,12 +6,9 @@
  */
 package com.ligadata.StorageBase
 
+import com.ligadata.KvBase.{ Key, Value, StorageTimeRange }
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import java.util.Date
-
-case class Key(timePartition: Date, bucketKey: Array[String], transactionId: Long)
-case class Value(serializerType: String, serializedInfo: Array[Byte])
-case class StorageTimeRange(beginTime: Date, endTime: Date)
 
 trait DataStoreOperations {
   // update operations, add & update semantics are different for relational databases

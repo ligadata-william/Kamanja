@@ -21,7 +21,8 @@ import scala.collection.mutable._
 import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
-import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
+import com.ligadata.KvBase.{ Key, Value, StorageTimeRange }
+import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.KamanjaBase._
 // import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
 import com.ligadata.kamanja.metadata._
@@ -75,6 +76,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var reload: Boolean = false
     var isContainer: Boolean = false
     var objFullName: String = ""
+    var dataStore: DataStore = null
   }
 
   object TxnContextCommonFunctions {
@@ -399,7 +401,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private[this] var _kryoSer: com.ligadata.Serialize.Serializer = null
   private[this] var _classLoader: java.lang.ClassLoader = null
-  private[this] var _allDataDataStore: DataStore = null
+  private[this] var _defaultDataStore: DataStore = null
+  private[this] var _statusinfoDataStore: DataStore = null
   private[this] var _committingPartitionsDataStore: DataStore = null
   private[this] var _checkPointAdapInfoDataStore: DataStore = null
   private[this] var _mdres: MdBaseResolveInfo = null
@@ -431,61 +434,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  /**
-   * For the current container, load the values for each key, coercing it to the appropriate MessageContainerBase, and storing
-   * each in the supplied map.
-   *
-   * @param containerType - a ContainerDef that describes the current container.  Its typeName is used to create an instance
-   *                      of the MessageContainerBase derivative.
-   * @param keys : the keys to use on the dstore to extract a given element.
-   * @param dstore : the mapdb handle
-   * @param map : the map to be updated with key/MessageContainerBase pairs.
-   */
-  private def loadMap(containerName:String, keys: Array[Key], msgOrCont: MsgContainerInfo): Unit = {
-    var objs: Array[KamanjaData] = new Array[KamanjaData](1)
-    var notFoundKeys = 0
-    val buildOne = (k:Key, v: Value) => {
-      buildObject(k, v, objs, msgOrCont.containerType)
-    }
-    keys.foreach(key => {
-      try {
-        _allDataDataStore.get(key, buildOne)
-        msgOrCont.synchronized {
-          msgOrCont.data(InMemoryKeyDataInJson(key.K)) = (false, objs(0))
-        }
-      } catch {
-        case e: ClassNotFoundException => {
-
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          notFoundKeys += 1
-        }
-        case e: KeyNotFoundException => {
-
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          notFoundKeys += 1
-        }
-        case e: Exception => {
-
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          notFoundKeys += 1
-        }
-        case ooh: Throwable => {
-
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${ooh.getCause}, Message:${ooh.getMessage}")
-          throw ooh
-        }
-      }
-    })
-
-    if (notFoundKeys > 0) {
-      logger.error("Not found some keys to load")
-      throw new Exception("Not found some keys to load")
-    }
-
-    logger.info("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
-  }
-
-  private def buildObject(k:Key, v: Value, objs: Array[KamanjaData], containerType: BaseTypeDef): Unit = {
+  private def buildObject(k: Key, v: Value, objs: Array[KamanjaData], containerType: BaseTypeDef): Unit = {
     v.serializerType.toLowerCase match {
       case "kryo" => {
         if (_kryoSer == null) {
@@ -509,10 +458,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String): DataStore = {
     try {
-      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
-      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
+      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo))
+      return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
       case e: Exception => {
         logger.error("Failed to GetDataStoreHandle")
@@ -947,9 +896,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   //BUGBUG:: May be we need to lock before we do anything here
   override def Shutdown: Unit = {
     _adapterUniqKeyValData.clear
-    if (_allDataDataStore != null)
-      _allDataDataStore.Shutdown
-    _allDataDataStore = null
+    if (_defaultDataStore != null)
+      _defaultDataStore.Shutdown
+    _defaultDataStore = null
+
+    if (_statusinfoDataStore != null)
+      _statusinfoDataStore.Shutdown
+    _statusinfoDataStore = null
+
     if (_committingPartitionsDataStore != null)
       _committingPartitionsDataStore.Shutdown
     _committingPartitionsDataStore = null
@@ -968,67 +922,62 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _mgr.GetUserProperty(clusterId, key)
   }
 
-  // Adding new messages or Containers
-  override def AddNewMessageOrContainers(dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit = {
-    logger.info("Messages/Containers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
-    logger.debug("Messages/Containers => loadAllData:%s, jarPaths:%s".format(loadAllData.toString, jarPaths.mkString(",")))
-    if (_allDataDataStore == null) {
-      logger.debug("Messages/Containers => dataDataStoreInfo:" + dataDataStoreInfo)
-      _allDataDataStore = GetDataStoreHandle(jarPaths, dataDataStoreInfo, "AllData")
+  override def SetJarPaths(jarPaths: collection.immutable.Set[String]): Unit = {
+    if (jarPaths != null) {
+      logger.debug("JarPaths:%s".format(jarPaths.mkString(",")))
     }
-    if (_committingPartitionsDataStore == null) {
-      _committingPartitionsDataStore = GetDataStoreHandle(jarPaths, statusDataStoreInfo, "CommmittingTransactions")
-      logger.debug("Messages/Containers => statusDataStoreInfo:" + statusDataStoreInfo + ", _committingPartitionsDataStore:" + _committingPartitionsDataStore)
-    }
-    if (_checkPointAdapInfoDataStore == null) {
-      _checkPointAdapInfoDataStore = GetDataStoreHandle(jarPaths, statusDataStoreInfo, "checkPointAdapInfo")
-      logger.debug("Messages/Containers => statusDataStoreInfo:" + statusDataStoreInfo + ", _checkPointAdapInfoDataStore:" + _checkPointAdapInfoDataStore)
-    }
-
     _jarPaths = jarPaths
-    val all_keys = ArrayBuffer[KamanjaDataKey]() // All keys for all tables for now
-    var keysAlreadyLoaded = false
+  }
 
-    containerNames.foreach(c1 => {
-      val c = c1.toLowerCase
+  override def SetDefaultDatastore(dataDataStoreInfo: String): Unit = {
+    if (dataDataStoreInfo != null)
+      logger.debug("DefaultDatastore Information:%s".format(dataDataStoreInfo))
+    if (_defaultDataStore == null) { // Doing it only once
+      _defaultDataStore = GetDataStoreHandle(_jarPaths, dataDataStoreInfo)
+    }
+  }
+
+  override def SetStatusInfoDatastore(statusDataStoreInfo: String): Unit = {
+    if (statusDataStoreInfo != null)
+      logger.debug("DefaultDatastore Information:%s".format(statusDataStoreInfo))
+    if (_statusinfoDataStore == null) { // Doing it only once
+      _statusinfoDataStore = GetDataStoreHandle(_jarPaths, statusDataStoreInfo)
+    }
+  }
+
+  // Adding new messages or Containers
+  override def RegisterMessageOrContainers(containersInfo: Array[ContainerNameAndDatastoreInfo]): Unit = {
+    if (containersInfo != null)
+      logger.info("Messages/Containers:%s".format(containersInfo.map(ci => (if (ci.containerName != null) ci.containerName else "", if (ci.dataDataStoreInfo != null) ci.dataDataStoreInfo else "")).mkString(",")))
+
+    containersInfo.foreach(ci => {
+      val c = ci.containerName.toLowerCase
       val (namespace, name) = Utils.parseNameTokenNoVersion(c)
       var containerType = _mgr.ActiveType(namespace, name)
 
       if (containerType != null) {
-
         val objFullName: String = containerType.FullName.toLowerCase
-
         val fnd = _messagesOrContainers.getOrElse(objFullName, null)
-
         if (fnd != null) {
           // We already have this
         } else {
           val newMsgOrContainer = new MsgContainerInfo
-
           newMsgOrContainer.containerType = containerType
           newMsgOrContainer.objFullName = objFullName
           newMsgOrContainer.isContainer = (_mgr.ActiveContainer(namespace, name) != null)
 
+          if (ci.dataDataStoreInfo != null)
+            newMsgOrContainer.dataStore = GetDataStoreHandle(_jarPaths, ci.dataDataStoreInfo)
+          else
+            newMsgOrContainer.dataStore = _defaultDataStore
+
           /** create a map to cache the entries to be resurrected from the mapdb */
           _messagesOrContainers(objFullName) = newMsgOrContainer
-          if (loadAllData) {
-            if (keysAlreadyLoaded == false) {
-              val keyCollector = (key: Key) => {
-                collectKey(key, all_keys)
-              }
-              _allDataDataStore.getAllKeys(keyCollector)
-              keysAlreadyLoaded = true
-            }
-            val keys = getTableKeys(all_keys, objFullName)
-            if (keys.size > 0) {
-              loadMap(keys, newMsgOrContainer)
-            }
-            newMsgOrContainer.loadedAll = true
-            newMsgOrContainer.reload = false
-          }
         }
       } else {
-        logger.error("Message/Container %s not found".format(c))
+        var error_msg = "Message/Container %s not found".format(c)
+        logger.error(error_msg)
+        throw new Exception(error_msg)
       }
     })
   }
@@ -1164,7 +1113,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (key != null && value != null && outputResults != null)
       localValues(key) = (transId, value, outputResults)
 
-    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String)])]() 
+    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String)])]()
     val modelsResult = if (txnCtxt != null) txnCtxt.getAllModelsResult else Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
     if (_kryoSer == null) {

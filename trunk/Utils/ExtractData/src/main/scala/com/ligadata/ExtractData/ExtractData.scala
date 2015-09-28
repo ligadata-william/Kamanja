@@ -37,7 +37,8 @@ import com.ligadata.KamanjaBase._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.Serialize.{ JDataStore }
-import com.ligadata.StorageBase.{ Key, Value, StorageTimeRange, DataStore, Transaction }
+import com.ligadata.KvBase.{ Key, Value, StorageTimeRange }
+import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.Exceptions.StackTrace
 import java.util.Date
 import java.text.SimpleDateFormat
