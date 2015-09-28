@@ -56,6 +56,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var dirToWatch: String = ""
   private var moveToDir: String = ""
   private var message_separator: Char = _
+  private var field_separator: Char = _
+  private var kv_separator: Char = _
   private var NUMBER_OF_BEES: Int = 2
   private var maxlen: Int = _
   private var partitionSelectionNumber: Int = _
@@ -72,7 +74,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     dirToWatch = props.getOrElse("dirToWatch","")
     NUMBER_OF_BEES = props("workerdegree").toInt
     maxlen = props("workerbuffersize").toInt * 1024 * 1024
-    kml = new KafkaMessageLoader (props("kafkaBroker"), props("topic"), props("metadataConfigFile"), props("messageName"))
+    kml = new KafkaMessageLoader (props)
     partitionSelectionNumber = props("fileConsumers").toInt
     moveToDir = props.getOrElse("moveToDir","")
   }

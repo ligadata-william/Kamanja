@@ -4,7 +4,7 @@ import java.io.{File, PrintWriter}
 import java.util.Properties
 
 import com.ligadata.Exceptions.{MsgCompilationFailedException, StackTrace}
-import com.ligadata.KamanjaBase.{DelimitedData, MessageContainerObjBase}
+import com.ligadata.KamanjaBase._
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import com.ligadata.Utils.{Utils, KamanjaLoaderInfo}
 import com.ligadata.kamanja.metadata.MdMgr._
@@ -14,20 +14,27 @@ import kafka.producer.{KeyedMessage, ProducerConfig, Producer}
 /**
  * Created by danielkozin on 9/24/15.
  */
-class KafkaMessageLoader(broker: String, topic: String, mdConfig: String, msgName: String) {
+class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, String]) {
   val pw = new PrintWriter(new File("/tmp/output.txt" ))
   var partIdx: Int = 0
 
   var objInst: Any = null
   // Set up some properties for the Kafka Producer
   val props = new Properties()
-  props.put("metadata.broker.list", broker);
+  props.put("metadata.broker.list", inConfiguration(SmartFileAdapterConstants.KAFKA_BROKER));
   props.put("request.required.acks", "1")
-  MetadataAPIImpl.InitMdMgrFromBootStrap(mdConfig, false)
+
+  var delimiters = new DataDelimiters
+  delimiters.keyAndValueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.KV_SEPARATOR,"\\x01")
+  delimiters.fieldDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.FIELD_SEPARATOR,",")
+  delimiters.valueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.VALUE_SEPARATOR,"~")
+
+  MetadataAPIImpl.InitMdMgrFromBootStrap(inConfiguration(SmartFileAdapterConstants.METADATA_CONFIG_FILE), false)
 
   val loaderInfo = new KamanjaLoaderInfo()
-  println("Getting "+ msgName)
-  var msgDefName = msgName.split('.')
+  println("Getting "+ inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+
+  var msgDefName = inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME).split('.')
   var msgDef: MessageDef = mdMgr.ActiveMessage(msgDefName(0), msgDefName(1))
 
   // Just in case we want this to deal with more then 1 MSG_DEF in a future.  - msgName paramter will probably have to
@@ -100,9 +107,9 @@ class KafkaMessageLoader(broker: String, topic: String, mdConfig: String, msgNam
    //   pw.write(msg.msg)
   //    pw.write('\n')
       println("\nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + "\n " + new String(msg.msg))
-      var inputData = new DelimitedData(new String(msg.msg), ",")
-      inputData.tokens = new String(msg.msg).split(",")
-      println(inputData.dataInput)  //mkString("*"))
+      var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)   // new DelimitedData(new String(msg.msg), ",")
+      //inputData.tokens = new String(msg.msg).split(",")
+      println(inputData.asInstanceOf[KvData].dataMap.foreach(x => {println(x._1 + "<>" +x._2)}))  //mkString("*"))
       println(" PartitionKey is " + objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString("--"))
     })
   //  pw.close
@@ -111,11 +118,11 @@ class KafkaMessageLoader(broker: String, topic: String, mdConfig: String, msgNam
   // Push the data into kafka
   private def insertData(msg: String): Unit = {
 
-    if (send(producer, topic, msg.getBytes("UTF8"), partIdx.toString.getBytes("UTF8"))) {
+    if (send(producer, inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC), msg.getBytes("UTF8"), partIdx.toString.getBytes("UTF8"))) {
       partIdx = partIdx + 1
       //return "SUCCESS: Added message to Topic:"+topic
     } else {
-      println("FAILURE: Failed to add message to Topic:"+topic)
+      println("FAILURE: Failed to add message to Topic:"+inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC))
     }
   }
 
@@ -131,5 +138,52 @@ class KafkaMessageLoader(broker: String, topic: String, mdConfig: String, msgNam
         e.printStackTrace()
         return false
     }
+  }
+
+  /**
+   *
+   * @param inputData
+   * @param associatedMsg
+   * @param delimiters
+   * @return
+   */
+  private def CreateKafkaInput(inputData: String, associatedMsg: String, delimiters: DataDelimiters): InputData = {
+    if (associatedMsg == null || associatedMsg.size == 0)
+      throw new Exception("KV data expecting Associated messages as input.")
+
+    if (delimiters.fieldDelimiter == null) delimiters.fieldDelimiter = ","
+    if (delimiters.valueDelimiter == null) delimiters.valueDelimiter = "~"
+    if (delimiters.keyAndValueDelimiter == null) delimiters.keyAndValueDelimiter = "\\x01"
+
+    println(inputData)
+
+    val str_arr = inputData.split(delimiters.fieldDelimiter, -1)
+    val inpData = new KvData(inputData, delimiters)
+    val dataMap = scala.collection.mutable.Map[String, String]()
+
+    println("1 ."+delimiters.fieldDelimiter+"."+delimiters.keyAndValueDelimiter+"."+delimiters.valueDelimiter+".")
+
+    if (delimiters.fieldDelimiter.compareTo(delimiters.keyAndValueDelimiter) == 0) {
+      if (str_arr.size % 2 != 0) {
+        val errStr = "Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched. We got %d tokens from input string %s".format(str_arr.size, inputData)
+        println(errStr)
+        throw new Exception(errStr)
+      }
+      for (i <- 0 until str_arr.size by 2) {
+        dataMap(str_arr(i).trim) = str_arr(i + 1)
+      }
+    } else {
+      str_arr.foreach(kv => {
+        val kvpair = kv.split(delimiters.keyAndValueDelimiter)
+        if (kvpair.size != 2) {
+          throw new Exception("Expecting Key & Value pair only")
+        }
+        dataMap(kvpair(0).trim) = kvpair(1)
+      })
+    }
+
+    inpData.dataMap = dataMap.toMap
+    inpData
+
   }
 }
