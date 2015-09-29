@@ -21,9 +21,14 @@ import java.net.URLClassLoader
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
 import com.ligadata.Exceptions.StackTrace
 import org.apache.log4j._
+import java.util.Date
 
 trait MessageContainerBase {
+  // System Columns
   var transactionId: Long
+  var timePartitionData: Date = null
+  var rowNumber: Int = 0 // This is unique value with in transactionId
+
   def isMessage: Boolean
   def isContainer: Boolean
   def IsFixed: Boolean
