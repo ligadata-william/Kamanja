@@ -32,6 +32,7 @@ import java.util.{ Comparator, List => JList, Iterator => JIterator }
 import java.lang.{ Iterable => JIterable, Long => JLong }
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.JavaConversions._
+import com.ligadata.KvBase.{ Key, Value, TimeRange }
 
 object ThreadLocalStorage {
   final val modelContextInfo = new ThreadLocal[ModelContext]();
@@ -49,12 +50,16 @@ class Stats {
   // # of Rows, Total Size of the data, Avg Size, etc
 }
 
+/*
+
 object TimeRange {
   // Time Range Methods like 30days ago, current date, week ago, adjusting partition to week, month or year, etc
 }
 
 // startTime & endTime are in the format of YYYYMMDDHH
 case class TimeRange(startTime: Int, endTime: Int) {}
+
+*/
 
 // RDD traits/classes
 /**
@@ -1336,8 +1341,8 @@ import RddUtils._
  * Used for various RDD and RDDObject methods.
  */
 object RddDate {
-  val milliSecsPerHr = 3600 * 1000
-  val milliSecsPerDay = 24 * milliSecsPerHr
+  val milliSecsPerHr = 3600L * 1000L
+  val milliSecsPerDay = 24L * milliSecsPerHr
   def currentDateTime = RddDate(currentDateTimeInMs)
   def currentGmtDateTime = RddDate(currentGmtDateTimeInMs)
   def currentDateTimeInMs = GetCurDtTmInMs

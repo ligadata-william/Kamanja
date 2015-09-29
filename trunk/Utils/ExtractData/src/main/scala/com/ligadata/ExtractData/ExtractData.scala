@@ -37,7 +37,7 @@ import com.ligadata.KamanjaBase._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.Serialize.{ JDataStore }
-import com.ligadata.KvBase.{ Key, Value, StorageTimeRange }
+import com.ligadata.KvBase.{ Key, Value, TimeRange }
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.Exceptions.StackTrace
 import java.util.Date
@@ -316,9 +316,9 @@ object ExtractData extends MdBaseResolveInfo {
       }
 
       if (partKey == null || partKey.size == 0) {
-        _dataStore.get(_currentTypName, Array(StorageTimeRange(startTm, endTm)), getObjFn)
+        _dataStore.get(_currentTypName, Array(TimeRange(startTm, endTm)), getObjFn)
       } else {
-        _dataStore.get(_currentTypName, Array(StorageTimeRange(startTm, endTm)), Array(partKey.toArray), getObjFn)
+        _dataStore.get(_currentTypName, Array(TimeRange(startTm, endTm)), Array(partKey.toArray), getObjFn)
       }
 
       // Close file

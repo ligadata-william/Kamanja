@@ -6,7 +6,7 @@
  */
 package com.ligadata.StorageBase
 
-import com.ligadata.KvBase.{ Key, Value, StorageTimeRange }
+import com.ligadata.KvBase.{ Key, Value, TimeRange }
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import java.util.Date
 
@@ -18,13 +18,13 @@ trait DataStoreOperations {
 
   // delete operations
   def del(containerName: String, keys: Array[Key]): Unit // For the given keys, delete the values
-  def del(containerName: String, time: StorageTimeRange, keys: Array[Array[String]]): Unit // For the given multiple bucket key strings, delete the values with in given date range
+  def del(containerName: String, time: TimeRange, keys: Array[Array[String]]): Unit // For the given multiple bucket key strings, delete the values with in given date range
 
   // get operations
   def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit
   def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit
-  def get(containerName: String, timeRanges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit // Range of dates
-  def get(containerName: String, timeRanges: Array[StorageTimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
+  def get(containerName: String, timeRanges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit // Range of dates
+  def get(containerName: String, timeRanges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
   def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit
 
 /*

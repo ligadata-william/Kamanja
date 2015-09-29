@@ -21,7 +21,7 @@ import scala.collection.mutable._
 import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
-import com.ligadata.KvBase.{ Key, Value, StorageTimeRange }
+import com.ligadata.KvBase.{ Key, Value, TimeRange }
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.KamanjaBase._
 // import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
@@ -82,19 +82,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getRecentFromKamanjaData(kamanjaData: KamanjaData, tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
       // BUGBUG:: tmRange is not yet handled
       if (kamanjaData != null) {
-        /*
-            val data = kamanjaData.GetAllData
-            var validRetVal: MessageContainerBase = null
-            var maxTxnId = 0
-            if (f != null) {
-              
-            } else {
-              
-            }
-            
-            data.foreach(v => {})
-*/
-
         if (f != null) {
           val filterddata = kamanjaData.GetAllData.filter(v => f(v))
           if (filterddata.size > 0)

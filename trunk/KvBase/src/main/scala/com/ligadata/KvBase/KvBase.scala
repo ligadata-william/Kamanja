@@ -21,5 +21,5 @@ import java.util.Date
 
 case class Key(timePartition: Date, bucketKey: Array[String], transactionId: Long, rowId: Int)
 case class Value(serializerType: String, serializedInfo: Array[Byte])
-case class StorageTimeRange(beginTime: Date, endTime: Date)
+case class TimeRange(beginTime: Date, endTime: Date)
 

@@ -18,7 +18,7 @@ package com.ligadata.keyvaluestore
 import java.sql.DriverManager
 import java.sql.{Statement,PreparedStatement,CallableStatement,DatabaseMetaData,ResultSet}
 import java.sql.Connection
-import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj, Key, Value, StorageTimeRange }
+import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj, Key, Value, TimeRange }
 import java.nio.ByteBuffer
 import org.apache.log4j._
 import com.ligadata.Exceptions._
@@ -326,7 +326,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     }
   }
 
-  override def del(containerName: String, time: StorageTimeRange, keys: Array[Array[String]]): Unit = {
+  override def del(containerName: String, time: TimeRange, keys: Array[Array[String]]): Unit = {
     logger.info("not implemented yet")
   }
 
@@ -454,11 +454,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     logger.info("not implemented yet")
   }    
 
-  override def get(containerName: String, time_ranges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, time_ranges: Array[StorageTimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
   override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
@@ -638,7 +638,7 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
     logger.info("not implemented yet")
   }
 
-  override def del(containerName: String, time: StorageTimeRange, keys: Array[Array[String]]): Unit = {
+  override def del(containerName: String, time: TimeRange, keys: Array[Array[String]]): Unit = {
     logger.info("not implemented yet")
   }
 
@@ -651,11 +651,11 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
     logger.info("not implemented yet")
   }    
 
-  override def get(containerName: String, time_ranges: Array[StorageTimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
 
-  override def get(containerName: String, time_ranges: Array[StorageTimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+  override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
     logger.info("not implemented yet")
   }
   override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
