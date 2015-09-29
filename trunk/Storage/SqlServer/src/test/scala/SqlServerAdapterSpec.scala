@@ -22,13 +22,15 @@ import Matchers._
 import com.ligadata.Utils._
 import util.control.Breaks._
 import scala.io._
-import java.util.Date
+import java.util.{Date,Calendar}
+import java.text.{SimpleDateFormat}
 import java.io._
 
 import sys.process._
 import org.apache.log4j._
 
 import com.ligadata.keyvaluestore._
+import com.ligadata.KvBase._
 import com.ligadata.StorageBase._
 import com.ligadata.Serialize._
 import com.ligadata.Utils.Utils._
@@ -47,6 +49,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   private val loggerName = this.getClass.getName
   private val logger = Logger.getLogger(loggerName)
   logger.setLevel(Level.INFO)
+  val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
   private val kvManagerLoader = new KamanjaLoaderInfo
 
@@ -70,6 +73,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
+    logger.info("rowId => " + key.rowId)
     logger.info("serializerType => " + value.serializerType)
     logger.info("serializedInfo length => " + value.serializedInfo.length)
   }
@@ -78,6 +82,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
+    logger.info("rowId => " + key.rowId)
   }
 
   @throws(classOf[FileNotFoundException])
@@ -121,7 +126,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var keyArray = new Array[String](0)
 	var custName = "customer-" + i
 	keyArray = keyArray :+ custName
-	var key = new Key(currentTime,keyArray,i)
+	var key = new Key(currentTime,keyArray,i,i)
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
 	var custNumber = "4256667777" + i
 	var obj = new Customer(custName,custAddress,custNumber)
@@ -155,7 +160,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var keyArray = new Array[String](0)
 	var custName = "customer-" + i
 	keyArray = keyArray :+ custName
-	var key = new Key(currentTime,keyArray,i)
+	var key = new Key(currentTime,keyArray,i,i)
 	keys = keys :+ key
       }
       noException should be thrownBy {
@@ -170,7 +175,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var keyArray = new Array[String](0)
 	var custName = "customer-" + i
 	keyArray = keyArray :+ custName
-	var key = new Key(currentTime,keyArray,i)
+	var key = new Key(currentTime,keyArray,i,i)
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
 	var custNumber = "4256667777" + i
 	var obj = new Customer(custName,custAddress,custNumber)
@@ -195,6 +200,66 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       And("Check the row count after truncating the container")
       cnt = sqlServerAdapter.getRowCount(containerName,null)
       assert(cnt == 0)
+
+      And("Test Bulk Put api")
+
+      var keyValueList = new Array[(Key, Value)](0)
+      var keyStringList = new Array[Array[String]](0)
+      for( i <- 1 to 10 ){
+	var  cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -i);    
+	var currentTime = cal.getTime()
+	var keyArray = new Array[String](0)
+	var custName = "customer-" + i
+	keyArray = keyArray :+ custName
+	// keyStringList is only used to test a del operation later
+	keyStringList = keyStringList :+ keyArray
+	var key = new Key(currentTime,keyArray,i,i)
+	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
+	var custNumber = "4256667777" + i
+	var obj = new Customer(custName,custAddress,custNumber)
+	var v = serializer.SerializeObjectToByteArray(obj)
+	var value = new Value("kryo",v)
+	keyValueList = keyValueList :+ (key,value)
+      }
+      var dataList = new Array[(String, Array[(Key,Value)])](0)
+      dataList = dataList :+ (containerName,keyValueList)
+      noException should be thrownBy {
+	adapter.put(dataList)
+      }
+
+      And("Get all the rows that were just added")
+      noException should be thrownBy {
+	adapter.get(containerName,readCallBack)
+      }
+
+      And("Check the row count after adding a bunch")
+      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      assert(cnt == 10)
+
+      And("Get all the keys for the rows that were just added")
+      noException should be thrownBy {
+	adapter.getAllKeys(containerName,readCallBack)
+      }
+
+      And("Test Delete for a time range")
+      var  cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -5);    
+      var beginTime = cal.getTime()
+      logger.info("begin time => " + dateFormat.format(beginTime))
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -3);    
+      var endTime = cal.getTime()
+      logger.info("end time => " + dateFormat.format(endTime))
+
+      val timeRange = new TimeRange(beginTime,endTime)
+      noException should be thrownBy {
+	adapter.del(containerName,timeRange,keyStringList)
+      }
+
+      And("Check the row count after deleting a bunch based on time range")
+      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      assert(cnt == 7)
 
       And("Test drop container again, cleanup")
       noException should be thrownBy {

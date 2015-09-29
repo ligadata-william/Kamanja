@@ -18,7 +18,8 @@ package com.ligadata.keyvaluestore
 import java.sql.DriverManager
 import java.sql.{Statement,PreparedStatement,CallableStatement,DatabaseMetaData,ResultSet}
 import java.sql.Connection
-import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj, Key, Value, TimeRange }
+import com.ligadata.KvBase.{Key, Value, TimeRange }
+import com.ligadata.StorageBase.{DataStore, Transaction, StorageAdapterObj}
 import java.nio.ByteBuffer
 import org.apache.log4j._
 import com.ligadata.Exceptions._
@@ -26,7 +27,8 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
-import java.util.Date
+import java.util.{Date,Calendar}
+import java.text.SimpleDateFormat
 import java.io.File
 import java.net.{ URL, URLClassLoader }
 import scala.collection.mutable.TreeSet
@@ -58,6 +60,8 @@ class DriverShim(d: Driver) extends Driver {
 }
 
 class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
+
+  val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
@@ -234,19 +238,21 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       // Ideally a merge should be implemented as stored procedure
       // I am having some trouble in implementing stored procedure
       // We are implementing this as delete followed by insert for lack of time
-      var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? "
+      var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(deleteSql)
       pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
       pstmt.setString(2,key.bucketKey.mkString(","))
       pstmt.setLong(3,key.transactionId)
+      pstmt.setInt(4,key.rowId)
       pstmt.executeUpdate();
 
-      var insertSql = "insert into " + tableName + "(timePartition,bucketKey,transactionId,serializedInfo) values(?,?,?,?)"
+      var insertSql = "insert into " + tableName + "(timePartition,bucketKey,transactionId,rowId,serializedInfo) values(?,?,?,?,?)"
       pstmt = con.prepareStatement(insertSql)
       pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
       pstmt.setString(2,key.bucketKey.mkString(","))
       pstmt.setLong(3,key.transactionId)
-      pstmt.setBinaryStream(4,new java.io.ByteArrayInputStream(value.serializedInfo),
+      pstmt.setInt(4,key.rowId)
+      pstmt.setBinaryStream(5,new java.io.ByteArrayInputStream(value.serializedInfo),
 			   value.serializedInfo.length)
       pstmt.executeUpdate();
       /*
@@ -279,6 +285,78 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def put(data_list: Array[(String, Array[(Key, Value)])]): Unit = {
+    var con:Connection = null
+    var pstmt:PreparedStatement = null
+    var deleteSql:String = null
+    var insertSql:String = null
+    var totalRowsDeleted = 0;
+    var totalRowsInserted = 0;
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      // we need to commit entire batch
+      con.setAutoCommit(false)
+      data_list.foreach( li => {
+	var containerName = li._1
+	var tableName = toTable(containerName)
+	var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ? "
+	pstmt = con.prepareStatement(deleteSql)
+	var keyValuePairs = li._2
+	keyValuePairs.foreach( keyValuePair => {
+	  var key = keyValuePair._1
+	  pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
+	  pstmt.setString(2,key.bucketKey.mkString(","))
+	  pstmt.setLong(3,key.transactionId)
+	  pstmt.setInt(4,key.rowId)
+	  // Add it to the batch
+	  pstmt.addBatch()
+	})
+	var deleteCount = pstmt.executeBatch();
+	deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
+	if(pstmt != null){
+	  pstmt.close
+	}
+	logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
+	// insert rows 
+	var insertSql = "insert into " + tableName + "(timePartition,bucketKey,transactionId,rowId,serializedInfo) values(?,?,?,?,?)"
+	pstmt = con.prepareStatement(insertSql)
+	// 
+	// we could have potential memory issue if number of records are huge
+	// use a batch size between executions executeBatch
+	keyValuePairs.foreach( keyValuePair => {
+	  var key = keyValuePair._1
+	  var value = keyValuePair._2
+	  pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
+	  pstmt.setString(2,key.bucketKey.mkString(","))
+	  pstmt.setLong(3,key.transactionId)
+	  pstmt.setInt(4,key.rowId)
+	  pstmt.setBinaryStream(5,new java.io.ByteArrayInputStream(value.serializedInfo),
+			   value.serializedInfo.length)
+	  // Add it to the batch
+	  pstmt.addBatch()
+	})
+	var insertCount = pstmt.executeBatch();
+	insertCount.foreach(cnt => { totalRowsInserted += cnt });
+	logger.info("Inserted " + totalRowsInserted + " rows into " + tableName)
+	if(pstmt != null){
+	  pstmt.close
+	}
+      })
+      con.commit()
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+	throw new Exception("Batch put operation failed:" + e.getMessage())
+      }
+    } finally {
+      if(pstmt != null){
+	pstmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }
+
     logger.info("not implemented yet")
   }
 
@@ -290,7 +368,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var tableName = toTable(containerName)
     try{
       con = DriverManager.getConnection(jdbcUrl);
-      var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? "
+      var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(deleteSql)
       // we need to commit entire batch
       con.setAutoCommit(false)
@@ -299,6 +377,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
 	pstmt.setString(2,key.bucketKey.mkString(","))
 	pstmt.setLong(3,key.transactionId)
+	pstmt.setInt(4,key.rowId)
 	// Add it to the batch
 	pstmt.addBatch()
       })
@@ -327,7 +406,49 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def del(containerName: String, time: TimeRange, keys: Array[Array[String]]): Unit = {
-    logger.info("not implemented yet")
+    var con:Connection = null
+    var pstmt:PreparedStatement = null
+    var cstmt:CallableStatement = null
+    var tableName = toTable(containerName)
+    try{
+      logger.info("begin time => " + dateFormat.format(time.beginTime))
+      logger.info("end time => " + dateFormat.format(time.endTime))
+
+      con = DriverManager.getConnection(jdbcUrl);
+      // we need to commit entire batch
+      con.setAutoCommit(false)
+      var deleteSql = "delete from " + tableName + " where timePartition >= ?  and timePartition <= ? and bucketKey = ?"
+      pstmt = con.prepareStatement(deleteSql)
+      keys.foreach( keyList => {
+	var keyStr = keyList.mkString(",")
+	pstmt.setDate(1,new java.sql.Date(time.beginTime.getTime))
+	pstmt.setDate(2,new java.sql.Date(time.endTime.getTime))
+	pstmt.setString(3,keyStr)
+	// Add it to the batch
+	pstmt.addBatch()
+      })
+      var deleteCount = pstmt.executeBatch();
+      con.commit()
+      var totalRowsDeleted = 0;
+      deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
+      logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.info("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to delete object(s) from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(cstmt != null){
+	cstmt.close
+      }
+      if(pstmt != null){
+	pstmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }
   }
 
   private def getData(tableName:String, query:String,callbackFunction: (Key, Value) => Unit): Unit = {
@@ -342,9 +463,10 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	var timePartition = new java.util.Date(rs.getDate(1).getTime())
 	var keyStr = rs.getString(2)
 	var tId = rs.getLong(3)
-	var ba = rs.getBytes(4)
+	var rId = rs.getInt(4)
+	var ba = rs.getBytes(5)
 	val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
-	var key = new Key(timePartition,bucketKey,tId)
+	var key = new Key(timePartition,bucketKey,tId,rId)
 	// yet to understand how split serializerType and serializedInfo from ba
 	// so hard coding serializerType to "kryo" for now
 	var value = new Value("kryo",ba)
@@ -382,8 +504,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	var timePartition = new java.util.Date(rs.getDate(1).getTime())
 	var keyStr = rs.getString(2)
 	var tId = rs.getLong(3)
+	var rId = rs.getInt(4)
 	val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
-	var key = new Key(timePartition,bucketKey,tId)
+	var key = new Key(timePartition,bucketKey,tId,rId)
 	(callbackFunction)(key)
       }
     } catch{
@@ -467,7 +590,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
   def getAllKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
     var tableName = toTable(containerName)
-    var query = "select timePartition,bucketKey,transactionId from " + tableName
+    var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName
     getKeys(tableName,query,callbackFunction)
   }
 
@@ -577,17 +700,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	logger.debug("The table " + tableName + " already exists ")
       }
       else{
-	var query = "create table " + tableName + "(timePartition date,bucketKey varchar(100), transactionId bigint, serializedInfo varbinary(max))"
+	var query = "create table " + tableName + "(timePartition date,bucketKey varchar(100), transactionId bigint, rowId Int, serializedInfo varbinary(max))"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
 	stmt.close
 	var clustered_index_name = "ix_" + tableName 
-	query = "create clustered index " + clustered_index_name + " on " + tableName + "(timePartition,bucketKey,transactionId)"
+	query = "create clustered index " + clustered_index_name + " on " + tableName + "(timePartition,bucketKey,transactionId,rowId)"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
 	stmt.close
 	var index_name = "ix1_" + tableName 
-	query = "create index " + index_name + " on " + tableName + "(bucketKey,transactionId)"
+	query = "create index " + index_name + " on " + tableName + "(bucketKey,transactionId,rowId)"
 	stmt = con.createStatement()
 	stmt.executeUpdate(query);
       }
