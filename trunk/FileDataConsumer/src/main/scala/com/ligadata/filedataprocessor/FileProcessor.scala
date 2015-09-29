@@ -399,6 +399,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         bufferingQ_map.foreach(fileTuple => {
           val d = new File(fileTuple._1)
           if (fileTuple._2 == d.length) {
+            println(partitionId + "  File READY TO PROCESS " + d.toString)
             enQFile(fileTuple._1, 69)
             bufferingQ_map.remove(fileTuple._1)
           }
@@ -450,7 +451,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
           }
         })
       }
-      println("Initialization complete for partition " + partitionId)
+      println(partitionId + " Initialization complete for partition " + partitionId)
 
       // Begin the listening process, TAKE()
       breakable {

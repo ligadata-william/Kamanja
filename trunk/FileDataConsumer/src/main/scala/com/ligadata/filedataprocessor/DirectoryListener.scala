@@ -38,12 +38,12 @@ object LocationWatcher {
       val dir_watcher_2 = new FileProcessor(path, 2)
 
       dir_watcher_1.init(properties)
-     // dir_watcher_2.init(properties)
+      dir_watcher_2.init(properties)
 
       val watch_thread1 = new Thread(dir_watcher_1)
       val watch_thread2 = new Thread(dir_watcher_2)
       watch_thread1.start()
-     // watch_thread2.start()
+      watch_thread2.start()
     }
   }
 }

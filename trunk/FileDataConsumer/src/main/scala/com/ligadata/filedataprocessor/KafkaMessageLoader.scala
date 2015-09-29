@@ -111,9 +111,10 @@ class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, S
         producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
                                         objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
                                         new String(msg.msg).getBytes("UTF8")))
-        
+
         lastFileProcessing = msg.relatedFileName
         lastOffsetProcessed = msg.offsetInFile
+        println("Message added")
       } catch {
         case e: Exception =>
           logger.error("Could not add to the queue due to an Exception "+ e.getMessage)
