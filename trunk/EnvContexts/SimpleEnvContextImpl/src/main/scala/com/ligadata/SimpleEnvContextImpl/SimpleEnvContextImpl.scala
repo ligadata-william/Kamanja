@@ -21,7 +21,7 @@ import scala.collection.mutable._
 import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
-import com.ligadata.KvBase.{ Key, Value, TimeRange }
+import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts }
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.KamanjaBase._
 // import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
@@ -36,6 +36,7 @@ import com.ligadata.Exceptions.StackTrace
 import com.ligadata.KamanjaData.{ KamanjaData }
 import com.ligadata.keyvaluestore.KeyValueManager
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
+import java.util.{ Comparator, TreeMap };
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -69,9 +70,109 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var key: String = _
   }
 
+  def BucketIdForBucketKey(bucketKey: Array[String]): Int = {
+    if (bucketKey == null) return 0
+    val prime = 31;
+    var result = 1;
+    bucketKey.foreach(k => {
+      result = result * prime
+      if (k != null)
+        result += k.hashCode();
+    })
+    return result
+  }
+
+  case class KeyWithBucketId(bucketId: Int, key: Key);
+
+  class BucketKeyComp extends Comparator[KeyWithBucketId] {
+    override def compare(k1: KeyWithBucketId, k2: KeyWithBucketId): Int = {
+      // First compare bucketId
+      if (k1.bucketId < k2.bucketId)
+        return -1
+      if (k1.bucketId > k2.bucketId)
+        return 1
+
+      // Next compare Bucket Keys
+      if (k1.key.bucketKey.size < k2.key.bucketKey.size)
+        return -1
+      if (k1.key.bucketKey.size > k2.key.bucketKey.size)
+        return 1
+
+      for (i <- 0 until k1.key.bucketKey.size) {
+        val cmp = k1.key.bucketKey(i).compareTo(k2.key.bucketKey(i))
+        if (cmp != 0)
+          return cmp
+      }
+
+      // Next Compare time
+      val tmCmp = k1.key.timePartition.compareTo(k2.key.timePartition)
+      if (tmCmp != 0)
+        return tmCmp
+
+      // Next compare TransactionId
+      if (k1.key.transactionId < k2.key.transactionId)
+        return -1
+      if (k1.key.transactionId > k2.key.transactionId)
+        return 1
+
+      // Next compare Row Id
+      if (k1.key.rowId < k2.key.rowId)
+        return -1
+      if (k1.key.rowId > k2.key.rowId)
+        return 1
+
+      return 0
+    }
+  }
+
+  class TimePartComp extends Comparator[KeyWithBucketId] {
+    override def compare(k1: KeyWithBucketId, k2: KeyWithBucketId): Int = {
+      // First Compare time
+      val tmCmp = k1.key.timePartition.compareTo(k2.key.timePartition)
+      if (tmCmp != 0)
+        return tmCmp
+
+      // Next compare bucketId
+      if (k1.bucketId < k2.bucketId)
+        return -1
+      if (k1.bucketId > k2.bucketId)
+        return 1
+
+      // Next compare Bucket Keys
+      if (k1.key.bucketKey.size < k2.key.bucketKey.size)
+        return -1
+      if (k1.key.bucketKey.size > k2.key.bucketKey.size)
+        return 1
+
+      for (i <- 0 until k1.key.bucketKey.size) {
+        val cmp = k1.key.bucketKey(i).compareTo(k2.key.bucketKey(i))
+        if (cmp != 0)
+          return cmp
+      }
+
+      // Next compare TransactionId
+      if (k1.key.transactionId < k2.key.transactionId)
+        return -1
+      if (k1.key.transactionId > k2.key.transactionId)
+        return 1
+
+      // Next compare Row Id
+      if (k1.key.rowId < k2.key.rowId)
+        return -1
+      if (k1.key.rowId > k2.key.rowId)
+        return 1
+
+      return 0
+    }
+  }
+
+  val bucketKeyComp = new BucketKeyComp()
+  val timePartComp = new TimePartComp()
+
   class MsgContainerInfo {
-    var current_msg_cont_data: scala.collection.mutable.ArrayBuffer[MessageContainerBase] = scala.collection.mutable.ArrayBuffer[MessageContainerBase]()
-    var data: scala.collection.mutable.Map[Key, MessageContainerBase] = scala.collection.mutable.Map[Key, MessageContainerBase]()
+    var current_msg_cont_data = ArrayBuffer[MessageContainerBase]()
+    var dataByTmPart = new TreeMap[KeyWithBucketId, MessageContainerBase](timePartComp) // By time, BucketKey, then transactionid & rowid. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+    var dataByBucketKey = new TreeMap[KeyWithBucketId, MessageContainerBase](bucketKeyComp) // By BucketKey, time, then transactionid & rowid
     var containerType: BaseTypeDef = null
     var isContainer: Boolean = false
     var objFullName: String = ""
@@ -111,8 +212,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       //BUGBUG:: tmRange is not yet handled
       //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
       if (container != null) {
+        val kamanjaData = container.data
         if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
-          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+          val kamanjaData = container.data.getOrElse(partKey)
           if (kamanjaData != null)
             return getRecentFromKamanjaData(kamanjaData._2, tmRange, f)
         } else {
@@ -194,13 +296,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       fnd
     }
 
+    /*
     def setFetchedObj(containerName: String, partKeyStr: String, kamanjaData: KamanjaData): Unit = {
       val container = getMsgContainer(containerName.toLowerCase, true)
       if (container != null) {
         container.data(partKeyStr) = (false, kamanjaData)
       }
     }
-
+*/
     def getAllObjects(containerName: String): Array[MessageContainerBase] = {
       val container = getMsgContainer(containerName.toLowerCase, false)
       val arrList = ArrayBuffer[MessageContainerBase]()
@@ -336,7 +439,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
     def saveModelsResult(key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit = {
-      _modelsResult(Key(KamanjaData.defaultTime, key.toArray, 0L, 0)) = value
+      _modelsResult(Key(KvBaseDefalts.defaultTime, key.toArray, 0L, 0)) = value
     }
 
     def getModelsResult(k: Key): scala.collection.mutable.Map[String, SavedMdlResult] = {
@@ -472,7 +575,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     results += ((k.bucketKey(0), (uniqVal.T, uniqVal.V, res.toList))) // taking 1st key, that is what we are expecting
   }
 
-  private def buildModelsResult(k: Key, v: Value, objs: Array[scala.collection.mutable.Map[String, SavedMdlResult]]) {
+  private def buildModelsResult(k: Key, v: Value, objs: Array[(Key, scala.collection.mutable.Map[String, SavedMdlResult])]) {
     v.serializerType.toLowerCase match {
       case "kryo" => {
         if (_kryoSer == null) {
@@ -482,7 +585,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           }
         }
         if (_kryoSer != null) {
-          objs(0) = _kryoSer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[scala.collection.mutable.Map[String, SavedMdlResult]]
+          objs(0) = ((k, _kryoSer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[scala.collection.mutable.Map[String, SavedMdlResult]]))
         }
       }
       case _ => {
@@ -642,7 +745,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       buildAdapterUniqueValue(k, v, results)
     }
     try {
-      _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KamanjaData.defaultTime, KamanjaData.defaultTime)), Array(Array(key)), buildAdapOne)
+      _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), Array(Array(key)), buildAdapOne)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -659,7 +762,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def localGetModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult] = {
-    val k = Key(KamanjaData.defaultTime, key.toArray, 0L, 0)
+    val k = Key(KvBaseDefalts.defaultTime, key.toArray, 0L, 0)
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getModelsResult(k)
@@ -669,10 +772,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val v = _modelsResult.getOrElse(k, null)
     if (v != null) return v
 
-    var objs = new Array[scala.collection.mutable.Map[String, SavedMdlResult]](1)
+    var objs = new Array[(Key, scala.collection.mutable.Map[String, SavedMdlResult])](1)
     val buildMdlOne = (k: Key, v: Value) => { buildModelsResult(k, v, objs) }
     try {
-      _defaultDataStore.get("ModelResults", Array(TimeRange(KamanjaData.defaultTime, KamanjaData.defaultTime)), Array(key.toArray), buildMdlOne)
+      _defaultDataStore.get("ModelResults", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), Array(key.toArray), buildMdlOne)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -680,12 +783,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      /*
       _modelsResult.synchronized {
-        _modelsResult(keystr) = objs(0)
+        _modelsResult(objs(0)._1) = objs(0)._2
       }
-*/
-      return objs(0)
+      return objs(0)._2
     }
     return scala.collection.mutable.Map[String, SavedMdlResult]()
   }
@@ -1115,7 +1216,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
         ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
       val compjson = compact(render(json))
-      dataForContainer += ((Key(KamanjaData.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
+      dataForContainer += ((Key(KvBaseDefalts.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
     })
     commiting_data += (("AdapterUniqKvData", dataForContainer.toArray))
 
@@ -1137,7 +1238,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
             ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
           val compjson = compact(render(json))
-          dataForContainer += ((Key(KamanjaData.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
+          dataForContainer += ((Key(KvBaseDefalts.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
         }
       })
       commiting_data += (("UK", dataForContainer.toArray))
@@ -1208,7 +1309,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       buildAdapterUniqueValue(k, v, results)
     }
 
-    _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KamanjaData.defaultTime, KamanjaData.defaultTime)), keys.map(k => Array(k)), buildAdapOne)
+    _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), keys.map(k => Array(k)), buildAdapOne)
 
     logger.debug("Loaded %d committing informations".format(results.size))
     results.toArray
@@ -1225,81 +1326,38 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit = {
-    // Persists unique key & value here for this transactionId
-    val storeObjects = new Array[IStorage](validateUniqVals.size)
-    var cntr = 0
-
-    logger.debug(s"PersistValidateAdapterInformation => " + validateUniqVals.mkString(","))
-
-    validateUniqVals.foreach(kv => {
-      object obj extends IStorage {
-        val key = makeKey(KamanjaData.PrepareKey("CP", List(kv._1), 0, 0))
-        val value = kv._2
-        val v = makeValue(value.getBytes("UTF8"), "CSV")
-
-        def Key = key
-
-        def Value = v
-
-        def Construct(Key: Key, Value: Value) = {}
-      }
-      storeObjects(cntr) = obj
-      cntr += 1
+    val ukvs = validateUniqVals.map(kv => {
+      (Key(KvBaseDefalts.defaultTime, Array(kv._1), 0L, 0), Value("", kv._2.getBytes("UTF8")))
     })
 
-    val txn = _checkPointAdapInfoDataStore.beginTx()
-    _checkPointAdapInfoDataStore.putBatch(storeObjects)
-    _checkPointAdapInfoDataStore.commitTx(txn)
+    _defaultDataStore.put(Array(("ValidateAdapterPartitionInfo", ukvs)))
   }
 
-  private def buildValidateAdapInfo(tupleBytes: Value, objs: Array[String]) {
-    // Get first _serInfoBufBytes bytes
-    if (tupleBytes.size < _serInfoBufBytes) {
-      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
-      logger.error(errMsg)
-      throw new Exception(errMsg)
-    }
-
-    val valInfo = getValueInfo(tupleBytes)
-    objs(0) = new String(valInfo)
+  private def buildValidateAdapInfo(k: Key, v: Value, results: ArrayBuffer[(String, String)]): Unit = {
+    results += ((k.bucketKey(0), new String(v.serializedInfo)))
   }
 
   override def GetValidateAdapterInformation: Array[(String, String)] = {
     logger.debug(s"GetValidateAdapterInformation() -- Entered")
     val results = ArrayBuffer[(String, String)]()
-
-    val keys = ArrayBuffer[KamanjaDataKey]()
-    val keyCollector = (key: Key) => {
-      collectKey(key, keys)
+    val collectorValidateAdapInfo = (k: Key, v: Value) => {
+      buildValidateAdapInfo(k, v, results)
     }
-    _checkPointAdapInfoDataStore.getAllKeys(keyCollector)
-    var objs: Array[String] = new Array[String](1)
-    logger.debug(s"GetValidateAdapterInformation() -- Get %d keys".format(keys.size))
-    keys.foreach(key => {
-      try {
-        val buildAdapOne = (tupleBytes: Value) => {
-          buildValidateAdapInfo(tupleBytes, objs)
-        }
-        _checkPointAdapInfoDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, 0, 0)), buildAdapOne)
-        logger.debug(s"GetValidateAdapterInformation -- %s -> %s".format(key.K(0), objs(0).toString))
-        results += ((key.K(0), objs(0)))
-      } catch {
-        case e: Exception => {
-          logger.debug(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
-        }
-      }
-    })
+    _defaultDataStore.get("CheckPointInformation", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), collectorValidateAdapInfo)
     logger.debug("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
     results.toArray
   }
 
-  override def ReloadKeys(tempTransId: Long, containerName: String, keys: List[List[String]]): Unit = {
+  override def ReloadKeys(tempTransId: Long, containerName: String, keys: List[Key]): Unit = {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val dataKeys = keys.map(partKey => {
         KamanjaDataKey(container.objFullName, partKey, List[Int](), 0)
       }).toArray
       loadMap(dataKeys, container)
+
+      // _defaultDataStore.get(containerName, keys, callbackFunction: (Key, Value) => Unit)
+
       /*
       keys.foreach(partKey => {
         // Loading full Partition key for now.

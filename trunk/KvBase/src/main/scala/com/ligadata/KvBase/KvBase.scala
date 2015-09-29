@@ -23,3 +23,7 @@ case class Key(timePartition: Date, bucketKey: Array[String], transactionId: Lon
 case class Value(serializerType: String, serializedInfo: Array[Byte])
 case class TimeRange(beginTime: Date, endTime: Date)
 
+object KvBaseDefalts {
+  val defaultTime = new Date(0)
+}
+

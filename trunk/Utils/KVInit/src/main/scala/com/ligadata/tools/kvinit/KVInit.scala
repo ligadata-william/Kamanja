@@ -43,7 +43,6 @@ import com.ligadata.Serialize._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.KamanjaData.KamanjaData
 import java.io.FileInputStream
 import java.util.zip.GZIPInputStream
 import java.io.BufferedReader
@@ -596,7 +595,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
                 //??????????????????????? BUGBUG:: Need to integrate with time partition information message and get the stuff here ???????????????????????
                 messageOrContainer.getTimePartitionInfo
-                val timeVal = KamanjaData.defaultTime
+                val timeVal = KvBaseDefalts.defaultTime
 
                 var foundKey = false
                 var i = 0
