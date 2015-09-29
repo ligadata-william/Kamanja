@@ -645,7 +645,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     kamanjaData.foreach(d => {
       try {
-        val k = Key(d.GetTime, d.GetBucketKey, d.GetTransactionId)
+        val k = Key(d.GetTime, d.GetBucketKey, d.GetTransactionId, 0)
         val v = Value("manual", d.SerializeData)
         storeObjects += ((k, v))
       } catch {

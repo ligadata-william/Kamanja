@@ -20,7 +20,7 @@ import java.util.Date
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.KamanjaBase.{ InputData, DelimitedData, JsonData, XmlData }
 import java.io.{ DataInputStream, DataOutputStream }
-import com.ligadata.KamanjaBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange, JavaRDDObject, MessageContainerBase }
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, JavaRDDObject, MessageContainerBase }
 
 object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerObj {
   type T = CustAlertHistory

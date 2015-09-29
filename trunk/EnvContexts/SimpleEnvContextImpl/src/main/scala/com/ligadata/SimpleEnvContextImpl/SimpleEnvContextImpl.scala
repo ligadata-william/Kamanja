@@ -180,7 +180,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   class TransactionContext(var txnId: Long) {
     private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
     private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
-    private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
+    private[this] val _modelsResult = scala.collection.mutable.Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
     /*
     private[this] val _statusStrings = new ArrayBuffer[String]()
 */
@@ -336,12 +336,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
     def saveModelsResult(key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit = {
-      _modelsResult(InMemoryKeyDataInJson(key)) = value
+      _modelsResult(Key(KamanjaData.defaultTime, key.toArray, 0L, 0)) = value
     }
 
-    def getModelsResult(key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult] = {
-      val keystr = InMemoryKeyDataInJson(key)
-      _modelsResult.getOrElse(keystr, null)
+    def getModelsResult(k: Key): scala.collection.mutable.Map[String, SavedMdlResult] = {
+      _modelsResult.getOrElse(k, null)
     }
 
     def setReloadFlag(containerName: String): Unit = {
@@ -383,13 +382,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
   private[this] val _txnContexts = new Array[scala.collection.mutable.Map[Long, TransactionContext]](_buckets)
   private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
-  private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
+  private[this] val _modelsResult = scala.collection.mutable.Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
   private[this] var _kryoSer: com.ligadata.Serialize.Serializer = null
   private[this] var _classLoader: java.lang.ClassLoader = null
   private[this] var _defaultDataStore: DataStore = null
   private[this] var _statusinfoDataStore: DataStore = null
-  private[this] var _checkPointAdapInfoDataStore: DataStore = null
   private[this] var _mdres: MdBaseResolveInfo = null
   private[this] var _jarPaths: collection.immutable.Set[String] = null // Jar paths where we can resolve all jars (including dependency jars).
 
@@ -453,7 +451,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def buildAdapterUniqueValue(k: Key, v: Value, objs: Array[(Long, String, List[(String, String)])]) {
+  val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
+
+  private def buildAdapterUniqueValue(k: Key, v: Value, results: ArrayBuffer[(String, (Long, String, List[(String, String)]))]) {
     implicit val jsonFormats: Formats = DefaultFormats
     val uniqVal = parse(new String(v.serializedInfo)).extract[AdapterUniqueValueDes]
 
@@ -469,7 +469,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
 
-    objs(0) = (uniqVal.T, uniqVal.V, res.toList)
+    results += ((k.bucketKey(0), (uniqVal.T, uniqVal.V, res.toList))) // taking 1st key, that is what we are expecting
   }
 
   private def buildModelsResult(k: Key, v: Value, objs: Array[scala.collection.mutable.Map[String, SavedMdlResult]]) {
@@ -491,6 +491,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
+  /*
+  
   private def loadObjFromDb(transId: Long, msgOrCont: MsgContainerInfo, key: List[String]): KamanjaData = {
     val partKeyStr = KamanjaData.PrepareKey(msgOrCont.objFullName, key, 0, 0)
     var objs: Array[KamanjaData] = new Array[KamanjaData](1)
@@ -513,7 +515,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
     return objs(0)
   }
-
+  
+  */
+  /*
   private def localGetObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
     if (TxnContextCommonFunctions.IsEmptyKey(partKey) || TxnContextCommonFunctions.IsEmptyKey(primaryKey))
       return null
@@ -599,7 +603,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     retVals.toArray
   }
-
   private def localGetAllKeyValues(transId: Long, containerName: String): Array[MessageContainerBase] = {
     val fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (fnd != null) {
@@ -623,6 +626,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private def localGetAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
     return localGetAllKeyValues(transId, containerName)
   }
+*/
 
   private def localGetAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)]) = {
     val txnCtxt = getTransactionContext(transId, false)
@@ -633,52 +637,54 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     val v = _adapterUniqKeyValData.getOrElse(key, null)
     if (v != null) return v
-    val partKeyStr = KamanjaData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)
-    var objs = new Array[(Long, String, List[(String, String)])](1)
-    val buildAdapOne = (tupleBytes: Value) => {
-      buildAdapterUniqueValue(tupleBytes, objs)
+    val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
+    val buildAdapOne = (k: Key, v: Value) => {
+      buildAdapterUniqueValue(k, v, results)
     }
     try {
-      _allDataDataStore.get(makeKey(partKeyStr), buildAdapOne)
+      _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KamanjaData.defaultTime, KamanjaData.defaultTime)), Array(Array(key)), buildAdapOne)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Data not found for key:" + partKeyStr + "\nStackTrace:" + stackTrace)
+        logger.debug("Data not found for key:" + key + "\nStackTrace:" + stackTrace)
       }
     }
-    if (objs(0) != null) {
+    if (results.size > 0) {
       _adapterUniqKeyValData.synchronized {
-        _adapterUniqKeyValData(key) = objs(0)
+        _adapterUniqKeyValData(key) = results(0)._2
       }
+      return results(0)._2
     }
-    return objs(0)
+    return null
   }
 
   private def localGetModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult] = {
+    val k = Key(KamanjaData.defaultTime, key.toArray, 0L, 0)
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
-      val v = txnCtxt.getModelsResult(key)
+      val v = txnCtxt.getModelsResult(k)
       if (v != null) return v
     }
 
-    val keystr = InMemoryKeyDataInJson(key)
-    val v = _modelsResult.getOrElse(keystr, null)
+    val v = _modelsResult.getOrElse(k, null)
     if (v != null) return v
+
     var objs = new Array[scala.collection.mutable.Map[String, SavedMdlResult]](1)
-    val buildMdlOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
-    val partKeyStr = KamanjaData.PrepareKey("ModelResults", key, 0, 0)
+    val buildMdlOne = (k: Key, v: Value) => { buildModelsResult(k, v, objs) }
     try {
-      _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
+      _defaultDataStore.get("ModelResults", Array(TimeRange(KamanjaData.defaultTime, KamanjaData.defaultTime)), Array(key.toArray), buildMdlOne)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Data not found for key:" + partKeyStr + "\nStackTrace:" + stackTrace)
+        logger.debug("Data not found for key:" + key.mkString(",") + "\nStackTrace:" + stackTrace)
       }
     }
     if (objs(0) != null) {
+      /*
       _modelsResult.synchronized {
         _modelsResult(keystr) = objs(0)
       }
+*/
       return objs(0)
     }
     return scala.collection.mutable.Map[String, SavedMdlResult]()
@@ -687,6 +693,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    * Does at least one of the supplied keys exist in a container with the supplied name?
    */
+  /*
   private def localContainsAny(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     var remainingPartKeys = partKeys
     val txnCtxt = getTransactionContext(transId, false)
@@ -724,10 +731,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
     false
   }
-
+*/
   /**
    * Do all of the supplied keys exist in a container with the supplied name?
    */
+  /*
   private def localContainsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     var remainingPartKeys: Array[List[String]] = partKeys
     var remainingPrimaryKeys: Array[List[String]] = primaryKeys
@@ -815,14 +823,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
   }
-
+*/
   private def localSetObject(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
     var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       val container = txnCtxt.getMsgContainer(containerName.toLowerCase, false)
       if (container == null) {
         // Try to load the key if they exists in global storage.
-        loadBeforeSetObject(txnCtxt, transId, containerName, partKey)
+        // loadBeforeSetObject(txnCtxt, transId, containerName, partKey)
       }
       txnCtxt.setObject(containerName, partKey, value)
     }
@@ -841,13 +849,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       txnCtxt.saveModelsResult(key, value)
     }
   }
-
+  /*
   private def collectKey(key: Key, keys: ArrayBuffer[KamanjaDataKey]): Unit = {
     implicit val jsonFormats: Formats = DefaultFormats
     val parsed_key = parse(new String(key.toArray)).extract[KamanjaDataKey]
     keys += parsed_key
   }
-
+*/
   override def SetClassLoader(cl: java.lang.ClassLoader): Unit = {
     _classLoader = cl
     if (_kryoSer != null)
@@ -869,16 +877,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _statusinfoDataStore.Shutdown
     _statusinfoDataStore = null
 
-    if (_checkPointAdapInfoDataStore != null)
-      _checkPointAdapInfoDataStore.Shutdown
-    _checkPointAdapInfoDataStore = null
     _messagesOrContainers.clear
   }
 
+  /*
   private def getTableKeys(all_keys: ArrayBuffer[KamanjaDataKey], objName: String): Array[KamanjaDataKey] = {
     val tmpObjName = objName.toLowerCase
     all_keys.filter(k => k.T.compareTo(objName) == 0).toArray
   }
+*/
 
   override def getPropertyValue(clusterId: String, key: String): String = {
     _mgr.GetUserProperty(clusterId, key)
@@ -961,6 +968,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     Some(ov.get.Clone())
   }
 
+  /*
   override def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
     Clone(localGetAllObjects(transId, containerName))
   }
@@ -976,6 +984,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)]) = {
     localGetAdapterUniqueKeyValue(transId, key)
   }
+*/
 
   override def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult] = {
     localGetModelsResult(transId, key)
@@ -984,24 +993,27 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    * Does the supplied key exist in a container with the supplied name?
    */
+  /*
   override def contains(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean = {
     localContainsAny(transId, containerName, Array(partKey), Array(primaryKey))
   }
-
+*/
   /**
    * Does at least one of the supplied keys exist in a container with the supplied name?
    */
+  /*
   override def containsAny(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     localContainsAny(transId, containerName, partKeys, primaryKeys)
   }
-
+*/
   /**
    * Do all of the supplied keys exist in a container with the supplied name?
    */
+  /*
   override def containsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     localContainsAll(transId, containerName, partKeys, primaryKeys)
   }
-
+*/
   override def setObject(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
     localSetObject(transId, containerName, partKey, value)
   }
@@ -1014,8 +1026,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     localSaveModelsResult(transId, key, value)
   }
 
-  override def getChangedData(tempTransId: Long, includeMessages: Boolean, includeContainers: Boolean): scala.collection.immutable.Map[String, List[List[String]]] = {
-    val changedContainersData = scala.collection.mutable.Map[String, List[List[String]]]()
+  override def getChangedData(tempTransId: Long, includeMessages: Boolean, includeContainers: Boolean): scala.collection.immutable.Map[String, Array[Key]] = {
+    val changedContainersData = scala.collection.mutable.Map[String, Array[Key]]()
 
     // Commit Data and Removed Transaction information from status
     val txnCtxt = getTransactionContext(tempTransId, false)
@@ -1027,31 +1039,19 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     messagesOrContainers.foreach(v => {
       val mc = _messagesOrContainers.getOrElse(v._1, null)
       if (mc != null) {
-        val savingKeys = new ArrayBuffer[List[String]]()
+        var savingKeys: Array[Key] = null
         if (includeMessages && includeContainers) {
           // All the vlaues (includes messages & containers)
-          v._2.data.foreach(kv => {
-            if (kv._2._1 && kv._2._2.DataSize > 0) {
-              savingKeys += kv._2._2.GetKey.toList
-            }
-          })
+          savingKeys = v._2.data.map(kv => kv._1).toArray
         } else if (includeMessages && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer == false && v._2.isContainer == false)) {
           // Msgs
-          v._2.data.foreach(kv => {
-            if (kv._2._1 && kv._2._2.DataSize > 0) {
-              savingKeys += kv._2._2.GetKey.toList
-            }
-          })
+          savingKeys = v._2.data.map(kv => kv._1).toArray
         } else if (includeContainers && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer || v._2.isContainer)) {
           // Containers
-          v._2.data.foreach(kv => {
-            if (kv._2._1 && kv._2._2.DataSize > 0) {
-              savingKeys += kv._2._2.GetKey.toList
-            }
-          })
+          savingKeys = v._2.data.map(kv => kv._1).toArray
         }
-        if (savingKeys.size > 0)
-          changedContainersData(v._1) = savingKeys.toList
+        if (savingKeys != null && savingKeys.size > 0)
+          changedContainersData(v._1) = savingKeys
       }
     })
 
@@ -1077,7 +1077,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       localValues(key) = (transId, value, outputResults)
 
     val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String)])]()
-    val modelsResult = if (txnCtxt != null) txnCtxt.getAllModelsResult else Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
+    val modelsResult = if (txnCtxt != null) txnCtxt.getAllModelsResult else Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
     if (_kryoSer == null) {
       _kryoSer = SerializerManager.GetSerializer("kryo")
@@ -1111,7 +1111,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     adapterUniqKeyValData.foreach(v1 => {
       _adapterUniqKeyValData(v1._1) = v1._2
       val json = ("T" -> v1._2._1) ~
-        ("V" -> v1._2._2)
+        ("V" -> v1._2._2) ~
+        ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
+        ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
       val compjson = compact(render(json))
       dataForContainer += ((Key(KamanjaData.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
     })
@@ -1120,10 +1122,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     dataForContainer.clear
     modelsResult.foreach(v1 => {
       _modelsResult(v1._1) = v1._2
-      dataForContainer += ((Key(KamanjaData.defaultTime, Array(v1._1), 0, 0), Value("kryo", _kryoSer.SerializeObjectToByteArray(v1._2))))
+      dataForContainer += ((v1._1, Value("kryo", _kryoSer.SerializeObjectToByteArray(v1._2))))
     })
     commiting_data += (("ModelResults", dataForContainer.toArray))
 
+    /*
     dataForContainer.clear
     if (adapterUniqKeyValData.size > 0) {
       adapterUniqKeyValData.foreach(v1 => {
@@ -1139,6 +1142,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       })
       commiting_data += (("UK", dataForContainer.toArray))
     }
+*/
+
+    dos.close()
+    bos.close()
 
     try {
       logger.debug("Going to commit data into datastore.")
@@ -1194,124 +1201,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Get Status information from Final table
-  override def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String))] = {
-    val results = new ArrayBuffer[(String, (Long, String))]()
-    var objs = new Array[(Long, String, List[(String, String)])](1)
-    keys.foreach(key => {
-      try {
-        val buildAdapOne = (tupleBytes: Value) => {
-          buildAdapterUniqueValue(tupleBytes, objs)
-        }
-        _allDataDataStore.get(makeKey(KamanjaData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)), buildAdapOne)
-        results += ((key, (objs(0)._1, objs(0)._2)))
-      } catch {
-        case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.debug(s"getAllAdapterUniqKvDataInfo() -- Unable to load Status Info.  Reason:%s, Message:%s.\nStackTrace:%s".format(key, e.getCause, e.getMessage, stackTrace))
-        }
-      }
-    })
-    logger.debug("Loaded %d committing informations".format(results.size))
-    results.toArray
-  }
-
-  // Get Committing information
-  override def getAllIntermediateCommittingInfo: Array[(String, (Long, String, List[(String, String)]))] = {
-    if (_committingPartitionsDataStore == null) {
-      throw new Exception("Not found Status DataStore to get Status.")
-    }
-
-    val keys = ArrayBuffer[KamanjaDataKey]()
-    val keyCollector = (key: Key) => {
-      collectKey(key, keys)
-    }
-    _committingPartitionsDataStore.getAllKeys(keyCollector)
-
+  override def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] = {
     val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
-    var objs = new Array[(Long, String, List[(String, String)])](1)
-    keys.foreach(key => {
-      if (key.T.compareToIgnoreCase("UK") == 0) {
-        try {
-          val buildAdapOne = (tupleBytes: Value) => {
-            buildAdapterUniqueValue(tupleBytes, objs)
-          }
-          objs(0) = null
-          _committingPartitionsDataStore.get(makeKey(KamanjaData.PrepareKey("UK", key.K, 0, 0)), buildAdapOne)
-          if (objs(0) != null) {
-            results += ((key.K(0), (objs(0))))
-          }
-        } catch {
-          case e: Exception => {
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            logger.debug(s"getAllIntermediateCommittingInfo() -- Unable to load committing Info. Reason:%s, Message:%s.\nStackTrace:%s".format(key, e.getCause, e.getMessage, stackTrace))
-          }
-        }
-      }
-    })
+
+    val buildAdapOne = (k: Key, v: Value) => {
+      buildAdapterUniqueValue(k, v, results)
+    }
+
+    _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KamanjaData.defaultTime, KamanjaData.defaultTime)), keys.map(k => Array(k)), buildAdapOne)
 
     logger.debug("Loaded %d committing informations".format(results.size))
     results.toArray
-  }
-
-  // Getting intermediate committing information.
-  override def getAllIntermediateCommittingInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] = {
-    if (_committingPartitionsDataStore == null) {
-      throw new Exception("Not found Status DataStore to get Status.")
-    }
-
-    val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
-    var objs = new Array[(Long, String, List[(String, String)])](1)
-    keys.foreach(key => {
-      try {
-        val buildAdapOne = (tupleBytes: Value) => {
-          buildAdapterUniqueValue(tupleBytes, objs)
-        }
-        objs(0) = null
-        _committingPartitionsDataStore.get(makeKey(KamanjaData.PrepareKey("UK", List(key), 0, 0)), buildAdapOne)
-        if (objs(0) != null)
-          results += ((key, (objs(0))))
-      } catch {
-        case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.debug(s"getAllIntermediateCommittingInfo() -- Unable to load committing Info. Reason:%s, Message:%s.\nStackTrace:%s".format(key, e.getCause, e.getMessage, stackTrace))
-        }
-      }
-    })
-    logger.debug("Loaded %d committing informations".format(results.size))
-    results.toArray
-  }
-
-  override def removeCommittedKey(transId: Long, key: String): Unit = {
-    if (_committingPartitionsDataStore == null) {
-      throw new Exception("Not found Status DataStore to get Status.")
-    }
-    try {
-      _committingPartitionsDataStore.del(makeKey(KamanjaData.PrepareKey("UK", List(key), 0, 0)))
-    } catch {
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error(s"removeCommittedKey() -- Filed to delete key:%s. Reason:%s, Message:%s.\nStackTrace:%s".format(key, e.getCause, e.getMessage, stackTrace))
-      }
-    }
-  }
-
-  override def removeCommittedKeys(keys: Array[String]): Unit = {
-    if (_committingPartitionsDataStore == null) {
-      throw new Exception("Not found Status DataStore to get Status.")
-    }
-
-    val delKeys = keys.map(key => {
-      makeKey(KamanjaData.PrepareKey("UK", List(key), 0, 0))
-    })
-
-    try {
-      _committingPartitionsDataStore.delBatch(delKeys)
-    } catch {
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error(s"removeCommittedKey() -- Filed to delete keys:%s. Reason:%s, Message:%s.\nStackTrace:%s".format(keys.mkString(","), e.getCause, e.getMessage, stackTrace))
-      }
-    }
   }
 
   // Save Current State of the machine
@@ -1325,9 +1225,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit = {
-    if (_checkPointAdapInfoDataStore == null) {
-      throw new Exception("Not found Status DataStore to save Validate Adapters Information.")
-    }
     // Persists unique key & value here for this transactionId
     val storeObjects = new Array[IStorage](validateUniqVals.size)
     var cntr = 0
@@ -1368,9 +1265,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def GetValidateAdapterInformation: Array[(String, String)] = {
-    if (_checkPointAdapInfoDataStore == null) {
-      throw new Exception("Not found Status DataStore to get Validate Adapters Information.")
-    }
     logger.debug(s"GetValidateAdapterInformation() -- Entered")
     val results = ArrayBuffer[(String, String)]()
 
@@ -1378,7 +1272,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val keyCollector = (key: Key) => {
       collectKey(key, keys)
     }
-    logger.debug(s"GetValidateAdapterInformation() -- About to get keys from _checkPointAdapInfoDataStore:" + _checkPointAdapInfoDataStore)
     _checkPointAdapInfoDataStore.getAllKeys(keyCollector)
     var objs: Array[String] = new Array[String](1)
     logger.debug(s"GetValidateAdapterInformation() -- Get %d keys".format(keys.size))

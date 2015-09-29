@@ -592,7 +592,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def SaveObject(bucketKeyStr: String, value: Array[Byte], typeName: String, serializerTyp: String) {
     val (containerName, store) = tableStoreMap(typeName)
-    val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)
+    val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId, 0)
     val v = Value(serializerTyp, value)
     try {
       store.put(containerName, k, v)
@@ -619,7 +619,7 @@ object MetadataAPIImpl extends MetadataAPI {
     i = 0
     keyList.foreach(bucketKeyStr => {
       var value = valueList(i)
-      val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)
+      val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId, 0)
       val v = Value(serializerTyp, value)
       storeObjects(i) = (k, v)
       i = i + 1
@@ -641,7 +641,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var delKeys = new Array[(Key)](keyList.length)
     i = 0
     keyList.foreach(bucketKeyStr => {
-      val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)
+      val k = Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId, 0)
       delKeys(i) = k
       i = i + 1
     })
@@ -739,7 +739,7 @@ object MetadataAPIImpl extends MetadataAPI {
         var value = serializer.SerializeObjectToByteArray(obj)
         val elemTyp = getMdElemTypeName(obj)
 
-        val k = Key(storageDefaultTime, Array(key), storageDefaultTxnId)
+        val k = Key(storageDefaultTime, Array(key), storageDefaultTxnId, 0)
         val v = Value(serializerType, value)
 
         val ab = saveDataMap.getOrElse(elemTyp, null)
@@ -1669,7 +1669,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def DeleteObject(bucketKeyStr: String, typeName: String) {
     val (containerName, store) = tableStoreMap(typeName)
-    store.del(containerName, Array(Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId)))
+    store.del(containerName, Array(Key(storageDefaultTime, Array(bucketKeyStr), storageDefaultTxnId, 0)))
   }
 
   def DeleteObject(obj: BaseElemDef) {
