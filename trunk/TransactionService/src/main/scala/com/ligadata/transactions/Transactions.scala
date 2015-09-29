@@ -104,7 +104,7 @@ object NodeLevelTransService {
       var cntr = 0
       val nextTxnStart = endTxnIdx + 1
 
-      val k = Key(KamanjaData.defaultTime, bucket_key, 0L)
+      val k = Key(KamanjaData.defaultTime, bucket_key, 0L, 0)
       val v = Value("", nextTxnStart.toString.getBytes())
       val txn = txnsDataStore.beginTx()
       txnsDataStore.put(containerName, k, v)

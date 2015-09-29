@@ -35,6 +35,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions.StackTrace
 import com.ligadata.KamanjaData.{ KamanjaData }
 import com.ligadata.keyvaluestore.KeyValueManager
+import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -70,10 +71,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   class MsgContainerInfo {
     var current_msg_cont_data: scala.collection.mutable.ArrayBuffer[MessageContainerBase] = scala.collection.mutable.ArrayBuffer[MessageContainerBase]()
-    var data: scala.collection.mutable.Map[String, (Boolean, KamanjaData)] = scala.collection.mutable.Map[String, (Boolean, KamanjaData)]()
+    var data: scala.collection.mutable.Map[Key, MessageContainerBase] = scala.collection.mutable.Map[Key, MessageContainerBase]()
     var containerType: BaseTypeDef = null
-    var loadedAll: Boolean = false
-    var reload: Boolean = false
     var isContainer: Boolean = false
     var objFullName: String = ""
     var dataStore: DataStore = null
@@ -403,7 +402,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _classLoader: java.lang.ClassLoader = null
   private[this] var _defaultDataStore: DataStore = null
   private[this] var _statusinfoDataStore: DataStore = null
-  private[this] var _committingPartitionsDataStore: DataStore = null
   private[this] var _checkPointAdapInfoDataStore: DataStore = null
   private[this] var _mdres: MdBaseResolveInfo = null
   private[this] var _jarPaths: collection.immutable.Set[String] = null // Jar paths where we can resolve all jars (including dependency jars).
@@ -434,7 +432,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def buildObject(k: Key, v: Value, objs: Array[KamanjaData], containerType: BaseTypeDef): Unit = {
+  private def buildObject(k: Key, v: Value, objs: Array[MessageContainerBase], containerType: BaseTypeDef): Unit = {
     v.serializerType.toLowerCase match {
       case "kryo" => {
         if (_kryoSer == null) {
@@ -444,13 +442,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           }
         }
         if (_kryoSer != null) {
-          objs(0) = _kryoSer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[KamanjaData]
+          objs(0) = _kryoSer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[MessageContainerBase]
         }
       }
       case "manual" => {
-        val datarec = new KamanjaData
-        datarec.DeserializeData(v.serializedInfo, _mdres, _classLoader)
-        objs(0) = datarec
+        objs(0) = SerializeDeserialize.Deserialize(v.serializedInfo, _mdres, _classLoader, true, "")
       }
       case _ => {
         throw new Exception("Found un-handled Serializer Info: " + v.serializerType)
@@ -470,17 +466,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def buildAdapterUniqueValue(tupleBytes: Value, objs: Array[(Long, String, List[(String, String)])]) {
-    if (tupleBytes.size < _serInfoBufBytes) {
-      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
-      logger.error(errMsg)
-      throw new Exception(errMsg)
-    }
-
-    val valInfo = getValueInfo(tupleBytes)
-
+  private def buildAdapterUniqueValue(k: Key, v: Value, objs: Array[(Long, String, List[(String, String)])]) {
     implicit val jsonFormats: Formats = DefaultFormats
-    val uniqVal = parse(new String(valInfo)).extract[AdapterUniqueValueDes]
+    val uniqVal = parse(new String(v.serializedInfo)).extract[AdapterUniqueValueDes]
 
     val res = ArrayBuffer[(String, String)]()
 
@@ -497,19 +485,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     objs(0) = (uniqVal.T, uniqVal.V, res.toList)
   }
 
-  private def buildModelsResult(tupleBytes: Value, objs: Array[scala.collection.mutable.Map[String, SavedMdlResult]]) {
-    // Get first _serInfoBufBytes bytes
-    if (tupleBytes.size < _serInfoBufBytes) {
-      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
-      logger.error(errMsg)
-      throw new Exception(errMsg)
-    }
-
-    val serInfo = getSerializeInfo(tupleBytes)
-
-    serInfo.toLowerCase match {
+  private def buildModelsResult(k: Key, v: Value, objs: Array[scala.collection.mutable.Map[String, SavedMdlResult]]) {
+    v.serializerType.toLowerCase match {
       case "kryo" => {
-        val valInfo = getValueInfo(tupleBytes)
         if (_kryoSer == null) {
           _kryoSer = SerializerManager.GetSerializer("kryo")
           if (_kryoSer != null && _classLoader != null) {
@@ -517,11 +495,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           }
         }
         if (_kryoSer != null) {
-          objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[scala.collection.mutable.Map[String, SavedMdlResult]]
+          objs(0) = _kryoSer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[scala.collection.mutable.Map[String, SavedMdlResult]]
         }
       }
       case _ => {
-        throw new Exception("Found un-handled Serializer Info: " + serInfo)
+        throw new Exception("Found un-handled Serializer Info: " + v.serializerType)
       }
     }
   }
@@ -904,9 +882,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _statusinfoDataStore.Shutdown
     _statusinfoDataStore = null
 
-    if (_committingPartitionsDataStore != null)
-      _committingPartitionsDataStore.Shutdown
-    _committingPartitionsDataStore = null
     if (_checkPointAdapInfoDataStore != null)
       _checkPointAdapInfoDataStore.Shutdown
     _checkPointAdapInfoDataStore = null
@@ -1097,6 +1072,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Final Commit for the given transaction
+  // BUGBUG:: For now we are committing all the data into default datastore. Not yet handled message level datastore.
   override def commitData(transId: Long, key: String, value: String, outResults: List[(String, String)]): Unit = {
     val outputResults = if (outResults != null) outResults else List[(String, String)]()
 
@@ -1123,150 +1099,70 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
 
-    val storeObjects = ArrayBuffer[IStorage]()
-    var cntr = 0
+    val bos = new ByteArrayOutputStream(1024 * 1024)
+    val dos = new DataOutputStream(bos)
+
+    val commiting_data = ArrayBuffer[(String, Array[(Key, Value)])]()
+    val dataForContainer = ArrayBuffer[(Key, Value)]()
 
     messagesOrContainers.foreach(v => {
+      dataForContainer.clear
       val mc = _messagesOrContainers.getOrElse(v._1, null)
       if (mc != null) {
-        if (v._2.reload)
-          mc.reload = true
         v._2.data.foreach(kv => {
-          if (kv._2._1 && kv._2._2.DataSize > 0) {
-            mc.data(kv._1) = (false, kv._2._2) // Here it is already converted to proper key type. Because we are copying from somewhere else where we applied function InMemoryKeyDataInJson
-            try {
-              val serVal = kv._2._2.SerializeData
-              object obj extends IStorage {
-                val k = makeKey(kv._2._2.SerializeKey)
-                // KamanjaData.PrepareKey(mc.objFullName, ka, 0, 0)
-                val v = makeValue(serVal, "manual")
-
-                def Key = k
-
-                def Value = v
-
-                def Construct(Key: Key, Value: Value) = {}
-              }
-              storeObjects += obj
-              cntr += 1
-            } catch {
-              case e: Exception => {
-
-                logger.error("Failed to serialize/write data.")
-                throw e
-              }
-            }
-          }
+          mc.data(kv._1) = kv._2 // Assigning new data
+          bos.reset
+          kv._2.Serialize(dos)
+          dataForContainer += ((kv._1, Value("manual", bos.toByteArray)))
         })
-
         v._2.current_msg_cont_data.clear
+        commiting_data += ((mc.objFullName, dataForContainer.toArray))
       }
     })
 
+    dataForContainer.clear
     adapterUniqKeyValData.foreach(v1 => {
       _adapterUniqKeyValData(v1._1) = v1._2
-      try {
-        object obj extends IStorage {
-          val k = makeKey(KamanjaData.PrepareKey("AdapterUniqKvData", List(v1._1), 0, 0))
-          val json = ("T" -> v1._2._1) ~
-            ("V" -> v1._2._2)
-          val compjson = compact(render(json))
-          val v = makeValue(compjson.getBytes("UTF8"), "CSV")
-
-          def Key = k
-
-          def Value = v
-
-          def Construct(Key: Key, Value: Value) = {}
-        }
-        storeObjects += obj
-        cntr += 1
-      } catch {
-        case e: Exception => {
-          logger.error("Failed to write data")
-          throw e
-        }
-      }
+      val json = ("T" -> v1._2._1) ~
+        ("V" -> v1._2._2)
+      val compjson = compact(render(json))
+      dataForContainer += ((Key(KamanjaData.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
     })
+    commiting_data += (("AdapterUniqKvData", dataForContainer.toArray))
 
+    dataForContainer.clear
     modelsResult.foreach(v1 => {
       _modelsResult(v1._1) = v1._2
-      try {
-        val serVal = _kryoSer.SerializeObjectToByteArray(v1._2)
-        object obj extends IStorage {
-          val k = makeKey(KamanjaData.PrepareKey("ModelResults", List(v1._1), 0, 0))
-          val v = makeValue(serVal, "kryo")
-
-          def Key = k
-
-          def Value = v
-
-          def Construct(Key: Key, Value: Value) = {}
-        }
-        storeObjects += obj
-        cntr += 1
-      } catch {
-        case e: Exception => {
-          logger.error("Failed to write data")
-          throw e
-        }
-      }
+      dataForContainer += ((Key(KamanjaData.defaultTime, Array(v1._1), 0, 0), Value("kryo", _kryoSer.SerializeObjectToByteArray(v1._2))))
     })
+    commiting_data += (("ModelResults", dataForContainer.toArray))
 
+    dataForContainer.clear
     if (adapterUniqKeyValData.size > 0) {
-      if (_committingPartitionsDataStore == null) {
-        throw new Exception("Not found Status DataStore to save Status.")
-      }
-
-      // Persists unique key & value here for this transactionId
-      val adapKeyValStoreObjs = new ArrayBuffer[IStorage]()
-
       adapterUniqKeyValData.foreach(v1 => {
         if (v1._2._3 != null && v1._2._3.size > 0) { // If we have output then only commit this, otherwise ignore 
-          try {
-            object obj extends IStorage {
-              val k = makeKey(KamanjaData.PrepareKey("UK", List(v1._1), 0, 0))
-              val json = ("T" -> v1._2._1) ~
-                ("V" -> v1._2._2) ~
-                ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
-                ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
-              val compjson = compact(render(json))
-              val v = makeValue(compjson.getBytes("UTF8"), "CSV")
 
-              def Key = k
-
-              def Value = v
-
-              def Construct(Key: Key, Value: Value) = {}
-            }
-            adapKeyValStoreObjs += obj
-          } catch {
-            case e: Exception => {
-              logger.error("Failed to write data")
-              throw e
-            }
-          }
+          val json = ("T" -> v1._2._1) ~
+            ("V" -> v1._2._2) ~
+            ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
+            ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
+          val compjson = compact(render(json))
+          dataForContainer += ((Key(KamanjaData.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
         }
       })
-
-      if (adapKeyValStoreObjs.size > 0) {
-        val txn1 = _committingPartitionsDataStore.beginTx()
-        _committingPartitionsDataStore.putBatch(adapKeyValStoreObjs.toArray)
-        _committingPartitionsDataStore.commitTx(txn1)
-      }
+      commiting_data += (("UK", dataForContainer.toArray))
     }
 
-    val txn = _allDataDataStore.beginTx()
     try {
-      logger.debug("Going to save " + cntr + " objects")
-      storeObjects.foreach(o => {
-        logger.debug("ObjKey:" + new String(o.Key.toArray) + " Value Size: " + o.Value.toArray.size)
+      logger.debug("Going to commit data into datastore.")
+      commiting_data.foreach(cd => {
+        cd._2.foreach(kv => {
+          logger.debug("ObjKey:(%d, %s, %d, %s), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition.getTime(), kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId), kv._2.serializerType, kv._2.serializedInfo.size)
+        })
       })
-      _allDataDataStore.putBatch(storeObjects.toArray)
-      _allDataDataStore.commitTx(txn)
+      _defaultDataStore.put(commiting_data.toArray)
     } catch {
       case e: Exception => {
-        _allDataDataStore.endTx(txn)
         logger.error("Failed to write data")
         throw e
       }
@@ -1288,11 +1184,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   // Clear Intermediate results before Restart processing
   //BUGBUG:: May be we need to lock before we do anything here
   override def clearIntermediateResults: Unit = {
-    // BUGBUG:: What happens to containers with reload flag
     _messagesOrContainers.foreach(v => {
-      if (v._2.loadedAll == false) {
-        v._2.data.clear
-      }
+      v._2.data.clear
     })
 
     _adapterUniqKeyValData.clear
