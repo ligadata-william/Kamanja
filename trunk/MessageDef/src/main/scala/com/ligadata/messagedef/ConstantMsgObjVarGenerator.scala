@@ -162,7 +162,7 @@ class ConstantMsgObjVarGenerator {
     """
    def getTimePartitionKeyData(inputdata: InputData): String = {
 
-    if (timePartionKey == null || timePartionKey.trim == "" || timeParitionKeyPos < 0)
+    if (timeParitionKey == null || timeParitionKey.trim == "" || timeParitionKeyPos < 0)
       return ""
 
     if (inputdata.isInstanceOf[DelimitedData]) {
@@ -181,7 +181,7 @@ class ConstantMsgObjVarGenerator {
       val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
       mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
 
-      return map.getOrElse(timePartionKey, "").toString
+      return map.getOrElse(timeParitionKey, "").toString
     } else if (inputdata.isInstanceOf[KvData]) {
       val kvData = inputdata.asInstanceOf[KvData]
       if (kvData == null) {
@@ -190,7 +190,7 @@ class ConstantMsgObjVarGenerator {
       val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
       kvData.dataMap.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
 
-      return map.getOrElse(timePartionKey, "").toString
+      return map.getOrElse(timeParitionKey, "").toString
 
     } else if (inputdata.isInstanceOf[XmlData]) {
       val xmlData = inputdata.asInstanceOf[XmlData]
@@ -328,36 +328,28 @@ class ConstantMsgObjVarGenerator {
 
   //DatePartitionInfo method in message Object
 
-  private def getTimePartitioninfo(datePatition: TimePartition): String = {
-    var dateParitionInfoStr = new StringBuilder(8 * 1024)
-    var datePatitionKey: String = ""
-    var datePatitionFormat: String = ""
-    var datePatitionDType: String = ""
+  private def getTimePartitioninfo(timePatition: TimePartition): String = {
+    var timeParitionInfoStr = new StringBuilder(8 * 1024)
 
-    if (datePatition == null) {
-      dateParitionInfoStr = dateParitionInfoStr.append("""     
+    if (timePatition == null) {
+      timeParitionInfoStr = timeParitionInfoStr.append("""     
     def getTimePartitionInfo: (String, String, String) = { // Column, Format & Types	
 		return(null, null, null)	
-	}""")
+	}
+    override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+      
+      """)
 
     } else {
 
-      if (datePatition.Format == null) {
-        dateParitionInfoStr = dateParitionInfoStr.append("""     
+      timeParitionInfoStr = timeParitionInfoStr.append("""     
     def getTimePartitionInfo: (String, String, String) = { // Column, Format & Types	
-		return("""" + datePatition.Key + """" , null, """" + datePatition.DType + """")	
-	}""")
-      } else {
-
-        dateParitionInfoStr = dateParitionInfoStr.append("""     
-    def getTimePartitionInfo: (String, String, String) = { // Column, Format & Types	
-		return("""" + datePatition.Key + """" , """" + datePatition.Format + """", """" + datePatition.DType + """")		
+		return("""" + timePatition.Key + """" , """" + timePatition.Format + """", """" + timePatition.DType + """")		
 	}""")
 
-      }
     }
 
-    return dateParitionInfoStr.toString
+    return timeParitionInfoStr.toString
   }
 
   def getName(msg: Message) = {
@@ -616,7 +608,7 @@ trait BaseContainer {
   def getTransactionIdMapped = {
     """
         fields("transactionId") =( (typsStr.indexOf("com.ligadata.BaseTypes.LongImpl")), transactionId)
-	  	fields("timePartitionData") =( (-1)), timePartitionData)
+	  	fields("timePartitionData") =( -1, timePartitionData)
     
     """
 
@@ -812,7 +804,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     val pad1 = "\t"
     var partitionStr = new StringBuilder
     if (timePartitionFld != null && timePartitionFld.trim() != "" && partitionPos != null && partitionPos.trim() != "")
-      "\n	val timeParitionKeyPos : Int = " + partitionPos + "; \n   val timePartionKey : String = \"" + timePartitionFld + "\"; \n " + getTimePartitionInfo + "\n"
+      "\n	val timeParitionKeyPos : Int = " + partitionPos + "; \n   val timeParitionKey : String = \"" + timePartitionFld + "\"; \n " + getTimePartitionInfo + "\n"
     else
       ""
 
@@ -912,21 +904,26 @@ class XmlData(var dataInput: String) extends InputData(){ }
     override def getFullName = FullName    
     """
   }
-  
+
   def computeTimePartitionDate(message: Message): String = {
 
-    var timePartitionKeyData : String = ""
-    if(message.timePartition != null) 
-      timePartitionKeyData = message.timePartition.Key + ".toString"
+    var timePartitionKeyData: String = ""
+    if (message.timePartition != null) {
+      if (message.Fixed.equalsIgnoreCase("true"))
+        timePartitionKeyData = message.timePartition.Key + ".toString"
+      else if (message.Fixed.equalsIgnoreCase("false"))
+        timePartitionKeyData = "fields(\"" + message.timePartition.Key + "\")._2.toString"
+
+    } else timePartitionKeyData = "\" \""
     """
    def ComputeTimePartitionData: Date = {
 		val tmPartInfo = HL7.getTimePartitionInfo
 		if (tmPartInfo == null) return new Date(0);
-		"""+message.Name+""".ComputeTimePartitionData("""+timePartitionKeyData +""", tmPartInfo._2, tmPartInfo._3)
+		""" + message.Name + """.ComputeTimePartitionData(""" + timePartitionKeyData + """, tmPartInfo._2, tmPartInfo._3)
    }
   
   """
-}
+  }
 
   def transactionIdFuncs(message: Message): String = {
 

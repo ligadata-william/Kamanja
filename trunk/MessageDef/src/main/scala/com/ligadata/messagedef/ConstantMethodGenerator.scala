@@ -649,12 +649,16 @@ class ConstantMethodGenerator {
 
   def getDeserStr(deserStr: String, fixed: Boolean): String = {
     var deSer: String = ""
-
+    var timePartitionFld: String = ""
+    if (!fixed) {
+      timePartitionFld = "fields(\"timePartitionData\") = (-1, timePartitionData)"
+    }
     if (deserStr != null && deserStr.trim() != "") {
       deSer = """
          if(prevVer == currentVer){  
               """ + deserStr + """
          timePartitionData = new java.util.Date(com.ligadata.BaseTypes.LongImpl.DeserializeFromDataInputStream(dis))
+          """ + timePartitionFld + """
       
         } else throw new Exception("Current Message/Container Version "+currentVer+" should be greater than Previous Message Version " +prevVer + "." )
      """
@@ -757,6 +761,7 @@ class ConstantMethodGenerator {
       SerializeBaseTypes(dos)
        // Non Base Types
      SerializeNonBaseTypes(dos)
+     com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, fields("timePartitionData")._2.asInstanceOf[Date].getTime())
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)

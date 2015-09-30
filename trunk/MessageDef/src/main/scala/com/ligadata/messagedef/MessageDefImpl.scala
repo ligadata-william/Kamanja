@@ -428,7 +428,7 @@ class MessageDefImpl {
       //println(deserializedBuf)
       mappedMsgPrevVerDeser
       val mapBaseDeser = methodGen.MappedMsgDeserBaseTypes(mappedDeserBaseTypesBuf)
-      val getDeserializedFuncStr = methodGen.getDeserializedFunction(true, mapBaseDeser + deserializedBuf, methodGen.prevVerLessThanCurVerCheck(prevDeserializedBuf), prevVerMsgObjstr, recompile)
+      val getDeserializedFuncStr = methodGen.getDeserializedFunction(false, mapBaseDeser + deserializedBuf, methodGen.prevVerLessThanCurVerCheck(prevDeserializedBuf), prevVerMsgObjstr, recompile)
       val convertOldObjtoNewObj = methodGen.getConvertOldVertoNewVer(methodGen.getConvertOldVertoNewVer, prevVerMsgObjstr, message.PhysicalName, message)
 
       val (btrait, striat, csetters) = cnstObjVar.getBaseTrait(message)
