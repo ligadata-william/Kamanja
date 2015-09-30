@@ -53,6 +53,15 @@ object KeyWithBucketIdAndPrimaryKeyCompHelper {
     if (k1.bucketId > k2.bucketId)
       return 1
 
+    if (k1.key.bucketKey == null && k2.key.bucketKey == null)
+      return 0
+
+    if (k1.key.bucketKey != null && k2.key.bucketKey == null)
+      return 1
+
+    if (k1.key.bucketKey == null && k2.key.bucketKey != null)
+      return -1
+
     // Next compare Bucket Keys
     if (k1.key.bucketKey.size < k2.key.bucketKey.size)
       return -1
@@ -68,10 +77,28 @@ object KeyWithBucketIdAndPrimaryKeyCompHelper {
   }
 
   def CompareTimePartitionData(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    if (k1.key.timePartition == null && k2.key.timePartition == null)
+      return 0
+
+    if (k1.key.timePartition != null && k2.key.timePartition == null)
+      return 1
+
+    if (k1.key.timePartition == null && k2.key.timePartition != null)
+      return -1
+
     return k1.key.timePartition.compareTo(k2.key.timePartition)
   }
 
   def ComparePrimaryKeyData(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    if (k1.primaryKey == null && k2.primaryKey == null)
+      return 0
+
+    if (k1.primaryKey != null && k2.primaryKey == null)
+      return 1
+
+    if (k1.primaryKey == null && k2.primaryKey != null)
+      return -1
+
     if (k1.primaryKey.size < k2.primaryKey.size)
       return -1
     if (k1.primaryKey.size > k2.primaryKey.size)

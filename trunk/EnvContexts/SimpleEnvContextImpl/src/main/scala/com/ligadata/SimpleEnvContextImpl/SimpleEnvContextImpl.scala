@@ -35,7 +35,9 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions.StackTrace
 import com.ligadata.keyvaluestore.KeyValueManager
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
-import java.util.{ TreeMap };
+import java.util.{ TreeMap, Date };
+// import collection._
+// import JavaConverters._
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -70,9 +72,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   class MsgContainerInfo {
-    var current_msg_cont_data = ArrayBuffer[MessageContainerBase]()
-    var dataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
-    var dataByBucketKey = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBucketKeyComp) // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
+    val current_msg_cont_data = ArrayBuffer[MessageContainerBase]()
+    val dataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+    val dataByBucketKey = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBucketKeyComp) // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
     var containerType: BaseTypeDef = null
     var isContainer: Boolean = false
     var objFullName: String = ""
@@ -80,52 +82,77 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   object TxnContextCommonFunctions {
-    def getRecentFromKamanjaData(kamanjaData: KamanjaData, tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
-      // BUGBUG:: tmRange is not yet handled
-      if (kamanjaData != null) {
-        if (f != null) {
-          val filterddata = kamanjaData.GetAllData.filter(v => f(v))
-          if (filterddata.size > 0)
-            return (filterddata(filterddata.size - 1), true)
-        } else {
-          val data = kamanjaData.GetAllData
-          if (data.size > 0)
-            return (data(data.size - 1), true)
-        }
-      }
-      (null, false)
-    }
-
-    def getRddDataFromKamanjaData(kamanjaData: KamanjaData, tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
-      // BUGBUG:: tmRange is not yet handled
-      if (kamanjaData != null) {
-        if (f != null) {
-          return kamanjaData.GetAllData.filter(v => f(v))
-        } else {
-          return kamanjaData.GetAllData
-        }
-      }
-      Array[MessageContainerBase]()
-    }
-
-    def getRecent(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
-      //BUGBUG:: tmRange is not yet handled
-      //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
+    //BUGBUG:: we are handling primaryKey only when partKey
+    def getRecent(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, primaryKey: List[String], f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
+      //BUGBUG:: Taking last record from the search. it may not be the most recent
       if (container != null) {
-        val kamanjaData = container.data
         if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
-          val kamanjaData = container.data.getOrElse(partKey)
-          if (kamanjaData != null)
-            return getRecentFromKamanjaData(kamanjaData._2, tmRange, f)
-        } else {
-          val dataAsArr = container.data.toArray
-          var idx = dataAsArr.size - 1
-          while (idx >= 0) {
-            val (v, foundPartKey) = getRecentFromKamanjaData(dataAsArr(idx)._2._2, tmRange, f)
-            if (foundPartKey)
-              return (v, foundPartKey)
-            idx = idx - 1
+          val tmRng =
+            if (tmRange == null)
+              TimeRange(new Date(Long.MinValue), new Date(Long.MaxValue))
+            else
+              tmRange
+          val partKeyAsArray = partKey.toArray
+          val primKeyAsArray = if (primaryKey != null && primaryKey.size > 0) primaryKey.toArray else null
+          val fromKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.beginTime, partKeyAsArray, 0, 0), primKeyAsArray != null, primKeyAsArray)
+          val toKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.endTime, partKeyAsArray, Long.MaxValue, Int.MaxValue), primKeyAsArray != null, primKeyAsArray)
+          val tmpDataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+          tmpDataByTmPart.putAll(container.dataByBucketKey.subMap(fromKey, true, toKey, true))
+          val tmFilterMap = tmpDataByTmPart.subMap(fromKey, true, toKey, true)
+
+          if (f != null) {
+            var it1 = tmFilterMap.descendingMap().entrySet().iterator()
+            while (it1.hasNext()) {
+              val entry = it1.next();
+              val value = entry.getValue();
+              if (primKeyAsArray != null) {
+                if (primKeyAsArray.sameElements(value.PrimaryKeyData) && f(value)) {
+                  return (value, true);
+                }
+              } else {
+                if (f(value)) {
+                  return (value, true);
+                }
+              }
+            }
+          } else {
+            if (primKeyAsArray != null) {
+              var it1 = tmFilterMap.descendingMap().entrySet().iterator()
+              while (it1.hasNext()) {
+                val entry = it1.next();
+                val value = entry.getValue();
+                if (primKeyAsArray.sameElements(value.PrimaryKeyData))
+                  return (value, true);
+              }
+            } else {
+              val data = tmFilterMap.lastEntry()
+              if (data != null)
+                return (data.getValue(), true)
+            }
           }
+        } else if (tmRange != null) {
+          val fromKey = KeyWithBucketIdAndPrimaryKey(Int.MinValue, Key(tmRange.beginTime, null, 0, 0), false, null)
+          val toKey = KeyWithBucketIdAndPrimaryKey(Int.MaxValue, Key(tmRange.endTime, null, Long.MaxValue, Int.MaxValue), false, null)
+          val tmFilterMap = container.dataByTmPart.subMap(fromKey, true, toKey, true)
+
+          if (f != null) {
+            var it1 = tmFilterMap.descendingMap().entrySet().iterator()
+            while (it1.hasNext()) {
+              val entry = it1.next();
+              val value = entry.getValue();
+              if (f(value)) {
+                return (value, true);
+              }
+            }
+          } else {
+            val data = tmFilterMap.lastEntry()
+            if (data != null)
+              return (data.getValue(), true)
+          }
+        } else {
+          val data = container.dataByTmPart.lastEntry()
+          if (data != null)
+            return (data.getValue(), true)
         }
       }
       (null, false)
@@ -135,6 +162,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (key == null || key.size == 0)
     }
 
+    /*
     def IsSameKey(key1: List[String], key2: List[String]): Boolean = {
       if (key1.size != key2.size)
         return false
@@ -154,25 +182,74 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       })
       return false
     }
+*/
 
-    def getRddData(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean, alreadyFoundPartKeys: Array[List[String]]): (Array[MessageContainerBase], Array[List[String]]) = {
+    def getRddData(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, primaryKey: List[String], f: MessageContainerBase => Boolean, alreadyFoundPartKeys: Array[Key]): (Array[MessageContainerBase], Array[Key]) = {
       val retResult = ArrayBuffer[MessageContainerBase]()
-      var foundPartKeys = ArrayBuffer[List[String]]()
+      var foundPartKeys = ArrayBuffer[Key]()
       if (container != null) {
         if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
-          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-          if (kamanjaData != null && IsKeyExists(alreadyFoundPartKeys, kamanjaData._2.GetKey.toList) == false) {
-            retResult ++= getRddDataFromKamanjaData(kamanjaData._2, tmRange, f)
-            foundPartKeys += partKey
+          val tmRng =
+            if (tmRange == null)
+              TimeRange(new Date(Long.MinValue), new Date(Long.MaxValue))
+            else
+              tmRange
+          val partKeyAsArray = partKey.toArray
+          val primKeyAsArray = if (primaryKey != null && primaryKey.size > 0) primaryKey.toArray else null
+          val fromKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.beginTime, partKeyAsArray, 0, 0), primKeyAsArray != null, primKeyAsArray)
+          val toKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.endTime, partKeyAsArray, Long.MaxValue, Int.MaxValue), primKeyAsArray != null, primKeyAsArray)
+          val tmpDataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+          tmpDataByTmPart.putAll(container.dataByBucketKey.subMap(fromKey, true, toKey, true))
+          val tmFilterMap = tmpDataByTmPart.subMap(fromKey, true, toKey, true)
+
+          if (f != null) {
+            var it1 = tmFilterMap.entrySet().iterator()
+            while (it1.hasNext()) {
+              val entry = it1.next();
+              val value = entry.getValue();
+              if (f(value)) {
+                retResult += value
+                foundPartKeys += entry.getKey().key
+              }
+            }
+          } else {
+            var it1 = tmFilterMap.entrySet().iterator()
+            while (it1.hasNext()) {
+              val entry = it1.next();
+              retResult += entry.getValue()
+              foundPartKeys += entry.getKey().key
+            }
+          }
+        } else if (tmRange != null) {
+          val fromKey = KeyWithBucketIdAndPrimaryKey(Int.MinValue, Key(tmRange.beginTime, null, 0, 0), false, null)
+          val toKey = KeyWithBucketIdAndPrimaryKey(Int.MaxValue, Key(tmRange.endTime, null, Long.MaxValue, Int.MaxValue), false, null)
+          val tmFilterMap = container.dataByTmPart.subMap(fromKey, true, toKey, true)
+
+          if (f != null) {
+            var it1 = tmFilterMap.entrySet().iterator()
+            while (it1.hasNext()) {
+              val entry = it1.next();
+              val value = entry.getValue();
+              if (f(value)) {
+                retResult += value
+                foundPartKeys += entry.getKey().key
+              }
+            }
+          } else {
+            var it1 = tmFilterMap.entrySet().iterator()
+            while (it1.hasNext()) {
+              val entry = it1.next();
+              retResult += entry.getValue()
+              foundPartKeys += entry.getKey().key
+            }
           }
         } else {
-          container.data.foreach(kv => {
-            val k = kv._2._2.GetKey.toList
-            if (IsKeyExists(alreadyFoundPartKeys, k) == false) {
-              retResult ++= getRddDataFromKamanjaData(kv._2._2, tmRange, f)
-              foundPartKeys += k.toList
-            }
-          })
+          var it1 = container.dataByTmPart.entrySet().iterator()
+          while (it1.hasNext()) {
+            val entry = it1.next();
+            retResult += entry.getValue()
+            foundPartKeys += entry.getKey().key
+          }
         }
       }
       (retResult.toArray, foundPartKeys.toArray)
@@ -183,9 +260,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
     private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
     private[this] val _modelsResult = scala.collection.mutable.Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
-    /*
-    private[this] val _statusStrings = new ArrayBuffer[String]()
-*/
 
     def getMsgContainer(containerName: String, addIfMissing: Boolean): MsgContainerInfo = {
       var fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
@@ -205,28 +279,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 */
     def getAllObjects(containerName: String): Array[MessageContainerBase] = {
-      val container = getMsgContainer(containerName.toLowerCase, false)
-      val arrList = ArrayBuffer[MessageContainerBase]()
-      if (container != null) {
-        container.data.foreach(kv => {
-          arrList ++= kv._2._2.GetAllData
-        })
-      }
-      arrList.toArray
+      return TxnContextCommonFunctions.getRddData(getMsgContainer(containerName.toLowerCase, false), null, null, null, null, Array[Key]())._1
     }
 
     def getObject(containerName: String, partKey: List[String], primaryKey: List[String]): (MessageContainerBase, Boolean) = {
-      val container = getMsgContainer(containerName.toLowerCase, false)
-      if (container != null && TxnContextCommonFunctions.IsEmptyKey(partKey) == false && TxnContextCommonFunctions.IsEmptyKey(primaryKey) == false) {
-        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-        if (kamanjaData != null) {
-          // Search for primary key match
-          return (kamanjaData._2.GetMessageContainerBase(primaryKey.toArray, false), true)
-        }
-      }
-      (null, false)
+      return TxnContextCommonFunctions.getRecent(getMsgContainer(containerName.toLowerCase, false), partKey, null, primaryKey, null)
     }
 
+/*
     def getObjects(containerName: String, partKey: List[String], appendCurrentChanges: Boolean): (Array[MessageContainerBase], Boolean) = {
       val container = getMsgContainer(containerName.toLowerCase, false)
       if (container != null) {
@@ -250,6 +310,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       (Array[MessageContainerBase](), false)
     }
+*/
 
     def containsAny(containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): (Boolean, Array[List[String]]) = {
       val container = getMsgContainer(containerName.toLowerCase, false)
@@ -346,35 +407,19 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _modelsResult.getOrElse(k, null)
     }
 
-    def setReloadFlag(containerName: String): Unit = {
-      val container = getMsgContainer(containerName.toLowerCase, false)
-      if (container != null)
-        container.reload = true
-    }
-
-    /*
-    def saveStatus(status: String): Unit = {
-      _statusStrings += status
-    }
-*/
-
     def getAllMessagesAndContainers = _messagesOrContainers.toMap
 
     def getAllAdapterUniqKeyValData = _adapterUniqKeyValData.toMap
 
     def getAllModelsResult = _modelsResult.toMap
 
-    /*
-    def getAllStatusStrings = _statusStrings
-*/
-
-    def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
-      val (v, foundPartKey) = TxnContextCommonFunctions.getRecent(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, f)
+    def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, primaryKey: List[String], f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
+      val (v, foundPartKey) = TxnContextCommonFunctions.getRecent(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, primaryKey, f)
       (v, foundPartKey)
     }
 
-    def getRddData(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean, alreadyFoundPartKeys: Array[List[String]]): (Array[MessageContainerBase], Array[List[String]]) = {
-      return TxnContextCommonFunctions.getRddData(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, f, alreadyFoundPartKeys)
+    def getRddData(containerName: String, partKey: List[String], tmRange: TimeRange, primaryKey: List[String], f: MessageContainerBase => Boolean, alreadyFoundPartKeys: Array[Key]): (Array[MessageContainerBase], Array[Key]) = {
+      return TxnContextCommonFunctions.getRddData(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, primaryKey, f, alreadyFoundPartKeys)
     }
   }
 
