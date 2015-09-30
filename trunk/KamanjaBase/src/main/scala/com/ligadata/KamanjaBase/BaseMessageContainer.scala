@@ -81,6 +81,10 @@ trait MessageContainerObjBase {
   def TimePartitionData(inputdata: InputData): Date
 
   private def extractTime(fieldData: String, timeFormat: String): Long = {
+    if (fieldData == null || fieldData.trim() == "") return 0
+
+    if (timeFormat == null || timeFormat.trim() == "") return 0
+
     if (timeFormat.compareToIgnoreCase("epochtimeInMillis") == 0)
       return fieldData.toLong
 
@@ -104,6 +108,8 @@ trait MessageContainerObjBase {
     // Align to Partition
     var cal: Calendar = Calendar.getInstance();
     cal.setTime(new Date(fldTimeDataInMs));
+
+    if (timePartitionType == null || timePartitionType.trim() == "") return new Date(0)
 
     timePartitionType.toLowerCase match {
       case "yearly" => {

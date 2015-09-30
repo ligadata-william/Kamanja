@@ -855,8 +855,7 @@ class MessageDefImpl {
 
       if (message.getOrElse(key, null) != null && message.get(key).get.isInstanceOf[sMap]) {
         val timePartitionMap: sMap = message.get(key).get.asInstanceOf[sMap]
-        println("timePartitionMap-Key" + timePartitionMap.contains("Key"))
-
+       
         if (timePartitionMap.contains("Key") && (timePartitionMap.get("Key").get.isInstanceOf[String])) {
           timePartitionKey = timePartitionMap.get("Key").get.asInstanceOf[String].toLowerCase()
 
