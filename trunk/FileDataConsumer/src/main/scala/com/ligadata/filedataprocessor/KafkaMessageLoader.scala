@@ -1,9 +1,11 @@
 package com.ligadata.filedataprocessor
 
-import java.io.{File, PrintWriter}
+import java.io.{IOException, File, PrintWriter}
+import java.nio.file.StandardCopyOption._
+import java.nio.file.{Paths, Files}
 import java.util.Properties
 
-import com.ligadata.Exceptions.{MsgCompilationFailedException, StackTrace}
+import com.ligadata.Exceptions.{UnsupportedObjectException, MsgCompilationFailedException, StackTrace}
 import com.ligadata.KamanjaBase._
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import com.ligadata.Utils.{Utils, KamanjaLoaderInfo}
@@ -25,10 +27,12 @@ class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, S
   val props = new Properties()
   props.put("metadata.broker.list", inConfiguration(SmartFileAdapterConstants.KAFKA_BROKER));
   props.put("request.required.acks", "1")
+  // create the producer object
+  val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props))
 
   var delimiters = new DataDelimiters
   delimiters.keyAndValueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.KV_SEPARATOR,"\\x01")
-  delimiters.fieldDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.FIELD_SEPARATOR,",")
+  delimiters.fieldDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.FIELD_SEPARATOR,"\\x01")
   delimiters.valueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.VALUE_SEPARATOR,"~")
 
   MetadataAPIImpl.InitMdMgrFromBootStrap(inConfiguration(SmartFileAdapterConstants.METADATA_CONFIG_FILE), false)
@@ -36,9 +40,15 @@ class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, S
   val loaderInfo = new KamanjaLoaderInfo()
   println("Getting "+ inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
 
-  var msgDefName = inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME).split('.')
-  var msgDef: MessageDef = mdMgr.ActiveMessage(msgDefName(0), msgDefName(1))
+  //var msgDefName = inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME).split('.')
+  val(typNameSpace, typName) = com.ligadata.kamanja.metadata.Utils.parseNameTokenNoVersion(inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+  println(typNameSpace)
+  println(typName)
+  var msgDef: MessageDef = mdMgr.ActiveMessage(typNameSpace, typName)
 
+  if (msgDef == null) {
+    throw new UnsupportedObjectException("Unknown message definition")
+  }
   // Just in case we want this to deal with more then 1 MSG_DEF in a future.  - msgName paramter will probably have to
   // be an array inthat case.. but for now......
   var allJars = collection.mutable.Set[String]()
@@ -88,55 +98,55 @@ class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, S
           objInst = tempCurClass.newInstance
         }
       }
-      println("\n\n" + objInst.asInstanceOf[MessageContainerObjBase].FullName + "\n\n" + objInst.asInstanceOf[MessageContainerObjBase].Version)
     }
   })
-
-  // Ok, get the MessageBaseObj for messagedef..
-
-  // create the producer object
-  val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props))
 
 
   def pushData(messages: Array[KafkaMessage]): Unit = {
 
     messages.foreach(msg => {
+      // Now, there are some special cases here.  If offset is -1, then its just a signal to close the file
+      // else, this may or may not be the last message in the file... look to isLast for guidance.
+      if(msg.offsetInFile > 0) {
+        println("\nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + "\n " + new String(msg.msg))
+        var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
 
-      println("\nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + "\n " + new String(msg.msg))
-      var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
-      println(inputData.asInstanceOf[KvData].dataMap.foreach(x => {println(x._1 + "<>" +x._2)}))  //mkString("*"))
-      println(" PartitionKey is " + objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString("--"))
+        try {
+          producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+            objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
+            new String(msg.msg).getBytes("UTF8")))
 
-      try {
-        producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
-                                        objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
-                                        new String(msg.msg).getBytes("UTF8")))
-
-        lastFileProcessing = msg.relatedFileName
-        lastOffsetProcessed = msg.offsetInFile
-        println("Message added")
-      } catch {
-        case e: Exception =>
-          logger.error("Could not add to the queue due to an Exception "+ e.getMessage)
-          e.printStackTrace
+          lastFileProcessing = msg.relatedFileName
+          lastOffsetProcessed = msg.offsetInFile
+          println("Message added")
+        } catch {
+          case e: Exception =>
+            logger.error("Could not add to the queue due to an Exception "+ e.getMessage)
+            e.printStackTrace
+        }
       }
+
+      if (msg.isLast) {
+        try {
+          println("EOF Detected")
+          var fileStruct = msg.relatedFileName.split("/")
+          if (inConfiguration.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null) != null) {
+            println(" Moving File" + msg.relatedFileName + " to "+ inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
+            Files.copy(Paths.get(msg.relatedFileName), Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO)+"/"+ fileStruct(fileStruct.size - 1)),REPLACE_EXISTING)
+            Files.deleteIfExists(Paths.get(msg.relatedFileName))
+          } else {
+            println(" Renaming file "+ msg.relatedFileName + " to " + msg.relatedFileName + "_COMPLETE")
+            (new File(msg.relatedFileName)).renameTo(new File(msg.relatedFileName + "_COMPLETE"))
+          }
+        } catch {
+          case ioe: IOException => ioe.printStackTrace()
+        }
+      }
+
     })
-  //  pw.close
   }
 
-  /**
-   * send message
-   */
-  private def send(producer: Producer[AnyRef, AnyRef], topic: String, message: Array[Byte], partIdx: Array[Byte]): Boolean = {
-    try {
-      producer.send(new KeyedMessage(topic, partIdx, message))
-      return true
-    } catch {
-      case e: Exception =>
-        e.printStackTrace()
-        return false
-    }
-  }
+
 
   /**
    *
@@ -153,13 +163,9 @@ class KafkaMessageLoader(inConfiguration: scala.collection.mutable.Map[String, S
     if (delimiters.valueDelimiter == null) delimiters.valueDelimiter = "~"
     if (delimiters.keyAndValueDelimiter == null) delimiters.keyAndValueDelimiter = "\\x01"
 
-    println(inputData)
-
     val str_arr = inputData.split(delimiters.fieldDelimiter, -1)
     val inpData = new KvData(inputData, delimiters)
     val dataMap = scala.collection.mutable.Map[String, String]()
-
-    println("1 ."+delimiters.fieldDelimiter+"."+delimiters.keyAndValueDelimiter+"."+delimiters.valueDelimiter+".")
 
     if (delimiters.fieldDelimiter.compareTo(delimiters.keyAndValueDelimiter) == 0) {
       if (str_arr.size % 2 != 0) {

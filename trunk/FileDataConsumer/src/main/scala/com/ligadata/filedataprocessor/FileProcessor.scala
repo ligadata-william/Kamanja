@@ -16,7 +16,7 @@ import java.nio.file.Paths.get
 
 case class BufferLeftoversArea (workerNumber: Int, leftovers: Array[Char], relatedChunk: Long)
 case class BufferToChunk(len: Int, payload: Array[Char], chunkNumber: Long, relatedFileName: String)
-case class KafkaMessage (msg: Array[Char], offsetInFile: Int, relatedFileName: String)
+case class KafkaMessage (msg: Array[Char], offsetInFile: Int, isLast: Boolean, relatedFileName: String)
 
 /**
  *
@@ -39,7 +39,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var msgQ: scala.collection.mutable.Queue[Array[KafkaMessage]] = scala.collection.mutable.Queue[Array[KafkaMessage]]()
   private var bufferQ: scala.collection.mutable.Queue[BufferToChunk] = scala.collection.mutable.Queue[BufferToChunk]()
   private var blg = new BufferLeftoversArea(-1, null, -1)
-  private var fileOffsetTracker: scala.collection.mutable.Map[String,Int] = scala.collection.mutable.Map[String,Int]()
+  private var fileOffsetTracker: scala.collection.mutable.Map[String,(Int,Boolean)] = scala.collection.mutable.Map[String,(Int,Boolean)]()
   private var bufferingQ_map: scala.collection.mutable.Map[String,Long] = scala.collection.mutable.Map[String,Long]()
 
   // Locks used for Q synchronization.
@@ -85,15 +85,22 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     }
   }
 
-  private def getKnownOffset(file: String): Int = {
+  private def getKnownOffset(file: String): (Int, Boolean) = {
     trackerLock.synchronized {
-      return fileOffsetTracker.getOrElse(file,0)
+      return fileOffsetTracker.getOrElse(file,(0,false))
     }
   }
 
   private def setOffsetForFile(file:String, offset: Int): Unit = {
     trackerLock.synchronized {
-      fileOffsetTracker(file) = offset
+      fileOffsetTracker(file) = (offset,false)
+    }
+  }
+
+  private def markFileAsFinished(file:String): Unit = {
+    trackerLock.synchronized {
+      var currentoffset = fileOffsetTracker(file)._1
+      fileOffsetTracker(file) = (currentoffset, true)
     }
   }
 
@@ -220,8 +227,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
              var newMsg: Array[Char] = buffer.payload.slice(prevIndx, indx)
           //   println("Message found:\n" + new String(newMsg))
              msgNum += 1
-             messages.add(new KafkaMessage(newMsg, msgNum, buffer.relatedFileName))
-            // enQMsg(newMsg, beeNumber)
+             messages.add(new KafkaMessage(newMsg, msgNum, false, buffer.relatedFileName))
              prevIndx = indx + 1
            }
            indx = indx + 1
@@ -246,7 +252,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
              // Prepend the leftovers to the first element of the array of messages
              val msgArray = messages.toArray
-             val firstMsgWithLefovers = new KafkaMessage(leftOvers ++ msgArray(0).msg, msgArray(0).offsetInFile, buffer.relatedFileName)
+             val firstMsgWithLefovers = new KafkaMessage(leftOvers ++ msgArray(0).msg, msgArray(0).offsetInFile, false, buffer.relatedFileName)
              msgArray(0) = firstMsgWithLefovers
              enQMsg(msgArray, beeNumber)
            } else {
@@ -276,9 +282,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
    * @param fileName
    */
   private def readBytesChunksFromFile (fileName: String) : Unit = {
-    //val maxlen: Int = 1024 * 1024 * 8
-    //val maxlen: Int = 16M
-    //val buffer = new Array[Byte](maxlen)
+
     val buffer = new Array[Char](maxlen)
     var readlen = 0
     var len: Int = 0
@@ -307,6 +311,10 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
       bis = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)))
     }
 
+    // Intitialize the leftover area for this file reading.
+    var newFileLeftOvers = BufferLeftoversArea(0, Array[Char](), -1)
+    setLeftovers(newFileLeftOvers, 0)
+
     do {
       readlen = bis.read(buffer, 0, maxlen -1)
       if (readlen > 0) {
@@ -323,14 +331,18 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     // make it a KamfkaMessage buffer.
     var myLeftovers: BufferLeftoversArea = null
     var foundRelatedLeftovers = false
-    while(!foundRelatedLeftovers){
+    while(!foundRelatedLeftovers) {
       myLeftovers = getLeftovers(1000)
       // if this is for the last chunk written...
       if (myLeftovers.relatedChunk == (chunkNumber - 1)) {
         // EnqMsg here.. but only if there is something in there.
         if (myLeftovers.leftovers.size > 0) {
           var messages: scala.collection.mutable.LinkedHashSet[KafkaMessage] = scala.collection.mutable.LinkedHashSet[KafkaMessage]()
-          messages.add(new KafkaMessage(myLeftovers.leftovers, getKnownOffset(fileName) + 1, fileName))
+          messages.add(new KafkaMessage(myLeftovers.leftovers, getKnownOffset(fileName)._1 + 1, true, fileName))
+          enQMsg(messages.toArray, 1000)
+        } else {
+          var messages: scala.collection.mutable.LinkedHashSet[KafkaMessage] = scala.collection.mutable.LinkedHashSet[KafkaMessage]()
+          messages.add(new KafkaMessage(null, -1, true, fileName))
           enQMsg(messages.toArray, 1000)
         }
         foundRelatedLeftovers = true
@@ -338,6 +350,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         Thread.sleep(100)
       }
     }
+    // Done with this file... mark is as closed
+    markFileAsFinished(fileName)
   }
 
   /**
@@ -357,20 +371,6 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         curTimeStart = System.currentTimeMillis
         readBytesChunksFromFile(fileToProcess)
         curTimeEnd = System.currentTimeMillis
-        println(" TIME in miliseconds: " + (curTimeEnd - curTimeStart ))
-        try {
-          var fileStruct = fileToProcess.split("/")
-          if (moveToDir.length != 0) {
-            println(partitionId + " Moving File" + fileToProcess + " to "+ moveToDir)
-            Files.copy(Paths.get(fileToProcess), Paths.get(moveToDir+"/"+ fileStruct(fileStruct.size - 1)),REPLACE_EXISTING)
-            Files.deleteIfExists(Paths.get(fileToProcess))
-          } else {
-            println(partitionId + " Renaming file "+ fileToProcess + " to " + fileToProcess + "_COMPLETE")
-            (new File(fileToProcess)).renameTo(new File(fileToProcess + "_COMPLETE"))
-          }
-        } catch {
-          case e: Exception => e.printStackTrace()
-        }
       }
     }
   }
@@ -391,18 +391,36 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   }
 
 
+  /**
+   *
+   */
   private def monitorBufferingFiles: Unit = {
     while (isCosuming) {
       // Scan all the files that we are buffering, if there is not difference in their file size.. move them onto
       // the FileQ, they are ready to process.
       bufferingQLock.synchronized {
-        bufferingQ_map.foreach(fileTuple => {
-          val d = new File(fileTuple._1)
-          if (fileTuple._2 == d.length) {
-            println(partitionId + "  File READY TO PROCESS " + d.toString)
-            enQFile(fileTuple._1, 69)
-            bufferingQ_map.remove(fileTuple._1)
+        var iter = bufferingQ_map.iterator
+        iter.foreach(fileTuple => {
+          try {
+            val d = new File(fileTuple._1)
+
+            // If the the new length of the file is the same as a second ago... this file is done, so move it
+            // onto the ready to process q.  Else update the latest length
+            if (fileTuple._2 == d.length) {
+              println(partitionId + "  File READY TO PROCESS " + d.toString)
+              enQFile(fileTuple._1, 69)
+              bufferingQ_map.remove(fileTuple._1)
+            } else {
+              bufferingQ_map(fileTuple._1) = d.length
+            }
+          } catch {
+            case ioe: IOException => {
+              println ("Unable to find the directory to watch, Shutting down File Consumer " + partitionId)
+              throw ioe
+            }
           }
+
+
         })
       }
       // Give all the files a 1 second to add a few bytes to the contents
@@ -455,7 +473,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
       // Begin the listening process, TAKE()
       breakable {
-        while (true) {
+        while (isCosuming) {
           println(partitionId + " ********        Watcher Running .... ")
           val key = watchService.take()
           val dir = keys.getOrElse(key, null)
@@ -466,7 +484,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
               // Only worry about new files.
               if(kind.equals(StandardWatchEventKinds.ENTRY_CREATE)) {
                 val event_path = event.context().asInstanceOf[Path]
-                val fileName = "/tmp/watch/"+event_path.toString
+                val fileName = dirToWatch + "/" + event_path.toString
 
                 var assignment =  scala.math.abs(fileName.hashCode) % partitionSelectionNumber
                 if ((assignment+ 1) == partitionId) {
@@ -490,7 +508,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
       }
     } catch {
       case ie: InterruptedException => println("InterruptedException: " + ie)
-      case ioe: IOException => println("IOException: " + ioe)
+      case ioe: IOException => println ("Unable to find the directory to watch, Shutting down File Consumer " + partitionId)
       case e: Exception => println("Exception: " + e)
     }
   }
