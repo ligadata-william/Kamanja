@@ -42,6 +42,9 @@ object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerOb
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
+  override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
+  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
@@ -68,6 +71,7 @@ class CustAlertHistory(var transactionId: Long, other: CustAlertHistory) extends
   override def NameSpace: String = CustAlertHistory.NameSpace
   override def Name: String = CustAlertHistory.Name
   override def Version: String = CustAlertHistory.Version
+  
 
   var custid: Long = 0;
   var branchid: Int = 0;
@@ -125,6 +129,8 @@ object CustPreferences extends RDDObject[CustPreferences] with BaseContainerObj 
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
+  override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
+  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
 
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
@@ -152,7 +158,7 @@ class CustPreferences(var transactionId: Long, other: CustPreferences) extends B
   override def NameSpace: String = CustPreferences.NameSpace
   override def Name: String = CustPreferences.Name
   override def Version: String = CustPreferences.Version
-
+ 
   def withMinBalanceAlertOptout(curDt: Date): CustPreferences = { this }
   def withOverdraftlimit(alertType: String): CustPreferences = { this }
   def withMultiDayMinBalanceAlertOptout(daysWithLessBalance: Int): CustPreferences = { this }
@@ -211,6 +217,8 @@ object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
+  override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
+  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
 
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
@@ -238,7 +246,7 @@ class CustTransaction(var transactionId: Long, other: CustTransaction) extends B
   override def NameSpace: String = CustTransaction.NameSpace
   override def Name: String = CustTransaction.Name
   override def Version: String = CustTransaction.Version
-
+  
   def Clone(): MessageContainerBase = {
     CustTransaction.build(this)
   }
@@ -294,6 +302,8 @@ object GlobalPreferences extends RDDObject[GlobalPreferences] with BaseContainer
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
+  override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
+  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
 
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
@@ -321,7 +331,7 @@ class GlobalPreferences(var transactionId: Long, other: GlobalPreferences) exten
   override def NameSpace: String = GlobalPreferences.NameSpace
   override def Name: String = GlobalPreferences.Name
   override def Version: String = GlobalPreferences.Version
-
+ 
   def Clone(): MessageContainerBase = {
     GlobalPreferences.build(this)
   }

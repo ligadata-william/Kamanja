@@ -30,9 +30,10 @@ class ConstantMethodGenerator {
 			populateJson(inputdata.asInstanceOf[JsonData])
 	  else if (inputdata.isInstanceOf[XmlData])
 			populateXml(inputdata.asInstanceOf[XmlData])
-    else if (inputdata.isInstanceOf[KvData])
+      else if (inputdata.isInstanceOf[KvData])
 			populateKvData(inputdata.asInstanceOf[KvData])
 	  else throw new Exception("Invalid input data")
+      timePartitionData = ComputeTimePartitionData
     
     }
 		"""
@@ -241,9 +242,9 @@ class ConstantMethodGenerator {
   }
 
   //assignKVData
-  
+
   def populateMappedMsgKvData(assignKvData: String) = {
-       """
+    """
   private def populateKvData(kvData: KvData): Unit = {
     try {
       if (kvData == null)
@@ -277,9 +278,7 @@ class ConstantMethodGenerator {
   }
   """
   }
-  
-  
-  
+
   def addInputJsonLeftOverKeys = {
     """
         var dataKeySet: Set[Any] = Set();
@@ -374,10 +373,10 @@ class ConstantMethodGenerator {
     }
     funcStr
   }
-  
+
   //assignKvDataForArray
-  
-   def assignKvDataForArray(fname: String, typeImpl: String, msg: Message, typ: String): String = {
+
+  def assignKvDataForArray(fname: String, typeImpl: String, msg: Message, typ: String): String = {
     var funcStr: String = ""
 
     val funcName = "fields(\"" + fname + "\")";
@@ -434,8 +433,6 @@ class ConstantMethodGenerator {
     funcStr
   }
 
-
-  
   //assignKvForPrimArrayBuffer
   def assignKvForPrimArrayBuffer(fname: String, typeImpl: String, msg: Message, typ: String): String = {
     var funcStr: String = ""
@@ -465,8 +462,7 @@ class ConstantMethodGenerator {
     }
     funcStr
   }
-  
-  
+
   def assignJsonForCntrArrayBuffer(fname: String, typeImpl: String) = {
     """
 	 
@@ -568,8 +564,12 @@ class ConstantMethodGenerator {
   /*
    * function to convert the old version to new version in desrializarion of messages especially when ArrayBuffer/Array of child messages or Child Message occurs
    */
-  def getConvertOldVertoNewVer(convertStr: String, oldObj: String, newObj: Any): String = {
+  def getConvertOldVertoNewVer(convertStr: String, oldObj: String, newObj: Any, mesg: Message): String = {
+    var timePartitionData: String = ""
     var convertFuncStr: String = ""
+    if (mesg.Fixed.equalsIgnoreCase("true"))
+      timePartitionData = "timePartitionData = oldObj.timePartitionData;"
+    else timePartitionData = "" /// check the mapped msgs
     // if (prevObjExists) {
     if (oldObj != null && oldObj.toString.trim() != "") {
       if (convertStr != null && convertStr.trim() != "") {
@@ -578,6 +578,7 @@ class ConstantMethodGenerator {
      def ConvertPrevToNewVerObj(oldObj : """ + oldObj + """) : Unit = {    
          if( oldObj != null){
            """ + convertStr + """
+         """ + timePartitionData + """  
          }  
        }"""
         //    }
@@ -607,6 +608,7 @@ class ConstantMethodGenerator {
     override def Serialize(dos: DataOutputStream) : Unit = {
         try {
     	   """ + serStr + """
+    	 com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, timePartitionData.getTime());
     	} catch {
     		case e: Exception => {
     	    val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -637,6 +639,7 @@ class ConstantMethodGenerator {
                 """ + prevVerObjStr + """ 
                 prevVerObj.Deserialize(dis, mdResolver, loader, savedDataVersion)   
                """ + prevObjDeserStr + """ 
+               timePartitionData = prevVerObj.timePartitionData;
            
 	     } else """
     }
@@ -651,6 +654,8 @@ class ConstantMethodGenerator {
       deSer = """
          if(prevVer == currentVer){  
               """ + deserStr + """
+         timePartitionData = new java.util.Date(com.ligadata.BaseTypes.LongImpl.DeserializeFromDataInputStream(dis))
+      
         } else throw new Exception("Current Message/Container Version "+currentVer+" should be greater than Previous Message Version " +prevVer + "." )
      """
     }
@@ -767,6 +772,7 @@ class ConstantMethodGenerator {
     """
     private def SerializeNonBaseTypes(dos: DataOutputStream): Unit = {
     """ + mappedMsgSerializeArray + """
+    
     }
     """
   }

@@ -95,7 +95,7 @@ class BaseTypesHandler {
 
       if (fixed.toLowerCase().equals("true")) {
 
-        if (f.Name.toLowerCase().equals(transactionid)) {
+        if (f.SystemField) {
           scalaclass = scalaclass.append("")
           withMethod = withMethod.append("")
 
@@ -129,7 +129,7 @@ class BaseTypesHandler {
         }
 
         keysStr.append("(\"" + f.Name + "\", " + mappedTypesABuf.indexOf(typstring) + "),")
-        if (f.Name.toLowerCase().equals(transactionid)) {
+        if (f.SystemField) {
           withMethod = withMethod.append("")
 
         } else {
@@ -206,11 +206,23 @@ class BaseTypesHandler {
       val serType = typ.get.implementationName + ".SerializeIntoDataOutputStream"
       if (serType != null && serType.trim() != "") {
         if (fixed.toLowerCase().equals("true")) {
-          serializedBuf = serializedBuf.append("%s%s(%s,%s);%s".format(pad1, serType, "dos", f.Name, newline))
+         // if (f.Name.equalsIgnoreCase("timepartitiondata")) {
+         //   serializedBuf = serializedBuf.append("%s %s(%s,%s.getTime());%s".format(pad1, serType, "dos", f.Name, newline))
+
+         // } else {
+            serializedBuf = serializedBuf.append("%s%s(%s,%s);%s".format(pad1, serType, "dos", f.Name, newline))
+
+        //  } 
+
         } else if (fixed.toLowerCase().equals("false")) {
-          if (mappedMsgBaseTypeIdx != -1)
-            serializedBuf = serializedBuf.append("%s case %s => %s(dos, field._2._2.asInstanceOf[%s])  %s".format(pad1, mappedMsgBaseTypeIdx, serType, typ.get.physicalName, newline))
-        }
+          //if (f.Name.equalsIgnoreCase("timepartitiondata")) {
+
+          //  serializedBuf = serializedBuf.append("%s %s(dos, field._2._2.asInstanceOf[java.util.Date].getTime()))  %s".format(pad1, serType, newline))
+         // } else {
+            if (mappedMsgBaseTypeIdx != -1)
+              serializedBuf = serializedBuf.append("%s case %s => %s(dos, field._2._2.asInstanceOf[%s])  %s".format(pad1, mappedMsgBaseTypeIdx, serType, typ.get.physicalName, newline))
+          }
+        //}
       }
     } catch {
       case e: Exception => {
@@ -240,12 +252,24 @@ class BaseTypesHandler {
       val dis = "dis"
       if (deserType != null && deserType.trim() != "") {
         if (fixed.toLowerCase().equals("true")) {
-          deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
-        } else if (fixed.toLowerCase().equals("false")) {
-          if (mappedMsgBaseTypeIdx != -1)
-            deserializedBuf = deserializedBuf.append("%s case %s => fields(key) = (typIdx, %s(dis));%s".format(pad1, mappedMsgBaseTypeIdx, deserType, newline))
+         // if (f.Name.equalsIgnoreCase("timepartitiondata")) { // new java.util.Date(
+          //  deserializedBuf = deserializedBuf.append("%s %s = new java.util.Date( %s(%s));%s".format(pad1, f.Name, deserType, dis, newline))
 
-          //deserializedBuf = deserializedBuf.append("%sset(\"%s\" , %s(%s));%s".format(pad1, f.Name, deserType, dis, newline))
+         // } else {
+            deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
+
+         // }
+
+        } else if (fixed.toLowerCase().equals("false")) {
+        //  if (f.Name.equalsIgnoreCase("timepartitiondata")) {
+        //    deserializedBuf = deserializedBuf.append("%s case %s => fields(key) = (typIdx, %s(dis));%s".format(pad1, mappedMsgBaseTypeIdx, deserType, newline))
+
+        //  } else {
+            if (mappedMsgBaseTypeIdx != -1)
+              deserializedBuf = deserializedBuf.append("%s case %s => fields(key) = (typIdx, %s(dis));%s".format(pad1, mappedMsgBaseTypeIdx, deserType, newline))
+
+            //deserializedBuf = deserializedBuf.append("%sset(\"%s\" , %s(%s));%s".format(pad1, f.Name, deserType, dis, newline))
+        //  }
         }
       }
 

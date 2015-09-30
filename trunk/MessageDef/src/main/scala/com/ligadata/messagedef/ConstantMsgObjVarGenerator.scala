@@ -139,6 +139,59 @@ class ConstantMsgObjVarGenerator {
     getParitionData.toString
   }
 
+  def getTimePartitionInfo = {
+
+    """
+   def getTimePartitionKeyData(inputdata: InputData): String = {
+
+    if (timePartionKey == null || timePartionKey.trim == "" || timeParitionKeyPos < 0)
+      return ""
+
+    if (inputdata.isInstanceOf[DelimitedData]) {
+      val csvData = inputdata.asInstanceOf[DelimitedData]
+      if (csvData.tokens == null) {
+        return ""
+      }
+      return csvData.tokens(timeParitionKeyPos)
+
+    } else if (inputdata.isInstanceOf[JsonData]) {
+      val jsonData = inputdata.asInstanceOf[JsonData]
+      val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+      if (mapOriginal == null) {
+        return ""
+      }
+      val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+      mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+
+      return map.getOrElse(timePartionKey, "").toString
+    } else if (inputdata.isInstanceOf[KvData]) {
+      val kvData = inputdata.asInstanceOf[KvData]
+      if (kvData == null) {
+        return ""
+      }
+      val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+      kvData.dataMap.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+
+      return map.getOrElse(timePartionKey, "").toString
+
+    } else if (inputdata.isInstanceOf[XmlData]) {
+      val xmlData = inputdata.asInstanceOf[XmlData]
+      // Fix this
+    } else throw new Exception("Invalid input data")
+    return ""
+  }
+
+  def TimePartitionData(inputdata: InputData): Date = {
+    val tmPartInfo = getTimePartitionInfo
+    if (tmPartInfo == null) return new Date(0);
+
+    // Get column data and pass it
+    ComputeTimePartitionData(com.ligadata.BaseTypes.StringImpl.Input(getTimePartitionKeyData(inputdata)), tmPartInfo._2, tmPartInfo._3)
+  }
+     """
+
+  }
+
   def addMessage(addMsg: String, msg: Message): String = {
     var addMessageFunc: String = ""
     var msgType: String = ""
@@ -210,7 +263,7 @@ class ConstantMsgObjVarGenerator {
     getMessageFunc
   }
 
-  def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int], clsname: String): (StringBuilder) = {
+  def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int], clsname: String, timePartitionKey: String, timePartitionPos: String): (StringBuilder) = {
     var cobj: StringBuilder = new StringBuilder
     var tdataexists: String = ""
     var tattribs: String = ""
@@ -231,6 +284,7 @@ class ConstantMsgObjVarGenerator {
       primaryKeyDef = getPrimaryKeyDef
     }
 */
+
     if (msg.msgtype.equals("Message")) {
       if (msg.TDataExists) {
         tdataexists = gettdataexists + msg.TDataExists.toString
@@ -242,13 +296,13 @@ class ConstantMsgObjVarGenerator {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getTimePartitioninfo(msg.datePartition) + newline + getFullName + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getTimePartitioninfo(msg.timePartition) + timePartitionKeyDataObj(timePartitionKey, timePartitionPos) + newline + getFullName + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + getTimePartitioninfo(msg.datePartition) + newline + newline + getFullName + newline + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + getTimePartitioninfo(msg.timePartition) + newline + timePartitionKeyDataObj(timePartitionKey, timePartitionPos) + newline + getFullName + newline + cbrace + newline)
 
     }
     cobj
@@ -446,6 +500,7 @@ import com.ligadata.KamanjaBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
 import com.ligadata.Exceptions.StackTrace
 import org.apache.log4j.Logger
+import java.util.Date
 """
     val versionPkgImport = verPkg + otherImprts + imprt
     val nonVerPkgImport = nonVerPkg + otherImprts + imprt
@@ -542,7 +597,9 @@ trait BaseContainer {
 
   def getTransactionIdMapped = {
     """
-         fields("transactionId") =( (typsStr.indexOf("com.ligadata.BaseTypes.LongImpl")), transactionId)
+        fields("transactionId") =( (typsStr.indexOf("com.ligadata.BaseTypes.LongImpl")), transactionId)
+	  	fields("timePartitionData") =( (-1)), timePartitionData)
+    
     """
 
   }
@@ -613,8 +670,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     	try {
 	    """ + fixedMsgGetKeyStr +
         """
-		     // if (key.equals("desynpuf_id")) return desynpuf_id;
-		      //if (key.equals("clm_id")) return clm_id;
+		      if (key.equals("timePartitionData")) return timePartitionData;
 		      return null;
 		    } catch {
 		      case e: Exception => {
@@ -734,6 +790,16 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   }
 
+  private def timePartitionKeyDataObj(timePartitionFld: String, partitionPos: String): String = {
+    val pad1 = "\t"
+    var partitionStr = new StringBuilder
+    if (timePartitionFld != null && timePartitionFld.trim() != "" && partitionPos != null && partitionPos.trim() != "")
+      "\n	val timeParitionKeyPos : Int = " + partitionPos + "; \n   val timePartionKey : String = \"" + timePartitionFld + "\"; \n " + getTimePartitionInfo + "\n"
+    else
+      ""
+
+  }
+
   //input function conversion
   def getDefVal(valType: String): String = {
     valType match {
@@ -789,7 +855,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
      private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
      """ + fromFuncBaeTypes + """
 	""" + fromFnc + """
-     	return this
+	timePartitionData = new Date(com.ligadata.BaseTypes.LongImpl.Clone(other.timePartitionData.getTime()));
+    return this
     }
     """
 
@@ -827,10 +894,26 @@ class XmlData(var dataInput: String) extends InputData(){ }
     override def getFullName = FullName    
     """
   }
+  
+  def computeTimePartitionDate(message: Message): String = {
+
+    var timePartitionKeyData : String = ""
+    if(message.timePartition != null) 
+      timePartitionKeyData = message.timePartition.Key + ".toString"
+    """
+   def ComputeTimePartitionData: Date = {
+		val tmPartInfo = HL7.getTimePartitionInfo
+		if (tmPartInfo == null) return new Date(0);
+		"""+message.Name+""".ComputeTimePartitionData("""+timePartitionKeyData +""", tmPartInfo._2, tmPartInfo._3)
+   }
+  
+  """
+}
 
   def transactionIdFuncs(message: Message): String = {
 
     """
+     
   if (other != null && other != this) {
     // call copying fields from other to local variables
     fromFunc(other)

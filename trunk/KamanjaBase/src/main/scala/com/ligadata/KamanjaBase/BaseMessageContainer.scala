@@ -22,12 +22,25 @@ import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteAr
 import com.ligadata.Exceptions.StackTrace
 import org.apache.log4j._
 import java.util.Date
+import java.util.Calendar
+import java.text.SimpleDateFormat
 
 trait MessageContainerBase {
   // System Columns
   var transactionId: Long
-  var timePartitionData: Date = null
+  var timePartitionData: Date = new Date(0) // By default we are taking Java date with 0 milliseconds.
   var rowNumber: Int = 0 // This is unique value with in transactionId
+
+  // System Attributes Functions
+  final def TransactionId(transId: Long): Unit = { transactionId = transId }
+  final def TransactionId(): Long = transactionId
+
+  final def TimePartitionData(timeInMillisecs: Long): Unit = { timePartitionData = new Date(timeInMillisecs) }
+  final def TimePartitionData(tm: Date): Unit = { timePartitionData = tm }
+  final def TimePartitionData(): Date = timePartitionData
+
+  final def RowNumber(rno: Int): Unit = { rowNumber = rno }
+  final def RowNumber(): Long = rowNumber
 
   def isMessage: Boolean
   def isContainer: Boolean
@@ -50,8 +63,6 @@ trait MessageContainerBase {
   def Serialize(dos: DataOutputStream): Unit
   def Save(): Unit
   def Clone(): MessageContainerBase
-  final def TransactionId(transId: Long): Unit = { transactionId = transId }
-  final def TransactionId(): Long = transactionId
 }
 
 trait MessageContainerObjBase {
@@ -66,6 +77,55 @@ trait MessageContainerObjBase {
   def Version: String // Message or Container Version
   def PartitionKeyData(inputdata: InputData): Array[String] // Partition key data
   def PrimaryKeyData(inputdata: InputData): Array[String] // Primary key data
+  def getTimePartitionInfo: (String, String, String) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
+  def TimePartitionData(inputdata: InputData): Date
+
+  private def extractTime(fieldData: String, timeFormat: String): Long = {
+    if (timeFormat.compareToIgnoreCase("epochtimeInMillis") == 0)
+      return fieldData.toLong
+
+    if (timeFormat.compareToIgnoreCase("epochtimeInSeconds") == 0 || timeFormat.compareToIgnoreCase("epochtime") == 0)
+      return fieldData.toLong * 1000
+
+    // Now assuming Date partition format exists.
+    val dtFormat = new SimpleDateFormat(timeFormat);
+    val tm =
+      if (fieldData.size == 0) {
+        new Date(0)
+      } else {
+        dtFormat.parse(fieldData)
+      }
+    tm.getTime()
+  }
+
+  def ComputeTimePartitionData(fieldData: String, timeFormat: String, timePartitionType: String): Date = {
+    val fldTimeDataInMs = extractTime(fieldData, timeFormat)
+
+    // Align to Partition
+    var cal: Calendar = Calendar.getInstance();
+    cal.setTime(new Date(fldTimeDataInMs));
+
+    timePartitionType.toLowerCase match {
+      case "yearly" => {
+        var newcal: Calendar = Calendar.getInstance();
+        newcal.set(Calendar.YEAR, cal.get(Calendar.YEAR));
+        return newcal.getTime()
+      }
+      case "monthly" => {
+        var newcal: Calendar = Calendar.getInstance();
+        newcal.set(Calendar.YEAR, cal.get(Calendar.YEAR))
+        newcal.set(Calendar.MONTH, cal.get(Calendar.MONTH))
+        return newcal.getTime()
+      }
+      case "daily" => {
+        var newcal: Calendar = Calendar.getInstance();
+        newcal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+        return newcal.getTime()
+      }
+    }
+    return new Date(0)
+  }
+
 }
 
 trait MdBaseResolveInfo {

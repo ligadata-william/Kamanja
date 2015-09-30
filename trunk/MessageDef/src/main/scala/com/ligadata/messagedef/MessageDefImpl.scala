@@ -38,6 +38,7 @@ import com.ligadata.kamanja.metadata.ArrayBufTypeDef
 import com.ligadata.kamanja.metadata._
 import com.ligadata.Exceptions._
 import com.ligadata.Exceptions.StackTrace
+import java.text.SimpleDateFormat
 
 trait Attrib {
   var NameSpace: String
@@ -45,10 +46,10 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long, var datePartition: TimePartition)
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long, var timePartition: TimePartition)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
-class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
+class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String, var SystemField: Boolean)
 class TimePartition(var Key: String, var Format: String, var DType: String)
 
 case class Concept(var NameSpace: Option[String], var Name: Option[String], var Type: Option[String])
@@ -74,7 +75,9 @@ class MessageDefImpl {
   var methodGen = new ConstantMethodGenerator
   var messageFldsExtractor = new MessageFldsExtractor
   var cnstObjVar = new ConstantMsgObjVarGenerator
-  val timePartitionTypeList: List[String] = List("daily", "monthly", "weekly", "30minutes", "60minutes", "15minutes", "5minutes", "1minute")
+  val timePartitionTypeList: List[String] = List("yearly", "monthly", "daily") //"weekly", "30minutes", "60minutes", "15minutes", "5minutes", "1minute")
+  val timePartitionFormatList: List[String] = List("epochtimeinmillis", "epochtimeinseconds", "epochtime")
+  val timePartInfo: String = "TimePartitionInfo"
 
   private def error[T](prefix: String): Option[T] =
     throw MessageException("%s must be specified".format(prefix))
@@ -338,13 +341,15 @@ class MessageDefImpl {
       val fromFunc = scalaReturnStrArray(15)
       val fromFuncBaseTypes = scalaReturnStrArray(16)
       val assignKvData = scalaReturnStrArray(17)
+      val timePartitionKeyFld = scalaReturnStrArray(18)
+      val timePartitionPos = scalaReturnStrArray(19)
 
       val fromFuncOfFixed = cnstObjVar.fromFuncOfFixedMsgs(message, fromFunc, fromFuncBaseTypes)
       val getSerializedFuncStr = methodGen.getSerializedFunction(serializedBuf)
       val getWithMethod = withMethods
       // println("withMethods" + withMethods)
       val getDeserializedFuncStr = methodGen.getDeserializedFunction(true, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, recompile)
-      val convertOldObjtoNewObj = methodGen.getConvertOldVertoNewVer(convertOldObjtoNewObjStr, prevVerMsgObjstr, message.PhysicalName)
+      val convertOldObjtoNewObj = methodGen.getConvertOldVertoNewVer(convertOldObjtoNewObjStr, prevVerMsgObjstr, message.PhysicalName, message)
       val populateKvData = methodGen.populateKvData(assignKvData)
 
       list_msg = list
@@ -353,16 +358,16 @@ class MessageDefImpl {
       getMsgStr = cnstObjVar.getMessage(getMsg)
       val (btrait, striat, csetters) = cnstObjVar.getBaseTrait(message)
       val (clsstr, objstr, clasname) = cnstObjVar.classname(message, recompile)
-      val cobj = cnstObjVar.createObj(message, partkeyPos, primarykeyPos, clasname)
+      val cobj = cnstObjVar.createObj(message, partkeyPos, primarykeyPos, clasname, timePartitionKeyFld, timePartitionPos)
       val isFixed = cnstObjVar.getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = cnstObjVar.importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + populateKvData + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + cnstObjVar.transactionIdFuncs(message) + " \n}")
+      scalaclass = scalaclass.append(classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + populateKvData + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + cnstObjVar.computeTimePartitionDate(message) + cnstObjVar.transactionIdFuncs(message) + " \n}")
 
       verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
 
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + populateKvData + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + cnstObjVar.transactionIdFuncs(message) + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + populateKvData + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + cnstObjVar.computeTimePartitionDate(message)+ cnstObjVar.transactionIdFuncs(message) + " \n}")
 
       nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
     } catch {
@@ -408,7 +413,9 @@ class MessageDefImpl {
       val fromFunc = scalaReturnStrArray(15)
       val fromFuncBaseTypesMapped = scalaReturnStrArray(16)
       val assignKvData = scalaReturnStrArray(17)
-     
+      val timePartitionKeyFld = scalaReturnStrArray(18)
+      val timePartitionPos = scalaReturnStrArray(19)
+
       val fromFuncOfMapped = cnstObjVar.fromFuncOfMappedMsgs(message, fromFunc, fromFuncBaseTypesMapped)
 
       list_msg = list
@@ -422,21 +429,21 @@ class MessageDefImpl {
       mappedMsgPrevVerDeser
       val mapBaseDeser = methodGen.MappedMsgDeserBaseTypes(mappedDeserBaseTypesBuf)
       val getDeserializedFuncStr = methodGen.getDeserializedFunction(true, mapBaseDeser + deserializedBuf, methodGen.prevVerLessThanCurVerCheck(prevDeserializedBuf), prevVerMsgObjstr, recompile)
-      val convertOldObjtoNewObj = methodGen.getConvertOldVertoNewVer(methodGen.getConvertOldVertoNewVer, prevVerMsgObjstr, message.PhysicalName)
+      val convertOldObjtoNewObj = methodGen.getConvertOldVertoNewVer(methodGen.getConvertOldVertoNewVer, prevVerMsgObjstr, message.PhysicalName, message)
 
       val (btrait, striat, csetters) = cnstObjVar.getBaseTrait(message)
       val (clsstr, objstr, clasname) = cnstObjVar.classname(message, recompile)
-      val cobj = cnstObjVar.createObj(message, partitionPos, primaryPos, clasname)
+      val cobj = cnstObjVar.createObj(message, partitionPos, primaryPos, clasname, timePartitionKeyFld, timePartitionPos)
       val isFixed = cnstObjVar.getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = cnstObjVar.importStmts(message)
 
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.populateMappedMsgKvData(assignKvData)+ methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + cnstObjVar.transactionIdFuncs(message) + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message) 
+      scalaclass = scalaclass.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.populateMappedMsgKvData(assignKvData) + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped +cnstObjVar.computeTimePartitionDate(message) + cnstObjVar.transactionIdFuncs(message) + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message) 
 
       verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
 
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.populateMappedMsgKvData(assignKvData) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + cnstObjVar.transactionIdFuncs(message) + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message)
+      nonVerScalaCls = nonVerScalaCls.append(classstr + cnstObjVar.logStackTrace + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.populateMappedMsgKvData(assignKvData) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + cnstObjVar.computeTimePartitionDate(message)+ cnstObjVar.transactionIdFuncs(message) + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message)
 
       nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
 
@@ -798,7 +805,7 @@ class MessageDefImpl {
         }
 
         //DateParition Info
-        val timePartInfo: String = "TimePartitionInfo"
+
         if (message.getOrElse(timePartInfo, null) != null) {
           timePartition = getMsgTimePartitionInfo(timePartInfo, message, fldList)
         }
@@ -807,9 +814,11 @@ class MessageDefImpl {
           throw new Exception("Either Fields or Elements or Concepts  do not exist in the Fixed Message/Container " + message.get("Name").get.toString())
 
         if (ele != null)
-          ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null)
+          ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null, true)
         else
-          ele = List(new Element("", "transactionId", "system.long", "", "Fields", null))
+          ele = List(new Element("", "transactionId", "system.long", "", "Fields", null, true))
+
+        ele = ele :+ new Element("", "timePartitionData", "java.util.Date", "", "Fields", null, true)
 
         // ele.foreach(f => log.debug("====" + f.Name))
 
@@ -852,18 +861,22 @@ class MessageDefImpl {
           timePartitionKey = timePartitionMap.get("Key").get.asInstanceOf[String].toLowerCase()
 
           if (!fldList.contains(timePartitionKey))
-            throw new Exception("Time Partition Key should be defined as one of the fields in the message definition");
+            throw new Exception("Time Partition Key " + timePartitionKey + " should be defined as one of the fields in the message definition");
 
         } else throw new Exception("Time Partition Key should be defined in the message definition");
 
-        if (timePartitionMap.contains("Format") && (timePartitionMap.get("Format").get.isInstanceOf[String]))
+        if (timePartitionMap.contains("Format") && (timePartitionMap.get("Format").get.isInstanceOf[String])) {
           timePartitionKeyFormat = timePartitionMap.get("Format").get.asInstanceOf[String].toLowerCase()
+
+          if (!validateTimePartitionFormat(timePartitionKeyFormat))
+            throw new Exception("Time Parition format given in message definition " + timePartitionKeyFormat + " is not a valid format");
+        } else throw new Exception("Time Partition Format should be defined in the message definition");
 
         if (timePartitionMap.contains("Type") && (timePartitionMap.get("Type").get.isInstanceOf[String])) {
           timePartitionType = timePartitionMap.get("Type").get.asInstanceOf[String].toLowerCase()
 
           if (!containsIgnoreCase(timePartitionTypeList, timePartitionType))
-            throw new Exception(timePartitionType + " should be defined as the fields in the message definition");
+            throw new Exception("Time Parition Type " + timePartitionType + " defined in the message definition is not a valid Type");
         } else throw new Exception("Time Partition Type should be defined in the message definition");
 
       }
@@ -877,6 +890,30 @@ class MessageDefImpl {
 
     new TimePartition(timePartitionKey, timePartitionKeyFormat, timePartitionType);
 
+  }
+
+  //Validate the Time Partition format 
+  private def validateTimePartitionFormat(format: String): Boolean = {
+
+    if (containsIgnoreCase(timePartitionFormatList, format))
+      return true;
+    else return validateDateTimeFormat(format)
+
+    return false
+  }
+
+  //Validate if the date time format is valid SimpleDateFormat
+
+  private def validateDateTimeFormat(format: String): Boolean = {
+    try {
+      new SimpleDateFormat(format);
+      return true
+    } catch {
+      case e: Exception => {
+        return false
+      }
+    }
+    return false
   }
 
   private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
@@ -942,7 +979,7 @@ class MessageDefImpl {
     if (ccpts == null) throw new Exception("Concepts List is null")
     try {
       for (l <- ccpts)
-        lbuffer += new Element(null, l.toString(), l.toString(), null, key, null)
+        lbuffer += new Element(null, l.toString(), l.toString(), null, key, null, false)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1159,7 +1196,7 @@ class MessageDefImpl {
 
       } else throw new Exception("Field Type do not exist in " + key)
       //log.debug("key========" + key)
-      fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer)
+      fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer, false)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
