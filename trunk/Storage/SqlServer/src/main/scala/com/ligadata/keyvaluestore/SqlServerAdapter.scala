@@ -34,6 +34,7 @@ import java.net.{ URL, URLClassLoader }
 import scala.collection.mutable.TreeSet
 import java.sql.{ Driver, DriverPropertyInfo }
 import java.util.Properties
+import org.apache.commons.dbcp.BasicDataSource
 
 class JdbcClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   override def addURL(url: URL) {
@@ -163,6 +164,22 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     throw new ConnectionFailedException("Unable to find jdbcJar in adapterConfig ")
   }
 
+  // The following three properties are used for connection pooling
+  var maxActiveConnections = 20
+  if (parsed_json.contains("maxActiveConnections")) {
+    maxActiveConnections = parsed_json.get("maxActiveConnections").get.toString.trim.toInt
+  }
+
+  var maxIdleConnections = 10
+  if (parsed_json.contains("maxIdleConnections")) {
+    maxIdleConnections = parsed_json.get("maxIdleConnections").get.toString.trim.toInt
+  }
+
+  var initialSize = 10
+  if (parsed_json.contains("initialSize")) {
+    initialSize = parsed_json.get("initialSize").get.toString.trim.toInt
+  }
+
   logger.info("hostname => " + hostname)
   logger.info("jarpaths => " + jarpaths)  
   logger.info("jdbcJar  => " + jdbcJar)
@@ -182,6 +199,15 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   val d = Class.forName(driverType, true, clsLoader).newInstance.asInstanceOf[Driver]
   logger.info("%s:Registering Driver".format(GetCurDtTmStr))
   DriverManager.registerDriver(new DriverShim(d));
+
+  // setup connection pooling using apache-commons-dbcp
+  val dataSource = new BasicDataSource
+  dataSource.setUrl(jdbcUrl)
+  dataSource.setUsername(user)
+  dataSource.setPassword(password)
+  dataSource.setMaxActive(maxActiveConnections);
+  dataSource.setMaxIdle(maxIdleConnections);
+  dataSource.setInitialSize(initialSize);
 
   private def GetCurDtTmStr: String = {
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
@@ -226,13 +252,15 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     containerName.replace('.','_')
   }
 
+
   override def put(containerName:String, key: Key, value: Value): Unit = {
     var con:Connection = null
     var pstmt:PreparedStatement = null
     var cstmt:CallableStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      // con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
       // put is sematically an upsert. An upsert is implemented using a merge
       // statement in sqlserver
       // Ideally a merge should be implemented as stored procedure
@@ -293,7 +321,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var totalRowsDeleted = 0;
     var totalRowsInserted = 0;
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
       // we need to commit entire batch
       con.setAutoCommit(false)
       data_list.foreach( li => {
@@ -369,7 +398,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var cstmt:CallableStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(deleteSql)
       // we need to commit entire batch
@@ -416,7 +447,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       logger.info("begin time => " + dateFormat.format(time.beginTime))
       logger.info("end time => " + dateFormat.format(time.endTime))
 
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       // we need to commit entire batch
       con.setAutoCommit(false)
       var deleteSql = "delete from " + tableName + " where timePartition >= ?  and timePartition <= ? and bucketKey = ?"
@@ -461,7 +494,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var rowCount = 0
     var tableName = ""
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       tableName = toTable(containerName)
       var query = "select count(*) from " + tableName
       if( whereClause != null ){
@@ -498,7 +533,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var rs: ResultSet = null
     logger.info("Fetch the results of " + query)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
       while(rs.next()){
@@ -540,7 +577,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var stmt:Statement = null
     var rs: ResultSet = null
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
       while(rs.next()){
@@ -589,7 +628,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(query)
       keys.foreach(key => {
@@ -629,7 +670,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       var query = "select serializerType,serializedInfo from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(query)
       keys.foreach(key => {
@@ -691,7 +734,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       time_ranges.foreach( time_range => {
 	var bt = df.format(time_range.beginTime)
 	var et = df.format(time_range.endTime)
@@ -741,7 +786,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       time_ranges.foreach( time_range => {
 	var bt = df.format(time_range.beginTime)
 	var et = df.format(time_range.endTime)
@@ -786,7 +833,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       var query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where  bucketKey = ? "
       pstmt = con.prepareStatement(query)
       bucketKeys.foreach(bucketKey => {
@@ -826,7 +875,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where  bucketKey = ? "
       pstmt = con.prepareStatement(query)
       bucketKeys.foreach(bucketKey => {
@@ -877,7 +928,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var stmt:Statement = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       var query = "truncate table " + tableName
       stmt = con.createStatement()
       stmt.executeUpdate(query);
@@ -911,7 +964,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var rs: ResultSet = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection()
       // check if the container already dropped
       val dbm = con.getMetaData();
       rs = dbm.getTables(null, null, tableName, null);
@@ -926,7 +980,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     } catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Stacktrace:"+stackTrace)
+        logger.info("Stacktrace:"+stackTrace)
 	throw new Exception("Failed to drop the table " + tableName + ":" + e.getMessage())
       }
     } finally {
@@ -956,7 +1010,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var rs: ResultSet = null
     var tableName = toTable(containerName)
     try{
-      con = DriverManager.getConnection(jdbcUrl);
+      //con = DriverManager.getConnection(jdbcUrl);
+      con = dataSource.getConnection
+
       // check if the container already exists
       val dbm = con.getMetaData();
       rs = dbm.getTables(null, null, tableName, null);
