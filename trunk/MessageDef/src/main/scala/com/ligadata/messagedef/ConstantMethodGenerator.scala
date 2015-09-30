@@ -571,8 +571,8 @@ class ConstantMethodGenerator {
       timePartitionData = "timePartitionData = oldObj.timePartitionData;"
     else if (mesg.Fixed.equalsIgnoreCase("false"))
       timePartitionData = "timePartitionData = oldObj.fields(\"timePartitionData\")._2.asInstanceOf[Date]; \n fields(\"timePartitionData\") = (-1, timePartitionData);" /// check the mapped msgs
-    
-     // if (prevObjExists) {
+
+    // if (prevObjExists) {
     if (oldObj != null && oldObj.toString.trim() != "") {
       if (convertStr != null && convertStr.trim() != "") {
 
@@ -630,9 +630,12 @@ class ConstantMethodGenerator {
 
   //create the deserialized function in generated scala class 
 
-  def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile: Boolean): String = {
+  def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile: Boolean, fixed: Boolean): String = {
     var preVerDeserStr: String = ""
+    var timePartitionfldMapped: String = ""
     // if (recompile == false && prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
+    if (!fixed)
+      timePartitionfldMapped = "fields(\"timePartitionData\") = (-1, timePartitionData); "
 
     if (prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
       val prevVerObjStr = "val prevVerObj = new %s()".format(prevVerMsgObjstr)
@@ -642,6 +645,7 @@ class ConstantMethodGenerator {
                 prevVerObj.Deserialize(dis, mdResolver, loader, savedDataVersion)   
                """ + prevObjDeserStr + """ 
                timePartitionData = prevVerObj.timePartitionData;
+                """ + timePartitionfldMapped + """             
            
 	     } else """
     }
@@ -695,7 +699,7 @@ class ConstantMethodGenerator {
     var getDeserFunc: String = ""
     var preVerDeserStr: String = ""
     var deSer: String = ""
-    preVerDeserStr = getPrevDeserStr(prevVerMsgObjstr, prevObjDeserStr, recompile)
+    preVerDeserStr = getPrevDeserStr(prevVerMsgObjstr, prevObjDeserStr, recompile, fixed)
     deSer = getDeserStr(deserStr, fixed)
 
     if (deserStr != null && deserStr.trim() != "")
@@ -844,8 +848,8 @@ class ConstantMethodGenerator {
             }
          }
        })
-       timePartitionData = prevVerObj.fields(\"timePartitionData\")._2.asInstanceOf[Date];
-       fields(\"timePartitionData\") = (-1, timePartitionData); 
+      
+       
 	 """
   }
 
