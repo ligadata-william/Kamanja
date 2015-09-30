@@ -3757,7 +3757,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
         if (processedContainersSet(storeInfo._1) == false) {
           processedContainersSet += storeInfo._1
-          storeInfo._2.getAllKeys(storeInfo._1, { (key: Key) =>
+          storeInfo._2.getKeys(storeInfo._1, { (key: Key) =>
             {
               val strKey = key.bucketKey(0)
               val i = strKey.indexOf(".")

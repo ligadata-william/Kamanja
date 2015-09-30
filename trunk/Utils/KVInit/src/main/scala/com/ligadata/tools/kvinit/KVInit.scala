@@ -583,10 +583,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                   }
 
                 //??????????????????????? BUGBUG:: Need to integrate with time partition information message and get the stuff here ???????????????????????
-                messageOrContainer.getTimePartitionInfo
+                // messageOrContainer.getTimePartitionInfo
                 val timeVal = KvBaseDefalts.defaultTime
 
-                messageOrContainer.RowId(processedRows)
+                // messageOrContainer.RowId(processedRows)
 
                 val primaryKey = messageOrContainer.PrimaryKeyData
                 val k = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(keyData), Key(timeVal, keyData, transId, processedRows), primaryKey != null && primaryKey.size > 0, primaryKey)

@@ -134,9 +134,10 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
           }
         }
 
-        kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
+        // kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNanoSecs, sendOutStartTime))
-
+        
+/*
         if (containerData != null && containerData.size > 0) {
           val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
@@ -149,6 +150,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
           // Do we need to log this?
           KamanjaLeader.SetNewDataToZkc(KamanjaConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
         }
+*/
       }
     } catch {
       case e: Exception => {
