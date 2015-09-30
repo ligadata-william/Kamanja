@@ -17,7 +17,7 @@
 
 package com.ligadata.KvBase
 
-import java.util.Date
+import java.util.{ Date, Comparator };
 
 case class Key(timePartition: Date, bucketKey: Array[String], transactionId: Long, rowId: Int)
 case class Value(serializerType: String, serializedInfo: Array[Byte])
@@ -25,5 +25,145 @@ case class TimeRange(beginTime: Date, endTime: Date)
 
 object KvBaseDefalts {
   val defaultTime = new Date(0)
+  val defualtBucketKeyComp = new BucketKeyComp() // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
+  val defualtBTimePartComp = new TimePartComp() // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
 }
 
+// We are doing this per Container. Not across containers
+case class KeyWithBucketIdAndPrimaryKey(bucketId: Int, key: Key, hasPrimaryKey: Boolean, primaryKey: Array[String]);
+
+object KeyWithBucketIdAndPrimaryKeyCompHelper {
+
+  def BucketIdForBucketKey(bucketKey: Array[String]): Int = {
+    if (bucketKey == null) return 0
+    val prime = 31;
+    var result = 1;
+    bucketKey.foreach(k => {
+      result = result * prime
+      if (k != null)
+        result += k.hashCode();
+    })
+    return result
+  }
+
+  def CompareBucketKey(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    // First compare bucketId
+    if (k1.bucketId < k2.bucketId)
+      return -1
+    if (k1.bucketId > k2.bucketId)
+      return 1
+
+    // Next compare Bucket Keys
+    if (k1.key.bucketKey.size < k2.key.bucketKey.size)
+      return -1
+    if (k1.key.bucketKey.size > k2.key.bucketKey.size)
+      return 1
+
+    for (i <- 0 until k1.key.bucketKey.size) {
+      val cmp = k1.key.bucketKey(i).compareTo(k2.key.bucketKey(i))
+      if (cmp != 0)
+        return cmp
+    }
+    return 0
+  }
+
+  def CompareTimePartitionData(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    return k1.key.timePartition.compareTo(k2.key.timePartition)
+  }
+
+  def ComparePrimaryKeyData(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    if (k1.primaryKey.size < k2.primaryKey.size)
+      return -1
+    if (k1.primaryKey.size > k2.primaryKey.size)
+      return 1
+
+    for (i <- 0 until k1.primaryKey.size) {
+      val cmp = k1.primaryKey(i).compareTo(k2.primaryKey(i))
+      if (cmp != 0)
+        return cmp
+    }
+    return 0
+  }
+
+  def CompareTransactionId(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    if (k1.key.transactionId < k2.key.transactionId)
+      return -1
+    if (k1.key.transactionId > k2.key.transactionId)
+      return 1
+    return 0
+  }
+
+  def CompareRowId(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    if (k1.key.rowId < k2.key.rowId)
+      return -1
+    if (k1.key.rowId > k2.key.rowId)
+      return 1
+    return 0
+  }
+}
+
+class BucketKeyComp extends Comparator[KeyWithBucketIdAndPrimaryKey] {
+  override def compare(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    // First compare Bucket Keys
+    var cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareBucketKey(k1, k2)
+    if (cmp != 0)
+      return cmp
+
+    // Next Compare time
+    cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareTimePartitionData(k1, k2)
+    if (cmp != 0)
+      return cmp
+
+    if (k1.hasPrimaryKey) {
+      // Next compare Bucket Keys
+      cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.ComparePrimaryKeyData(k1, k2)
+      if (cmp != 0)
+        return cmp
+    } else {
+      // Next compare TransactionId
+      cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareTransactionId(k1, k2)
+      if (cmp != 0)
+        return cmp
+
+      // Next compare Row Id
+      cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareRowId(k1, k2)
+      if (cmp != 0)
+        return cmp
+    }
+
+    return 0
+  }
+}
+
+class TimePartComp extends Comparator[KeyWithBucketIdAndPrimaryKey] {
+  override def compare(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
+    // First Compare time
+    var cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareTimePartitionData(k1, k2)
+    if (cmp != 0)
+      return cmp
+
+    // Next compare Bucket Keys
+    cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareBucketKey(k1, k2)
+    if (cmp != 0)
+      return cmp
+
+    if (k1.hasPrimaryKey) {
+      // Next compare Bucket Keys
+      cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.ComparePrimaryKeyData(k1, k2)
+      if (cmp != 0)
+        return cmp
+    } else {
+      // Next compare TransactionId
+      cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareTransactionId(k1, k2)
+      if (cmp != 0)
+        return cmp
+
+      // Next compare Row Id
+      cmp = KeyWithBucketIdAndPrimaryKeyCompHelper.CompareRowId(k1, k2)
+      if (cmp != 0)
+        return cmp
+    }
+
+    return 0
+  }
+}

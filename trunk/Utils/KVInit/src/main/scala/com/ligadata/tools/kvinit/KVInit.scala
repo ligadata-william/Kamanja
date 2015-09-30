@@ -52,9 +52,10 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
-import com.ligadata.KvBase.{ Key, Value, TimeRange }
+import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper }
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.Exceptions.StackTrace
+import java.util.{ Collection, Iterator, TreeMap }
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -493,18 +494,6 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     return null
   }
 
-  private def IsSameKey(key1: List[String], key2: List[String]): Boolean = {
-    if (key1.size != key2.size)
-      return false
-
-    for (i <- 0 until key1.size) {
-      if (key1(i).compareTo(key2(i)) != 0)
-        return false
-    }
-
-    return true
-  }
-
   // If we have keyfieldnames.size > 0
   private def buildContainerOrMessage(kvstore: DataStore): Unit = {
     if (!isOk)
@@ -518,7 +507,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     logger.debug("KeyFields:" + keyfieldnames.mkString(","))
 
-    val kamanjaData = ArrayBuffer[KamanjaData]()
+    var dataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
 
     dataFiles.foreach(fl => {
       val alldata: List[String] = fileData(fl, format)
@@ -597,29 +586,11 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                 messageOrContainer.getTimePartitionInfo
                 val timeVal = KvBaseDefalts.defaultTime
 
-                var foundKey = false
-                var i = 0
+                messageOrContainer.RowId(processedRows)
 
-                var datarec: KamanjaData = null
-
-                val keyDataLst = keyData.toList
-                while (foundKey == false && i < kamanjaData.size) {
-                  foundKey = (transId == kamanjaData(i).GetTransactionId && timeVal.equals(kamanjaData(i).GetTime) && IsSameKey(keyDataLst, kamanjaData(i).GetBucketKey.toList))
-                  if (foundKey)
-                    datarec = kamanjaData(i)
-                  i += 1
-                }
-
-                if (foundKey == false) {
-                  datarec = new KamanjaData
-                  datarec.SetBucketKey(keyData)
-                  datarec.SetTime(timeVal)
-                  datarec.SetTransactionId(transId)
-                  datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
-                  kamanjaData += datarec
-                }
-
-                datarec.AddMessageContainerBase(messageOrContainer, true, true)
+                val primaryKey = messageOrContainer.PrimaryKeyData
+                val k = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(keyData), Key(timeVal, keyData, transId, processedRows), primaryKey != null && primaryKey.size > 0, primaryKey)
+                dataByTmPart.put(k, messageOrContainer)
                 processedRows += 1
               } catch {
                 case e: Exception => {
@@ -640,12 +611,17 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       }
     })
 
-    val storeObjects = new ArrayBuffer[(Key, Value)](kamanjaData.size)
+    val storeObjects = new ArrayBuffer[(Key, Value)](dataByTmPart.size())
+    var it1 = dataByTmPart.entrySet().iterator()
+    while (it1.hasNext()) {
+      val entry = it1.next();
 
-    kamanjaData.foreach(d => {
+      val key = entry.getKey();
+      val value = entry.getValue();
+
       try {
-        val k = Key(d.GetTime, d.GetBucketKey, d.GetTransactionId, 0)
-        val v = Value("manual", d.SerializeData)
+        val k = entry.getKey().key
+        val v = Value("manual", SerializeDeserialize.Serialize(value))
         storeObjects += ((k, v))
       } catch {
         case e: Exception => {
@@ -653,7 +629,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
           throw e
         }
       }
-    })
+    }
 
     val txn = kvstore.beginTx()
     try {

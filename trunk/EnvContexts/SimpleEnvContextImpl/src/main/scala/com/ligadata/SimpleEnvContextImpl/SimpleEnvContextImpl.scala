@@ -21,7 +21,7 @@ import scala.collection.mutable._
 import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
-import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts }
+import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper }
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.KamanjaBase._
 // import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
@@ -33,10 +33,9 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions.StackTrace
-import com.ligadata.KamanjaData.{ KamanjaData }
 import com.ligadata.keyvaluestore.KeyValueManager
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
-import java.util.{ Comparator, TreeMap };
+import java.util.{ TreeMap };
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -70,109 +69,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var key: String = _
   }
 
-  def BucketIdForBucketKey(bucketKey: Array[String]): Int = {
-    if (bucketKey == null) return 0
-    val prime = 31;
-    var result = 1;
-    bucketKey.foreach(k => {
-      result = result * prime
-      if (k != null)
-        result += k.hashCode();
-    })
-    return result
-  }
-
-  case class KeyWithBucketId(bucketId: Int, key: Key);
-
-  class BucketKeyComp extends Comparator[KeyWithBucketId] {
-    override def compare(k1: KeyWithBucketId, k2: KeyWithBucketId): Int = {
-      // First compare bucketId
-      if (k1.bucketId < k2.bucketId)
-        return -1
-      if (k1.bucketId > k2.bucketId)
-        return 1
-
-      // Next compare Bucket Keys
-      if (k1.key.bucketKey.size < k2.key.bucketKey.size)
-        return -1
-      if (k1.key.bucketKey.size > k2.key.bucketKey.size)
-        return 1
-
-      for (i <- 0 until k1.key.bucketKey.size) {
-        val cmp = k1.key.bucketKey(i).compareTo(k2.key.bucketKey(i))
-        if (cmp != 0)
-          return cmp
-      }
-
-      // Next Compare time
-      val tmCmp = k1.key.timePartition.compareTo(k2.key.timePartition)
-      if (tmCmp != 0)
-        return tmCmp
-
-      // Next compare TransactionId
-      if (k1.key.transactionId < k2.key.transactionId)
-        return -1
-      if (k1.key.transactionId > k2.key.transactionId)
-        return 1
-
-      // Next compare Row Id
-      if (k1.key.rowId < k2.key.rowId)
-        return -1
-      if (k1.key.rowId > k2.key.rowId)
-        return 1
-
-      return 0
-    }
-  }
-
-  class TimePartComp extends Comparator[KeyWithBucketId] {
-    override def compare(k1: KeyWithBucketId, k2: KeyWithBucketId): Int = {
-      // First Compare time
-      val tmCmp = k1.key.timePartition.compareTo(k2.key.timePartition)
-      if (tmCmp != 0)
-        return tmCmp
-
-      // Next compare bucketId
-      if (k1.bucketId < k2.bucketId)
-        return -1
-      if (k1.bucketId > k2.bucketId)
-        return 1
-
-      // Next compare Bucket Keys
-      if (k1.key.bucketKey.size < k2.key.bucketKey.size)
-        return -1
-      if (k1.key.bucketKey.size > k2.key.bucketKey.size)
-        return 1
-
-      for (i <- 0 until k1.key.bucketKey.size) {
-        val cmp = k1.key.bucketKey(i).compareTo(k2.key.bucketKey(i))
-        if (cmp != 0)
-          return cmp
-      }
-
-      // Next compare TransactionId
-      if (k1.key.transactionId < k2.key.transactionId)
-        return -1
-      if (k1.key.transactionId > k2.key.transactionId)
-        return 1
-
-      // Next compare Row Id
-      if (k1.key.rowId < k2.key.rowId)
-        return -1
-      if (k1.key.rowId > k2.key.rowId)
-        return 1
-
-      return 0
-    }
-  }
-
-  val bucketKeyComp = new BucketKeyComp()
-  val timePartComp = new TimePartComp()
-
   class MsgContainerInfo {
     var current_msg_cont_data = ArrayBuffer[MessageContainerBase]()
-    var dataByTmPart = new TreeMap[KeyWithBucketId, MessageContainerBase](timePartComp) // By time, BucketKey, then transactionid & rowid. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
-    var dataByBucketKey = new TreeMap[KeyWithBucketId, MessageContainerBase](bucketKeyComp) // By BucketKey, time, then transactionid & rowid
+    var dataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+    var dataByBucketKey = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBucketKeyComp) // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
     var containerType: BaseTypeDef = null
     var isContainer: Boolean = false
     var objFullName: String = ""

@@ -261,12 +261,10 @@ object ExtractData extends MdBaseResolveInfo {
     }
   }
 
-  private def deSerializeData(v: Value): KamanjaData = {
+  private def deSerializeData(v: Value): MessageContainerBase = {
     v.serializerType.toLowerCase match {
       case "manual" => {
-        val datarec = new KamanjaData
-        datarec.DeserializeData(v.serializedInfo, this, clsLoaderInfo.loader)
-        return datarec
+        return SerializeDeserialize.Deserialize(v.serializedInfo, this, clsLoaderInfo.loader, true, "")
       }
       case _ => {
         throw new Exception("Found un-handled Serializer Info: " + v.serializerType)
@@ -298,18 +296,15 @@ object ExtractData extends MdBaseResolveInfo {
         if (dta != null) {
           if (hasValidPrimaryKey) {
             // Search for primary key match
-            val v = dta.GetMessageContainerBase(primaryKey.toArray, false)
-            LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
-            if (v != null) {
-              os.write(gson.toJson(v).getBytes("UTF8"));
+            if (primaryKey.sameElements(dta.PrimaryKeyData)) {
+              LOG.debug("Primarykey found")
+              os.write(gson.toJson(dta).getBytes("UTF8"));
               os.write(ln);
             }
           } else {
             // Write the whole list
-            dta.GetAllData.foreach(v => {
-              os.write(gson.toJson(v).getBytes("UTF8"));
-              os.write(ln);
-            })
+            os.write(gson.toJson(dta).getBytes("UTF8"));
+            os.write(ln);
           }
         }
       }
