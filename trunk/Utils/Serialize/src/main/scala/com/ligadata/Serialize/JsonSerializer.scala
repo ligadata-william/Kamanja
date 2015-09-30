@@ -932,7 +932,9 @@ object JsonSerializer {
           ("JarName" -> o.jarName) ~
           ("DependencyJars" -> o.dependencyJars.toList) ~
           ("AdapterSpecificCfg" -> o.adapterSpecificCfg) ~
-          ("DelimiterString" -> o.delimiterString) ~
+          ("KeyAndValueDelimiter" -> o.KeyAndValueDelimiter) ~
+          ("FieldDelimiter" -> o.FieldDelimiter) ~
+          ("ValueDelimiter" -> o.ValueDelimiter) ~
           ("AssociatedMessage" -> o.associatedMsg))
         pretty(render(json))
       }

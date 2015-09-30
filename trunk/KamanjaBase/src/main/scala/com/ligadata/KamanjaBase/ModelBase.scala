@@ -266,8 +266,8 @@ trait EnvContext {
   def containsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size
 
   // Adapters Keys & values
-  def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit
-  def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)])
+  def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit
+  def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String, String)])
   /*
   def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] // Get all Status information from intermediate table. No Transaction required here.
   def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from intermediate table for given keys. No Transaction required here.
@@ -286,7 +286,8 @@ trait EnvContext {
   def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult]
 
   // Final Commit for the given transaction
-  def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit
+  // outputResults has AdapterName, PartitionKey & Message
+  def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit
 
   // Save State Entries on local node & on Leader
   def PersistLocalNodeStateEntries: Unit
@@ -338,7 +339,10 @@ trait ModelBaseObj {
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
-class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
+class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase, val msgData: Array[Byte]) {
+  def InputMessageData: Array[Byte] = msgData
+  def Message: MessageContainerBase = msg
+  def TransactionContext: TransactionContext = txnContext
   def getPropertyValue(clusterId: String, key: String): String = (txnContext.getPropertyValue(clusterId, key))
 }
 

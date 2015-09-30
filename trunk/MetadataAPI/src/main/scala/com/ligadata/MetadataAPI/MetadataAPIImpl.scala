@@ -4595,11 +4595,11 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def AddAdapter(name: String, typeString: String, dataFormat: String, className: String,
     jarName: String, dependencyJars: List[String],
-    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
+    adapterSpecificCfg: String, inputAdapterToVerify: String, keyAndValueDelimiter: String, fieldDelimiter: String, valueDelimiter: String, associatedMsg: String): String = {
     try {
       // save in memory
       val ai = MdMgr.GetMdMgr.MakeAdapter(name, typeString, dataFormat, className, jarName,
-        dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
+        dependencyJars, adapterSpecificCfg, inputAdapterToVerify, keyAndValueDelimiter, fieldDelimiter, valueDelimiter, associatedMsg)
       MdMgr.GetMdMgr.AddAdapter(ai)
       // save in database
       val key = "AdapterInfo." + name
@@ -4619,8 +4619,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def UpdateAdapter(name: String, typeString: String, dataFormat: String, className: String,
     jarName: String, dependencyJars: List[String],
-    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
-    AddAdapter(name, typeString, dataFormat, className, jarName, dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
+    adapterSpecificCfg: String, inputAdapterToVerify: String, keyAndValueDelimiter: String, fieldDelimiter: String, valueDelimiter: String, associatedMsg: String): String = {
+    AddAdapter(name, typeString, dataFormat, className, jarName, dependencyJars, adapterSpecificCfg, inputAdapterToVerify, keyAndValueDelimiter, fieldDelimiter, valueDelimiter, associatedMsg)
   }
 
   def RemoveAdapter(name: String): String = {
@@ -5022,16 +5022,28 @@ object MetadataAPIImpl extends MetadataAPI {
                 if (adap.contains("DataFormat")) {
                   dataFormat = adap.get("DataFormat").get.asInstanceOf[String]
                 }
-                var delimiterString: String = null
+                var keyAndValueDelimiter: String = null
+                var fieldDelimiter: String = null
+                var valueDelimiter: String = null
                 var associatedMsg: String = null
-                if (adap.contains("DelimiterString")) {
-                  delimiterString = adap.get("DelimiterString").get.asInstanceOf[String]
+                
+                if (adap.contains("KeyAndValueDelimiter")) {
+                  keyAndValueDelimiter = adap.get("KeyAndValueDelimiter").get.asInstanceOf[String]
+                }
+                if (adap.contains("FieldDelimiter")) {
+                  fieldDelimiter = adap.get("FieldDelimiter").get.asInstanceOf[String]
+                }
+                else if (adap.contains("DelimiterString")) { // If not found FieldDelimiter
+                  fieldDelimiter = adap.get("DelimiterString").get.asInstanceOf[String]
+                }
+                if (adap.contains("ValueDelimiter")) {
+                  valueDelimiter = adap.get("ValueDelimiter").get.asInstanceOf[String]
                 }
                 if (adap.contains("AssociatedMessage")) {
                   associatedMsg = adap.get("AssociatedMessage").get.asInstanceOf[String]
                 }
                 // save in memory
-                val ai = MdMgr.GetMdMgr.MakeAdapter(nm, typStr, dataFormat, clsNm, jarnm, depJars, ascfg, inputAdapterToVerify, delimiterString, associatedMsg)
+                val ai = MdMgr.GetMdMgr.MakeAdapter(nm, typStr, dataFormat, clsNm, jarnm, depJars, ascfg, inputAdapterToVerify, keyAndValueDelimiter, fieldDelimiter, valueDelimiter, associatedMsg)
                 MdMgr.GetMdMgr.AddAdapter(ai)
                 val key = "AdapterInfo." + ai.name
                 val value = serializer.SerializeObjectToByteArray(ai)

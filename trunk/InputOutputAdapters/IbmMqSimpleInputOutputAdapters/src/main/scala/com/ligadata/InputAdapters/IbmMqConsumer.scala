@@ -33,6 +33,7 @@ import com.ibm.msg.client.wmq.WMQConstants
 import com.ibm.msg.client.wmq.common.CommonConstants
 import com.ibm.msg.client.jms.JmsConstants
 import com.ligadata.Exceptions.StackTrace
+import com.ligadata.KamanjaBase.DataDelimiters
 
 object IbmMqConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new IbmMqConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
@@ -164,10 +165,15 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
     } catch {
       case jmsex: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(jmsex)
-        LOG.debug("\nstackTrace:"+stackTrace)
+        LOG.debug("\nstackTrace:" + stackTrace)
         printFailure(jmsex)
         return
     }
+
+    val delimiters = new DataDelimiters()
+    delimiters.keyAndValueDelimiter = qc.keyAndValueDelimiter
+    delimiters.fieldDelimiter = qc.fieldDelimiter
+    delimiters.valueDelimiter = qc.valueDelimiter
 
     var threads: Int = 1
     if (threads == 0)
@@ -241,7 +247,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
 
                         if (msgData != null) {
                           uniqueVal.MessageId = msgId
-                          execThread.execute(msgData, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, false, qc.associatedMsg, qc.delimiterString)
+                          execThread.execute(msgData, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, false, qc.associatedMsg, delimiters)
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"

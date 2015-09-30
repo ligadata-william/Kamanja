@@ -44,7 +44,9 @@ trait LogTrait {
   val logger = Logger.getLogger(loggerName)
 }
 
-case class AdapterUniqueValueDes(T: Long, V: String, Qs: Option[List[String]], Res: Option[List[String]]) // TransactionId, Value, Queues & Result Strings. Queues and Result Strings should be same size.  
+// case class AdapterUniqueValueDes(T: Long, V: String, Qs: Option[List[String]], Ks: Option[List[String]], Res: Option[List[String]]) // TransactionId, Value, Queues & Result Strings. Queues and Result Strings should be same size.  
+
+case class AdapterUniqueValueDes(T: Long, V: String, Out: Option[List[List[String]]]) // TransactionId, Value, Queues & Result Strings. Adapter Name, Key and Result Strings  
 
 /**
  *  The SimpleEnvContextImpl supports kv stores that are based upon MapDb hash tables.
@@ -258,7 +260,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   class TransactionContext(var txnId: Long) {
     private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
-    private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
+    private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String, String)])]()
     private[this] val _modelsResult = scala.collection.mutable.Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
     def getMsgContainer(containerName: String, addIfMissing: Boolean): MsgContainerInfo = {
@@ -387,11 +389,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     // Adapters Keys & values
-    def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit = {
+    def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit = {
       _adapterUniqKeyValData(key) = (transId, value, outputResults)
     }
 
-    def getAdapterUniqueKeyValue(key: String): (Long, String, List[(String, String)]) = {
+    def getAdapterUniqueKeyValue(key: String): (Long, String, List[(String, String, String)]) = {
       _adapterUniqKeyValData.getOrElse(key, null)
     }
 
@@ -426,7 +428,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
   private[this] val _txnContexts = new Array[scala.collection.mutable.Map[Long, TransactionContext]](_buckets)
-  private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
+  private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String, String)])]()
   private[this] val _modelsResult = scala.collection.mutable.Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
   private[this] var _kryoSer: com.ligadata.Serialize.Serializer = null
@@ -504,17 +506,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     implicit val jsonFormats: Formats = DefaultFormats
     val uniqVal = parse(new String(v.serializedInfo)).extract[AdapterUniqueValueDes]
 
-    val res = ArrayBuffer[(String, String)]()
+    var res = List[(String, String, String)]()
 
-    if (uniqVal.Qs != None && uniqVal.Res != None) {
-      val Qs = uniqVal.Qs.get
-      val Res = uniqVal.Res.get
-      if (Qs.size == Res.size) {
-        for (i <- 0 until Qs.size) {
-          res += ((Qs(i), Res(i)))
+    if (uniqVal.Out != None) {
+      res = uniqVal.Out.get.map(o => { (o(0), o(1), o(2)) })
         }
-      }
-    }
 
     results += ((k.bucketKey(0), (uniqVal.T, uniqVal.V, res.toList))) // taking 1st key, that is what we are expecting
   }
@@ -680,7 +676,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return localGetAllKeyValues(transId, containerName)
   }
 
-  private def localGetAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)]) = {
+  private def localGetAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String, String)]) = {
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getAdapterUniqueKeyValue(key)
@@ -889,7 +885,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def localSetAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit = {
+  private def localSetAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit = {
     var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       txnCtxt.setAdapterUniqueKeyValue(transId, key, value, outputResults)
@@ -1033,7 +1029,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     Clone(localHistoryObjects(transId, containerName, partKey, appendCurrentChanges))
   }
 
-  override def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)]) = {
+  override def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String, String)]) = {
     localGetAdapterUniqueKeyValue(transId, key)
   }
 
@@ -1063,7 +1059,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     localSetObject(transId, containerName, partKey, value)
   }
 
-  override def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit = {
+  override def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit = {
     localSetAdapterUniqueKeyValue(transId, key, value, outputResults)
   }
 
@@ -1117,12 +1113,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     // Persist current transaction objects
     val messagesOrContainers = if (txnCtxt != null) txnCtxt.getAllMessagesAndContainers else Map[String, MsgContainerInfo]()
 
-    val localValues = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
+    val localValues = scala.collection.mutable.Map[String, (Long, String, List[(String, String, String)])]()
 
     if (key != null && value != null && outputResults != null)
       localValues(key) = (transId, value, outputResults)
 
-    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String)])]()
+    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String, String)])]()
     val modelsResult = if (txnCtxt != null) txnCtxt.getAllModelsResult else Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
     if (_kryoSer == null) {
@@ -1187,8 +1183,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
           val json = ("T" -> v1._2._1) ~
             ("V" -> v1._2._2) ~
+                ("Out" -> v1._2._3.map(qsres => List(qsres._1, qsres._2, qsres._3)))
+              /*
+              val json = ("T" -> v1._2._1) ~
+                ("V" -> v1._2._2) ~
             ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
-            ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
+                ("Ks" -> v1._2._3.map(qsres => { qsres._2 })) ~
+                ("Res" -> v1._2._3.map(qsres => { qsres._3 }))
+*/
           val compjson = compact(render(json))
           dataForContainer += ((Key(KvBaseDefalts.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
         }

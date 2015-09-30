@@ -29,16 +29,16 @@ object ObjFormatType extends Enumeration {
   type FormatType = Value
   val fCSV, fJSON, fXML, fSERIALIZED, fJAVA, fSCALA = Value
 
-  def asString(typ : FormatType) : String = {
-     val str = typ.toString match {
-       case "fCSV" =>  "CSV"
-       case "fJSON" => "JSON"
-       case "fXML" => "XML"
-       case "fSERIALIZED" => "SERIALIZED"
-       case "fJAVA" => "JAVA"
-       case "fSCALA" => "SCALA"
-       case _ => "Unknown"
-      }
+  def asString(typ: FormatType): String = {
+    val str = typ.toString match {
+      case "fCSV" => "CSV"
+      case "fJSON" => "JSON"
+      case "fXML" => "XML"
+      case "fSERIALIZED" => "SERIALIZED"
+      case "fJAVA" => "JAVA"
+      case "fSCALA" => "SCALA"
+      case _ => "Unknown"
+    }
     str
   }
 }
@@ -702,7 +702,7 @@ class NodeInfo {
   var java_home: String = _
   var classpath: String = _
   var clusterId: String = _
-  var power:Int = _
+  var power: Int = _
   var roles: Array[String] = new Array[String](0)
   var description: String = _
 
@@ -759,11 +759,14 @@ class AdapterInfo {
   var dataFormat: String = _ // valid only for Input or Validate types. Output and Status does not have this
   var className: String = _
   var inputAdapterToVerify: String = _ // Valid only for Output Adapter.
-  var delimiterString: String = _ // Delimiter String for CSV
+  var delimiterString1: String = _ // Delimiter String for CSV
   var associatedMsg: String = _ // Queue Associated Message
   var jarName: String = _
   var dependencyJars: Array[String] = new Array[String](0)
   var adapterSpecificCfg: String = _
+  var keyAndValueDelimiter: String = _ // Delimiter String for keyAndValueDelimiter
+  var fieldDelimiter: String = _ // Delimiter String for fieldDelimiter
+  var valueDelimiter: String = _ // Delimiter String for valueDelimiter
 
   def Name: String = name
   def TypeString: String = typeString
@@ -773,16 +776,20 @@ class AdapterInfo {
   def DependencyJars: Array[String] = dependencyJars
   def AdapterSpecificCfg: String = adapterSpecificCfg
   def InputAdapterToVerify: String = inputAdapterToVerify
-  def DelimiterString: String = delimiterString
+  def DelimiterString1: String = if (fieldDelimiter != null) fieldDelimiter else delimiterString1
   def AssociatedMessage: String = associatedMsg
+  def KeyAndValueDelimiter: String = keyAndValueDelimiter
+  def FieldDelimiter: String = if (fieldDelimiter != null) fieldDelimiter else delimiterString1
+  def ValueDelimiter: String = valueDelimiter
+
 }
 
 class UserPropertiesInfo {
-   var clusterId: String = _
-   var props: scala.collection.mutable.HashMap[String, String] = _
-   
-   def ClusterId: String = clusterId
-   def Props: scala.collection.mutable.HashMap[String, String] = props  
+  var clusterId: String = _
+  var props: scala.collection.mutable.HashMap[String, String] = _
+
+  def ClusterId: String = clusterId
+  def Props: scala.collection.mutable.HashMap[String, String] = props
 }
 
 class OutputMsgDef extends BaseElemDef {

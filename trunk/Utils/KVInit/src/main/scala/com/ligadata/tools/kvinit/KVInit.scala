@@ -114,6 +114,12 @@ Sample uses:
           nextOption(map ++ Map('keyfields -> value), tail)
         case "--delimiter" :: value :: tail =>
           nextOption(map ++ Map('delimiter -> value), tail)
+        case "--keyandvaluedelimiter" :: value :: tail =>
+          nextOption(map ++ Map('keyandvaluedelimiter -> value), tail)
+        case "--fielddelimiter" :: value :: tail =>
+          nextOption(map ++ Map('fielddelimiter -> value), tail)
+        case "--valuedelimiter" :: value :: tail =>
+          nextOption(map ++ Map('valuedelimiter -> value), tail)
         case "--ignoreerrors" :: value :: tail =>
           nextOption(map ++ Map('ignoreerrors -> value), tail)
         case "--ignorerecords" :: value :: tail =>
@@ -133,9 +139,14 @@ Sample uses:
     var tmpdatafiles = if (options.contains('datafiles)) options.apply('datafiles) else if (options.contains('csvpath)) options.apply('csvpath) else null
     val tmpkeyfieldnames = if (options.contains('keyfields)) options.apply('keyfields) else if (options.contains('keyfieldname)) options.apply('keyfieldname) else null
     val delimiterString = if (options.contains('delimiter)) options.apply('delimiter) else null
+    val keyAndValueDelimiter = if (options.contains('keyandvaluedelimiter)) options.apply('keyandvaluedelimiter) else null
+    val fieldDelimiter1 = if (options.contains('fielddelimiter)) options.apply('fielddelimiter) else null
+    val valueDelimiter = if (options.contains('valuedelimiter)) options.apply('valuedelimiter) else null
     var ignoreerrors = (if (options.contains('ignoreerrors)) options.apply('ignoreerrors) else "0").trim
     val format = (if (options.contains('format)) options.apply('format) else "delimited").trim.toLowerCase()
 
+    val fieldDelimiter = if (fieldDelimiter1 != null) fieldDelimiter1 else delimiterString
+    
     if (!(format.equals("delimited") || format.equals("json"))) {
       logger.error("Supported formats are only delimited & json")
       return
@@ -174,7 +185,8 @@ Sample uses:
       }
 
       KvInitConfiguration.configFile = cfgfile.toString
-      val kvmaker: KVInit = new KVInit(loadConfigs, typename.toLowerCase, dataFiles, keyfieldnames, delimiterString, ignoreerrors, ignoreRecords, format)
+
+      val kvmaker: KVInit = new KVInit(loadConfigs, typename.toLowerCase, dataFiles, keyfieldnames, keyAndValueDelimiter, fieldDelimiter, valueDelimiter, ignoreerrors, ignoreRecords, format)
       if (kvmaker.isOk) {
         val dstore = kvmaker.GetDataStoreHandle(KvInitConfiguration.jarPaths, kvmaker.dataDataStoreInfo)
         if (dstore != null) {
@@ -206,14 +218,18 @@ object KvInitConfiguration {
   var jarPaths: collection.immutable.Set[String] = _
 }
 
-class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: Array[String], val keyfieldnames: Array[String], delimiterString: String, ignoreerrors: String, ignoreRecords: Int, format: String) extends LogTrait {
+class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: Array[String], val keyfieldnames: Array[String], keyAndValueDelimiter1: String,
+  fieldDelimiter1: String, valueDelimiter1: String, ignoreerrors: String, ignoreRecords: Int, format: String) extends LogTrait {
+  val fieldDelimiter = if (DataDelimiters.IsEmptyDelimiter(fieldDelimiter1) == false) fieldDelimiter1 else ","
+  val keyAndValueDelimiter = if (DataDelimiters.IsEmptyDelimiter(keyAndValueDelimiter1) == false) keyAndValueDelimiter1 else "\\x01"
+  val valueDelimiter = if (DataDelimiters.IsEmptyDelimiter(valueDelimiter1) == false) valueDelimiter1 else "~"
 
-  val dataDelim = if (delimiterString != null && delimiterString.size > 0) delimiterString else ","
   var ignoreErrsCount = if (ignoreerrors != null && ignoreerrors.size > 0) ignoreerrors.toInt else 0
   if (ignoreErrsCount < 0) ignoreErrsCount = 0
   var isOk: Boolean = true
   val isDelimited = format.equals("delimited")
   val isJson = format.equals("json")
+  val isKv = format.equals("kv")
 
   val kvInitLoader = new KamanjaLoaderInfo
 
@@ -462,9 +478,51 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
   private def prepareInputData(inputStr: String): InputData = {
     /** if we can make one ... we add the data to the store. This will crash if the data is bad */
     if (isDelimited) {
-      val inputData = new DelimitedData(inputStr, dataDelim)
-      inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
+      val fieldDelimiter = if (DataDelimiters.IsEmptyDelimiter(fieldDelimiter1) == false) fieldDelimiter1 else ","
+      val keyAndValueDelimiter = if (DataDelimiters.IsEmptyDelimiter(keyAndValueDelimiter1) == false) keyAndValueDelimiter1 else "\\x01"
+      val valueDelimiter = if (DataDelimiters.IsEmptyDelimiter(valueDelimiter1) == false) valueDelimiter1 else "~"
+      val delimiters = new DataDelimiters()
+      delimiters.keyAndValueDelimiter = keyAndValueDelimiter
+      delimiters.fieldDelimiter = fieldDelimiter
+      delimiters.valueDelimiter = valueDelimiter
+      val inputData = new DelimitedData(inputStr, delimiters)
+      inputData.tokens = inputData.dataInput.split(inputData.delimiters.fieldDelimiter, -1)
       inputData.curPos = 0
+      return inputData
+    }
+
+    if (isKv) {
+      val fieldDelimiter = if (DataDelimiters.IsEmptyDelimiter(fieldDelimiter1) == false) fieldDelimiter1 else ","
+      val keyAndValueDelimiter = if (DataDelimiters.IsEmptyDelimiter(keyAndValueDelimiter1) == false) keyAndValueDelimiter1 else "\\x01"
+      val valueDelimiter = if (DataDelimiters.IsEmptyDelimiter(valueDelimiter1) == false) valueDelimiter1 else "~"
+      val delimiters = new DataDelimiters()
+      delimiters.keyAndValueDelimiter = keyAndValueDelimiter
+      delimiters.fieldDelimiter = fieldDelimiter
+      delimiters.valueDelimiter = valueDelimiter
+      val inputData = new KvData(inputStr, delimiters)
+
+      val dataMap = scala.collection.mutable.Map[String, String]()
+
+      val str_arr = inputData.dataInput.split(delimiters.fieldDelimiter, -1)
+
+      if (delimiters.fieldDelimiter.compareTo(delimiters.keyAndValueDelimiter) == 0) {
+        if (str_arr.size % 2 != 0) {
+          throw new Exception("Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched")
+        }
+        for (i <- 0 until str_arr.size by 2) {
+          dataMap(str_arr(i).trim) = str_arr(i + 1)
+        }
+      } else {
+        str_arr.foreach(kv => {
+          val kvpair = kv.split(delimiters.keyAndValueDelimiter)
+          if (kvpair.size != 2) {
+            throw new Exception("Expecting Key & Value pair only")
+          }
+          dataMap(kvpair(0).trim) = kvpair(1)
+        })
+      }
+
+      inputData.dataMap = dataMap.toMap
       return inputData
     }
 

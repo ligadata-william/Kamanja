@@ -46,6 +46,7 @@ class MessageFldsExtractor {
   def classStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (Array[String], Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], Array[Int], Array[Int]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
+    var assignKvData = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
     var addMsg = new StringBuilder(8 * 1024)
@@ -200,6 +201,7 @@ class MessageFldsExtractor {
               fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arr_4(15))
               withMethods = withMethods.append(arr_4(16))
               fromFuncBuf = fromFuncBuf.append(arr_4(17))
+              assignKvData = assignKvData.append(arr_4(18))
 
               //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
             } else if (typ.get.tType.toString().equals("tArrayBuf")) {
@@ -228,6 +230,7 @@ class MessageFldsExtractor {
               fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arrayBuf_4(17))
               withMethods = withMethods.append(arrayBuf_4(18))
               fromFuncBuf = fromFuncBuf.append(arrayBuf_4(19))
+              assignKvData = assignKvData.append(arrayBuf_4(20))
 
             } else if (typ.get.tType.toString().equals("tHashMap")) {
 
@@ -249,6 +252,7 @@ class MessageFldsExtractor {
               assignCsvdata = assignCsvdata.append(baseTyp_6(1))
               assignJsondata = assignJsondata.append(baseTyp_6(2))
               assignXmldata = assignXmldata.append(baseTyp_6(3))
+
               addMsg = addMsg.append(baseTyp_6(4))
               keysStr = keysStr.append(baseTyp_6(5))
               typeImpl = typeImpl.append(baseTyp_6(6))
@@ -271,6 +275,7 @@ class MessageFldsExtractor {
               fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(baseTyp_6(14))
               withMethods = withMethods.append(baseTyp_6(15))
               fromFuncBaseTypesBuf = fromFuncBaseTypesBuf.append(baseTyp_6(16))
+              assignKvData = assignKvData.append(baseTyp_6(17))
 
               if (paritionkeys != null && paritionkeys.size > 0) {
                 if (paritionkeys.contains(f.Name)) {
@@ -323,6 +328,7 @@ class MessageFldsExtractor {
                 fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arrayBuf_4(17))
                 withMethods = withMethods.append(arrayBuf_4(18))
                 fromFuncBuf = fromFuncBuf.append(arrayBuf_4(19))
+                assignKvData = assignKvData.append("// Not Handling Array of Container")
 
               } else if (typ.get.tType.toString().equals("tArray")) {
 
@@ -349,6 +355,7 @@ class MessageFldsExtractor {
                 fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arr_4(15))
                 withMethods = withMethods.append(arr_4(16))
                 fromFuncBuf = fromFuncBuf.append(arr_4(17))
+                assignKvData = assignKvData.append("// Not Handling Array of Container")
 
                 //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
               } else {
@@ -375,6 +382,7 @@ class MessageFldsExtractor {
 
                   withMethods = withMethods.append(cntnr_4(13))
                   fromFuncBuf = fromFuncBuf.append(cntnr_4(14))
+                  assignKvData = assignKvData.append("// Not Handling Container")
                   //   mappedPrevVerMatchkeys
 
                 }
@@ -473,7 +481,7 @@ class MessageFldsExtractor {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -497,6 +505,7 @@ class MessageFldsExtractor {
     returnClassStr += withMethods.toString
     returnClassStr += fromFuncBuf.toString
     returnClassStr += fromFuncBaseTypesBuf.toString
+    returnClassStr += assignKvData.toString
 
     (returnClassStr.toArray, count, list, argsList, partitionPos, primaryPos)
 
@@ -525,7 +534,7 @@ class MessageFldsExtractor {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
       }
     }
     log.debug("version from metadata " + msgdef.get.Version)
@@ -614,7 +623,7 @@ class MessageFldsExtractor {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.debug("StackTrace:"+stackTrace)
+        log.debug("StackTrace:" + stackTrace)
       }
     }
 
