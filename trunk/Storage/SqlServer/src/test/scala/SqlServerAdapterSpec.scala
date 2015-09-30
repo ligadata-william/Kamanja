@@ -69,7 +69,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     }
   }
 
-  def readCallBack(key:Key, value: Value){
+  def readCallBack(key:Key, value: Value) {
     logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
@@ -78,7 +78,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     logger.info("serializedInfo length => " + value.serializedInfo.length)
   }
 
-  def readCallBack(key:Key){
+  def readKeyCallBack(key:Key) {
     logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
@@ -150,7 +150,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       And("Get all the keys for the rows that were just added")
       noException should be thrownBy {
-	adapter.getAllKeys(containerName,readCallBack)
+	adapter.getAllKeys(containerName,readKeyCallBack)
       }
 
       And("Test Del api")
@@ -239,20 +239,20 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       And("Get all the keys for the rows that were just added")
       noException should be thrownBy {
-	adapter.getAllKeys(containerName,readCallBack)
+	adapter.getAllKeys(containerName,readKeyCallBack)
       }
 
       And("Test Delete for a time range")
       var  cal = Calendar.getInstance();
-      cal.add(Calendar.DATE, -5);    
+      cal.add(Calendar.DATE, -10);    
       var beginTime = cal.getTime()
       logger.info("begin time => " + dateFormat.format(beginTime))
       cal = Calendar.getInstance();
-      cal.add(Calendar.DATE, -3);    
+      cal.add(Calendar.DATE, -8);    
       var endTime = cal.getTime()
       logger.info("end time => " + dateFormat.format(endTime))
 
-      val timeRange = new TimeRange(beginTime,endTime)
+      var timeRange = new TimeRange(beginTime,endTime)
       noException should be thrownBy {
 	adapter.del(containerName,timeRange,keyStringList)
       }
@@ -261,6 +261,62 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       cnt = sqlServerAdapter.getRowCount(containerName,null)
       assert(cnt == 7)
 
+      And("Test Get for a time range")
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -7);    
+      beginTime = cal.getTime()
+      logger.info("begin time => " + dateFormat.format(beginTime))
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -6);    
+      endTime = cal.getTime()
+      logger.info("end time => " + dateFormat.format(endTime))
+
+      timeRange = new TimeRange(beginTime,endTime)
+      var timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+
+      noException should be thrownBy {
+	adapter.get(containerName,timeRanges,readCallBack _)
+      }
+
+      And("Test Get for a given keyString Arrays")
+      keyStringList = new Array[Array[String]](0)
+      for( i <- 1 to 5 ){
+	var keyArray = new Array[String](0)
+	var custName = "customer-" + i
+	keyArray = keyArray :+ custName
+	keyStringList = keyStringList :+ keyArray
+      }
+      noException should be thrownBy {
+	adapter.get(containerName,keyStringList,readCallBack _)
+      }
+
+
+      And("Test Get for a given set of keyStrings and also an array of time ranges")
+      keyStringList = new Array[Array[String]](0)
+      for( i <- 1 to 5 ){
+	var keyArray = new Array[String](0)
+	var custName = "customer-" + i
+	keyArray = keyArray :+ custName
+	keyStringList = keyStringList :+ keyArray
+      }
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -3);    
+      beginTime = cal.getTime()
+      logger.info("begin time => " + dateFormat.format(beginTime))
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -2);    
+      endTime = cal.getTime()
+      logger.info("end time => " + dateFormat.format(endTime))
+
+      timeRange = new TimeRange(beginTime,endTime)
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+
+      noException should be thrownBy {
+	adapter.get(containerName,timeRanges,keyStringList,readCallBack _)
+      }
+      
       And("Test drop container again, cleanup")
       noException should be thrownBy {
 	var containers = new Array[String](0)

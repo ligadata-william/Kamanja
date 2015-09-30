@@ -455,6 +455,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var con:Connection = null
     var stmt:Statement = null
     var rs: ResultSet = null
+    logger.info("Fetch the results of " + query)
     try{
       con = DriverManager.getConnection(jdbcUrl);
       stmt = con.createStatement()
@@ -475,7 +476,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     } catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Stacktrace:"+stackTrace)
+        logger.info("Stacktrace:"+stackTrace)
 	throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
@@ -574,18 +575,143 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
-  }    
+    var con:Connection = null
+    var pstmt:PreparedStatement = null
+    var tableName = toTable(containerName)
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      var query = "select value from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
+      pstmt = con.prepareStatement(query)
+      keys.foreach(key => {
+	pstmt.setDate(1,new java.sql.Date(key.timePartition.getTime))
+	pstmt.setString(2,key.bucketKey.mkString(","))
+	pstmt.setLong(3,key.transactionId)
+	pstmt.setInt(4,key.rowId)
+	var rs = pstmt.executeQuery();
+	while(rs.next()){
+	  var ba = rs.getBytes(1)
+	  // yet to understand how split serializerType and serializedInfo from ba
+	  // so hard coding serializerType to "kryo" for now
+	  var value = new Value("kryo",ba)
+	  (callbackFunction)(key,value)
+	 }
+      })
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(pstmt != null){
+	pstmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }
+  }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    var df = new SimpleDateFormat("yyyy/MM/dd")
+    var tableName = toTable(containerName)
+    time_ranges.foreach( time_range => {
+      var bt = df.format(time_range.beginTime)
+      var et = df.format(time_range.endTime)
+      var query = "select timePartition,bucketKey,transactionId,rowId,serializedInfo from " + tableName + " where timePartition >= '" + bt  + "' and timePartition <= '" + et + "'"
+      getData(tableName,query,callbackFunction)
+    })
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    var df = new SimpleDateFormat("yyyy/MM/dd")
+    var con:Connection = null
+    var pstmt:PreparedStatement = null
+    var tableName = toTable(containerName)
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      time_ranges.foreach( time_range => {
+	var bt = df.format(time_range.beginTime)
+	var et = df.format(time_range.endTime)
+	var query = "select timePartition,bucketKey,transactionId,rowId,serializedInfo from " + tableName + " where timePartition >= '" + bt  + "' and timePartition <= '" + et + "' and bucketKey = ? "
+	pstmt = con.prepareStatement(query)
+	bucketKeys.foreach(bucketKey => {
+	  pstmt.setString(1,bucketKey.mkString(","))
+	  var rs = pstmt.executeQuery();
+	  while(rs.next()){
+	    var timePartition = new java.util.Date(rs.getDate(1).getTime())
+	    var keyStr = rs.getString(2)
+	    var tId = rs.getLong(3)
+	    var rId = rs.getInt(4)
+	    var ba = rs.getBytes(5)
+	    val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
+	    var key = new Key(timePartition,bucketKey,tId,rId)
+	    // yet to understand how split serializerType and serializedInfo from ba
+	    // so hard coding serializerType to "kryo" for now
+	    var value = new Value("kryo",ba)
+	    (callbackFunction)(key,value)
+	  }
+	})
+	if(pstmt != null){
+	  pstmt.close
+	  pstmt = null
+	}	
+      })
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.info("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(pstmt != null){
+	pstmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }
   }
+
   override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    var con:Connection = null
+    var pstmt:PreparedStatement = null
+    var tableName = toTable(containerName)
+    try{
+      con = DriverManager.getConnection(jdbcUrl);
+      var query = "select timePartition,bucketKey,transactionId,rowId,serializedInfo from " + tableName + " where  bucketKey = ? "
+      pstmt = con.prepareStatement(query)
+      bucketKeys.foreach(bucketKey => {
+	pstmt.setString(1,bucketKey.mkString(","))
+	var rs = pstmt.executeQuery();
+	while(rs.next()){
+	  var timePartition = new java.util.Date(rs.getDate(1).getTime())
+	  var keyStr = rs.getString(2)
+	  var tId = rs.getLong(3)
+	  var rId = rs.getInt(4)
+	  var ba = rs.getBytes(5)
+	  val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
+	  var key = new Key(timePartition,bucketKey,tId,rId)
+	  // yet to understand how split serializerType and serializedInfo from ba
+	  // so hard coding serializerType to "kryo" for now
+	  var value = new Value("kryo",ba)
+	  (callbackFunction)(key,value)
+	 }
+      })
+    } catch{
+      case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.info("Stacktrace:"+stackTrace)
+	throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+      }
+    } finally {
+      if(pstmt != null){
+	pstmt.close
+      }
+      if( con != null ){
+	con.close
+      }
+    }
   }
 
   def getAllKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
@@ -753,40 +879,40 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
   }
 
   override def put(data_list: Array[(String, Array[(Key, Value)])]): Unit = {
-    logger.info("not implemented yet")
+    parent.put(data_list)
   }
 
   // delete operations
   override def del(containerName: String, keys: Array[Key]): Unit = {
-    logger.info("not implemented yet")
+    parent.del(containerName,keys)
   }
 
   override def del(containerName: String, time: TimeRange, keys: Array[Array[String]]): Unit = {
-    logger.info("not implemented yet")
+    parent.del(containerName,time,keys)
   }
 
   // get operations
   override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    parent.get(containerName,callbackFunction)
   }
 
   override def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    parent.get(containerName,keys,callbackFunction)
   }    
 
   override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    parent.get(containerName,time_ranges,callbackFunction)
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    parent.get(containerName,time_ranges,bucketKeys,callbackFunction)
   }
   override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    logger.info("not implemented yet")
+    parent.get(containerName,bucketKeys,callbackFunction)
   }
 
   def getAllKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
-    logger.info("not implemented yet")
+    parent.getAllKeys(containerName,callbackFunction)
   }
 }
 
