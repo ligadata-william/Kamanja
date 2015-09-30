@@ -502,7 +502,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
 
-  private def buildAdapterUniqueValue(k: Key, v: Value, results: ArrayBuffer[(String, (Long, String, List[(String, String)]))]) {
+  private def buildAdapterUniqueValue(k: Key, v: Value, results: ArrayBuffer[(String, (Long, String, List[(String, String, String)]))]) {
     implicit val jsonFormats: Formats = DefaultFormats
     val uniqVal = parse(new String(v.serializedInfo)).extract[AdapterUniqueValueDes]
 
@@ -685,7 +685,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     val v = _adapterUniqKeyValData.getOrElse(key, null)
     if (v != null) return v
-    val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
+    val results = new ArrayBuffer[(String, (Long, String, List[(String, String, String)]))]()
     val buildAdapOne = (k: Key, v: Value) => {
       buildAdapterUniqueValue(k, v, results)
     }
@@ -1102,8 +1102,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Final Commit for the given transaction
   // BUGBUG:: For now we are committing all the data into default datastore. Not yet handled message level datastore.
-  override def commitData(transId: Long, key: String, value: String, outResults: List[(String, String)]): Unit = {
-    val outputResults = if (outResults != null) outResults else List[(String, String)]()
+  override def commitData(transId: Long, key: String, value: String, outResults: List[(String, String, String)]): Unit = {
+    val outputResults = if (outResults != null) outResults else List[(String, String, String)]()
 
     // Commit Data and Removed Transaction information from status
     val txnCtxt = getTransactionContext(transId, false)
@@ -1265,8 +1265,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Get Status information from Final table
-  override def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] = {
-    val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
+  override def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String, String)]))] = {
+    val results = new ArrayBuffer[(String, (Long, String, List[(String, String, String)]))]()
 
     val buildAdapOne = (k: Key, v: Value) => {
       buildAdapterUniqueValue(k, v, results)
