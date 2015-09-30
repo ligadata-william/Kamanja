@@ -893,6 +893,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
       })
      
 	""" + fromFnc + """
+	timePartitionData = new Date(com.ligadata.BaseTypes.LongImpl.Clone(other.fields("timePartitionData")._2.asInstanceOf[Date].getTime()))
+    fields("timePartitionData") = (-1, timePartitionData)
+
      	return this
     }
     """

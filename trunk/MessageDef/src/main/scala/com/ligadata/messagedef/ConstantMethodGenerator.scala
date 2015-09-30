@@ -569,8 +569,10 @@ class ConstantMethodGenerator {
     var convertFuncStr: String = ""
     if (mesg.Fixed.equalsIgnoreCase("true"))
       timePartitionData = "timePartitionData = oldObj.timePartitionData;"
-    else timePartitionData = "" /// check the mapped msgs
-    // if (prevObjExists) {
+    else if (mesg.Fixed.equalsIgnoreCase("false"))
+      timePartitionData = "timePartitionData = oldObj.fields(\"timePartitionData\")._2.asInstanceOf[Date]; \n fields(\"timePartitionData\") = (-1, timePartitionData);" /// check the mapped msgs
+    
+     // if (prevObjExists) {
     if (oldObj != null && oldObj.toString.trim() != "") {
       if (convertStr != null && convertStr.trim() != "") {
 
@@ -842,6 +844,8 @@ class ConstantMethodGenerator {
             }
          }
        })
+       timePartitionData = prevVerObj.fields(\"timePartitionData\")._2.asInstanceOf[Date];
+       fields(\"timePartitionData\") = (-1, timePartitionData); 
 	 """
   }
 
