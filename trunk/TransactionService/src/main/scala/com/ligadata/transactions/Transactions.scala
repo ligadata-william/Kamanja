@@ -29,8 +29,7 @@ import org.apache.curator.framework.CuratorFramework
 import org.apache.curator.framework.recipes.locks.InterProcessMutex
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.keyvaluestore.KeyValueManager
-import com.ligadata.KamanjaData.{ KamanjaData }
-import com.ligadata.KvBase.{ Key, Value, TimeRange }
+import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts }
 
 object NodeLevelTransService {
   private[this] val LOG = Logger.getLogger(getClass);
@@ -89,7 +88,7 @@ object NodeLevelTransService {
 
       try {
         objs(0) = 0
-        txnsDataStore.get(containerName, Array(TimeRange(KamanjaData.defaultTime, KamanjaData.defaultTime)), Array(bucket_key), buildTxnOff)
+        txnsDataStore.get(containerName, Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), Array(bucket_key), buildTxnOff)
         startTxnIdx = objs(0)
       } catch {
         case e: Exception => LOG.debug("Key %s not found. Reason:%s, Message:%s".format(bucket_key.mkString(","), e.getCause, e.getMessage))
@@ -104,7 +103,7 @@ object NodeLevelTransService {
       var cntr = 0
       val nextTxnStart = endTxnIdx + 1
 
-      val k = Key(KamanjaData.defaultTime, bucket_key, 0L, 0)
+      val k = Key(KvBaseDefalts.defaultTime, bucket_key, 0L, 0)
       val v = Value("", nextTxnStart.toString.getBytes())
       val txn = txnsDataStore.beginTx()
       txnsDataStore.put(containerName, k, v)

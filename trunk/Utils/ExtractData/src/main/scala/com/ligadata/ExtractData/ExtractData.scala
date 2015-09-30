@@ -28,7 +28,6 @@ import scala.collection.mutable.TreeSet
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.ligadata.Serialize._
-import com.ligadata.KamanjaData.KamanjaData
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadata._
