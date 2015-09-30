@@ -50,6 +50,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   private val logger = Logger.getLogger(loggerName)
   logger.setLevel(Level.INFO)
   val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+  val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
 
   private val kvManagerLoader = new KamanjaLoaderInfo
 
@@ -70,19 +71,21 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   }
 
   def readCallBack(key:Key, value: Value) {
-    logger.info("timePartition => " + key.timePartition)
+    logger.info("timePartition => " + dateFormat1.format(key.timePartition))
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
     logger.info("serializerType => " + value.serializerType)
     logger.info("serializedInfo length => " + value.serializedInfo.length)
+    logger.info("----------------------------------------------------")
   }
 
   def readKeyCallBack(key:Key) {
-    logger.info("timePartition => " + key.timePartition)
+    logger.info("timePartition => " + dateFormat1.format(key.timePartition))
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
+    logger.info("----------------------------------------------------")
   }
 
   @throws(classOf[FileNotFoundException])
@@ -139,7 +142,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       And("Get all the rows that were just added")
       noException should be thrownBy {
-	adapter.get(containerName,readCallBack)
+	adapter.get(containerName,readCallBack _)
       }
 
       val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
@@ -150,7 +153,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       And("Get all the keys for the rows that were just added")
       noException should be thrownBy {
-	adapter.getAllKeys(containerName,readKeyCallBack)
+	adapter.getKeys(containerName,readKeyCallBack _)
       }
 
       And("Test Del api")
@@ -230,7 +233,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       And("Get all the rows that were just added")
       noException should be thrownBy {
-	adapter.get(containerName,readCallBack)
+	adapter.get(containerName,readCallBack _)
       }
 
       And("Check the row count after adding a bunch")
@@ -239,7 +242,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       And("Get all the keys for the rows that were just added")
       noException should be thrownBy {
-	adapter.getAllKeys(containerName,readKeyCallBack)
+	adapter.getKeys(containerName,readKeyCallBack _)
       }
 
       And("Test Delete for a time range")
@@ -279,6 +282,11 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	adapter.get(containerName,timeRanges,readCallBack _)
       }
 
+      And("Test GetKeys for a time range")
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+
       And("Test Get for a given keyString Arrays")
       keyStringList = new Array[Array[String]](0)
       for( i <- 1 to 5 ){
@@ -289,6 +297,11 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
       noException should be thrownBy {
 	adapter.get(containerName,keyStringList,readCallBack _)
+      }
+      
+      And("Test GetKeys for a given keyString Arrays")
+      noException should be thrownBy {
+	adapter.getKeys(containerName,keyStringList,readKeyCallBack _)
       }
 
 
@@ -315,6 +328,11 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       noException should be thrownBy {
 	adapter.get(containerName,timeRanges,keyStringList,readCallBack _)
+      }
+
+      And("Test GetKeys for a given set of keyStrings and also an array of time ranges")
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,keyStringList,readKeyCallBack _)
       }
       
       And("Test drop container again, cleanup")
