@@ -243,3 +243,5 @@ class TransformMessage {
   var outputKeys: Array[String] = null // Output Key field names from input fields.
 }
 
+case class MessageContainerBaseWithModFlag(modified: Boolean, value: MessageContainerBase)
+

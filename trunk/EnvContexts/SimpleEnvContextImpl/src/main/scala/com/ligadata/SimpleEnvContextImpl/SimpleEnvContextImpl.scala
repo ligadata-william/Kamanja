@@ -75,8 +75,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   class MsgContainerInfo {
     val current_msg_cont_data = ArrayBuffer[MessageContainerBase]()
-    val dataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
-    val dataByBucketKey = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBucketKeyComp) // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
+    val dataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag](KvBaseDefalts.defualtTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+    val dataByBucketKey = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag](KvBaseDefalts.defualtBucketKeyComp) // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
     var containerType: BaseTypeDef = null
     var isContainer: Boolean = false
     var objFullName: String = ""
@@ -98,7 +98,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val primKeyAsArray = if (primaryKey != null && primaryKey.size > 0) primaryKey.toArray else null
           val fromKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.beginTime, partKeyAsArray, 0, 0), primKeyAsArray != null, primKeyAsArray)
           val toKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.endTime, partKeyAsArray, Long.MaxValue, Int.MaxValue), primKeyAsArray != null, primKeyAsArray)
-          val tmpDataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+          val tmpDataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag](KvBaseDefalts.defualtTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
           tmpDataByTmPart.putAll(container.dataByBucketKey.subMap(fromKey, true, toKey, true))
           val tmFilterMap = tmpDataByTmPart.subMap(fromKey, true, toKey, true)
 
@@ -108,12 +108,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               val entry = it1.next();
               val value = entry.getValue();
               if (primKeyAsArray != null) {
-                if (primKeyAsArray.sameElements(value.PrimaryKeyData) && f(value)) {
-                  return (value, true);
+                if (primKeyAsArray.sameElements(value.value.PrimaryKeyData) && f(value.value)) {
+                  return (value.value, true);
                 }
               } else {
-                if (f(value)) {
-                  return (value, true);
+                if (f(value.value)) {
+                  return (value.value, true);
                 }
               }
             }
@@ -123,13 +123,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               while (it1.hasNext()) {
                 val entry = it1.next();
                 val value = entry.getValue();
-                if (primKeyAsArray.sameElements(value.PrimaryKeyData))
-                  return (value, true);
+                if (primKeyAsArray.sameElements(value.value.PrimaryKeyData))
+                  return (value.value, true);
               }
             } else {
               val data = tmFilterMap.lastEntry()
               if (data != null)
-                return (data.getValue(), true)
+                return (data.getValue().value, true)
             }
           }
         } else if (tmRange != null) {
@@ -142,19 +142,19 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             while (it1.hasNext()) {
               val entry = it1.next();
               val value = entry.getValue();
-              if (f(value)) {
-                return (value, true);
+              if (f(value.value)) {
+                return (value.value, true);
               }
             }
           } else {
             val data = tmFilterMap.lastEntry()
             if (data != null)
-              return (data.getValue(), true)
+              return (data.getValue().value, true)
           }
         } else {
           val data = container.dataByTmPart.lastEntry()
           if (data != null)
-            return (data.getValue(), true)
+            return (data.getValue().value, true)
         }
       }
       (null, false)
@@ -200,7 +200,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val primKeyAsArray = if (primaryKey != null && primaryKey.size > 0) primaryKey.toArray else null
           val fromKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.beginTime, partKeyAsArray, 0, 0), primKeyAsArray != null, primKeyAsArray)
           val toKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.endTime, partKeyAsArray, Long.MaxValue, Int.MaxValue), primKeyAsArray != null, primKeyAsArray)
-          val tmpDataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+          val tmpDataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag](KvBaseDefalts.defualtTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
           tmpDataByTmPart.putAll(container.dataByBucketKey.subMap(fromKey, true, toKey, true))
           val tmFilterMap = tmpDataByTmPart.subMap(fromKey, true, toKey, true)
 
@@ -209,8 +209,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             while (it1.hasNext()) {
               val entry = it1.next();
               val value = entry.getValue();
-              if (f(value)) {
-                retResult += value
+              if (f(value.value)) {
+                retResult += value.value
                 foundPartKeys += entry.getKey().key
               }
             }
@@ -218,7 +218,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             var it1 = tmFilterMap.entrySet().iterator()
             while (it1.hasNext()) {
               val entry = it1.next();
-              retResult += entry.getValue()
+              retResult += entry.getValue().value
               foundPartKeys += entry.getKey().key
             }
           }
@@ -232,8 +232,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             while (it1.hasNext()) {
               val entry = it1.next();
               val value = entry.getValue();
-              if (f(value)) {
-                retResult += value
+              if (f(value.value)) {
+                retResult += value.value
                 foundPartKeys += entry.getKey().key
               }
             }
@@ -241,7 +241,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             var it1 = tmFilterMap.entrySet().iterator()
             while (it1.hasNext()) {
               val entry = it1.next();
-              retResult += entry.getValue()
+              retResult += entry.getValue().value
               foundPartKeys += entry.getKey().key
             }
           }
@@ -249,7 +249,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           var it1 = container.dataByTmPart.entrySet().iterator()
           while (it1.hasNext()) {
             val entry = it1.next();
-            retResult += entry.getValue()
+            retResult += entry.getValue().value
             foundPartKeys += entry.getKey().key
           }
         }
@@ -380,8 +380,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
         val primkey = value.PrimaryKeyData
         val putkey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKey.toArray), Key(KvBaseDefalts.defaultTime, partKey.toArray, value.TransactionId, 0 /* value.RowId */ ), primkey != null && primkey.size > 0, primkey)
-        container.dataByBucketKey.put(putkey, value)
-        container.dataByTmPart.put(putkey, value)
+        container.dataByBucketKey.put(putkey, MessageContainerBaseWithModFlag(true, value))
+        container.dataByTmPart.put(putkey, MessageContainerBaseWithModFlag(true, value))
 
         container.current_msg_cont_data -= value
         container.current_msg_cont_data += value // to get the value to end
@@ -510,7 +510,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     if (uniqVal.Out != None) {
       res = uniqVal.Out.get.map(o => { (o(0), o(1), o(2)) })
-        }
+    }
 
     results += ((k.bucketKey(0), (uniqVal.T, uniqVal.V, res.toList))) // taking 1st key, that is what we are expecting
   }
@@ -562,7 +562,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   */
 
   private def localGetObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
-/*
+    /*
     if (TxnContextCommonFunctions.IsEmptyKey(partKey) || TxnContextCommonFunctions.IsEmptyKey(primaryKey))
       return null
     val txnCtxt = getTransactionContext(transId, false)
@@ -608,7 +608,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private def localHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
     val retVals = ArrayBuffer[MessageContainerBase]()
-/*
+    /*
     if (TxnContextCommonFunctions.IsEmptyKey(partKey))
       return retVals.toArray
     val txnCtxt = getTransactionContext(transId, false)
@@ -650,7 +650,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     retVals.toArray
   }
   private def localGetAllKeyValues(transId: Long, containerName: String): Array[MessageContainerBase] = {
-/*
+    /*
     val fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (fnd != null) {
       if (fnd.loadedAll) {
@@ -669,7 +669,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       return Array[MessageContainerBase]()
     }
 */
-      return Array[MessageContainerBase]()
+    return Array[MessageContainerBase]()
   }
 
   private def localGetAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
@@ -1144,7 +1144,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val k = entry.getKey()
           val v = entry.getValue()
           bos.reset
-          v.Serialize(dos)
+          v.value.Serialize(dos)
           dataForContainer += ((k.key, Value("manual", bos.toByteArray)))
         }
 

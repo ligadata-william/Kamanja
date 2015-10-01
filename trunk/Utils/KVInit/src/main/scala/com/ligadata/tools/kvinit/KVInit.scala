@@ -564,7 +564,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     return null
   }
 
-  private def collectKeyAndValues(k: Key, v: Value, dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, (Boolean, MessageContainerBase)]): Unit = {
+  private def collectKeyAndValues(k: Key, v: Value, dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag]): Unit = {
     val value = SerializeDeserialize.Deserialize(v.serializedInfo, this, kvInitLoader.loader, true, "")
     val primarykey = value.PrimaryKeyData
 /*
@@ -572,10 +572,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), newK, primarykey != null && primarykey.size > 0, primarykey)
 */
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), k, primarykey != null && primarykey.size > 0, primarykey)
-    dataByBucketKeyPart.put(key, (false, value))
+    dataByBucketKeyPart.put(key, MessageContainerBaseWithModFlag(false, value))
   }
 
-  private def LoadDataIfNeeded(loadKey: LoadKeyWithBucketId, loadedKeys: java.util.TreeSet[LoadKeyWithBucketId], dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, (Boolean, MessageContainerBase)], kvstore: DataStore): Unit = {
+  private def LoadDataIfNeeded(loadKey: LoadKeyWithBucketId, loadedKeys: java.util.TreeSet[LoadKeyWithBucketId], dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag], kvstore: DataStore): Unit = {
     if (loadedKeys.contains(loadKey))
       return
     val buildOne = (k: Key, v: Value) => {
@@ -607,7 +607,8 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     logger.debug("KeyFields:" + keyfieldnames.mkString(","))
 
-    var dataByBucketKeyPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, (Boolean, MessageContainerBase)](KvBaseDefalts.defualtBucketKeyComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+    // The value for this is Boolean & MessageContainerBase. Here Boolean represents it is changed in this transaction or loaded from previous file
+    var dataByBucketKeyPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag](KvBaseDefalts.defualtBucketKeyComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
     var loadedKeys = new java.util.TreeSet[LoadKeyWithBucketId](KvBaseDefalts.defaultLoadKeyComp) // By BucketId, BucketKey, Time Range
 
     var hasPrimaryKey = false
@@ -704,7 +705,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                   LoadDataIfNeeded(loadKey, loadedKeys, dataByBucketKeyPart, kvstore)
                 }
 
-                dataByBucketKeyPart.put(k, (true, messageOrContainer))
+                dataByBucketKeyPart.put(k, MessageContainerBaseWithModFlag(true, messageOrContainer))
                 processedRows += 1
               } catch {
                 case e: Exception => {
@@ -731,11 +732,11 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       val entry = it1.next();
 
       val value = entry.getValue();
-      if (value._1) {
+      if (value.modified) {
         val key = entry.getKey();
         try {
           val k = entry.getKey().key
-          val v = Value("manual", SerializeDeserialize.Serialize(value._2))
+          val v = Value("manual", SerializeDeserialize.Serialize(value.value))
           storeObjects += ((k, v))
         } catch {
           case e: Exception => {
