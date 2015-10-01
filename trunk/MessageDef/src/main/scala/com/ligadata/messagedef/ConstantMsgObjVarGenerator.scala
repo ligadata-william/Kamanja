@@ -314,7 +314,7 @@ class ConstantMsgObjVarGenerator {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getTimePartitioninfo(msg.timePartition) + timePartitionKeyDataObj(timePartitionKey, timePartitionPos) + newline + hasObjPrimaryPartitionTimePartitionKeys + newline +getFullName + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getTimePartitioninfo(msg.timePartition) + timePartitionKeyDataObj(timePartitionKey, timePartitionPos) + newline + hasObjPrimaryPartitionTimePartitionKeys + newline + getFullName + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
@@ -981,10 +981,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
     """
     override def hasPrimaryKey(): Boolean = {
-    	(primaryKeys.size > 0);
+		 if(primaryKeys == null) return false;
+		 (primaryKeys.size > 0);
     }
 
     override def hasPartitionKey(): Boolean = {
+		 if(partitionKeys == null) return false;
     	(partitionKeys.size > 0);
     }
 

@@ -37,14 +37,31 @@ object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerOb
   def build = new T
   def build(from: T) = new T(from)
 
-  val partitionKeys: Array[String] = null
+  val partitionKeys: Array[String] = null;
   val partKeyPos = Array(0)
+  val primaryKeys: Array[String] = null;
+   
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
   override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+  
+  override def hasPrimaryKey(): Boolean = {
+	if(primaryKeys == null) return false;
+	(primaryKeys.size > 0);
+  }
 
+  override def hasPartitionKey(): Boolean = {
+	 if(partitionKeys == null) return false;
+    (partitionKeys.size > 0);
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    val tmPartInfo = getTimePartitionInfo
+    (tmPartInfo != null && tmPartInfo._1 != null && tmPartInfo._2 != null && tmPartInfo._3 != null);
+  }
+  
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
@@ -107,6 +124,18 @@ class CustAlertHistory(var transactionId: Long, other: CustAlertHistory) extends
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  
+  override def hasPrimaryKey(): Boolean = {
+    CustAlertHistory.hasPrimaryKey;
+  }
+
+  override def hasPartitionKey(): Boolean = {
+    CustAlertHistory.hasPartitionKey;
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    CustAlertHistory.hasTimeParitionInfo;
+  }
 }
 
 object CustPreferences extends RDDObject[CustPreferences] with BaseContainerObj {
@@ -124,14 +153,29 @@ object CustPreferences extends RDDObject[CustPreferences] with BaseContainerObj 
   def build = new T
   def build(from: T) = new T(from)
 
-  val partitionKeys: Array[String] = null
+  val partitionKeys: Array[String] = null;
   val partKeyPos = Array(0)
-
+  val primaryKeys: Array[String] = null;
+   
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
   override def TimePartitionData(inputdata: InputData): Date = new Date(0)
 
+  override def hasPrimaryKey(): Boolean = {
+	if(primaryKeys == null) return false;
+	(primaryKeys.size > 0);
+  }
+
+  override def hasPartitionKey(): Boolean = {
+	 if(partitionKeys == null) return false;
+    (partitionKeys.size > 0);
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    val tmPartInfo = getTimePartitionInfo
+   (tmPartInfo != null && tmPartInfo._1 != null && tmPartInfo._2 != null && tmPartInfo._3 != null);
+  }
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
@@ -193,6 +237,19 @@ class CustPreferences(var transactionId: Long, other: CustPreferences) extends B
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  
+  override def hasPrimaryKey(): Boolean = {
+    CustPreferences.hasPrimaryKey;
+  }
+
+  override def hasPartitionKey(): Boolean = {
+    CustPreferences.hasPartitionKey;
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    CustPreferences.hasTimeParitionInfo;
+  }
+
 }
 
 object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
@@ -209,9 +266,10 @@ object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
   override def IsKv: Boolean = false;
   override def CanPersist: Boolean = true;
 
-  val partitionKeys: Array[String] = null
+  val partitionKeys: Array[String] = null;
   val partKeyPos = Array(0)
-
+  val primaryKeys: Array[String] = null;
+   
   def build = new T
   def build(from: T) = new T(from)
 
@@ -220,6 +278,21 @@ object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
   override def TimePartitionData(inputdata: InputData): Date = new Date(0)
 
+  override def hasPrimaryKey(): Boolean = {
+	if(primaryKeys == null) return false;
+	(primaryKeys.size > 0);
+  }
+
+  override def hasPartitionKey(): Boolean = {
+	 if(partitionKeys == null) return false;
+    (partitionKeys.size > 0);
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    val tmPartInfo = getTimePartitionInfo
+    (tmPartInfo != null && tmPartInfo._1 != null && tmPartInfo._2 != null && tmPartInfo._3 != null);
+  }
+  
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
@@ -280,6 +353,19 @@ class CustTransaction(var transactionId: Long, other: CustTransaction) extends B
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  
+  override def hasPrimaryKey(): Boolean = {
+    CustTransaction.hasPrimaryKey;
+  }
+
+  override def hasPartitionKey(): Boolean = {
+    CustTransaction.hasPartitionKey;
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    CustTransaction.hasTimeParitionInfo;
+  }
+
 }
 
 object GlobalPreferences extends RDDObject[GlobalPreferences] with BaseContainerObj {
@@ -297,14 +383,30 @@ object GlobalPreferences extends RDDObject[GlobalPreferences] with BaseContainer
   def build = new T
   def build(from: T) = new T(from)
 
-  val partitionKeys: Array[String] = null
+  val partitionKeys: Array[String] = null;
   val partKeyPos = Array(0)
-
+  val primaryKeys: Array[String] = null;
+   
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
   override def TimePartitionData(inputdata: InputData): Date = new Date(0)
 
+  override def hasPrimaryKey(): Boolean = {
+	if(primaryKeys == null) return false;
+	(primaryKeys.size > 0);
+  }
+
+  override def hasPartitionKey(): Boolean = {
+	 if(partitionKeys == null) return false;
+    (partitionKeys.size > 0);
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    val tmPartInfo = getTimePartitionInfo
+    (tmPartInfo != null && tmPartInfo._1 != null && tmPartInfo._2 != null && tmPartInfo._3 != null);
+  }
+  
   override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
@@ -361,5 +463,18 @@ class GlobalPreferences(var transactionId: Long, other: GlobalPreferences) exten
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  
+  override def hasPrimaryKey(): Boolean = {
+    GlobalPreferences.hasPrimaryKey;
+  }
+
+  override def hasPartitionKey(): Boolean = {
+    GlobalPreferences.hasPartitionKey;
+  }
+
+  override def hasTimeParitionInfo(): Boolean = {
+    GlobalPreferences.hasTimeParitionInfo;
+  }
+
 }
 
