@@ -436,10 +436,6 @@ object KamanjaMdCfg {
 
   private def LoadOutputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], outputAdapters: ArrayBuffer[OutputAdapter], hasInputAdapterName: Boolean): Boolean = {
     // ConfigurationName
-    if (adaps.size > 1) {
-      LOG.error(" Got %d ouput adapters, but we are expecting only one output adapter.".format(adaps.size))
-      return false
-    }
     adaps.foreach(ac => {
       //BUGBUG:: Not yet validating required fields 
       val conf = new AdapterConfiguration
@@ -451,7 +447,9 @@ object KamanjaMdCfg {
         conf.formatOrInputAdapterName = adap.InputAdapterToVerify
       conf.className = adap.ClassName
       conf.jarName = adap.JarName
-      conf.delimiterString = adap.DelimiterString
+      conf.keyAndValueDelimiter = adap.KeyAndValueDelimiter
+      conf.fieldDelimiter = adap.FieldDelimiter
+      conf.valueDelimiter = adap.ValueDelimiter
       conf.associatedMsg = adap.AssociatedMessage
       conf.dependencyJars = if (adap.DependencyJars != null) adap.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
       conf.adapterSpecificCfg = adap.AdapterSpecificCfg
@@ -556,7 +554,9 @@ object KamanjaMdCfg {
       conf.jarName = adap.JarName
       conf.dependencyJars = if (adap.DependencyJars != null) adap.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
       conf.adapterSpecificCfg = adap.AdapterSpecificCfg
-      conf.delimiterString = adap.DelimiterString
+      conf.keyAndValueDelimiter = adap.KeyAndValueDelimiter
+      conf.fieldDelimiter = adap.FieldDelimiter
+      conf.valueDelimiter = adap.ValueDelimiter
       conf.associatedMsg = adap.AssociatedMessage
 
       try {

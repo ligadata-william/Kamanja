@@ -16,15 +16,19 @@
 
 package com.ligadata.InputOutputAdapterInfo
 
+import com.ligadata.KamanjaBase.DataDelimiters
+
 class AdapterConfiguration {
   var Name: String = _ // Name of the Adapter, KafkaQueue Name/MQ Name/File Adapter Logical Name/etc
   var formatOrInputAdapterName: String = _ // CSV/JSON/XML for input adapter. For output it is just corresponding input adapter name. For Status it is default
-  var delimiterString: String = _ // Delimiter String for CSV
   var associatedMsg: String = _ // Queue Associated Message
   var className: String = _ // Class where the Adapter can be loaded (Object derived from InputAdapterObj)
   var jarName: String = _ // Jar where the className can be found
   var dependencyJars: Set[String] = _ // All dependency Jars for jarName 
   var adapterSpecificCfg: String = _ // adapter specific (mostly json) string 
+  var keyAndValueDelimiter: String = _ // Delimiter String for keyAndValueDelimiter
+  var fieldDelimiter: String = _ // Delimiter String for fieldDelimiter
+  var valueDelimiter: String = _ // Delimiter String for valueDelimiter
 }
 
 trait CountersAdapter {
@@ -78,8 +82,16 @@ trait OutputAdapterObj {
 trait OutputAdapter {
   val inputConfig: AdapterConfiguration // Configuration
 
-  def send(message: String, partKey: String): Unit
-  def send(message: Array[Byte], partKey: Array[Byte]): Unit
+  def send(message: String, partKey: String): Unit = send(Array(message.getBytes("UTF8")), Array(partKey.getBytes("UTF8")))
+
+  def send(message: Array[Byte], partKey: Array[Byte]): Unit = send(Array(message), Array(partKey))
+
+  // To send an array of messages. messages.size should be same as partKeys.size
+  def send(messages: Array[String], partKeys: Array[String]): Unit = send(messages.map(m => m.getBytes("UTF8")), partKeys.map(k => k.getBytes("UTF8")))
+  
+  // To send an array of messages. messages.size should be same as partKeys.size
+  def send(messages: Array[Array[Byte]], partKeys: Array[Array[Byte]]): Unit
+  
   def Shutdown: Unit
   def Category = "Output"
 }
@@ -89,7 +101,7 @@ trait ExecContext {
   val curPartitionKey: PartitionUniqueRecordKey
   val callerCtxt: InputAdapterCallerContext
 
-  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiters: DataDelimiters): Unit
 }
 
 trait ExecContextObj {

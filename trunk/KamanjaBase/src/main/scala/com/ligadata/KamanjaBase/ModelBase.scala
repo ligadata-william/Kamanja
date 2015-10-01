@@ -25,6 +25,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
 import com.ligadata.KvBase.{ TimeRange }
+import com.ligadata.KvBase.{ Key, Value, TimeRange/* , KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper */ }
 
 object MinVarType extends Enumeration {
   type MinVarType = Value
@@ -265,27 +266,28 @@ trait EnvContext {
   def containsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size
 
   // Adapters Keys & values
-  def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit
-  def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)])
+  def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit
+  def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String, String)])
   /*
   def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] // Get all Status information from intermediate table. No Transaction required here.
   def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from intermediate table for given keys. No Transaction required here.
 */
-  def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String))] // Get Status information from Final table. No Transaction required here.
+  def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String, String)]))] // Get Status information from Final table. No Transaction required here.
 
-  def getAllIntermediateCommittingInfo: Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information. Once we commit we don't have this, because we remove after commit
+//  def getAllIntermediateCommittingInfo: Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information. Once we commit we don't have this, because we remove after commit
 
-  def getAllIntermediateCommittingInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information.
+//  def getAllIntermediateCommittingInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information.
 
-  def removeCommittedKey(transId: Long, key: String): Unit
-  def removeCommittedKeys(keys: Array[String]): Unit
+//  def removeCommittedKey(transId: Long, key: String): Unit
+//  def removeCommittedKeys(keys: Array[String]): Unit
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
   def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit
   def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult]
 
   // Final Commit for the given transaction
-  def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String)]): Unit
+  // outputResults has AdapterName, PartitionKey & Message
+  def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit
 
   // Save State Entries on local node & on Leader
   def PersistLocalNodeStateEntries: Unit
@@ -298,11 +300,11 @@ trait EnvContext {
   def clearIntermediateResults(unloadMsgsContainers: Array[String]): Unit
 
   // Changed Data & Reloading data are Time in MS, Bucket Key & TransactionId
-  def getChangedData(tempTransId: Long, includeMessages: Boolean, includeContainers: Boolean): scala.collection.immutable.Map[String, List[(Long, List[String], Long)]]
-  def ReloadKeys(tempTransId: Long, containerName: String, keys: List[(Long, List[String], Long)]): Unit
+  def getChangedData(tempTransId: Long, includeMessages: Boolean, includeContainers: Boolean): scala.collection.immutable.Map[String, Array[Key]]
+  def ReloadKeys(tempTransId: Long, containerName: String, keys: List[Key]): Unit
 
   // Set Reload Flag
-  def setReloadFlag(transId: Long, containerName: String): Unit
+//  def setReloadFlag(transId: Long, containerName: String): Unit
 
   def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit
   def GetValidateAdapterInformation: Array[(String, String)]
@@ -337,7 +339,10 @@ trait ModelBaseObj {
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
-class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
+class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase, val msgData: Array[Byte]) {
+  def InputMessageData: Array[Byte] = msgData
+  def Message: MessageContainerBase = msg
+  def TransactionContext: TransactionContext = txnContext
   def getPropertyValue(clusterId: String, key: String): String = (txnContext.getPropertyValue(clusterId, key))
 }
 
