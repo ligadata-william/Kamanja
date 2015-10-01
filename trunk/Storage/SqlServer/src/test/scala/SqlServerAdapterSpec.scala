@@ -22,7 +22,7 @@ import Matchers._
 import com.ligadata.Utils._
 import util.control.Breaks._
 import scala.io._
-import java.util.{Date,Calendar}
+import java.util.{Date,Calendar,TimeZone}
 import java.text.{SimpleDateFormat}
 import java.io._
 
@@ -51,6 +51,8 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   logger.setLevel(Level.INFO)
   val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
   val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
+  // set the timezone to UTC for all time values
+  TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
   private val kvManagerLoader = new KamanjaLoaderInfo
 
@@ -70,8 +72,21 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     }
   }
 
+  private def RoundDateToSecs(d:Date): Date = {
+    var c = Calendar.getInstance()
+    if( d == null ){
+      c.setTime(new Date(0))
+      c.getTime
+    }
+    else{
+      c.setTime(d)
+      c.set(Calendar.MILLISECOND,0)
+      c.getTime
+    }
+  }
+
   def readCallBack(key:Key, value: Value) {
-    logger.info("timePartition => " + dateFormat1.format(key.timePartition))
+    logger.info("timePartition => " + dateFormat.format(RoundDateToSecs(key.timePartition)))
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
@@ -81,7 +96,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   }
 
   def readKeyCallBack(key:Key) {
-    logger.info("timePartition => " + dateFormat1.format(key.timePartition))
+    logger.info("timePartition => " + dateFormat.format(RoundDateToSecs(key.timePartition)))
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
@@ -123,13 +138,15 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Test Put api")
-
+      var keys = new Array[Key](0) // to be used by a delete operation later on
       for( i <- 1 to 10 ){
 	var currentTime = new Date()
+	//var currentTime = null
 	var keyArray = new Array[String](0)
 	var custName = "customer-" + i
 	keyArray = keyArray :+ custName
 	var key = new Key(currentTime,keyArray,i,i)
+	keys = keys :+ key
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
 	var custNumber = "4256667777" + i
 	var obj = new Customer(custName,custAddress,custNumber)
@@ -145,6 +162,8 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	adapter.get(containerName,readCallBack _)
       }
 
+      // System.exit(0)
+
       val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
 
       And("Check the row count after adding a bunch")
@@ -157,18 +176,10 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Test Del api")
-      var keys = new Array[Key](0)
-      for( i <- 1 to 10 ){
-	var currentTime = new Date()
-	var keyArray = new Array[String](0)
-	var custName = "customer-" + i
-	keyArray = keyArray :+ custName
-	var key = new Key(currentTime,keyArray,i,i)
-	keys = keys :+ key
-      }
       noException should be thrownBy {
 	adapter.del(containerName,keys)
       }
+
       And("Check the row count after deleting a bunch")
       cnt = sqlServerAdapter.getRowCount(containerName,null)
       assert(cnt == 0)
@@ -262,7 +273,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       And("Check the row count after deleting a bunch based on time range")
       cnt = sqlServerAdapter.getRowCount(containerName,null)
-      assert(cnt == 7)
+      assert(cnt == 8)
 
       And("Test Get for a time range")
       cal = Calendar.getInstance();
