@@ -70,6 +70,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var maxlen: Int = _
   private var partitionSelectionNumber: Int = _
   private var localMetadataConfig = ""
+  private var kafkaTopic = ""
 
 
   /**
@@ -83,7 +84,15 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     maxlen = props.getOrElse(SmartFileAdapterConstants.WORKER_BUFFER_SIZE, "4").toInt * 1024 * 1024
     partitionSelectionNumber = props(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS).toInt
 
-    // Bail out
+    kafkaTopic = props.getOrElse(SmartFileAdapterConstants.KAFKA_TOPIC, null)
+
+    // Bail out if dirToWatch, Topic are not set
+    if (kafkaTopic == null) {
+      logger.error("SMART_FILE_CONSUMER Kafka Topic to populate must be specified")
+      shutdown
+      throw new MissingPropertyException ("Missing Paramter: " + SmartFileAdapterConstants.KAFKA_TOPIC )
+    }
+
     if (dirToWatch == null) {
       logger.error("SMART_FILE_CONSUMER Directory to watch must be specified")
       shutdown

@@ -20,7 +20,6 @@ import org.apache.log4j.Logger
  * Created by danielkozin on 9/24/15.
  */
 class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutable.Map[String, String]) {
-  val pw = new PrintWriter(new File("/tmp/output.txt" ))
   var fileBeingProcessing: String = ""
   var lastOffsetProcessed: Int = 0
   lazy val loggerName = this.getClass.getName
@@ -66,6 +65,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       // else, this may or may not be the last message in the file... look to isLast for guidance.
       if(msg.offsetInFile > 0) {
         var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
+
         logger.debug(partIdx +" SMART FILE CONSUMER \nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + " Message Partition ID is "+
                      objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString + "\n " + new String(msg.msg))
         try {
