@@ -65,9 +65,9 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       // Now, there are some special cases here.  If offset is -1, then its just a signal to close the file
       // else, this may or may not be the last message in the file... look to isLast for guidance.
       if(msg.offsetInFile > 0) {
-        logger.debug(partIdx +" SMART FILE CONSUMER \nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + "\n " + new String(msg.msg))
         var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
-
+        logger.debug(partIdx +" SMART FILE CONSUMER \nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + " Message Partition ID is "+
+                     objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString + "\n " + new String(msg.msg))
         try {
           //if ( msg.offsetInFile > 1) throw new Exception("FUKCYEAH")
           producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
