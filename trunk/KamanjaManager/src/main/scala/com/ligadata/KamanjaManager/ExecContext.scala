@@ -120,7 +120,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
           if (oadap != null) {
             oadap.send(output._2.map(out => out._3.getBytes("UTF8")).toArray, output._2.map(out => out._2.getBytes("UTF8")).toArray)
           }
-            })
+        })
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(3)) {
           try {
             LOG.debug("Started Waiting in Step 3 (before removing sent data) for Message:" + dispMsg)
@@ -136,8 +136,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
         // kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNanoSecs, sendOutStartTime))
-        
-/*
+
+        /*
         if (containerData != null && containerData.size > 0) {
           val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
@@ -154,7 +154,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s. StackTrace:%s".format(e.getCause, e.getMessage, stackTrace))
       }
     }
   }
@@ -298,7 +299,8 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s. StackTrace:%s".format(e.getCause, e.getMessage, stackTrace))
       }
     }
   }

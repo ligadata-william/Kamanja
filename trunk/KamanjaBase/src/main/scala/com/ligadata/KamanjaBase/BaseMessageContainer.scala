@@ -63,6 +63,9 @@ trait MessageContainerBase {
   def Serialize(dos: DataOutputStream): Unit
   def Save(): Unit
   def Clone(): MessageContainerBase
+  def hasPrimaryKey: Boolean
+  def hasPartitionKey: Boolean
+  def hasTimeParitionInfo: Boolean
 }
 
 trait MessageContainerObjBase {
@@ -79,6 +82,9 @@ trait MessageContainerObjBase {
   def PrimaryKeyData(inputdata: InputData): Array[String] // Primary key data
   def getTimePartitionInfo: (String, String, String) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
   def TimePartitionData(inputdata: InputData): Date
+  def hasPrimaryKey: Boolean
+  def hasPartitionKey: Boolean
+  def hasTimeParitionInfo: Boolean
 
   private def extractTime(fieldData: String, timeFormat: String): Long = {
     if (fieldData == null || fieldData.trim() == "") return 0

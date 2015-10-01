@@ -290,8 +290,8 @@ trait EnvContext {
   def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit
 
   // Save State Entries on local node & on Leader
-  def PersistLocalNodeStateEntries: Unit
-  def PersistRemainingStateEntriesOnLeader: Unit
+  // def PersistLocalNodeStateEntries: Unit
+  // def PersistRemainingStateEntriesOnLeader: Unit
 
   // Clear Intermediate results before Restart processing
   def clearIntermediateResults: Unit

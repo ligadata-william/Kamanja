@@ -446,7 +446,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private[this] val _locks = new Array[Object](_buckets)
 
-  private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
+  // private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
   private[this] val _txnContexts = new Array[scala.collection.mutable.Map[Long, TransactionContext]](_buckets)
   private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String, String)])]()
   private[this] val _modelsResult = scala.collection.mutable.Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
@@ -510,7 +510,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String): DataStore = {
     try {
-      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo))
+      logger.debug("Getting DB Connection for dataStoreInfo:%s".format(dataStoreInfo))
       return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
       case e: Exception => {
@@ -914,7 +914,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // tmValues, partKeys & values are kind of triplate. So, we should have same size for all those
   private def localSetObject(transId: Long, containerName: String, tmValues: Array[Date], partKeys: Array[Array[String]], values: Array[MessageContainerBase]): Unit = {
-    var txnCtxt = getTransactionContext(transId, true)
+    val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       // Try to load the key(s) if they exists in global storage.
       LoadDataIfNeeded(txnCtxt, transId, containerName, tmValues.map(t => TimeRange(t, t)), partKeys)
@@ -963,7 +963,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _statusinfoDataStore.Shutdown
     _statusinfoDataStore = null
 
-    _messagesOrContainers.clear
+    // _messagesOrContainers.clear
   }
 
   /*
@@ -1002,6 +1002,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Adding new messages or Containers
   override def RegisterMessageOrContainers(containersInfo: Array[ContainerNameAndDatastoreInfo]): Unit = {
+    /*
     if (containersInfo != null)
       logger.info("Messages/Containers:%s".format(containersInfo.map(ci => (if (ci.containerName != null) ci.containerName else "", if (ci.dataDataStoreInfo != null) ci.dataDataStoreInfo else "")).mkString(",")))
 
@@ -1035,6 +1036,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         throw new Exception(error_msg)
       }
     })
+*/
   }
 
   private def Clone(vals: Array[MessageContainerBase]): Array[MessageContainerBase] = {
@@ -1055,15 +1057,18 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
-    Clone(localGetAllObjects(transId, containerName))
+    // Clone(localGetAllObjects(transId, containerName))
+    localGetAllObjects(transId, containerName)
   }
 
   override def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
-    Clone(localGetObject(transId, containerName, partKey, primaryKey))
+    // Clone(localGetObject(transId, containerName, partKey, primaryKey))
+    localGetObject(transId, containerName, partKey, primaryKey)
   }
 
   override def getHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
-    Clone(localHistoryObjects(transId, containerName, partKey, appendCurrentChanges))
+    // Clone(localHistoryObjects(transId, containerName, partKey, appendCurrentChanges))
+    localHistoryObjects(transId, containerName, partKey, appendCurrentChanges)
   }
 
   override def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String, String)]) = {
@@ -1116,22 +1121,20 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val messagesOrContainers = txnCtxt.getAllMessagesAndContainers
 
     messagesOrContainers.foreach(v => {
-      val mc = _messagesOrContainers.getOrElse(v._1, null)
-      if (mc != null) {
-        val canConsiderThis = ((includeMessages && includeContainers) ||
-          (includeMessages && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer == false && v._2.isContainer == false)) ||
-          (includeContainers && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer || v._2.isContainer)))
+      // val mc = _messagesOrContainers.getOrElse(v._1, null)
+      val canConsiderThis = ((includeMessages && includeContainers) ||
+        (includeMessages && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ ( /* mc.isContainer == false && */ v._2.isContainer == false)) ||
+        (includeContainers && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ ( /* mc.isContainer || */ v._2.isContainer)))
 
-        if (canConsiderThis) {
-          var foundPartKeys = new ArrayBuffer[Key](v._2.dataByTmPart.size())
-          var it1 = v._2.dataByTmPart.entrySet().iterator()
-          while (it1.hasNext()) {
-            val entry = it1.next();
-            foundPartKeys += entry.getKey().key
-          }
-          if (foundPartKeys.size > 0)
-            changedContainersData(v._1) = foundPartKeys.toArray
+      if (canConsiderThis) {
+        var foundPartKeys = new ArrayBuffer[Key](v._2.dataByTmPart.size())
+        var it1 = v._2.dataByTmPart.entrySet().iterator()
+        while (it1.hasNext()) {
+          val entry = it1.next();
+          foundPartKeys += entry.getKey().key
         }
+        if (foundPartKeys.size > 0)
+          changedContainersData(v._1) = foundPartKeys.toArray
       }
     })
 
@@ -1174,24 +1177,25 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     messagesOrContainers.foreach(v => {
       dataForContainer.clear
-      val mc = _messagesOrContainers.getOrElse(v._1, null)
-      if (mc != null) {
-        var it1 = v._2.dataByTmPart.entrySet().iterator()
-        while (it1.hasNext()) {
-          val entry = it1.next();
+      //       val mc = _messagesOrContainers.getOrElse(v._1, null)
+      var it1 = v._2.dataByTmPart.entrySet().iterator()
+      while (it1.hasNext()) {
+        val entry = it1.next();
+        val v = entry.getValue()
+        if (v.modified) {
           val k = entry.getKey()
-          val v = entry.getValue()
           bos.reset
           v.value.Serialize(dos)
           dataForContainer += ((k.key, Value("manual", bos.toByteArray)))
         }
-
-        // mc.dataByTmPart.putAll(v._2.dataByTmPart) // Assigning new data
-        // mc.dataByBucketKey.putAll(v._2.dataByTmPart) // Assigning new data
-
-        // v._2.current_msg_cont_data.clear
-        commiting_data += ((mc.objFullName, dataForContainer.toArray))
       }
+
+      // mc.dataByTmPart.putAll(v._2.dataByTmPart) // Assigning new data
+      // mc.dataByBucketKey.putAll(v._2.dataByTmPart) // Assigning new data
+
+      // v._2.current_msg_cont_data.clear
+      if (dataForContainer.size > 0)
+        commiting_data += ((v._1, dataForContainer.toArray))
     })
 
     dataForContainer.clear
@@ -1204,14 +1208,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val compjson = compact(render(json))
       dataForContainer += ((Key(KvBaseDefalts.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
     })
-    commiting_data += (("AdapterUniqKvData", dataForContainer.toArray))
+    if (dataForContainer.size > 0)
+      commiting_data += (("AdapterUniqKvData", dataForContainer.toArray))
 
     dataForContainer.clear
     modelsResult.foreach(v1 => {
       _modelsResult(v1._1) = v1._2
       dataForContainer += ((v1._1, Value("kryo", _kryoSer.SerializeObjectToByteArray(v1._2))))
     })
-    commiting_data += (("ModelResults", dataForContainer.toArray))
+    if (dataForContainer.size > 0)
+      commiting_data += (("ModelResults", dataForContainer.toArray))
 
     /*
     dataForContainer.clear
@@ -1244,7 +1250,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       logger.debug("Going to commit data into datastore.")
       commiting_data.foreach(cd => {
         cd._2.foreach(kv => {
-          logger.debug("ObjKey:(%d, %s, %d, %s), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition.getTime(), kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId), kv._2.serializerType, kv._2.serializedInfo.size)
+          logger.debug("ObjKey:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition.getTime(), kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId, kv._2.serializerType, kv._2.serializedInfo.size))
         })
       })
       _defaultDataStore.put(commiting_data.toArray)
@@ -1273,11 +1279,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   // Clear Intermediate results before Restart processing
   //BUGBUG:: May be we need to lock before we do anything here
   override def clearIntermediateResults: Unit = {
+    /*
     _messagesOrContainers.foreach(v => {
       v._2.dataByBucketKey.clear()
       v._2.dataByTmPart.clear()
       // v._2.current_msg_cont_data.clear
     })
+*/
 
     _adapterUniqKeyValData.clear
 
@@ -1289,6 +1297,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   def clearIntermediateResults(unloadMsgsContainers: Array[String]): Unit = {
     if (unloadMsgsContainers == null)
       return
+    /*
     unloadMsgsContainers.foreach(mc => {
       val msgCont = _messagesOrContainers.getOrElse(mc.trim.toLowerCase, null)
       if (msgCont != null) {
@@ -1302,6 +1311,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 */
       }
     })
+*/
   }
 
   // Get Status information from Final table
@@ -1318,6 +1328,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     results.toArray
   }
 
+  /*
   // Save Current State of the machine
   override def PersistLocalNodeStateEntries: Unit = {
     // BUGBUG:: Persist all state on this node.
@@ -1327,6 +1338,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def PersistRemainingStateEntriesOnLeader: Unit = {
     // BUGBUG:: Persist Remaining state (when other nodes goes down, this helps)
   }
+*/
 
   override def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit = {
     val ukvs = validateUniqVals.map(kv => {
@@ -1357,6 +1369,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def ReloadKeys(tempTransId: Long, containerName: String, keys: List[Key]): Unit = {
+    /*
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val readValues = ArrayBuffer[(Key, MessageContainerBase)]()
@@ -1372,12 +1385,19 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         // container.dataByTmPart.put(putkey, kv._2)
       })
     }
+*/
   }
 
   private def getLocalRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
     if (TxnContextCommonFunctions.IsEmptyKey(partKey))
       return None
-    val txnCtxt = getTransactionContext(transId, false)
+
+    val txnCtxt = getTransactionContext(transId, true)
+    if (txnCtxt != null) {
+      // Try to load the key(s) if they exists in global storage.
+      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(tmRange), Array(partKey.toArray))
+    }
+
     if (txnCtxt != null) {
       val (v, foundPartKey) = txnCtxt.getRecent(containerName, partKey, tmRange, null, f)
       if (foundPartKey) {
@@ -1385,6 +1405,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       if (v != null) return Some(v) // It must be null. Without finding partition key it should not find the primary key
     }
+
+    /*
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
 
     val (v, foundPartKey) = TxnContextCommonFunctions.getRecent(container, partKey, tmRange, null, f)
@@ -1417,22 +1439,33 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
       return None // If partition key exists, tried DB also, no need to go down
     }
+*/
 
     None
   }
 
   override def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
-    Clone(getLocalRecent(transId, containerName, partKey, tmRange, f))
+    // Clone(getLocalRecent(transId, containerName, partKey, tmRange, f))
+    getLocalRecent(transId, containerName, partKey, tmRange, f)
   }
 
   override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
-    Clone(getLocalRDD(transId, containerName, partKey, tmRange, f))
+    // Clone(getLocalRDD(transId, containerName, partKey, tmRange, f))
+    getLocalRDD(transId, containerName, partKey, tmRange, f)
   }
 
   private def getLocalRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+      return Array[MessageContainerBase]()
+
+    val txnCtxt = getTransactionContext(transId, true)
+    if (txnCtxt != null) {
+      // Try to load the key(s) if they exists in global storage.
+      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(tmRange), Array(partKey.toArray))
+    }
+
     val foundPartKeys = ArrayBuffer[Key]()
     val retResult = ArrayBuffer[MessageContainerBase]()
-    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (res, foundPartKeys1) = txnCtxt.getRddData(containerName, partKey, tmRange, null, f, foundPartKeys.toArray)
       if (foundPartKeys1.size > 0) {
@@ -1442,7 +1475,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           return retResult.toArray
       }
     }
-
+    /*
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     // In memory
     if (container != null) {
@@ -1499,7 +1532,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         // container.dataByTmPart.put(putkey, kv._2)
       })
     }
-
+*/
     return retResult.toArray
   }
 
