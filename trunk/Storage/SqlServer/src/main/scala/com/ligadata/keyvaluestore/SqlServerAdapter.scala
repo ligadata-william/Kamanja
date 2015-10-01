@@ -747,30 +747,25 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
   override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
     CheckTableExists(containerName)
-    var df = new SimpleDateFormat("yyyy/MM/dd")
     var tableName = toFullTableName(containerName)
     time_ranges.foreach(time_range => {
-      var bt = df.format(time_range.beginTime)
-      var et = df.format(time_range.endTime)
-      var query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where timePartition >= '" + bt + "' and timePartition <= '" + et + "'"
+      var query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime
+      logger.debug("query => " + query)
       getData(tableName, query, callbackFunction)
     })
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key) => Unit): Unit = {
     CheckTableExists(containerName)
-    var df = new SimpleDateFormat("yyyy/MM/dd")
     var tableName = toFullTableName(containerName)
     time_ranges.foreach(time_range => {
-      var bt = df.format(time_range.beginTime)
-      var et = df.format(time_range.endTime)
-      var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition >= '" + bt + "' and timePartition <= '" + et + "'"
+      var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime
+      logger.debug("query => " + query)
       getKeys(tableName, query, callbackFunction)
     })
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    var df = new SimpleDateFormat("yyyy/MM/dd")
     var con: Connection = null
     var pstmt: PreparedStatement = null
     var tableName = toFullTableName(containerName)
@@ -780,9 +775,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con = dataSource.getConnection
 
       time_ranges.foreach(time_range => {
-        var bt = df.format(time_range.beginTime)
-        var et = df.format(time_range.endTime)
-        var query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where timePartition >= '" + bt + "' and timePartition <= '" + et + "' and bucketKey = ? "
+	var query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
         pstmt = con.prepareStatement(query)
         bucketKeys.foreach(bucketKey => {
           pstmt.setString(1, bucketKey.mkString(","))
@@ -822,7 +815,6 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key) => Unit): Unit = {
-    var df = new SimpleDateFormat("yyyy/MM/dd")
     var con: Connection = null
     var pstmt: PreparedStatement = null
     var tableName = toFullTableName(containerName)
@@ -832,9 +824,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con = dataSource.getConnection
 
       time_ranges.foreach(time_range => {
-        var bt = df.format(time_range.beginTime)
-        var et = df.format(time_range.endTime)
-        var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition >= '" + bt + "' and timePartition <= '" + et + "' and bucketKey = ? "
+	var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
+	logger.debug("query => " + query)
         pstmt = con.prepareStatement(query)
         bucketKeys.foreach(bucketKey => {
           pstmt.setString(1, bucketKey.mkString(","))
@@ -1065,7 +1056,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       if (rs.next()) {
         logger.debug("The table " + tableName + " already exists ")
       } else {
-        var query = "create table " + fullTableName + "(timePartition datetime,bucketKey varchar(1024), transactionId bigint, rowId Int, serializerType varchar(128), serializedInfo varbinary(max))"
+        var query = "create table " + fullTableName + "(timePartition bigint,bucketKey varchar(1024), transactionId bigint, rowId Int, serializerType varchar(128), serializedInfo varbinary(max))"
         stmt = con.createStatement()
         stmt.executeUpdate(query);
         stmt.close
@@ -1083,7 +1074,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to create the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to create the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (rs != null) {
