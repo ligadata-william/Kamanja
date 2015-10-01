@@ -1250,7 +1250,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       logger.debug("Going to commit data into datastore.")
       commiting_data.foreach(cd => {
         cd._2.foreach(kv => {
-          logger.debug("ObjKey:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition.getTime(), kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId), kv._2.serializerType, kv._2.serializedInfo.size)
+          logger.debug("ObjKey:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition.getTime(), kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId, kv._2.serializerType, kv._2.serializedInfo.size))
         })
       })
       _defaultDataStore.put(commiting_data.toArray)
