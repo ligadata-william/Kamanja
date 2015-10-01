@@ -1055,15 +1055,18 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
-    Clone(localGetAllObjects(transId, containerName))
+    // Clone(localGetAllObjects(transId, containerName))
+    localGetAllObjects(transId, containerName)
   }
 
   override def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
-    Clone(localGetObject(transId, containerName, partKey, primaryKey))
+    // Clone(localGetObject(transId, containerName, partKey, primaryKey))
+    localGetObject(transId, containerName, partKey, primaryKey)
   }
 
   override def getHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
-    Clone(localHistoryObjects(transId, containerName, partKey, appendCurrentChanges))
+    // Clone(localHistoryObjects(transId, containerName, partKey, appendCurrentChanges))
+    localHistoryObjects(transId, containerName, partKey, appendCurrentChanges)
   }
 
   override def getAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String, String)]) = {
@@ -1422,11 +1425,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
-    Clone(getLocalRecent(transId, containerName, partKey, tmRange, f))
+    // Clone(getLocalRecent(transId, containerName, partKey, tmRange, f))
+    getLocalRecent(transId, containerName, partKey, tmRange, f)
   }
 
   override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
-    Clone(getLocalRDD(transId, containerName, partKey, tmRange, f))
+    // Clone(getLocalRDD(transId, containerName, partKey, tmRange, f))
+    getLocalRDD(transId, containerName, partKey, tmRange, f)
   }
 
   private def getLocalRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
