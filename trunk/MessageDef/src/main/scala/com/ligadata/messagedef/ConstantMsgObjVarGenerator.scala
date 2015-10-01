@@ -911,22 +911,38 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def computeTimePartitionDate(message: Message): String = {
 
     var timePartitionKeyData: String = ""
+    var keyDataCheckStr: String = ""
+    var computeTmPartition: String = ""
     if (message.timePartition != null) {
-      if (message.Fixed.equalsIgnoreCase("true"))
+      if (message.Fixed.equalsIgnoreCase("true")) {
         timePartitionKeyData = message.timePartition.Key + ".toString"
-      else if (message.Fixed.equalsIgnoreCase("false"))
+        keyDataCheckStr = "if(" + message.timePartition.Key + " == null) return new Date(0);"
+      } else if (message.Fixed.equalsIgnoreCase("false")) {
         timePartitionKeyData = "fields(\"" + message.timePartition.Key + "\")._2.toString"
+        keyDataCheckStr = "if(fields(\"" + message.timePartition.Key + "\")._2 " + "== null) return new Date(0);"
 
-    } else timePartitionKeyData = "\" \""
-    """
-   def ComputeTimePartitionData: Date = {
+      }
+
+      computeTmPartition = """
+      def ComputeTimePartitionData: Date = {
+		val tmPartInfo = """ + message.Name + """.getTimePartitionInfo
+		if (tmPartInfo == null) return new Date(0);
+		"""+keyDataCheckStr+"""
+		""" + message.Name + """.ComputeTimePartitionData(""" + timePartitionKeyData + """, tmPartInfo._2, tmPartInfo._3)
+	 } 
+  
+  """
+    } else {
+      timePartitionKeyData = "\" \""
+      computeTmPartition = """
+      def ComputeTimePartitionData: Date = {
 		val tmPartInfo = """ + message.Name + """.getTimePartitionInfo
 		if (tmPartInfo == null) return new Date(0);
 		""" + message.Name + """.ComputeTimePartitionData(""" + timePartitionKeyData + """, tmPartInfo._2, tmPartInfo._3)
-   }
-  
+	 } 
   """
-		
+    }
+    computeTmPartition
   }
 
   def transactionIdFuncs(message: Message): String = {
