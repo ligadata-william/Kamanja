@@ -56,6 +56,7 @@ import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts, KeyWithBucket
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.Exceptions.StackTrace
 import java.util.{ Collection, Iterator, TreeMap }
+import com.ligadata.Exceptions._
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -566,6 +567,10 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
   private def collectKeyAndValues(k: Key, v: Value, dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, (Boolean, MessageContainerBase)]): Unit = {
     val value = SerializeDeserialize.Deserialize(v.serializedInfo, this, kvInitLoader.loader, true, "")
     val primarykey = value.PrimaryKeyData
+/*
+    val newK = Key(new java.util.Date(k.timePartition.getTime + 57600000), k.bucketKey, k.transactionId, k.rowId) // BUGBUG:: Used this until we fix the storage
+    val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), newK, primarykey != null && primarykey.size > 0, primarykey)
+*/
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), k, primarykey != null && primarykey.size > 0, primarykey)
     dataByBucketKeyPart.put(key, (false, value))
   }
@@ -579,8 +584,12 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     try {
       kvstore.get(objFullName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
     } catch {
+      case e: ObjectNotFoundException => {
+        logger.debug("Key %s Not found for timerange: %d-%d".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
+      }
       case e: Exception => {
-
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime(), stackTrace))
       }
     }
   }
