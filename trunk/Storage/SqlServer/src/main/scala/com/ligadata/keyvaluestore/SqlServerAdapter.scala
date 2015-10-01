@@ -63,6 +63,8 @@ class DriverShim(d: Driver) extends Driver {
 
 class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
 
+  private[this] val lock = new Object
+
   val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
@@ -1013,7 +1015,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     })
   }
 
-  private def DropContainer(containerName: String) : Unit = {
+  private def DropContainer(containerName: String) : Unit = lock.synchronized {
     var con:Connection = null
     var stmt:Statement = null
     var rs: ResultSet = null
@@ -1060,7 +1062,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     })
   }
 
-  private def CreateContainer(containerName: String) : Unit = {
+  private def CreateContainer(containerName: String) : Unit = lock.synchronized {
     var con:Connection = null
     var stmt:Statement = null
     var rs: ResultSet = null
