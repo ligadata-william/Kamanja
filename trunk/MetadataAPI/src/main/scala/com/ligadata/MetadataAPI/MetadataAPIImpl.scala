@@ -575,6 +575,8 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       objs(0) = null
       store.get(containerName, Array(TimeRange(storageDefaultTime, storageDefaultTime)), Array(Array(bucketKeyStr)), getObjFn)
+      if (objs(0) == null)
+        throw new ObjectNotFoundException("Object %s not found in container %s".format(bucketKeyStr.mkString(","), containerName))
       objs(0)
     } catch {
       case e: KeyNotFoundException => {
@@ -1212,6 +1214,11 @@ object MetadataAPIImpl extends MetadataAPI {
             mObj = GetObject(obj.jarName, "jar_store")
           } catch {
             case e: ObjectNotFoundException => {
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("\nStackTrace:" + stackTrace)
+              loadObject = true
+            }
+            case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
               logger.debug("\nStackTrace:" + stackTrace)
               loadObject = true
@@ -5026,14 +5033,13 @@ object MetadataAPIImpl extends MetadataAPI {
                 var fieldDelimiter: String = null
                 var valueDelimiter: String = null
                 var associatedMsg: String = null
-                
+
                 if (adap.contains("KeyAndValueDelimiter")) {
                   keyAndValueDelimiter = adap.get("KeyAndValueDelimiter").get.asInstanceOf[String]
                 }
                 if (adap.contains("FieldDelimiter")) {
                   fieldDelimiter = adap.get("FieldDelimiter").get.asInstanceOf[String]
-                }
-                else if (adap.contains("DelimiterString")) { // If not found FieldDelimiter
+                } else if (adap.contains("DelimiterString")) { // If not found FieldDelimiter
                   fieldDelimiter = adap.get("DelimiterString").get.asInstanceOf[String]
                 }
                 if (adap.contains("ValueDelimiter")) {

@@ -52,10 +52,11 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
-import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper }
+import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper, LoadKeyWithBucketId }
 import com.ligadata.StorageBase.{ DataStore, Transaction }
 import com.ligadata.Exceptions.StackTrace
 import java.util.{ Collection, Iterator, TreeMap }
+import com.ligadata.Exceptions._
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -146,7 +147,7 @@ Sample uses:
     val format = (if (options.contains('format)) options.apply('format) else "delimited").trim.toLowerCase()
 
     val fieldDelimiter = if (fieldDelimiter1 != null) fieldDelimiter1 else delimiterString
-    
+
     if (!(format.equals("delimited") || format.equals("json"))) {
       logger.error("Supported formats are only delimited & json")
       return
@@ -219,7 +220,7 @@ object KvInitConfiguration {
 }
 
 class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: Array[String], val keyfieldnames: Array[String], keyAndValueDelimiter1: String,
-  fieldDelimiter1: String, valueDelimiter1: String, ignoreerrors: String, ignoreRecords: Int, format: String) extends LogTrait {
+  fieldDelimiter1: String, valueDelimiter1: String, ignoreerrors: String, ignoreRecords: Int, format: String) extends LogTrait with MdBaseResolveInfo {
   val fieldDelimiter = if (DataDelimiters.IsEmptyDelimiter(fieldDelimiter1) == false) fieldDelimiter1 else ","
   val keyAndValueDelimiter = if (DataDelimiters.IsEmptyDelimiter(keyAndValueDelimiter1) == false) keyAndValueDelimiter1 else "\\x01"
   val valueDelimiter = if (DataDelimiters.IsEmptyDelimiter(valueDelimiter1) == false) valueDelimiter1 else "~"
@@ -461,6 +462,17 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     true
   }
 
+  override def getMessgeOrContainerInstance(MsgContainerType: String): MessageContainerBase = {
+    if (MsgContainerType.compareToIgnoreCase(objFullName) != 0)
+      return null
+    // Simply creating new object and returning. Not checking for MsgContainerType. This is issue if the child level messages ask for the type 
+    if (isMsg)
+      return messageObj.CreateNewMessage
+    if (isContainer)
+      return containerObj.CreateNewContainer
+    return null
+  }
+
   private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String): DataStore = {
     try {
       logger.debug("Getting DB Connection for dataStoreInfo:%s".format(dataStoreInfo))
@@ -552,6 +564,36 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     return null
   }
 
+  private def collectKeyAndValues(k: Key, v: Value, dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag]): Unit = {
+    val value = SerializeDeserialize.Deserialize(v.serializedInfo, this, kvInitLoader.loader, true, "")
+    val primarykey = value.PrimaryKeyData
+/*
+    val newK = Key(new java.util.Date(k.timePartition.getTime + 57600000), k.bucketKey, k.transactionId, k.rowId) // BUGBUG:: Used this until we fix the storage
+    val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), newK, primarykey != null && primarykey.size > 0, primarykey)
+*/
+    val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), k, primarykey != null && primarykey.size > 0, primarykey)
+    dataByBucketKeyPart.put(key, MessageContainerBaseWithModFlag(false, value))
+  }
+
+  private def LoadDataIfNeeded(loadKey: LoadKeyWithBucketId, loadedKeys: java.util.TreeSet[LoadKeyWithBucketId], dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag], kvstore: DataStore): Unit = {
+    if (loadedKeys.contains(loadKey))
+      return
+    val buildOne = (k: Key, v: Value) => {
+      collectKeyAndValues(k, v, dataByBucketKeyPart)
+    }
+    try {
+      kvstore.get(objFullName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
+    } catch {
+      case e: ObjectNotFoundException => {
+        logger.debug("Key %s Not found for timerange: %d-%d".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
+      }
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime(), stackTrace))
+      }
+    }
+  }
+
   // If we have keyfieldnames.size > 0
   private def buildContainerOrMessage(kvstore: DataStore): Unit = {
     if (!isOk)
@@ -565,7 +607,12 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
 
     logger.debug("KeyFields:" + keyfieldnames.mkString(","))
 
-    var dataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBase](KvBaseDefalts.defualtBTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+    // The value for this is Boolean & MessageContainerBase. Here Boolean represents it is changed in this transaction or loaded from previous file
+    var dataByBucketKeyPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag](KvBaseDefalts.defualtBucketKeyComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+    var loadedKeys = new java.util.TreeSet[LoadKeyWithBucketId](KvBaseDefalts.defaultLoadKeyComp) // By BucketId, BucketKey, Time Range
+
+    var hasPrimaryKey = false
+    var triedForPrimaryKey = false
 
     dataFiles.foreach(fl => {
       val alldata: List[String] = fileData(fl, format)
@@ -606,6 +653,11 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
               try {
                 messageOrContainer.TransactionId(transId)
                 messageOrContainer.populate(inputData)
+                if (triedForPrimaryKey == false) {
+                  val primaryKey = messageOrContainer.PrimaryKeyData
+                  hasPrimaryKey = primaryKey != null && primaryKey.size > 0 // Checking for the first record
+                }
+                triedForPrimaryKey = true
               } catch {
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -640,15 +692,20 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                     messageOrContainer.PartitionKeyData
                   }
 
-                //??????????????????????? BUGBUG:: Need to integrate with time partition information message and get the stuff here ???????????????????????
-                // messageOrContainer.getTimePartitionInfo
-                val timeVal = KvBaseDefalts.defaultTime
+                var timeVal = messageOrContainer.TimePartitionData
+                if (timeVal == null)
+                  timeVal = KvBaseDefalts.defaultTime
+                messageOrContainer.RowNumber(processedRows)
 
-                // messageOrContainer.RowId(processedRows)
+                val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(keyData)
+                val k = KeyWithBucketIdAndPrimaryKey(bucketId, Key(timeVal, keyData, transId, processedRows), hasPrimaryKey, if (hasPrimaryKey) messageOrContainer.PrimaryKeyData else null)
+                if (hasPrimaryKey) {
+                  // Get the record(s) for this partition key, time value & primary key
+                  val loadKey = LoadKeyWithBucketId(bucketId, TimeRange(timeVal, timeVal), keyData)
+                  LoadDataIfNeeded(loadKey, loadedKeys, dataByBucketKeyPart, kvstore)
+                }
 
-                val primaryKey = messageOrContainer.PrimaryKeyData
-                val k = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(keyData), Key(timeVal, keyData, transId, processedRows), primaryKey != null && primaryKey.size > 0, primaryKey)
-                dataByTmPart.put(k, messageOrContainer)
+                dataByBucketKeyPart.put(k, MessageContainerBaseWithModFlag(true, messageOrContainer))
                 processedRows += 1
               } catch {
                 case e: Exception => {
@@ -669,37 +726,35 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       }
     })
 
-    val storeObjects = new ArrayBuffer[(Key, Value)](dataByTmPart.size())
-    var it1 = dataByTmPart.entrySet().iterator()
+    val storeObjects = new ArrayBuffer[(Key, Value)](dataByBucketKeyPart.size())
+    var it1 = dataByBucketKeyPart.entrySet().iterator()
     while (it1.hasNext()) {
       val entry = it1.next();
 
-      val key = entry.getKey();
       val value = entry.getValue();
-
-      try {
-        val k = entry.getKey().key
-        val v = Value("manual", SerializeDeserialize.Serialize(value))
-        storeObjects += ((k, v))
-      } catch {
-        case e: Exception => {
-          logger.error("Failed to serialize/write data.")
-          throw e
+      if (value.modified) {
+        val key = entry.getKey();
+        try {
+          val k = entry.getKey().key
+          val v = Value("manual", SerializeDeserialize.Serialize(value.value))
+          storeObjects += ((k, v))
+        } catch {
+          case e: Exception => {
+            logger.error("Failed to serialize/write data.")
+            throw e
+          }
         }
       }
     }
 
-    val txn = kvstore.beginTx()
     try {
       logger.debug("Going to save " + storeObjects.size + " objects")
       storeObjects.foreach(kv => {
         logger.debug("ObjKey:(" + kv._1.timePartition.getTime() + ":" + kv._1.bucketKey.mkString(",") + ":" + kv._1.transactionId + ") Value Size: " + kv._2.serializedInfo.size)
       })
       kvstore.put(Array((objFullName, storeObjects.toArray)))
-      kvstore.commitTx(txn)
     } catch {
       case e: Exception => {
-        kvstore.endTx(txn)
         logger.error("Failed to write data")
         throw e
       }

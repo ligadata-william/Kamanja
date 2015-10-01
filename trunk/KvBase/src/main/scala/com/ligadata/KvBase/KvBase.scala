@@ -26,11 +26,14 @@ case class TimeRange(beginTime: Date, endTime: Date)
 object KvBaseDefalts {
   val defaultTime = new Date(0)
   val defualtBucketKeyComp = new BucketKeyComp() // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
-  val defualtBTimePartComp = new TimePartComp() // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+  val defualtTimePartComp = new TimePartComp() // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
+  val defaultLoadKeyComp = new LoadKeyComp() // By BucketId, BucketKey, Time Range
 }
 
 // We are doing this per Container. Not across containers
 case class KeyWithBucketIdAndPrimaryKey(bucketId: Int, key: Key, hasPrimaryKey: Boolean, primaryKey: Array[String]);
+
+case class LoadKeyWithBucketId(bucketId: Int, tmRange: TimeRange, bucketKey: Array[String]);
 
 object KeyWithBucketIdAndPrimaryKeyCompHelper {
 
@@ -194,3 +197,75 @@ class TimePartComp extends Comparator[KeyWithBucketIdAndPrimaryKey] {
     return 0
   }
 }
+
+class LoadKeyComp extends Comparator[LoadKeyWithBucketId] {
+  override def compare(k1: LoadKeyWithBucketId, k2: LoadKeyWithBucketId): Int = {
+    // First compare bucketId
+    if (k1.bucketId < k2.bucketId)
+      return -1
+    if (k1.bucketId > k2.bucketId)
+      return 1
+
+    if (k1.bucketKey == null && k2.bucketKey == null)
+      return 0
+
+    if (k1.bucketKey != null && k2.bucketKey == null)
+      return 1
+
+    if (k1.bucketKey == null && k2.bucketKey != null)
+      return -1
+
+    // Next compare Bucket Keys
+    if (k1.bucketKey.size < k2.bucketKey.size)
+      return -1
+    if (k1.bucketKey.size > k2.bucketKey.size)
+      return 1
+
+    for (i <- 0 until k1.bucketKey.size) {
+      val cmp = k1.bucketKey(i).compareTo(k2.bucketKey(i))
+      if (cmp != 0)
+        return cmp
+    }
+
+    if (k1.tmRange == null && k2.tmRange == null)
+      return 0
+
+    if (k1.tmRange != null && k2.tmRange == null)
+      return 1
+
+    if (k1.tmRange == null && k2.tmRange != null)
+      return -1
+
+    if (k1.tmRange.beginTime == null && k2.tmRange.beginTime == null)
+      return 0
+
+    if (k1.tmRange.beginTime != null && k2.tmRange.beginTime == null)
+      return 1
+
+    if (k1.tmRange.beginTime == null && k2.tmRange.beginTime != null)
+      return -1
+
+    var cmp = k1.tmRange.beginTime.compareTo(k2.tmRange.beginTime)
+
+    if (cmp != 0)
+      return cmp
+
+    if (k1.tmRange.endTime == null && k2.tmRange.endTime == null)
+      return 0
+
+    if (k1.tmRange.endTime != null && k2.tmRange.endTime == null)
+      return 1
+
+    if (k1.tmRange.endTime == null && k2.tmRange.endTime != null)
+      return -1
+
+    cmp = k1.tmRange.endTime.compareTo(k2.tmRange.endTime)
+
+    if (cmp != 0)
+      return cmp
+
+    return 0
+  }
+}
+
+
