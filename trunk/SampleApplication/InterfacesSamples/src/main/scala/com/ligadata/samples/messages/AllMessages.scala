@@ -45,7 +45,7 @@ object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerOb
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
-  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+  override def TimePartitionData(inputdata: InputData): Long = 0
   
   override def hasPrimaryKey(): Boolean = {
 	if(primaryKeys == null) return false;
@@ -160,7 +160,7 @@ object CustPreferences extends RDDObject[CustPreferences] with BaseContainerObj 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
-  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+  override def TimePartitionData(inputdata: InputData): Long = 0
 
   override def hasPrimaryKey(): Boolean = {
 	if(primaryKeys == null) return false;
@@ -276,7 +276,7 @@ object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
-  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+  override def TimePartitionData(inputdata: InputData): Long = 0
 
   override def hasPrimaryKey(): Boolean = {
 	if(primaryKeys == null) return false;
@@ -390,7 +390,7 @@ object GlobalPreferences extends RDDObject[GlobalPreferences] with BaseContainer
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def getTimePartitionInfo: (String, String, String) = (null, null, null) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
-  override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+  override def TimePartitionData(inputdata: InputData): Long = 0
 
   override def hasPrimaryKey(): Boolean = {
 	if(primaryKeys == null) return false;

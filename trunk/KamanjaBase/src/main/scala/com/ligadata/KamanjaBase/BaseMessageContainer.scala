@@ -28,16 +28,15 @@ import java.text.SimpleDateFormat
 trait MessageContainerBase {
   // System Columns
   var transactionId: Long
-  var timePartitionData: Date = new Date(0) // By default we are taking Java date with 0 milliseconds.
+  var timePartitionData: Long = 0 // By default we are taking Java date with 0 milliseconds.
   var rowNumber: Int = 0 // This is unique value with in transactionId
 
   // System Attributes Functions
   final def TransactionId(transId: Long): Unit = { transactionId = transId }
   final def TransactionId(): Long = transactionId
 
-  final def TimePartitionData(timeInMillisecs: Long): Unit = { timePartitionData = new Date(timeInMillisecs) }
-  final def TimePartitionData(tm: Date): Unit = { timePartitionData = tm }
-  final def TimePartitionData(): Date = timePartitionData
+  final def TimePartitionData(timeInMillisecs: Long): Unit = { timePartitionData = timeInMillisecs }
+  final def TimePartitionData(): Long = timePartitionData
 
   final def RowNumber(rno: Int): Unit = { rowNumber = rno }
   final def RowNumber(): Int = rowNumber
@@ -81,7 +80,7 @@ trait MessageContainerObjBase {
   def PartitionKeyData(inputdata: InputData): Array[String] // Partition key data
   def PrimaryKeyData(inputdata: InputData): Array[String] // Primary key data
   def getTimePartitionInfo: (String, String, String) // FieldName, Format & Time Partition Types(Daily/Monthly/Yearly)
-  def TimePartitionData(inputdata: InputData): Date
+  def TimePartitionData(inputdata: InputData): Long
   def hasPrimaryKey: Boolean
   def hasPartitionKey: Boolean
   def hasTimeParitionInfo: Boolean
@@ -108,34 +107,34 @@ trait MessageContainerObjBase {
     tm.getTime()
   }
 
-  def ComputeTimePartitionData(fieldData: String, timeFormat: String, timePartitionType: String): Date = {
+  def ComputeTimePartitionData(fieldData: String, timeFormat: String, timePartitionType: String): Long = {
     val fldTimeDataInMs = extractTime(fieldData, timeFormat)
 
     // Align to Partition
     var cal: Calendar = Calendar.getInstance();
     cal.setTime(new Date(fldTimeDataInMs));
 
-    if (timePartitionType == null || timePartitionType.trim() == "") return new Date(0)
+    if (timePartitionType == null || timePartitionType.trim() == "") return 0
 
     timePartitionType.toLowerCase match {
       case "yearly" => {
         var newcal: Calendar = Calendar.getInstance();
         newcal.set(Calendar.YEAR, cal.get(Calendar.YEAR));
-        return newcal.getTime()
+        return newcal.getTime().getTime()
       }
       case "monthly" => {
         var newcal: Calendar = Calendar.getInstance();
         newcal.set(Calendar.YEAR, cal.get(Calendar.YEAR))
         newcal.set(Calendar.MONTH, cal.get(Calendar.MONTH))
-        return newcal.getTime()
+        return newcal.getTime().getTime()
       }
       case "daily" => {
         var newcal: Calendar = Calendar.getInstance();
         newcal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
-        return newcal.getTime()
+        return newcal.getTime().getTime()
       }
     }
-    return new Date(0)
+    return 0
   }
 
 }

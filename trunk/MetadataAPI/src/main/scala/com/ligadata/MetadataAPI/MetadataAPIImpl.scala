@@ -118,7 +118,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private var compileCfg: String = ""
   private var heartBeat: HeartBeatUtil = null
   var zkHeartBeatNodePath = ""
-  private val storageDefaultTime = new Date(0)
+  private val storageDefaultTime = 0L
   private val storageDefaultTxnId = 0L
 
   // For future debugging  purposes, we want to know which properties were not set - so create a set

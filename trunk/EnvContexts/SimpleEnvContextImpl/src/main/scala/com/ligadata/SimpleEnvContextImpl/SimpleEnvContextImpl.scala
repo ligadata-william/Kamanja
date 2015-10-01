@@ -375,7 +375,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (matchedPartKeys.toArray, unmatchedPartKeys.toArray, matchedPrimaryKeys.toArray, unmatchedPrimaryKeys.toArray)
     }
 
-    def setObjects(containerName: String, tmValues: Array[Date], partKeys: Array[Array[String]], values: Array[MessageContainerBase]): Unit = {
+    def setObjects(containerName: String, tmValues: Array[Long], partKeys: Array[Array[String]], values: Array[MessageContainerBase]): Unit = {
       if (tmValues.size != partKeys.size || partKeys.size != values.size) {
         logger.error("All time partition value, bucket keys & values should have the same count in arrays. tmValues.size(%d), partKeys.size(%d), values.size(%d)".format(tmValues.size, partKeys.size, values.size))
         return
@@ -393,7 +393,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               v.TransactionId(txnId) // Setting the current transactionid
 
             val primkey = v.PrimaryKeyData
-            val putkey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(bk), Key(KvBaseDefalts.defaultTime, bk, v.TransactionId, v.RowNumber), primkey != null && primkey.size > 0, primkey)
+            val putkey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(bk), Key(t, bk, v.TransactionId, v.RowNumber), primkey != null && primkey.size > 0, primkey)
             container.dataByBucketKey.put(putkey, MessageContainerBaseWithModFlag(true, v))
             container.dataByTmPart.put(putkey, MessageContainerBaseWithModFlag(true, v))
             /*
@@ -916,11 +916,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // tmValues, partKeys & values are kind of triplate. So, we should have same size for all those
-  private def localSetObject(transId: Long, containerName: String, tmValues: Array[Date], partKeys: Array[Array[String]], values: Array[MessageContainerBase]): Unit = {
+  private def localSetObject(transId: Long, containerName: String, tmValues: Array[Long], partKeys: Array[Array[String]], values: Array[MessageContainerBase]): Unit = {
     val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       // Try to load the key(s) if they exists in global storage.
-      LoadDataIfNeeded(txnCtxt, transId, containerName, tmValues.map(t => TimeRange(t.getTime(), t.getTime())), partKeys)
+      LoadDataIfNeeded(txnCtxt, transId, containerName, tmValues.map(t => TimeRange(t, t)), partKeys)
       txnCtxt.setObjects(containerName, tmValues, partKeys, values)
     }
   }
@@ -1549,7 +1549,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (values == null)
       return
 
-    val tmValues = ArrayBuffer[Date]()
+    val tmValues = ArrayBuffer[Long]()
     val partKeyValues = ArrayBuffer[Array[String]]()
     val finalValues = ArrayBuffer[MessageContainerBase]()
 

@@ -821,7 +821,7 @@ class MessageDefImpl {
         else
           ele = List(new Element("", "transactionId", "system.long", "", "Fields", null, true))
 
-        ele = ele :+ new Element("", "timePartitionData", "java.util.Date", "", "Fields", null, true)
+        ele = ele :+ new Element("", "timePartitionData", "system.long", "", "Fields", null, true)
 
         // ele.foreach(f => log.debug("====" + f.Name))
 

@@ -199,9 +199,9 @@ class ConstantMsgObjVarGenerator {
     return ""
   }
 
-  def TimePartitionData(inputdata: InputData): Date = {
+  def TimePartitionData(inputdata: InputData): Long = {
     val tmPartInfo = getTimePartitionInfo
-    if (tmPartInfo == null) return new Date(0);
+    if (tmPartInfo == null) return new 0;
 
     // Get column data and pass it
     ComputeTimePartitionData(com.ligadata.BaseTypes.StringImpl.Input(getTimePartitionKeyData(inputdata)), tmPartInfo._2, tmPartInfo._3)
@@ -336,7 +336,7 @@ class ConstantMsgObjVarGenerator {
     def getTimePartitionInfo: (String, String, String) = { // Column, Format & Types	
 		return(null, null, null)	
 	}
-    override def TimePartitionData(inputdata: InputData): Date = new Date(0)
+    override def TimePartitionData(inputdata: InputData): Long = 0
       
       """)
 
@@ -865,7 +865,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
      private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
      """ + fromFuncBaeTypes + """
 	""" + fromFnc + """
-	timePartitionData = new Date(com.ligadata.BaseTypes.LongImpl.Clone(other.timePartitionData.getTime()));
+	timePartitionData = com.ligadata.BaseTypes.LongImpl.Clone(other.timePartitionData);
     return this
     }
     """
@@ -893,7 +893,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       })
      
 	""" + fromFnc + """
-	timePartitionData = new Date(com.ligadata.BaseTypes.LongImpl.Clone(other.fields("timePartitionData")._2.asInstanceOf[Date].getTime()))
+	timePartitionData = com.ligadata.BaseTypes.LongImpl.Clone(other.fields("timePartitionData")._2.asInstanceOf[Long])
     fields("timePartitionData") = (-1, timePartitionData)
 
      	return this
@@ -916,17 +916,17 @@ class XmlData(var dataInput: String) extends InputData(){ }
     if (message.timePartition != null) {
       if (message.Fixed.equalsIgnoreCase("true")) {
         timePartitionKeyData = message.timePartition.Key + ".toString"
-        keyDataCheckStr = "if(" + message.timePartition.Key + " == null) return new Date(0);"
+        keyDataCheckStr = "if(" + message.timePartition.Key + " == null) return 0;"
       } else if (message.Fixed.equalsIgnoreCase("false")) {
         timePartitionKeyData = "fields(\"" + message.timePartition.Key + "\")._2.toString"
-        keyDataCheckStr = "if(fields(\"" + message.timePartition.Key + "\")._2 " + "== null) return new Date(0);"
+        keyDataCheckStr = "if(fields(\"" + message.timePartition.Key + "\")._2 " + "== null) return 0;"
 
       }
 
       computeTmPartition = """
-      def ComputeTimePartitionData: Date = {
+      def ComputeTimePartitionData: Long = {
 		val tmPartInfo = """ + message.Name + """.getTimePartitionInfo
-		if (tmPartInfo == null) return new Date(0);
+		if (tmPartInfo == null) return 0;
 		""" + keyDataCheckStr + """
 		""" + message.Name + """.ComputeTimePartitionData(""" + timePartitionKeyData + """, tmPartInfo._2, tmPartInfo._3)
 	 } 
@@ -935,9 +935,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
     } else {
       timePartitionKeyData = "\" \""
       computeTmPartition = """
-      def ComputeTimePartitionData: Date = {
+      def ComputeTimePartitionData: Long = {
 		val tmPartInfo = """ + message.Name + """.getTimePartitionInfo
-		if (tmPartInfo == null) return new Date(0);
+		if (tmPartInfo == null) return 0;
 		""" + message.Name + """.ComputeTimePartitionData(""" + timePartitionKeyData + """, tmPartInfo._2, tmPartInfo._3)
 	 } 
   """
