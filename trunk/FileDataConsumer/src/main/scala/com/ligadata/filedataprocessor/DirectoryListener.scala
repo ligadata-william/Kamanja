@@ -19,7 +19,7 @@ object LocationWatcher {
   def main (args: Array[String]) : Unit = {
 
       if (args.size == 0 || args.size > 1) {
-        println("Smart File Consumer requires a configuration file as its argument")
+        logger.error("Smart File Consumer requires a configuration file as its argument")
         return
       }
 
@@ -30,7 +30,16 @@ object LocationWatcher {
       val lines = scala.io.Source.fromFile(config).getLines.toList
       lines.foreach(line => {
         var lProp = line.split("=")
-        properties(lProp(0)) = lProp(1)
+        try {
+          properties(lProp(0)) = lProp(1)
+        } catch {
+          case iobe: IndexOutOfBoundsException => {
+            logger.error("SMART FILE CONSUMER: Invalid format in the configuration file " + config)
+            logger.error("SMART FILE CONSUMER: unable to determine the value for property " + lProp(0))
+            return
+          }
+        }
+
       })
 
       var numberOfProcessors = properties(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS).toInt
@@ -46,7 +55,7 @@ object LocationWatcher {
         }
       }
 
-      println("Starting "+ numberOfProcessors+" file consumers, reading from "+ path)
+      logger.info("Starting "+ numberOfProcessors+" file consumers, reading from "+ path)
     try {
       for (i <- 1 to numberOfProcessors) {
         var processor = new FileProcessor(path,i)
