@@ -119,7 +119,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       noException should be thrownBy {
 	var containers = new Array[String](0)
 	containers = containers :+ containerName
-	adapter.CreateContainer(containers)
+	//adapter.CreateContainer(containers)
       }
 
       And("Test Put api")

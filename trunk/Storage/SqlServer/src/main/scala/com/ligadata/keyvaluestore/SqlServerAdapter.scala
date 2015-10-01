@@ -70,6 +70,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   private val loadedJars: TreeSet[String] = new TreeSet[String];
   private val clsLoader = new JdbcClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
 
+  private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+
   //val classLoader = new KamanjaLoaderInfo
   //val classLoader = URLClassLoader
 
@@ -213,6 +215,16 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
   }
 
+  private def CheckTableExists(containerName:String): Unit = {
+    if ( containerList.contains(containerName) ){
+      return
+    }
+    else{
+      CreateContainer(containerName)
+      containerList.add(containerName)
+    }
+  }
+
   /**
    * loadJar - load the specified jar into the classLoader
    */
@@ -259,6 +271,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var cstmt:CallableStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       // con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
       // put is sematically an upsert. An upsert is implemented using a merge
@@ -327,6 +340,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(false)
       data_list.foreach( li => {
 	var containerName = li._1
+	CheckTableExists(containerName)
 	var tableName = toTable(containerName)
 	var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ? "
 	pstmt = con.prepareStatement(deleteSql)
@@ -398,6 +412,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var cstmt:CallableStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
@@ -446,6 +461,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       logger.info("begin time => " + dateFormat.format(time.beginTime))
       logger.info("end time => " + dateFormat.format(time.endTime))
+      CheckTableExists(containerName)
 
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
@@ -496,6 +512,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
+      CheckTableExists(containerName)
 
       tableName = toTable(containerName)
       var query = "select count(*) from " + tableName
@@ -611,12 +628,14 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
+    CheckTableExists(containerName)
     var tableName = toTable(containerName)
     var query = "select * from " + tableName
     getData(tableName,query,callbackFunction)
   }
 
   override def getKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
+    CheckTableExists(containerName)
     var tableName = toTable(containerName)
     var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName
     getKeys(tableName,query,callbackFunction)
@@ -628,6 +647,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
@@ -670,6 +690,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
@@ -707,6 +728,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
+    CheckTableExists(containerName)
     var df = new SimpleDateFormat("yyyy/MM/dd")
     var tableName = toTable(containerName)
     time_ranges.foreach( time_range => {
@@ -718,6 +740,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key) => Unit): Unit = {
+    CheckTableExists(containerName)
     var df = new SimpleDateFormat("yyyy/MM/dd")
     var tableName = toTable(containerName)
     time_ranges.foreach( time_range => {
@@ -734,6 +757,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
@@ -786,6 +810,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
@@ -833,6 +858,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
@@ -875,6 +901,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt:PreparedStatement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
@@ -928,6 +955,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var stmt:Statement = null
     var tableName = toTable(containerName)
     try{
+      CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
       con = dataSource.getConnection
 
