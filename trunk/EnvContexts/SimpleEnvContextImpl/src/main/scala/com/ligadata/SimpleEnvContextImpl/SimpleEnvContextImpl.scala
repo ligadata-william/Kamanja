@@ -876,7 +876,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Same kind of code is there in localGetObject
-  private def loadBeforeSetObject(txnCtxt: TransactionContext, transId: Long, containerName: String, tmRangeValues: Array[TimeRange], partKeys: Array[Array[String]]): Unit = {
+  private def LoadDataIfNeeded(txnCtxt: TransactionContext, transId: Long, containerName: String, tmRangeValues: Array[TimeRange], partKeys: Array[Array[String]]): Unit = {
     if (tmRangeValues.size == partKeys.size) {
       val container = txnCtxt.getMsgContainer(containerName.toLowerCase, true) // adding if not there
       if (container != null) {
@@ -917,7 +917,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       // Try to load the key(s) if they exists in global storage.
-      loadBeforeSetObject(txnCtxt, transId, containerName, tmValues.map(t => TimeRange(t, t)), partKeys)
+      LoadDataIfNeeded(txnCtxt, transId, containerName, tmValues.map(t => TimeRange(t, t)), partKeys)
       txnCtxt.setObjects(containerName, tmValues, partKeys, values)
     }
   }
