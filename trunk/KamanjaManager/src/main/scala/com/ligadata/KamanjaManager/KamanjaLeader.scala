@@ -209,7 +209,7 @@ object KamanjaLeader {
               if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
                 // Send the data to output queues in case if anything not sent before
                 SendUnSentInfoToOutputAdapters
-                envCtxt.PersistRemainingStateEntriesOnLeader
+                // envCtxt.PersistRemainingStateEntriesOnLeader
                 nodesStatus.clear
                 expectedNodesAction = "distributed"
 
@@ -614,7 +614,7 @@ object KamanjaLeader {
               if (distributionExecutor.isShutdown)
                 break
 
-              envCtxt.PersistLocalNodeStateEntries
+              // envCtxt.PersistLocalNodeStateEntries
               envCtxt.clearIntermediateResults
 
               // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
