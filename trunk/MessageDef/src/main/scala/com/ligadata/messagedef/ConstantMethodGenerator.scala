@@ -570,7 +570,7 @@ class ConstantMethodGenerator {
     if (mesg.Fixed.equalsIgnoreCase("true"))
       timePartitionData = "timePartitionData = oldObj.timePartitionData;"
     else if (mesg.Fixed.equalsIgnoreCase("false"))
-      timePartitionData = "timePartitionData = oldObj.fields(\"timePartitionData\")._2.asInstanceOf[Date]; \n fields(\"timePartitionData\") = (-1, timePartitionData);" /// check the mapped msgs
+      timePartitionData = "timePartitionData = oldObj.fields(\"timePartitionData\")._2.asInstanceOf[Long]; \n fields(\"timePartitionData\") = (-1, timePartitionData);" /// check the mapped msgs
 
     // if (prevObjExists) {
     if (oldObj != null && oldObj.toString.trim() != "") {
@@ -663,7 +663,7 @@ class ConstantMethodGenerator {
       deSer = """
          if(prevVer == currentVer){  
               """ + deserStr + """
-         timePartitionData = new java.util.Date(com.ligadata.BaseTypes.LongImpl.DeserializeFromDataInputStream(dis))
+         timePartitionData = com.ligadata.BaseTypes.LongImpl.DeserializeFromDataInputStream(dis)
           """ + timePartitionFld + """
       
         } else throw new Exception("Current Message/Container Version "+currentVer+" should be greater than Previous Message Version " +prevVer + "." )
@@ -767,7 +767,7 @@ class ConstantMethodGenerator {
       SerializeBaseTypes(dos)
        // Non Base Types
      SerializeNonBaseTypes(dos)
-     com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, fields("timePartitionData")._2.asInstanceOf[Date].getTime())
+     com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, fields("timePartitionData")._2.asInstanceOf[Long])
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
