@@ -926,6 +926,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
    }
   
   """
+		
   }
 
   def transactionIdFuncs(message: Message): String = {
