@@ -315,11 +315,10 @@ cp $ivyPath/cache/com.google.protobuf/protobuf-java/bundles/protobuf-java-2.5.0.
 cp $srcPath/Utils/ExtractData/target/scala-2.10/extractdata_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.hbase/hbase-client/jars/hbase-client-0.98.4-hadoop2.jar $systemlib
 cp $srcPath/KamanjaBase/target/scala-2.10/kamanjabase_2.10-1.0.jar $systemlib
+cp $srcPath/KvBase/target/scala-2.10/kvbase_2.10-0.1.0.jar $systemlib
 cp $ivyPath/cache/com.sleepycat/je/jars/je-4.0.92.jar $systemlib
 cp $ivyPath/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.6.jar $systemlib
 cp $ivyPath/cache/javax.servlet/servlet-api/jars/servlet-api-2.5.jar $systemlib
-
-cp $srcPath/KamanjaData/target/scala-2.10/kamanjadata_2.10-0.1.0.jar $systemlib
 
 cp $ivyPath/cache/org.ow2.asm/asm-commons/jars/asm-commons-4.0.jar $systemlib
 cp $ivyPath/cache/org.scala-lang/scala-actors/jars/scala-actors-2.10.4.jar $systemlib

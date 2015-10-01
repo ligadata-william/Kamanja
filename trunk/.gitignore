@@ -28,7 +28,6 @@ project/plugins/project/
 .metadata
 .cache-main
 .cache-tests
-bin/
 tmp/
 *.tmp
 *.bak
