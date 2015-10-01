@@ -920,7 +920,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     } else timePartitionKeyData = "\" \""
     """
    def ComputeTimePartitionData: Date = {
-		val tmPartInfo = HL7.getTimePartitionInfo
+		val tmPartInfo = """ + message.Name + """.getTimePartitionInfo
 		if (tmPartInfo == null) return new Date(0);
 		""" + message.Name + """.ComputeTimePartitionData(""" + timePartitionKeyData + """, tmPartInfo._2, tmPartInfo._3)
    }
