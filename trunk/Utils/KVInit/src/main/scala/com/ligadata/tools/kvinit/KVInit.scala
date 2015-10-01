@@ -564,25 +564,30 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     return null
   }
 
-  private def collectKeyAndValues(k: Key, v: Value, dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag]): Unit = {
+  private def collectKeyAndValues(k: Key, v: Value, dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag], loadedKeys: java.util.TreeSet[LoadKeyWithBucketId]): Unit = {
     val value = SerializeDeserialize.Deserialize(v.serializedInfo, this, kvInitLoader.loader, true, "")
     val primarykey = value.PrimaryKeyData
-/*
+    /*
     val newK = Key(new java.util.Date(k.timePartition.getTime + 57600000), k.bucketKey, k.transactionId, k.rowId) // BUGBUG:: Used this until we fix the storage
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), newK, primarykey != null && primarykey.size > 0, primarykey)
 */
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), k, primarykey != null && primarykey.size > 0, primarykey)
     dataByBucketKeyPart.put(key, MessageContainerBaseWithModFlag(false, value))
+
+    val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey)
+    val loadKey = LoadKeyWithBucketId(bucketId, TimeRange(k.timePartition, k.timePartition), k.bucketKey)
+    loadedKeys.add(loadKey)
   }
 
   private def LoadDataIfNeeded(loadKey: LoadKeyWithBucketId, loadedKeys: java.util.TreeSet[LoadKeyWithBucketId], dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag], kvstore: DataStore): Unit = {
     if (loadedKeys.contains(loadKey))
       return
     val buildOne = (k: Key, v: Value) => {
-      collectKeyAndValues(k, v, dataByBucketKeyPart)
+      collectKeyAndValues(k, v, dataByBucketKeyPart, loadedKeys)
     }
     try {
       kvstore.get(objFullName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
+      loadedKeys.add(loadKey)
     } catch {
       case e: ObjectNotFoundException => {
         logger.debug("Key %s Not found for timerange: %d-%d".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))

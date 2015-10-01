@@ -40,7 +40,7 @@ trait MessageContainerBase {
   final def TimePartitionData(): Date = timePartitionData
 
   final def RowNumber(rno: Int): Unit = { rowNumber = rno }
-  final def RowNumber(): Long = rowNumber
+  final def RowNumber(): Int = rowNumber
 
   def isMessage: Boolean
   def isContainer: Boolean
