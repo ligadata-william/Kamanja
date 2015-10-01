@@ -377,7 +377,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     def setObjects(containerName: String, tmValues: Array[Date], partKeys: Array[Array[String]], values: Array[MessageContainerBase]): Unit = {
       if (tmValues.size != partKeys.size || partKeys.size != values.size) {
-        logger.error("All time partition value, bucket keys & values should have the same count in arrays. tmValues.size(%d), partKeys.size(%d), partKeys.size(%d)".format(tmValues.size, partKeys.size, partKeys.size))
+        logger.error("All time partition value, bucket keys & values should have the same count in arrays. tmValues.size(%d), partKeys.size(%d), values.size(%d)".format(tmValues.size, partKeys.size, values.size))
         return
       }
 
@@ -892,23 +892,26 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(bk)
             val loadKey = LoadKeyWithBucketId(bucketId, tr, bk)
 
-            if (container.loadedKeys.contains(loadKey)) {
+            if (container.loadedKeys.contains(loadKey) == false) {
               try {
+                println("Table %s Key %s for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
                 _defaultDataStore.get(containerName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
                 container.loadedKeys.add(loadKey)
               } catch {
                 case e: ObjectNotFoundException => {
-                  logger.debug("Key %s Not found for timerange: %d-%d".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
+                  logger.debug("Table %s Key %s Not found for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
                 }
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  logger.error("Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime(), stackTrace))
+                  logger.error("Table %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime(), stackTrace))
                 }
               }
             }
           }
         }
       }
+    } else {
+      logger.error("All time partition value, bucket keys & values should have the same count in arrays. tmRangeValues.size(%d), partKeys.size(%d)".format(tmRangeValues.size, partKeys.size))
     }
   }
 
