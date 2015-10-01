@@ -172,6 +172,21 @@ object SerializeDeserialize {
     null
   }
 
+  def Serialize(inst: MessageContainerBase, dos: DataOutputStream): Unit = {
+    try {
+      dos.writeUTF(inst.FullName)
+      dos.writeUTF(inst.Version)
+      dos.writeUTF(inst.getClass.getName)
+      inst.Serialize(dos)
+    } catch {
+      case e: Exception => {
+        //LOG.error("Failed to get classname :" + clsName)
+        logger.debug("StackTrace:" + StackTrace.ThrowableTraceString(e))
+        throw e
+      }
+    }
+  }
+
   def Deserialize(bytearray: Array[Byte], mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, isTopObject: Boolean, desClassName: String): MessageContainerBase = {
     var dis = new DataInputStream(new ByteArrayInputStream(bytearray));
 

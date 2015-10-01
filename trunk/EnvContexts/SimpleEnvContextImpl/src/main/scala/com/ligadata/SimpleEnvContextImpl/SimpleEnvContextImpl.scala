@@ -863,6 +863,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def collectKeyAndValues(k: Key, v: Value, container: MsgContainerInfo): Unit = {
+    // println("Key:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(k.timePartition, k.bucketKey.mkString(","), k.transactionId, k.rowId, v.serializerType, v.serializedInfo.size))
     val value = SerializeDeserialize.Deserialize(v.serializedInfo, _mdres, _classLoader, true, "")
     val primarykey = value.PrimaryKeyData
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), k, primarykey != null && primarykey.size > 0, primarykey)
@@ -1188,7 +1189,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         if (v.modified) {
           val k = entry.getKey()
           bos.reset
-          v.value.Serialize(dos)
+          SerializeDeserialize.Serialize(v.value, dos)
           dataForContainer += ((k.key, Value("manual", bos.toByteArray)))
         }
       }
