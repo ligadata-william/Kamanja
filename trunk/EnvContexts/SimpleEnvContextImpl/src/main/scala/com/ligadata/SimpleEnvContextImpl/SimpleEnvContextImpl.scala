@@ -1148,8 +1148,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           dataForContainer += ((k.key, Value("manual", bos.toByteArray)))
         }
 
-        mc.dataByTmPart.putAll(v._2.dataByTmPart) // Assigning new data
-        mc.dataByBucketKey.putAll(v._2.dataByTmPart) // Assigning new data
+        // mc.dataByTmPart.putAll(v._2.dataByTmPart) // Assigning new data
+        // mc.dataByBucketKey.putAll(v._2.dataByTmPart) // Assigning new data
 
         v._2.current_msg_cont_data.clear
         commiting_data += ((mc.objFullName, dataForContainer.toArray))
@@ -1328,8 +1328,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       readValues.foreach(kv => {
         val primkey = kv._2.PrimaryKeyData
         val putkey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(kv._1.bucketKey), kv._1, primkey != null && primkey.size > 0, primkey)
-        container.dataByBucketKey.put(putkey, kv._2)
-        container.dataByTmPart.put(putkey, kv._2)
+        // container.dataByBucketKey.put(putkey, kv._2)
+        // container.dataByTmPart.put(putkey, kv._2)
       })
     }
   }
@@ -1366,8 +1366,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       readValues.foreach(kv => {
         val primkey = kv._2.PrimaryKeyData
         val putkey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(kv._1.bucketKey), kv._1, primkey != null && primkey.size > 0, primkey)
-        container.dataByBucketKey.put(putkey, kv._2)
-        container.dataByTmPart.put(putkey, kv._2)
+        // container.dataByBucketKey.put(putkey, kv._2)
+        // container.dataByTmPart.put(putkey, kv._2)
       })
 
       val (v, foundPartKey) = TxnContextCommonFunctions.getRecent(container, partKey, tmRange, null, f)
@@ -1455,8 +1455,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       readValues.foreach(kv => {
         val primkey = kv._2.PrimaryKeyData
         val putkey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(kv._1.bucketKey), kv._1, primkey != null && primkey.size > 0, primkey)
-        container.dataByBucketKey.put(putkey, kv._2)
-        container.dataByTmPart.put(putkey, kv._2)
+        // container.dataByBucketKey.put(putkey, kv._2)
+        // container.dataByTmPart.put(putkey, kv._2)
       })
     }
 
