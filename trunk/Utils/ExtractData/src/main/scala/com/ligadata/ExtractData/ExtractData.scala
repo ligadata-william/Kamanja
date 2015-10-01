@@ -310,9 +310,9 @@ object ExtractData extends MdBaseResolveInfo {
       }
 
       if (partKey == null || partKey.size == 0) {
-        _dataStore.get(_currentTypName, Array(TimeRange(startTm, endTm)), getObjFn)
+        _dataStore.get(_currentTypName, Array(TimeRange(startTm.getTime(), endTm.getTime())), getObjFn)
       } else {
-        _dataStore.get(_currentTypName, Array(TimeRange(startTm, endTm)), Array(partKey.toArray), getObjFn)
+        _dataStore.get(_currentTypName, Array(TimeRange(startTm.getTime(), endTm.getTime())), Array(partKey.toArray), getObjFn)
       }
 
       // Close file

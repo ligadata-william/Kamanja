@@ -301,7 +301,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       var deleteSql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       logger.debug("deletesql => " + deleteSql)
       pstmt = con.prepareStatement(deleteSql)
-      pstmt.setTimestamp(1, new java.sql.Timestamp(RoundDateToSecs(key.timePartition).getTime))
+      pstmt.setLong(1, key.timePartition)
       pstmt.setString(2, key.bucketKey.mkString(","))
       pstmt.setLong(3, key.transactionId)
       pstmt.setInt(4, key.rowId)
@@ -310,7 +310,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       var insertSql = "insert into " + tableName + "(timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo) values(?,?,?,?,?,?)"
       logger.debug("insertsql => " + insertSql)
       pstmt = con.prepareStatement(insertSql)
-      pstmt.setTimestamp(1, new java.sql.Timestamp(RoundDateToSecs(key.timePartition).getTime))
+      pstmt.setLong(1, key.timePartition)
       pstmt.setString(2, key.bucketKey.mkString(","))
       pstmt.setLong(3, key.transactionId)
       pstmt.setInt(4, key.rowId)
@@ -369,7 +369,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         var keyValuePairs = li._2
         keyValuePairs.foreach(keyValuePair => {
           var key = keyValuePair._1
-          pstmt.setTimestamp(1, new java.sql.Timestamp(RoundDateToSecs(key.timePartition).getTime))
+          pstmt.setLong(1, key.timePartition)
           pstmt.setString(2, key.bucketKey.mkString(","))
           pstmt.setLong(3, key.transactionId)
           pstmt.setInt(4, key.rowId)
@@ -391,7 +391,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         keyValuePairs.foreach(keyValuePair => {
           var key = keyValuePair._1
           var value = keyValuePair._2
-          pstmt.setTimestamp(1, new java.sql.Timestamp(RoundDateToSecs(key.timePartition).getTime))
+          pstmt.setLong(1, key.timePartition)
           pstmt.setString(2, key.bucketKey.mkString(","))
           pstmt.setLong(3, key.transactionId)
           pstmt.setInt(4, key.rowId)
@@ -442,7 +442,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(false)
 
       keys.foreach(key => {
-        pstmt.setTimestamp(1, new java.sql.Timestamp(RoundDateToSecs(key.timePartition).getTime))
+        pstmt.setLong(1, key.timePartition)
         pstmt.setString(2, key.bucketKey.mkString(","))
         pstmt.setLong(3, key.transactionId)
         pstmt.setInt(4, key.rowId)
@@ -492,8 +492,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       pstmt = con.prepareStatement(deleteSql)
       keys.foreach(keyList => {
         var keyStr = keyList.mkString(",")
-        pstmt.setTimestamp(1, new java.sql.Timestamp(time.beginTime.getTime))
-        pstmt.setTimestamp(2, new java.sql.Timestamp(time.endTime.getTime))
+        pstmt.setLong(1, time.beginTime)
+        pstmt.setLong(2, time.endTime)
         pstmt.setString(3, keyStr)
         // Add it to the batch
         pstmt.addBatch()
@@ -576,7 +576,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
       while (rs.next()) {
-        var timePartition = new java.util.Date(rs.getDate(1).getTime())
+        var timePartition = rs.getLong(1)
         var keyStr = rs.getString(2)
         var tId = rs.getLong(3)
         var rId = rs.getInt(4)
@@ -619,7 +619,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
       while (rs.next()) {
-        var timePartition = new java.util.Date(rs.getDate(1).getTime())
+        var timePartition = rs.getLong(1)
         var keyStr = rs.getString(2)
         var tId = rs.getLong(3)
         var rId = rs.getInt(4)
@@ -672,13 +672,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       var query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(query)
       keys.foreach(key => {
-        pstmt.setTimestamp(1, new java.sql.Timestamp(RoundDateToSecs(key.timePartition).getTime))
+        pstmt.setLong(1, key.timePartition)
         pstmt.setString(2, key.bucketKey.mkString(","))
         pstmt.setLong(3, key.transactionId)
         pstmt.setInt(4, key.rowId)
         var rs = pstmt.executeQuery();
         while (rs.next()) {
-          var timePartition = new java.util.Date(rs.getDate(1).getTime())
+          var timePartition = rs.getLong(1)
           var keyStr = rs.getString(2)
           var tId = rs.getLong(3)
           var rId = rs.getInt(4)
@@ -715,7 +715,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       var query = "select serializerType,serializedInfo from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(query)
       keys.foreach(key => {
-        pstmt.setTimestamp(1, new java.sql.Timestamp(RoundDateToSecs(key.timePartition).getTime))
+        pstmt.setLong(1, key.timePartition)
         pstmt.setString(2, key.bucketKey.mkString(","))
         pstmt.setLong(3, key.transactionId)
         pstmt.setInt(4, key.rowId)
@@ -788,7 +788,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           pstmt.setString(1, bucketKey.mkString(","))
           var rs = pstmt.executeQuery();
           while (rs.next()) {
-            var timePartition = new java.util.Date(rs.getDate(1).getTime())
+            var timePartition = rs.getLong(1)
             var keyStr = rs.getString(2)
             var tId = rs.getLong(3)
             var rId = rs.getInt(4)
@@ -840,7 +840,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           pstmt.setString(1, bucketKey.mkString(","))
           var rs = pstmt.executeQuery();
           while (rs.next()) {
-            var timePartition = new java.util.Date(rs.getDate(1).getTime())
+            var timePartition = rs.getLong(1)
             var keyStr = rs.getString(2)
             var tId = rs.getLong(3)
             var rId = rs.getInt(4)
@@ -885,7 +885,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         pstmt.setString(1, bucketKey.mkString(","))
         var rs = pstmt.executeQuery();
         while (rs.next()) {
-          var timePartition = new java.util.Date(rs.getDate(1).getTime())
+          var timePartition = rs.getLong(1)
           var keyStr = rs.getString(2)
           var tId = rs.getLong(3)
           var rId = rs.getInt(4)
@@ -928,7 +928,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         pstmt.setString(1, bucketKey.mkString(","))
         var rs = pstmt.executeQuery();
         while (rs.next()) {
-          var timePartition = new java.util.Date(rs.getDate(1).getTime())
+          var timePartition = rs.getLong(1)
           var keyStr = rs.getString(2)
           var tId = rs.getLong(3)
           var rId = rs.getInt(4)

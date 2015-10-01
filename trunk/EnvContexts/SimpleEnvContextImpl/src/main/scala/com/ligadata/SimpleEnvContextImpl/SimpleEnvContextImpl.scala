@@ -92,7 +92,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
           val tmRng =
             if (tmRange == null)
-              TimeRange(new Date(Long.MinValue), new Date(Long.MaxValue))
+              TimeRange(Long.MinValue, Long.MaxValue)
             else
               tmRange
           val partKeyAsArray = partKey.toArray
@@ -198,7 +198,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
           val tmRng =
             if (tmRange == null)
-              TimeRange(new Date(Long.MinValue), new Date(Long.MaxValue))
+              TimeRange(Long.MinValue, Long.MaxValue)
             else
               tmRange
           val partKeyAsArray = partKey.toArray
@@ -894,16 +894,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
             if (container.loadedKeys.contains(loadKey) == false) {
               try {
-                println("Table %s Key %s for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
+                logger.debug("Table %s Key %s for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
                 _defaultDataStore.get(containerName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
                 container.loadedKeys.add(loadKey)
               } catch {
                 case e: ObjectNotFoundException => {
-                  logger.debug("Table %s Key %s Not found for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
+                  logger.debug("Table %s Key %s Not found for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
                 }
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  logger.error("Table %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime(), stackTrace))
+                  logger.error("Table %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
                 }
               }
             }
@@ -920,7 +920,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       // Try to load the key(s) if they exists in global storage.
-      LoadDataIfNeeded(txnCtxt, transId, containerName, tmValues.map(t => TimeRange(t, t)), partKeys)
+      LoadDataIfNeeded(txnCtxt, transId, containerName, tmValues.map(t => TimeRange(t.getTime(), t.getTime())), partKeys)
       txnCtxt.setObjects(containerName, tmValues, partKeys, values)
     }
   }
@@ -1253,7 +1253,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       logger.debug("Going to commit data into datastore.")
       commiting_data.foreach(cd => {
         cd._2.foreach(kv => {
-          logger.debug("ObjKey:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition.getTime(), kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId, kv._2.serializerType, kv._2.serializedInfo.size))
+          logger.debug("ObjKey:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition, kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId, kv._2.serializerType, kv._2.serializedInfo.size))
         })
       })
       _defaultDataStore.put(commiting_data.toArray)

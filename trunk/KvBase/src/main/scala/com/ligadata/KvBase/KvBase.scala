@@ -17,14 +17,14 @@
 
 package com.ligadata.KvBase
 
-import java.util.{ Date, Comparator };
+import java.util.{ Comparator };
 
-case class Key(timePartition: Date, bucketKey: Array[String], transactionId: Long, rowId: Int)
+case class Key(timePartition: Long, bucketKey: Array[String], transactionId: Long, rowId: Int)
 case class Value(serializerType: String, serializedInfo: Array[Byte])
-case class TimeRange(beginTime: Date, endTime: Date)
+case class TimeRange(beginTime: Long, endTime: Long)
 
 object KvBaseDefalts {
-  val defaultTime = new Date(0)
+  val defaultTime = 0L
   val defualtBucketKeyComp = new BucketKeyComp() // By BucketKey, time, then PrimaryKey/{Transactionid & Rowid}
   val defualtTimePartComp = new TimePartComp() // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
   val defaultLoadKeyComp = new LoadKeyComp() // By BucketId, BucketKey, Time Range
@@ -80,16 +80,12 @@ object KeyWithBucketIdAndPrimaryKeyCompHelper {
   }
 
   def CompareTimePartitionData(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
-    if (k1.key.timePartition == null && k2.key.timePartition == null)
-      return 0
-
-    if (k1.key.timePartition != null && k2.key.timePartition == null)
+    if (k1.key.timePartition < k2.key.timePartition)
+      return -1
+    if (k1.key.timePartition > k2.key.timePartition)
       return 1
 
-    if (k1.key.timePartition == null && k2.key.timePartition != null)
-      return -1
-
-    return k1.key.timePartition.compareTo(k2.key.timePartition)
+    return 0
   }
 
   def ComparePrimaryKeyData(k1: KeyWithBucketIdAndPrimaryKey, k2: KeyWithBucketIdAndPrimaryKey): Int = {
@@ -236,34 +232,16 @@ class LoadKeyComp extends Comparator[LoadKeyWithBucketId] {
     if (k1.tmRange == null && k2.tmRange != null)
       return -1
 
-    if (k1.tmRange.beginTime == null && k2.tmRange.beginTime == null)
-      return 0
-
-    if (k1.tmRange.beginTime != null && k2.tmRange.beginTime == null)
+    if (k1.tmRange.beginTime < k2.tmRange.beginTime)
+      return -1
+    if (k1.tmRange.beginTime > k2.tmRange.beginTime)
       return 1
 
-    if (k1.tmRange.beginTime == null && k2.tmRange.beginTime != null)
+    if (k1.tmRange.endTime < k2.tmRange.endTime)
       return -1
-
-    var cmp = k1.tmRange.beginTime.compareTo(k2.tmRange.beginTime)
-
-    if (cmp != 0)
-      return cmp
-
-    if (k1.tmRange.endTime == null && k2.tmRange.endTime == null)
-      return 0
-
-    if (k1.tmRange.endTime != null && k2.tmRange.endTime == null)
+    if (k1.tmRange.endTime > k2.tmRange.endTime)
       return 1
-
-    if (k1.tmRange.endTime == null && k2.tmRange.endTime != null)
-      return -1
-
-    cmp = k1.tmRange.endTime.compareTo(k2.tmRange.endTime)
-
-    if (cmp != 0)
-      return cmp
-
+      
     return 0
   }
 }

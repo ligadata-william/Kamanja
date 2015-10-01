@@ -1371,7 +1371,7 @@ case class RddDate(val dttmInMs: Long) {
     val cal = Calendar.getInstance()
     cal.setTimeInMillis(dttmInMs)
     cal.add(Calendar.DATE, days * -1)
-    return TimeRange(cal.getTime, new Date(dttmInMs))
+    return TimeRange(cal.getTime.getTime(), dttmInMs)
   }
 
   //BUGBUG:: Do we need to return in UTC??????
@@ -1386,7 +1386,7 @@ case class RddDate(val dttmInMs: Long) {
     val cal = Calendar.getInstance()
     cal.setTimeInMillis(dttmInMs)
     cal.add(Calendar.DATE, days)
-    return TimeRange(new Date(dttmInMs), cal.getTime)
+    return TimeRange(dttmInMs, cal.getTime.getTime())
   }
 
   def getDateTimeInMs = dttmInMs

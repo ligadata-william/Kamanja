@@ -86,7 +86,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   }
 
   def readCallBack(key:Key, value: Value) {
-    logger.info("timePartition => " + dateFormat.format(RoundDateToSecs(key.timePartition)))
+    logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
@@ -96,7 +96,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   }
 
   def readKeyCallBack(key:Key) {
-    logger.info("timePartition => " + dateFormat.format(RoundDateToSecs(key.timePartition)))
+    logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
@@ -145,7 +145,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var keyArray = new Array[String](0)
 	var custName = "customer-" + i
 	keyArray = keyArray :+ custName
-	var key = new Key(currentTime,keyArray,i,i)
+	var key = new Key(currentTime.getTime(),keyArray,i,i)
 	keys = keys :+ key
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
 	var custNumber = "4256667777" + i
@@ -189,7 +189,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var keyArray = new Array[String](0)
 	var custName = "customer-" + i
 	keyArray = keyArray :+ custName
-	var key = new Key(currentTime,keyArray,i,i)
+	var key = new Key(currentTime.getTime(),keyArray,i,i)
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
 	var custNumber = "4256667777" + i
 	var obj = new Customer(custName,custAddress,custNumber)
@@ -228,7 +228,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	keyArray = keyArray :+ custName
 	// keyStringList is only used to test a del operation later
 	keyStringList = keyStringList :+ keyArray
-	var key = new Key(currentTime,keyArray,i,i)
+	var key = new Key(currentTime.getTime(),keyArray,i,i)
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
 	var custNumber = "4256667777" + i
 	var obj = new Customer(custName,custAddress,custNumber)
@@ -266,7 +266,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       var endTime = cal.getTime()
       logger.info("end time => " + dateFormat.format(endTime))
 
-      var timeRange = new TimeRange(beginTime,endTime)
+      var timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
       noException should be thrownBy {
 	adapter.del(containerName,timeRange,keyStringList)
       }
@@ -285,7 +285,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       endTime = cal.getTime()
       logger.info("end time => " + dateFormat.format(endTime))
 
-      timeRange = new TimeRange(beginTime,endTime)
+      timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
       var timeRanges = new Array[TimeRange](0)
       timeRanges = timeRanges :+ timeRange
 
@@ -333,7 +333,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       endTime = cal.getTime()
       logger.info("end time => " + dateFormat.format(endTime))
 
-      timeRange = new TimeRange(beginTime,endTime)
+      timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
       timeRanges = new Array[TimeRange](0)
       timeRanges = timeRanges :+ timeRange
 

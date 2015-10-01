@@ -586,11 +586,11 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       loadedKeys.add(loadKey)
     } catch {
       case e: ObjectNotFoundException => {
-        logger.debug("Key %s Not found for timerange: %d-%d".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime()))
+        logger.debug("Key %s Not found for timerange: %d-%d".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime.getTime(), loadKey.tmRange.endTime.getTime(), stackTrace))
+        logger.error("Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
       }
     }
   }
@@ -693,9 +693,12 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                     messageOrContainer.PartitionKeyData
                   }
 
-                var timeVal = messageOrContainer.TimePartitionData
-                if (timeVal == null)
-                  timeVal = KvBaseDefalts.defaultTime
+                var tmVal = messageOrContainer.TimePartitionData
+                val timeVal =
+                  if (tmVal == null)
+                    KvBaseDefalts.defaultTime
+                  else
+                    tmVal.getTime()
                 messageOrContainer.RowNumber(processedRows)
 
                 val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(keyData)
@@ -751,7 +754,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     try {
       logger.debug("Going to save " + storeObjects.size + " objects")
       storeObjects.foreach(kv => {
-        logger.debug("ObjKey:(" + kv._1.timePartition.getTime() + ":" + kv._1.bucketKey.mkString(",") + ":" + kv._1.transactionId + ") Value Size: " + kv._2.serializedInfo.size)
+        logger.debug("ObjKey:(" + kv._1.timePartition + ":" + kv._1.bucketKey.mkString(",") + ":" + kv._1.transactionId + ") Value Size: " + kv._2.serializedInfo.size)
       })
       kvstore.put(Array((objFullName, storeObjects.toArray)))
     } catch {
@@ -779,7 +782,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
           ("changeddatakeys" -> changedContainersData.map(kv =>
             ("C" -> kv._1) ~
               ("K" -> kv._2.map(k =>
-                ("tm" -> k.timePartition.getDate()) ~
+                ("tm" -> k.timePartition) ~
                   ("bk" -> k.bucketKey.toList) ~
                   ("tx" -> k.transactionId)))))
         val sendJson = compact(render(datachangedata))
