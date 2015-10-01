@@ -693,12 +693,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
                     messageOrContainer.PartitionKeyData
                   }
 
-                var tmVal = messageOrContainer.TimePartitionData
-                val timeVal =
-                  if (tmVal == null)
-                    KvBaseDefalts.defaultTime
-                  else
-                    tmVal.getTime()
+                val timeVal = messageOrContainer.TimePartitionData
                 messageOrContainer.RowNumber(processedRows)
 
                 val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(keyData)
