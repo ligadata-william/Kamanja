@@ -4,6 +4,7 @@ import java.io.{IOException, File, PrintWriter}
 import java.nio.file.{Path, FileSystems}
 
 import com.ligadata.Exceptions.{InternalErrorException, MissingArgumentException}
+import org.apache.log4j.Logger
 
 /**
  * Created by danielkozin on 9/24/15.
@@ -13,6 +14,8 @@ class DirectoryListener {
 }
 
 object LocationWatcher {
+  lazy val loggerName = this.getClass.getName
+  lazy val logger = Logger.getLogger(loggerName)
   def main (args: Array[String]) : Unit = {
 
       if (args.size == 0 || args.size > 1) {
@@ -44,11 +47,19 @@ object LocationWatcher {
       }
 
       println("Starting "+ numberOfProcessors+" file consumers, reading from "+ path)
+    try {
       for (i <- 1 to numberOfProcessors) {
         var processor = new FileProcessor(path,i)
         processor.init(properties)
         val watch_thread = new Thread(processor)
-        watch_thread .start
+        watch_thread.start
       }
+
+    } catch {
+      case e: Exception => {
+        logger.error("ERROR in starting SMART FILE CONSUMER "+ e)
+        return
+      }
+    }
   }
 }

@@ -39,12 +39,13 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
   delimiters.valueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.VALUE_SEPARATOR,"~")
 
   val zkcConnectString = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
-  logger.debug("SMART FILE CONSUMER Using zookeeper " +zkcConnectString)
+  logger.debug(partIdx + " SMART FILE CONSUMER Using zookeeper " +zkcConnectString)
   val znodePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/smartFileConsumer/" + partIdx
   var zkc: CuratorFramework = initZookeeper
   var objInst: Any = configureMessageDef
   if (objInst == null) {
-    throw new UnsupportedObjectException("Unknown message definition")
+    shutdown
+    throw new UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
   }
 
 
@@ -64,7 +65,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       // Now, there are some special cases here.  If offset is -1, then its just a signal to close the file
       // else, this may or may not be the last message in the file... look to isLast for guidance.
       if(msg.offsetInFile > 0) {
-        logger.debug("SMART FILE CONSUMER \nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + "\n " + new String(msg.msg))
+        logger.debug(partIdx +" SMART FILE CONSUMER \nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + "\n " + new String(msg.msg))
         var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
 
         try {
@@ -77,8 +78,9 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
           zkc.setData.forPath(znodePath, zkFname.getBytes)
         } catch {
           case e: Exception =>
-            logger.error("Could not add to the queue due to an Exception "+ e.getMessage)
+            logger.error(partIdx +" Could not add to the queue due to an Exception "+ e.getMessage)
             e.printStackTrace
+            shutdown
             throw e
         }
       }
@@ -88,11 +90,11 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
           // Either move or rename the file.
           var fileStruct = msg.relatedFileName.split("/")
           if (inConfiguration.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null) != null) {
-            logger.debug("SMART FILE CONSUMER Moving File" + msg.relatedFileName + " to "+ inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
+            logger.debug(partIdx +" SMART FILE CONSUMER Moving File" + msg.relatedFileName + " to "+ inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
             Files.copy(Paths.get(msg.relatedFileName), Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO)+"/"+ fileStruct(fileStruct.size - 1)),REPLACE_EXISTING)
             Files.deleteIfExists(Paths.get(msg.relatedFileName))
           } else {
-            logger.debug("SMART FILE CONSUMER Renaming file "+ msg.relatedFileName + " to " + msg.relatedFileName + "_COMPLETE")
+            logger.debug(partIdx +" SMART FILE CONSUMER Renaming file "+ msg.relatedFileName + " to " + msg.relatedFileName + "_COMPLETE")
             (new File(msg.relatedFileName)).renameTo(new File(msg.relatedFileName + "_COMPLETE"))
           }
 
@@ -116,8 +118,10 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    * @return
    */
   private def CreateKafkaInput(inputData: String, associatedMsg: String, delimiters: DataDelimiters): InputData = {
-    if (associatedMsg == null || associatedMsg.size == 0)
+    if (associatedMsg == null || associatedMsg.size == 0) {
+      shutdown
       throw new Exception("KV data expecting Associated messages as input.")
+    }
 
     if (delimiters.fieldDelimiter == null) delimiters.fieldDelimiter = ","
     if (delimiters.valueDelimiter == null) delimiters.valueDelimiter = "~"
@@ -131,6 +135,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       if (str_arr.size % 2 != 0) {
         val errStr = "Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched. We got %d tokens from input string %s".format(str_arr.size, inputData)
         logger.error(errStr)
+        shutdown
         throw new Exception(errStr)
       }
       for (i <- 0 until str_arr.size by 2) {
@@ -140,6 +145,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       str_arr.foreach(kv => {
         val kvpair = kv.split(delimiters.keyAndValueDelimiter)
         if (kvpair.size != 2) {
+          shutdown
           throw new Exception("Expecting Key & Value pair only")
         }
         dataMap(kvpair(0).trim) = kvpair(1)
@@ -174,11 +180,22 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    */
   private def configureMessageDef (): com.ligadata.KamanjaBase.BaseMsgObj = {
     val loaderInfo = new KamanjaLoaderInfo()
-    val(typNameSpace, typName) = com.ligadata.kamanja.metadata.Utils.parseNameTokenNoVersion(inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
-    var msgDef: MessageDef = mdMgr.ActiveMessage(typNameSpace, typName)
+    var msgDef: MessageDef = null
+    try {
+      val(typNameSpace, typName) = com.ligadata.kamanja.metadata.Utils.parseNameTokenNoVersion(inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+      msgDef = mdMgr.ActiveMessage(typNameSpace, typName)
+    } catch {
+      case e: Exception => {
+        shutdown
+        logger.error("Unable to to parse message defintion")
+        throw new UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+      }
+    }
 
     if (msgDef == null) {
-      throw new UnsupportedObjectException("Unknown message definition")
+      shutdown
+      logger.error("Unable to to retrieve message defintion")
+      throw new UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
     }
     // Just in case we want this to deal with more then 1 MSG_DEF in a future.  - msgName paramter will probably have to
     // be an array inthat case.. but for now......
@@ -234,5 +251,18 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       }
     })
     return null
+  }
+
+  /**
+   *
+   */
+  private def shutdown: Unit = {
+    MetadataAPIImpl.shutdown
+    if (producer != null)
+      producer.close
+    if (zkc != null)
+      zkc.close
+
+    Thread.sleep(2000)
   }
 }

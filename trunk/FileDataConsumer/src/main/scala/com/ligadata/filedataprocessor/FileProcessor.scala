@@ -36,6 +36,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var zkc: CuratorFramework = null
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
+  var fileConsumers: ExecutorService = Executors.newFixedThreadPool(3)
 
   var isCosuming = true
   var isProducing = true
@@ -82,15 +83,25 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     maxlen = props.getOrElse(SmartFileAdapterConstants.WORKER_BUFFER_SIZE, "4").toInt * 1024 * 1024
     partitionSelectionNumber = props(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS).toInt
 
+    // Bail out
     if (dirToWatch == null) {
       logger.error("SMART_FILE_CONSUMER Directory to watch must be specified")
+      shutdown
       throw new MissingPropertyException ("Missing Paramter: " + SmartFileAdapterConstants.DIRECTORY_TO_WATCH )
     }
 
     // Initialize threads
     localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
     MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
-    kml = new KafkaMessageLoader (partitionId, props)
+    try {
+      kml = new KafkaMessageLoader (partitionId, props)
+    } catch {
+      case e: Exception => {
+        shutdown
+        throw e
+      }
+    }
+
 
     // will need to check zookeeper here
     val zkcConnectString = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
@@ -432,6 +443,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
           } catch {
             case ioe: IOException => {
               logger.error ("SMART_FILE_CONSUMER Unable to find the directory to watch, Shutting down File Consumer " + partitionId)
+              shutdown
               throw ioe
             }
           }
@@ -452,7 +464,6 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
 
       // Initialize and launch the File Processor thread(s), and kafka producers
-      var fileConsumers: ExecutorService = Executors.newFixedThreadPool(3)
       fileConsumers.execute(new Runnable() {
         override def run() = {
           doSomeConsuming
@@ -591,6 +602,22 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     val head = (b0 & 0xff) | ((b1 << 8) & 0xff00)
 
     return (head == GZIPInputStream.GZIP_MAGIC);
+  }
+
+
+  /**
+   *
+   */
+  private def shutdown: Unit = {
+    isCosuming = false
+    isProducing = false
+    if (fileConsumers != null) {
+      fileConsumers.shutdown()
+    }
+    MetadataAPIImpl.shutdown
+    if (zkc != null)
+      zkc.close
+    Thread.sleep(2000)
   }
 }
 
