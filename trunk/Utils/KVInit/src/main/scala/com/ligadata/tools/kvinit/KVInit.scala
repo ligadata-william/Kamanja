@@ -567,10 +567,6 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
   private def collectKeyAndValues(k: Key, v: Value, dataByBucketKeyPart: TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag], loadedKeys: java.util.TreeSet[LoadKeyWithBucketId]): Unit = {
     val value = SerializeDeserialize.Deserialize(v.serializedInfo, this, kvInitLoader.loader, true, "")
     val primarykey = value.PrimaryKeyData
-    /*
-    val newK = Key(new java.util.Date(k.timePartition.getTime + 57600000), k.bucketKey, k.transactionId, k.rowId) // BUGBUG:: Used this until we fix the storage
-    val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), newK, primarykey != null && primarykey.size > 0, primarykey)
-*/
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), k, primarykey != null && primarykey.size > 0, primarykey)
     dataByBucketKeyPart.put(key, MessageContainerBaseWithModFlag(false, value))
 
