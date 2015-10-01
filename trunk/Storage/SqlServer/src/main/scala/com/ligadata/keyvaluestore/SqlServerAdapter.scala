@@ -593,7 +593,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (rs != null) {
@@ -631,7 +631,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch data from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (rs != null) {
@@ -691,7 +691,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (pstmt != null) {
@@ -733,7 +733,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (pstmt != null) {
@@ -802,7 +802,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (pstmt != null) {
@@ -849,7 +849,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (pstmt != null) {
@@ -892,7 +892,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (pstmt != null) {
@@ -932,7 +932,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
+        //throw new Exception("Failed to fetch object(s) from the table " + tableName + ":" + e.getMessage())
       }
     } finally {
       if (pstmt != null) {
