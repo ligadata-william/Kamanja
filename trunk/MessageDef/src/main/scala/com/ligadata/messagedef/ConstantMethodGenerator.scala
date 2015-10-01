@@ -610,7 +610,7 @@ class ConstantMethodGenerator {
     override def Serialize(dos: DataOutputStream) : Unit = {
         try {
     	   """ + serStr + """
-    	 com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, timePartitionData.getTime());
+    	 com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, timePartitionData);
     	} catch {
     		case e: Exception => {
     	    val stackTrace = StackTrace.ThrowableTraceString(e)
