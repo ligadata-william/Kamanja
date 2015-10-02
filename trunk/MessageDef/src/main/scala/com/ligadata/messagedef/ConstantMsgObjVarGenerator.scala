@@ -201,7 +201,7 @@ class ConstantMsgObjVarGenerator {
 
   def TimePartitionData(inputdata: InputData): Long = {
     val tmPartInfo = getTimePartitionInfo
-    if (tmPartInfo == null) return new 0;
+    if (tmPartInfo == null) return 0;
 
     // Get column data and pass it
     ComputeTimePartitionData(com.ligadata.BaseTypes.StringImpl.Input(getTimePartitionKeyData(inputdata)), tmPartInfo._2, tmPartInfo._3)
