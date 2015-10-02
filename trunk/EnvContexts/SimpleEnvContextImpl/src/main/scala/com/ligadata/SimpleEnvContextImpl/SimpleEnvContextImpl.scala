@@ -886,25 +886,26 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
 
         for (i <- 0 until tmRangeValues.size) {
-          val bk = partKeys(i)
+          val bk = if (partKeys(i) != null) partKeys(i) else Array("")
           if (TxnContextCommonFunctions.IsEmptyKey(bk) == false) {
-            val tr = tmRangeValues(i)
+            val tr = if (tmRangeValues(i) != null) tmRangeValues(i) else TimeRange(Long.MinValue, Long.MaxValue)
 
             val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(bk)
             val loadKey = LoadKeyWithBucketId(bucketId, tr, bk)
 
             if (container.loadedKeys.contains(loadKey) == false) {
               try {
-                logger.debug("Table %s Key %s for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
+                logger.debug("Table %s Key %s for timerange: (%d,%d)".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
                 _defaultDataStore.get(containerName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
                 container.loadedKeys.add(loadKey)
               } catch {
                 case e: ObjectNotFoundException => {
-                  logger.debug("Table %s Key %s Not found for timerange: %d-%d".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("Table %s Key %s Not found for timerange: (%d,%d). Message:%s, Cause:%s \nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, e.getMessage(), e.getCause(), stackTrace))
                 }
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  logger.error("Table %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
+                  logger.error("Table %s Key %s Not found for timerange: (%d,%d). Message:%s, Cause:%s \nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, e.getMessage(), e.getCause(), stackTrace))
                 }
               }
             }
