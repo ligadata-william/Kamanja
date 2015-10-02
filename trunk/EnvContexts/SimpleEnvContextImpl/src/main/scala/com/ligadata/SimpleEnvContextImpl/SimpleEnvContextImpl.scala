@@ -886,17 +886,59 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
 
         for (i <- 0 until tmRangeValues.size) {
-          val bk = if (partKeys(i) != null) partKeys(i) else Array("")
+          val bk = partKeys(i)
+          val tr = tmRangeValues(i)
           if (TxnContextCommonFunctions.IsEmptyKey(bk) == false) {
-            val tr = if (tmRangeValues(i) != null) tmRangeValues(i) else TimeRange(Long.MinValue, Long.MaxValue)
-
             val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(bk)
-            val loadKey = LoadKeyWithBucketId(bucketId, tr, bk)
+            val tr1 = if (tr != null) tr else TimeRange(Long.MinValue, Long.MaxValue)
+
+            val loadKey = LoadKeyWithBucketId(bucketId, tr1, bk)
 
             if (container.loadedKeys.contains(loadKey) == false) {
               try {
                 logger.debug("Table %s Key %s for timerange: (%d,%d)".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
-                _defaultDataStore.get(containerName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
+                if (tr != null)
+                  _defaultDataStore.get(containerName, Array(tr), Array(bk), buildOne)
+                else
+                  _defaultDataStore.get(containerName, Array(bk), buildOne)
+                container.loadedKeys.add(loadKey)
+              } catch {
+                case e: ObjectNotFoundException => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("Table %s Key %s Not found for timerange: (%d,%d). Message:%s, Cause:%s \nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, e.getMessage(), e.getCause(), stackTrace))
+                }
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.error("Table %s Key %s Not found for timerange: (%d,%d). Message:%s, Cause:%s \nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, e.getMessage(), e.getCause(), stackTrace))
+                }
+              }
+            }
+          } else if (tr != null) {
+            val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(Array[String]())
+            val loadKey = LoadKeyWithBucketId(bucketId, tr, Array[String]())
+            if (container.loadedKeys.contains(loadKey) == false) {
+              try {
+                logger.debug("Table %s Key %s for timerange: (%d,%d)".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
+                _defaultDataStore.get(containerName, Array(tr), buildOne)
+                container.loadedKeys.add(loadKey)
+              } catch {
+                case e: ObjectNotFoundException => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("Table %s Key %s Not found for timerange: (%d,%d). Message:%s, Cause:%s \nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, e.getMessage(), e.getCause(), stackTrace))
+                }
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.error("Table %s Key %s Not found for timerange: (%d,%d). Message:%s, Cause:%s \nStackTrace:%s".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, e.getMessage(), e.getCause(), stackTrace))
+                }
+              }
+            }
+          } else {
+            val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(Array[String]())
+            val loadKey = LoadKeyWithBucketId(bucketId, TimeRange(Long.MinValue, Long.MaxValue), Array[String]())
+            if (container.loadedKeys.contains(loadKey) == false) {
+              try {
+                logger.debug("Table %s Key %s for timerange: (%d,%d)".format(containerName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
+                _defaultDataStore.get(containerName, buildOne)
                 container.loadedKeys.add(loadKey)
               } catch {
                 case e: ObjectNotFoundException => {
@@ -1398,6 +1440,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       return None
 
     val txnCtxt = getTransactionContext(transId, true)
+    if (txnCtxt != null) {
+      val (v, foundPartKey) = txnCtxt.getRecent(containerName, partKey, tmRange, null, f)
+      if (foundPartKey) {
+        return Some(v)
+      }
+      if (v != null) return Some(v) // It must be null. Without finding partition key it should not find the primary key
+    }
+
     if (txnCtxt != null) {
       // Try to load the key(s) if they exists in global storage.
       LoadDataIfNeeded(txnCtxt, transId, containerName, Array(tmRange), Array(partKey.toArray))
