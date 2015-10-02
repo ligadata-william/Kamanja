@@ -128,3 +128,6 @@ lazy val HeartBeat = project.in(file("HeartBeat")) dependsOn(ZooKeeperListener, 
 lazy val TransactionService = project.in(file("TransactionService")) dependsOn(Exceptions, KamanjaBase, ZooKeeperClient, StorageBase, StorageManager)
 
 lazy val KvBase = project.in(file("KvBase"))
+
+lazy val FileDataConsumer = project.in(file("FileDataConsumer")) dependsOn(Exceptions, MetadataAPI)
+
