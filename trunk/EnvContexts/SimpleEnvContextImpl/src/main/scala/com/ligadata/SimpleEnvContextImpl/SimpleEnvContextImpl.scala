@@ -162,11 +162,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     def IsEmptyKey(key: List[String]): Boolean = {
-      (key == null || key.size == 0)
+      (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */)
     }
 
     def IsEmptyKey(key: Array[String]): Boolean = {
-      (key == null || key.size == 0)
+      (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */)
     }
 
     /*
@@ -1519,7 +1519,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       // Try to load the key(s) if they exists in global storage.
-      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(tmRange), if (partKey != null) Array(partKey.toArray) else Array(Array[String](null)))
+      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(tmRange), if (partKey != null) Array(partKey.toArray) else Array(null))
     }
 
     val foundPartKeys = ArrayBuffer[Key]()
