@@ -863,7 +863,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def collectKeyAndValues(k: Key, v: Value, container: MsgContainerInfo): Unit = {
-    // println("Key:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(k.timePartition, k.bucketKey.mkString(","), k.transactionId, k.rowId, v.serializerType, v.serializedInfo.size))
+    logger.debug("Key:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(k.timePartition, k.bucketKey.mkString(","), k.transactionId, k.rowId, v.serializerType, v.serializedInfo.size))
     val value = SerializeDeserialize.Deserialize(v.serializedInfo, _mdres, _classLoader, true, "")
     val primarykey = value.PrimaryKeyData
     val key = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(k.bucketKey), k, primarykey != null && primarykey.size > 0, primarykey)
@@ -889,6 +889,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val bk = partKeys(i)
           val tr = tmRangeValues(i)
           if (TxnContextCommonFunctions.IsEmptyKey(bk) == false) {
+            // println("1. containerName:" + containerName)
             val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(bk)
             val tr1 = if (tr != null) tr else TimeRange(Long.MinValue, Long.MaxValue)
 
@@ -914,6 +915,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               }
             }
           } else if (tr != null) {
+            // println("2. containerName:" + containerName)
             val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(Array[String]())
             val loadKey = LoadKeyWithBucketId(bucketId, tr, Array[String]())
             if (container.loadedKeys.contains(loadKey) == false) {
@@ -933,6 +935,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               }
             }
           } else {
+            // println("3. containerName:" + containerName)
             val bucketId = KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(Array[String]())
             val loadKey = LoadKeyWithBucketId(bucketId, TimeRange(Long.MinValue, Long.MaxValue), Array[String]())
             if (container.loadedKeys.contains(loadKey) == false) {
@@ -1436,8 +1439,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def getLocalRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
-    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
-      return None
+    // if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+    //   return None
 
     val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
@@ -1510,8 +1513,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def getLocalRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
-    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
-      return Array[MessageContainerBase]()
+    // if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+    //  return Array[MessageContainerBase]()
 
     val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
