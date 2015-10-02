@@ -1439,8 +1439,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def getLocalRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
-    // if (TxnContextCommonFunctions.IsEmptyKey(partKey))
-    //   return None
+    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+      return None
 
     val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
@@ -1519,7 +1519,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       // Try to load the key(s) if they exists in global storage.
-      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(tmRange), Array(partKey.toArray))
+      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(tmRange), if (partKey != null) Array(partKey.toArray) else Array(Array[String](null)))
     }
 
     val foundPartKeys = ArrayBuffer[Key]()
