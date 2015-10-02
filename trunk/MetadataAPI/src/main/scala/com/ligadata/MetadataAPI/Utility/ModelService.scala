@@ -354,7 +354,7 @@ object ModelService {
       var srNo = 0
       for(modelKey <- modelKeys){
         srNo += 1
-        response+="[" + srNo + "]" + modelKey+"\n"
+        response+="\n"+modelKey
       }
     }
     response

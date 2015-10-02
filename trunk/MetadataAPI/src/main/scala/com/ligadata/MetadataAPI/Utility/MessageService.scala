@@ -87,11 +87,11 @@ object MessageService {
         response = "Sorry, No messages are available in the Metadata"
       } else {
         var srno = 0
-        println("List of messages:")
+        //println("List of messages:")
         for (messageKey <- messageKeys) {
           //srno += 1
           //println("[" + srno + "] " + messageKey)
-          response += messageKey
+          response +="\n"+messageKey
         }
       }
     } catch {
