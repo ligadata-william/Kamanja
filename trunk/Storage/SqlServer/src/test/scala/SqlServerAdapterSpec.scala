@@ -63,9 +63,8 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       serializer = SerializerManager.GetSerializer("kryo")
       logger.info("Initialize SqlServerAdapter")
       val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","database": "bofa","user":"bofauser","password":"bofauser","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""
+      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","database": "bofa1","user":"sa","password":"ligadata2014","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""
       adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
-      //adapter = KeyValueManager.Get(jarPaths, dataStoreInfo)
    }
     catch {
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
@@ -162,7 +161,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	adapter.get(containerName,readCallBack _)
       }
 
-      // System.exit(0)
+      System.exit(0)
 
       val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
 

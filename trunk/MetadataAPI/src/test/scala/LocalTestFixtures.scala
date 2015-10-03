@@ -28,6 +28,6 @@ trait CommonResources {
 }
 
 trait LocalTestFixtures extends CommonResources {
-  val mdMan: MetadataManager = new MetadataManager(new MetadataAPIProperties)
+  val mdMan: MetadataManager = new MetadataManager(new MetadataAPIProperties(metadataDataStore = """{"StoreType": "sqlserver","hostname": "192.168.56.1","database": "bofa1","user":"sa","password":"ligadata2014","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""))
   val zkServer = EmbeddedZookeeper
 }

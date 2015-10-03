@@ -27,7 +27,8 @@ import scala.collection.mutable
 import scala.io.Source
 import org.apache.log4j._
 
-case class MetadataAPIProperties(var database: String = "hashmap", 
+case class MetadataAPIProperties(var metadataDataStore: String = null,
+				 var database: String = "sqlserver", 
 				 var databaseHost: String = "localhost", 
 				 var databaseSchema: String = "metadata",
 				 var dataDirectory: String = ConfigDefaults.dataDirectory,
@@ -96,14 +97,20 @@ class MetadataManager(var config: MetadataAPIProperties) {
     md.metadataAPIConfig.setProperty("DATABASE_HOST", config.databaseHost)
     md.metadataAPIConfig.setProperty("DATABASE_SCHEMA", config.databaseSchema)
     var dsJson:String = null
-    if( config.database.equalsIgnoreCase("hashmap") ){
+
+    if( config.metadataDataStore != null ){
       md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.dataDirectory)
-      dsJson="{\"StoreType\": \"" + config.database + "\",\"SchemaName\": \"" + config.databaseSchema + "\",\"Location\": \"" + config.dataDirectory + "\"}"
+      dsJson = config.metadataDataStore
     }
     else{
-      md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.databaseHost)
-      dsJson="{\"StoreType\": \"" + config.database + "\",\"SchemaName\": \"" + config.databaseSchema + "\",\"Location\": \"" + config.databaseHost + "\"}"
-
+      if( config.database.equalsIgnoreCase("hashmap") ){
+	md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.dataDirectory)
+	dsJson="{\"StoreType\": \"" + config.database + "\",\"SchemaName\": \"" + config.databaseSchema + "\",\"Location\": \"" + config.dataDirectory + "\"}"
+      }
+      else{
+	md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.databaseHost)
+	dsJson="{\"StoreType\": \"" + config.database + "\",\"SchemaName\": \"" + config.databaseSchema + "\",\"Location\": \"" + config.databaseHost + "\"}"
+      }
     }
     md.metadataAPIConfig.setProperty("MetadataDataStore",dsJson)
     md.metadataAPIConfig.setProperty("METADATA_DATASTORE",dsJson)
@@ -121,7 +128,7 @@ class MetadataManager(var config: MetadataAPIProperties) {
     md.metadataAPIConfig.setProperty("SECURITY_IMPL_CLASS", "com.ligadata.Security.SimpleApacheShiroAdapter")
     md.metadataAPIConfig.setProperty("DO_AUTH", "YES")
     md.metadataAPIConfig.setProperty("AUDIT_IMPL_JAR", jarPathSystem + "/auditadapters_2.10-1.0.jar")
-    md.metadataAPIConfig.setProperty("DO_AUDIT", "YES")
+    md.metadataAPIConfig.setProperty("DO_AUDIT", "NO")
     var db = config.database.toLowerCase
     db match {
       case "cassandra" => {
@@ -132,6 +139,9 @@ class MetadataManager(var config: MetadataAPIProperties) {
       }
       case "hashmap" => {
 	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditHashMapAdapter")
+      }
+      case "sqlserver" => {
+	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditCassandraAdapter")
       }
       case _ => {
 	throw new MetadataManagerException("Unknown DataStoreType: " + db)
@@ -145,5 +155,6 @@ class MetadataManager(var config: MetadataAPIProperties) {
     md.metadataAPIConfig.setProperty("CONCEPT_FILES_DIR",metadataDir.getAbsoluteFile + "/concept")
     md.metadataAPIConfig.setProperty("TYPE_FILES_DIR",metadataDir.getAbsoluteFile + "/type")
     md.metadataAPIConfig.setProperty("CONFIG_FILES_DIR",metadataDir.getAbsoluteFile + "/config")
+    md.propertiesAlreadyLoaded = true
   }
 }

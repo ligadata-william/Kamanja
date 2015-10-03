@@ -566,6 +566,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   private var mainDS: DataStore = _
 
+  def GetMainDS: DataStore = mainDS
+
   def GetObject(bucketKeyStr: String, typeName: String): Value = {
     val (containerName, store) = tableStoreMap(typeName)
     var objs = new Array[Value](1)
@@ -576,7 +578,7 @@ object MetadataAPIImpl extends MetadataAPI {
       objs(0) = null
       store.get(containerName, Array(TimeRange(storageDefaultTime, storageDefaultTime)), Array(Array(bucketKeyStr)), getObjFn)
       if (objs(0) == null)
-        throw new ObjectNotFoundException("Object %s not found in container %s".format(bucketKeyStr.mkString(","), containerName))
+        throw new ObjectNotFoundException("Object %s not found in container %s".format(bucketKeyStr, containerName))
       objs(0)
     } catch {
       case e: KeyNotFoundException => {
