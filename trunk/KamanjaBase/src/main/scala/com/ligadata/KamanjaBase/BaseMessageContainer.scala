@@ -65,6 +65,7 @@ trait MessageContainerBase {
   def hasPrimaryKey: Boolean
   def hasPartitionKey: Boolean
   def hasTimeParitionInfo: Boolean
+  def getNativeKeyValues: scala.collection.immutable.Map[String, (String, Any)]
 }
 
 trait MessageContainerObjBase {
