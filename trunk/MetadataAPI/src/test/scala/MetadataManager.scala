@@ -17,18 +17,19 @@
 package com.ligadata.automation.unittests.api.setup
 
 import java.io.File
+import java.util.Properties
 
 import com.ligadata.MetadataAPI.{ApiResult, MetadataAPIImpl => md}
 import com.ligadata.Serialize.SerializerManager
 import com.ligadata.kamanja.metadata.MdMgr
 import com.ligadata.Exceptions.AlreadyExistsException
+import com.ligadata.Utils.Utils.loadConfiguration
 
 import scala.collection.mutable
 import scala.io.Source
 import org.apache.log4j._
 
-case class MetadataAPIProperties(var metadataDataStore: String = null,
-				 var database: String = "sqlserver", 
+case class MetadataAPIProperties(var database: String = "hashmap", 
 				 var databaseHost: String = "localhost", 
 				 var databaseSchema: String = "metadata",
 				 var dataDirectory: String = ConfigDefaults.dataDirectory,
@@ -54,7 +55,6 @@ class MetadataManager(var config: MetadataAPIProperties) {
   }
 
   private val metadataDir = new File(getClass.getResource("/Metadata").getPath)
-
   logger.info("metadataDir => " + metadataDir)
 
   private val scalaHome = System.getenv("SCALA_HOME")
@@ -82,12 +82,31 @@ class MetadataManager(var config: MetadataAPIProperties) {
     logger.info("jarPathSystem => " + jarPathSystem)
 
     val jarPathApp: String = getClass.getResource("/jars/lib/application").getPath
-
     logger.info("jarPathApp => " + jarPathApp)
 
     md.metadataAPIConfig.setProperty("ROOT_DIR", "")
     md.metadataAPIConfig.setProperty("GIT_ROOT", "")
 
+    // loadConfiguration converts all the key values to lowercase
+    val (prop, failStr) = com.ligadata.Utils.Utils.loadConfiguration(ConfigDefaults.dataStorePropertiesFile, true)
+    if (failStr != null && failStr.size > 0) {
+      logger.error(failStr)
+      return
+    }
+    if (prop == null) {
+      logger.error("Failed to parse the entries in " + ConfigDefaults.dataStorePropertiesFile)
+      return
+    }
+    // Loop through and set the rest of the values.
+    val eProps1 = prop.propertyNames();
+    while (eProps1.hasMoreElements()) {
+      val key = eProps1.nextElement().asInstanceOf[String]
+      val value = prop.getProperty(key);
+      logger.info(key + " => " + value)
+      md.metadataAPIConfig.setProperty(key,value)
+    }
+
+    config.database = md.metadataAPIConfig.getProperty("database")
     logger.info("DATABASE => " + config.database)
 
     md.metadataAPIConfig.setProperty("NODE_ID", config.node_id)
@@ -98,9 +117,10 @@ class MetadataManager(var config: MetadataAPIProperties) {
     md.metadataAPIConfig.setProperty("DATABASE_SCHEMA", config.databaseSchema)
     var dsJson:String = null
 
-    if( config.metadataDataStore != null ){
+    if( config.database.equalsIgnoreCase("sqlserver") ){
       md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.dataDirectory)
-      dsJson = config.metadataDataStore
+      dsJson = md.metadataAPIConfig.getProperty("metadatadatastore")
+      logger.info("metadataDataStore => " + dsJson)
     }
     else{
       if( config.database.equalsIgnoreCase("hashmap") ){
