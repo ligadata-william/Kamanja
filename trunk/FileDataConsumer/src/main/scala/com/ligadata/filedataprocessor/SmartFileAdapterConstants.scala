@@ -19,5 +19,6 @@ object SmartFileAdapterConstants {
   val KAFKA_BROKER = "kafkaBroker"
   val KAFKA_TOPIC = "topic"
   val MESSAGE_NAME = "messageName"
+  val FILE_READY_TO_PROCESS_KEY = "fileReadyToProcessKey"
 
 }

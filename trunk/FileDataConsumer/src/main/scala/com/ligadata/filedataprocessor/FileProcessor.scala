@@ -71,6 +71,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var partitionSelectionNumber: Int = _
   private var localMetadataConfig = ""
   private var kafkaTopic = ""
+  private var readyToProcessKey = ""
 
 
   /**
@@ -83,6 +84,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     NUMBER_OF_BEES = props.getOrElse(SmartFileAdapterConstants.PAR_DEGREE_OF_FILE_CONSUMER, "1").toInt
     maxlen = props.getOrElse(SmartFileAdapterConstants.WORKER_BUFFER_SIZE, "4").toInt * 1024 * 1024
     partitionSelectionNumber = props(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS).toInt
+    readyToProcessKey = props.getOrElse(SmartFileAdapterConstants.FILE_READY_TO_PROCESS_KEY,".gzip")
 
     kafkaTopic = props.getOrElse(SmartFileAdapterConstants.KAFKA_TOPIC, null)
 
@@ -538,14 +540,16 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
               val kind = event.kind
               logger.info("SMART_FILE_CONSUMER partition " + partitionId + " *** Event: " + kind + " for "+ event.context().asInstanceOf[Path])
               // Only worry about new files.
-              if(kind.equals(StandardWatchEventKinds.ENTRY_CREATE)) {
+              if(kind.equals(StandardWatchEventKinds.ENTRY_CREATE) || kind.equals(StandardWatchEventKinds.ENTRY_MODIFY) ) {
                 val event_path = event.context().asInstanceOf[Path]
                 val fileName = dirToWatch + "/" + event_path.toString
 
-                var assignment =  scala.math.abs(fileName.hashCode) % partitionSelectionNumber
-                if ((assignment+ 1) == partitionId) {
-                  if (isValidFile(fileName)) {
-                    enQBufferedFile(fileName)
+                if (fileName.endsWith(readyToProcessKey)) {
+                  var assignment =  scala.math.abs(fileName.hashCode) % partitionSelectionNumber
+                  if ((assignment+ 1) == partitionId) {
+                    if (isValidFile(fileName)) {
+                      enQBufferedFile(fileName)
+                    }
                   }
                 }
               }
