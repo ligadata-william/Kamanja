@@ -128,6 +128,16 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     throw new ConnectionFailedException("Unable to find hostname in adapterConfig ")
   }
 
+  var instanceName: String = null;
+  if (parsed_json.contains("instancename")) {
+    instanceName = parsed_json.get("instancename").get.toString.trim
+  } 
+
+  var portNumber: String = null;
+  if (parsed_json.contains("portnumber")) {
+    portNumber = parsed_json.get("portnumber").get.toString.trim
+  }
+
   var database: String = null;
   if (parsed_json.contains("database")) {
     database = parsed_json.get("database").get.toString.trim
@@ -183,7 +193,15 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   logger.info("jarpaths => " + jarpaths)
   logger.info("jdbcJar  => " + jdbcJar)
 
-  var jdbcUrl = "jdbc:sqlserver://" + hostname + ";databaseName=" + database + ";user=" + user + ";password=" + password
+  var sqlServerInstance:String = hostname
+  if( instanceName != null ){
+    sqlServerInstance = sqlServerInstance + "\\" + instanceName
+  }
+  if( portNumber != null ){
+    sqlServerInstance = sqlServerInstance + ":" + portNumber
+  }
+
+  var jdbcUrl = "jdbc:sqlserver://" + sqlServerInstance + ";databaseName=" + database + ";user=" + user + ";password=" + password
 
   //logger.info("jdbcUrl  => " + jdbcUrl)
 
