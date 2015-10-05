@@ -183,6 +183,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     var msgDef: MessageDef = null
     try {
       val(typNameSpace, typName) = com.ligadata.kamanja.metadata.Utils.parseNameTokenNoVersion(inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+      println("SMART FILE CONSUMER "+ partIdx +" is looking for message " + typNameSpace + " " + typName)
       msgDef = mdMgr.ActiveMessage(typNameSpace, typName)
     } catch {
       case e: Exception => {

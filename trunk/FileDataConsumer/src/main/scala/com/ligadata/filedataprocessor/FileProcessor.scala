@@ -548,6 +548,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
                   var assignment =  scala.math.abs(fileName.hashCode) % partitionSelectionNumber
                   if ((assignment+ 1) == partitionId) {
                     if (isValidFile(fileName)) {
+                      println(partitionId + " QUEUEING " + fileName)
                       enQBufferedFile(fileName)
                     }
                   }
