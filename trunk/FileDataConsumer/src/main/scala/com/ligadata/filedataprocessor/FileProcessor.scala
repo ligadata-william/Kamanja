@@ -71,6 +71,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var partitionSelectionNumber: Int = _
   private var localMetadataConfig = ""
   private var kafkaTopic = ""
+  private var readyToProcessKey = ""
 
 
   /**
@@ -83,6 +84,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     NUMBER_OF_BEES = props.getOrElse(SmartFileAdapterConstants.PAR_DEGREE_OF_FILE_CONSUMER, "1").toInt
     maxlen = props.getOrElse(SmartFileAdapterConstants.WORKER_BUFFER_SIZE, "4").toInt * 1024 * 1024
     partitionSelectionNumber = props(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS).toInt
+    readyToProcessKey = props.getOrElse(SmartFileAdapterConstants.READY_MESSAGE_MASK, ".gzip")
 
     kafkaTopic = props.getOrElse(SmartFileAdapterConstants.KAFKA_TOPIC, null)
 
@@ -520,7 +522,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         files.foreach(file => {
           var assignment =  scala.math.abs(file.toString.hashCode) % partitionSelectionNumber
           if ((assignment+ 1) == partitionId) {
-            if (isValidFile(file.toString)) {
+            println("*Processing "+ file.toString)
+            if (isValidFile(file.toString) && file.toString.endsWith(readyToProcessKey)) {
               enQBufferedFile(file.toString)
             }
           }
@@ -542,10 +545,18 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
                 val event_path = event.context().asInstanceOf[Path]
                 val fileName = dirToWatch + "/" + event_path.toString
 
-                var assignment =  scala.math.abs(fileName.hashCode) % partitionSelectionNumber
-                if ((assignment+ 1) == partitionId) {
-                  if (isValidFile(fileName)) {
-                    enQBufferedFile(fileName)
+                if (fileName.endsWith(readyToProcessKey)) {
+                  var assignment =  scala.math.abs(fileName.hashCode) % partitionSelectionNumber
+                  if ((assignment+ 1) == partitionId) {
+                    if (isValidFile(fileName)) {
+                      if (!kml.checkIfFileBeingProcessed(fileName)) {
+                        println(partitionId + " QUEUEING("+kind+") " + fileName)
+                        enQBufferedFile(fileName)
+                      } else {
+                        println(partitionId + " ABORT QUEUEING("+kind+") this (file by the same name already queued) " + fileName)
+                      }
+
+                    }
                   }
                 }
               }
