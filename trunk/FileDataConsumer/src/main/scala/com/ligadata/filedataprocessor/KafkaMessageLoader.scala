@@ -25,6 +25,8 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
+  private var fileCache: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+
   // Set up some properties for the Kafka Producer
   val props = new Properties()
   props.put("metadata.broker.list", inConfiguration(SmartFileAdapterConstants.KAFKA_BROKER));
@@ -97,7 +99,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
             logger.debug(partIdx +" SMART FILE CONSUMER Renaming file "+ msg.relatedFileName + " to " + msg.relatedFileName + "_COMPLETE")
             (new File(msg.relatedFileName)).renameTo(new File(msg.relatedFileName + "_COMPLETE"))
           }
-
+          fileCache.remove(msg.relatedFileName)
           // Remove reference to this file from Zookeeper - this file is done and will not be replayed
           //
           // SetData in Zookeeper... set null...
@@ -252,6 +254,21 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     })
     return null
   }
+
+  /**
+   * checkIfFileBeingProcessed - if for some reason a file name is queued twice... this will prevent it
+   * @param file
+   * @return
+   */
+  def checkIfFileBeingProcessed (file: String): Boolean = {
+    if (fileCache.contains(file))
+      return true
+    else {
+      fileCache.add(file)
+      return false
+    }
+  }
+
 
   /**
    *
