@@ -2,7 +2,7 @@ package com.ligadata.filedataprocessor
 
 import java.util.zip.GZIPInputStream
 
-import com.ligadata.Exceptions.{MissingPropertyException, StackTrace}
+import com.ligadata.Exceptions.{KamanjaFileNoftFoundFatalException, MissingPropertyException, StackTrace}
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import org.apache.curator.framework.CuratorFramework
 import org.apache.log4j.Logger
@@ -102,11 +102,15 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     }
 
     // Initialize threads
-    localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
-    MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
     try {
+      localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
       kml = new KafkaMessageLoader (partitionId, props)
     } catch {
+      case fnfe: FileNotFoundException => {
+        shutdown
+        throw new KamanjaFileNoftFoundFatalException(fnfe.getMessage)
+      }
       case e: Exception => {
         shutdown
         throw e
@@ -124,7 +128,16 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
   private def enQBufferedFile(file: String): Unit = {
     bufferingQLock.synchronized {
-      bufferingQ_map(file) = new File(file).length
+      try {
+        bufferingQ_map(file) = new File(file).length
+      } catch {
+        case fnfe: FileNotFoundException => {
+          logger.warn("SMART FILE CONSUMER Cannot ENQ " + file + " unable to access this file")
+          val stackTrace = StackTrace.ThrowableTraceString(fnfe)
+          logger.warn(stackTrace)
+        }
+      }
+
     }
   }
 
@@ -346,10 +359,18 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     // worker bees to pick them up.
     //var bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)))
     var bis: BufferedReader = null
-    if (isCompressed(fileName)) {
-      bis = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fileName))))
-    } else {
-      bis = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)))
+    try {
+      if (isCompressed(fileName)) {
+        bis = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fileName))))
+      } else {
+        bis = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)))
+      }
+    } catch {
+      case fnfe: FileNotFoundException => {
+        logger.warn("SMART FILE CONSUMER: Unable to read " + fileName)
+        val stackTrace = StackTrace.ThrowableTraceString(fnfe)
+        logger.warn(stackTrace)
+      }
     }
 
     // Intitialize the leftover area for this file reading.
@@ -452,14 +473,17 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
               bufferingQ_map(fileTuple._1) = d.length
             }
           } catch {
+            case fnfe: FileNotFoundException => {
+              logger.warn("Unable to find file " + fileTuple._1)
+              val stackTrace = StackTrace.ThrowableTraceString(fnfe)
+              logger.warn(stackTrace)
+            }
             case ioe: IOException => {
               logger.error ("SMART_FILE_CONSUMER Unable to find the directory to watch, Shutting down File Consumer " + partitionId)
               shutdown
               throw ioe
             }
           }
-
-
         })
       }
       // Give all the files a 1 second to add a few bytes to the contents
@@ -574,9 +598,17 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
         }
       }
     } catch {
-      case ie: InterruptedException => logger.error("InterruptedException: " + ie)
-      case ioe: IOException => logger.error ("Unable to find the directory to watch, Shutting down File Consumer " + partitionId)
-      case e: Exception => logger.error("Exception: " + e.printStackTrace())
+      case ie: InterruptedException => {
+        logger.error("InterruptedException: " + ie)
+        shutdown
+      }
+      case ioe: IOException => {
+        logger.error ("Unable to find the directory to watch, Shutting down File Consumer " + partitionId)
+        throw new KamanjaFileNoftFoundFatalException(ioe.getMessage)
+      }
+      case e: Exception => {
+        logger.error("Exception: " + e.printStackTrace())
+      }
     }
   }
 
@@ -603,7 +635,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        e.printStackTrace()
+        logger.warn("Unable to open " +inputfile)
+        logger.warn(stackTrace)
         return false
     }
 

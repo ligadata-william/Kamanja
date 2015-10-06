@@ -1,6 +1,6 @@
 package com.ligadata.filedataprocessor
 
-import java.io.{IOException, File, PrintWriter}
+import java.io.{FileNotFoundException, IOException, File, PrintWriter}
 import java.nio.file.StandardCopyOption._
 import java.nio.file.{Paths, Files}
 import java.util.Properties
@@ -105,6 +105,11 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
           // SetData in Zookeeper... set null...
           zkc.setData.forPath(znodePath, null)
         } catch {
+          case fnfe: FileNotFoundException => {
+            logger.warn("SMART FILE CONSUMER: Unable to Save/Rename file " + msg.relatedFileName)
+            val stackTrace = StackTrace.ThrowableTraceString(fnfe)
+            logger.warn(stackTrace)
+          }
           case ioe: IOException => ioe.printStackTrace()
         }
       }
