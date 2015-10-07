@@ -95,7 +95,7 @@ class BaseTypesHandler {
 
       if (fixed.toLowerCase().equals("true")) {
 
-        if (f.Name.toLowerCase().equals(transactionid)) {
+        if (f.SystemField) {
           scalaclass = scalaclass.append("")
           withMethod = withMethod.append("")
 
@@ -129,7 +129,7 @@ class BaseTypesHandler {
         }
 
         keysStr.append("(\"" + f.Name + "\", " + mappedTypesABuf.indexOf(typstring) + "),")
-        if (f.Name.toLowerCase().equals(transactionid)) {
+        if (f.SystemField) {
           withMethod = withMethod.append("")
 
         } else {
@@ -245,7 +245,6 @@ class BaseTypesHandler {
           if (mappedMsgBaseTypeIdx != -1)
             deserializedBuf = deserializedBuf.append("%s case %s => fields(key) = (typIdx, %s(dis));%s".format(pad1, mappedMsgBaseTypeIdx, deserType, newline))
 
-          //deserializedBuf = deserializedBuf.append("%sset(\"%s\" , %s(%s));%s".format(pad1, f.Name, deserType, dis, newline))
         }
       }
 
