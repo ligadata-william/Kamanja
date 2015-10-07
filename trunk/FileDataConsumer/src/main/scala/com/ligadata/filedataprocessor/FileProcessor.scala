@@ -330,6 +330,9 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     var fileName = file.name
     var offset = file.offset
 
+    // record the file offset for the last message to be able to tell.
+    setOffsetForFile(fileName, 0)
+
     // Start the worker bees... should only be started the first time..
     if (workerBees == null) {
       workerBees = Executors.newFixedThreadPool(NUMBER_OF_BEES)
@@ -391,7 +394,16 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
       }
     }
     // Done with this file... mark is as closed
-    markFileAsFinished(fileName)
+    try {
+      markFileAsFinished(fileName)
+    } catch {
+      case nsee: java.util.NoSuchElementException => {
+        logger.error("SMART FILE CONSUMER: cannot remove file from internal watch queue.   " + fileName)
+        val stackTrace = StackTrace.ThrowableTraceString(nsee)
+        logger.warn(stackTrace)
+      }
+    }
+
   }
 
   /**
@@ -444,7 +456,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
             // If the the new length of the file is the same as a second ago... this file is done, so move it
             // onto the ready to process q.  Else update the latest length
-            if (fileTuple._2 == d.length) {
+            if (fileTuple._2 == d.length && fileTuple._2 != 0) {
               logger.info("SMART_FILE_CONSUMER partition "+partitionId + "  File READY TO PROCESS " + d.toString)
               enQFile(fileTuple._1, 0)
               bufferingQ_map.remove(fileTuple._1)
