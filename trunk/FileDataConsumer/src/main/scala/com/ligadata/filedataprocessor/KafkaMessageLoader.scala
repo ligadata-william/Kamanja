@@ -53,6 +53,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
   def pushData(messages: Array[KafkaMessage]): Unit = {
     // First, if we are handling failover, then the messages could be of size 0.
     logger.debug("SMART FILE CONSUMER **** processing "+messages.size+"messages")
+    println("SMART FILE CONSUMER **** processing "+messages.size+"messages")
     if (messages.size == 0) return
 
     // If we start processing a new file, then mark so in the zk.
@@ -65,7 +66,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     messages.foreach(msg => {
       // Now, there are some special cases here.  If offset is -1, then its just a signal to close the file
       // else, this may or may not be the last message in the file... look to isLast for guidance.
-      if(msg.offsetInFile > 0) {
+      if(!msg.isLastDummy) {
         var inputData =  CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
 
         logger.debug(partIdx +" SMART FILE CONSUMER \nKafkaMessage:\n  File: " + msg.relatedFileName+", offset:  "+ msg.offsetInFile + " Message Partition ID is "+
@@ -76,6 +77,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
             objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
             new String(msg.msg).getBytes("UTF8")))
 
+          println(new String(msg.msg) + " SUCCESS ")
           val zkFname = "{" + "\""+fileBeingProcessing+ "\":" + msg.offsetInFile + "}"
           zkc.setData.forPath(znodePath, zkFname.getBytes)
         } catch {
@@ -88,6 +90,27 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       }
 
       if (msg.isLast) {
+        // output the status message to the KAFAKA_STATUS_TOPIC
+        try {
+          if (inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC, "").length > 0) {
+            var statusMsg = "processed " + msg.relatedFileName + " with " + msg.offsetInFile + " events"
+            var statusPartitionId = "it does not matter"
+            producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC),
+              statusPartitionId.getBytes("UTF8"),
+              new String(statusMsg).getBytes("UTF8")))
+            println("Status pushed ->"+statusMsg)
+            logger.debug("Status pushed ->"+statusMsg)
+          } else {
+            println("NO STATUS Q SPECIFIED")
+            logger.debug("NO STATUS Q SPECIFIED")
+          }
+        } catch {
+          case e: Exception => {
+            logger.warn(partIdx +" SMART FILE CONSUMER: Unable to exgernalize status message")
+            e.printStackTrace()
+          }
+        }
+
         try {
           // Either move or rename the file.
           var fileStruct = msg.relatedFileName.split("/")
@@ -103,7 +126,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
           // Remove reference to this file from Zookeeper - this file is done and will not be replayed
           //
           // SetData in Zookeeper... set null...
-          zkc.setData.forPath(znodePath, null)
+          clearRecoveryArea
         } catch {
           case ioe: IOException => ioe.printStackTrace()
         }
@@ -269,6 +292,12 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     }
   }
 
+  def clearRecoveryArea: Unit = {
+    if (zkc != null)
+      zkc.setData.forPath(znodePath, null)
+    else
+      logger.warn("SMART_FILE_CONSUMER " + partIdx + " Unable to connect to Zookeeper")
+  }
 
   /**
    *
