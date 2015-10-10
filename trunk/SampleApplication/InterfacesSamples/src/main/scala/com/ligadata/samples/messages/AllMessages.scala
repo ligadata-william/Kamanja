@@ -88,7 +88,7 @@ class CustAlertHistory(var transactionId: Long, other: CustAlertHistory) extends
   override def NameSpace: String = CustAlertHistory.NameSpace
   override def Name: String = CustAlertHistory.Name
   override def Version: String = CustAlertHistory.Version
-  
+   
 
   var custid: Long = 0;
   var branchid: Int = 0;
@@ -124,6 +124,7 @@ class CustAlertHistory(var transactionId: Long, other: CustAlertHistory) extends
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = null
   
   override def hasPrimaryKey(): Boolean = {
     CustAlertHistory.hasPrimaryKey;
@@ -237,6 +238,8 @@ class CustPreferences(var transactionId: Long, other: CustPreferences) extends B
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = null
+  
   
   override def hasPrimaryKey(): Boolean = {
     CustPreferences.hasPrimaryKey;
@@ -353,6 +356,8 @@ class CustTransaction(var transactionId: Long, other: CustTransaction) extends B
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = null
+  
   
   override def hasPrimaryKey(): Boolean = {
     CustTransaction.hasPrimaryKey;
@@ -463,6 +468,8 @@ class GlobalPreferences(var transactionId: Long, other: GlobalPreferences) exten
   override def Serialize(dos: DataOutputStream): Unit = {}
   override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {}
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
+  override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = null
+  
   
   override def hasPrimaryKey(): Boolean = {
     GlobalPreferences.hasPrimaryKey;
