@@ -21,5 +21,6 @@ object SmartFileAdapterConstants {
   val KAFKA_STATUS_TOPIC = "statusTopic"
   val MESSAGE_NAME = "messageName"
   val READY_MESSAGE_MASK = "readyMessageMask"
+  val KAFKA_ERROR_TOPIC = "errorTopic"
 
 }
