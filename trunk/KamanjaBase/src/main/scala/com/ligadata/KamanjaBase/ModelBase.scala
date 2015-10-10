@@ -294,7 +294,7 @@ trait EnvContext {
   /**
    *  Answer an empty instance of the message or container with the supplied fully qualified class name.  If the name is
    *  invalid, null is returned.
-   *  @param fqclassname : a full package qualifed class name
+   *  @param fqclassname : a full package qualified class name
    *  @return a MesssageContainerBase of that ilk
    */
   def NewMessageOrContainer(fqclassname: String): MessageContainerBase
@@ -318,7 +318,7 @@ trait ModelBaseObj {
   def CreateResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
 }
 
-class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
+class ModelInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
 class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
