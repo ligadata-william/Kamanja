@@ -23,6 +23,7 @@ import com.datastax.driver.core.Row
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.SimpleStatement
+import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.BatchStatement
 import com.datastax.driver.core.HostDistance
 import com.datastax.driver.core.PoolingOptions
@@ -87,6 +88,7 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+  private var preparedStatementsMap: scala.collection.mutable.Map[String,PreparedStatement] = new scala.collection.mutable.HashMap()
 
   if (adapterConfig.size == 0) {
     throw new Exception("Not found valid Cassandra Configuration.")
@@ -189,8 +191,8 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     poolingOptions.setMaxConnectionsPerHost(HostDistance.LOCAL,   maxConPerHostLocal)
     poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE,  maxConPerHostRemote)
 
-    //cluster = clusterBuilder.withPoolingOptions(poolingOptions).build()
-    cluster = clusterBuilder.build()
+    cluster = clusterBuilder.withPoolingOptions(poolingOptions).build()
+    //cluster = clusterBuilder.build()
 
     if (cluster.getMetadata().getKeyspace(keyspace) == null) {
       logger.warn("The keyspace " + keyspace + " doesn't exist yet, we will create a new keyspace and continue")
@@ -284,9 +286,13 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
       var query = "UPDATE " + tableName + " SET serializertype = ? , serializedinfo = ? where timepartition = ? and bucketkey = ? and transactionid = ? and rowid = ?;"
-      var updateStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       var byteBuf = ByteBuffer.wrap(value.serializedInfo.toArray[Byte]);      
-      session.execute(updateStmt.bind(value.serializerType, 
+      session.execute(prepStmt.bind(value.serializerType, 
 				      byteBuf,
 				      new java.lang.Long(key.timePartition),
 				      key.bucketKey.mkString(","),
@@ -309,13 +315,17 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	CheckTableExists(containerName)
 	var tableName = toFullTableName(containerName)
 	var query = "UPDATE " + tableName + " SET serializertype = ? , serializedinfo = ? where timepartition = ? and bucketkey = ? and transactionid = ? and rowid = ?;"
-	var updateStmt = session.prepare(query)
+	var prepStmt = preparedStatementsMap.getOrElse(query,null)
+	if( prepStmt == null ){
+	  prepStmt = session.prepare(query)
+	  preparedStatementsMap.put(query,prepStmt)
+	}
         var keyValuePairs = li._2
         keyValuePairs.foreach(keyValuePair => {
           var key = keyValuePair._1
           var value = keyValuePair._2
 	  var byteBuf = ByteBuffer.wrap(value.serializedInfo.toArray[Byte]);      
-	  batch.add(updateStmt.bind(value.serializerType, 
+	  batch.add(prepStmt.bind(value.serializerType, 
 				      byteBuf,
 				      new java.lang.Long(key.timePartition),
 				      key.bucketKey.mkString(","),
@@ -340,9 +350,13 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       var tableName = toFullTableName(containerName)
       val batch = new BatchStatement
       var query = "delete from " + tableName + " where timepartition = ? and bucketkey = ? and transactionid = ? and rowid = ?;"
-      var deleteStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       keys.foreach(key => {
-	batch.add(deleteStmt.bind(new java.lang.Long(key.timePartition),
+	batch.add(prepStmt.bind(new java.lang.Long(key.timePartition),
 				  key.bucketKey.mkString(","),
 				  new java.lang.Long(key.transactionId),
 				  new java.lang.Integer(key.rowId)).
@@ -373,7 +387,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       CheckTableExists(containerName)
       var query = "select timepartition,bucketkey,transactionid,rowid from " + tableName + " where bucketkey = ? and timepartition >= ?  and timepartition <= ? "
-      var prepStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       var rowKeys = new Array[Key](0)
       bucketKeys.foreach(bucketKey => {
 	var rows = session.execute(prepStmt.bind(bucketKey.mkString(","),
@@ -495,7 +513,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       CheckTableExists(containerName)
       var query = "select timepartition,bucketkey,transactionid,rowid from " + tableName + " where timepartition = ? and bucketkey = ? and transactionid = ? and rowid = ?"
-      var prepStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       keys.foreach(key => {
 	var rows = session.execute(prepStmt.bind(new java.lang.Long(key.timePartition),
 				      key.bucketKey.mkString(","),
@@ -520,7 +542,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       CheckTableExists(containerName)
       var query = "select serializertype,serializedinfo from " + tableName + " where timepartition = ? and bucketkey = ? and transactionid = ? and rowid = ?"
-      var prepStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       keys.foreach(key => {
 	var rows = session.execute(prepStmt.bind(new java.lang.Long(key.timePartition),
 				      key.bucketKey.mkString(","),
@@ -545,7 +571,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     CheckTableExists(containerName)
     var tableName = toFullTableName(containerName)
     var query = "select timepartition,bucketkey,transactionid,rowid,serializertype,serializedinfo from " + tableName + " where timepartition >= ? and timepartition <= ? ALLOW FILTERING;"
-    var prepStmt = session.prepare(query)
+    var prepStmt = preparedStatementsMap.getOrElse(query,null)
+    if( prepStmt == null ){
+      prepStmt = session.prepare(query)
+      preparedStatementsMap.put(query,prepStmt)
+    }
     time_ranges.foreach(time_range => {
       var rs:Row = null
       var rows = session.execute(prepStmt.bind(new java.lang.Long(time_range.beginTime),
@@ -561,7 +591,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     CheckTableExists(containerName)
     var tableName = toFullTableName(containerName)
     var query = "select timepartition,bucketkey,transactionid,rowid from " + tableName + " where timepartition >= ? and timepartition <= ? ALLOW FILTERING;"
-    var prepStmt = session.prepare(query)
+    var prepStmt = preparedStatementsMap.getOrElse(query,null)
+    if( prepStmt == null ){
+      prepStmt = session.prepare(query)
+      preparedStatementsMap.put(query,prepStmt)
+    }
     time_ranges.foreach(time_range => {
       var rs:Row = null
       var rows = session.execute(prepStmt.bind(new java.lang.Long(time_range.beginTime),
@@ -579,7 +613,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       CheckTableExists(containerName)
       var query = "select timepartition,bucketkey,transactionid,rowid,serializertype,serializedinfo from " + tableName + " where timepartition >= ?  and timepartition <= ?  and bucketkey = ? "
-      var prepStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       time_ranges.foreach(time_range => {
 	  bucketKeys.foreach(bucketKey => {
 	    var rs:Row = null
@@ -605,7 +643,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       CheckTableExists(containerName)
       var query = "select timepartition,bucketkey,transactionid,rowid from " + tableName + " where timepartition >= ? and timepartition <= ?  and bucketkey = ? "
-      var prepStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       time_ranges.foreach(time_range => {
 	  bucketKeys.foreach(bucketKey => {
 	    var rs:Row = null
@@ -631,7 +673,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       CheckTableExists(containerName)
       var query = "select timepartition,bucketkey,transactionid,rowid,serializertype,serializedinfo from " + tableName + " where  bucketkey = ? "
-      var prepStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       bucketKeys.foreach(bucketKey => {
 	var rs:Row = null
 	var rows = session.execute(prepStmt.bind(bucketKey.mkString(",")).
@@ -653,7 +699,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try{
       CheckTableExists(containerName)
       var query = "select timepartition,bucketkey,transactionid,rowid from " + tableName + " where  bucketkey = ? "
-      var prepStmt = session.prepare(query)
+      var prepStmt = preparedStatementsMap.getOrElse(query,null)
+      if( prepStmt == null ){
+	prepStmt = session.prepare(query)
+	preparedStatementsMap.put(query,prepStmt)
+      }
       bucketKeys.foreach(bucketKey => {
 	var rows = session.execute(prepStmt.bind(bucketKey.mkString(",")).
 				   setConsistencyLevel(consistencylevelRead))
