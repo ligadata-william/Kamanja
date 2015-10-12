@@ -154,6 +154,11 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   val consistencylevelRead = ConsistencyLevel.valueOf(getOptionalField("ConsistencyLevelRead", parsed_json, adapterSpecificConfig_json, "ONE").toString.trim)
   val consistencylevelWrite = ConsistencyLevel.valueOf(getOptionalField("ConsistencyLevelWrite", parsed_json, adapterSpecificConfig_json, "ANY").toString.trim)
   val consistencylevelDelete = ConsistencyLevel.valueOf(getOptionalField("ConsistencyLevelDelete", parsed_json, adapterSpecificConfig_json, "ONE").toString.trim)
+
+  var batchPuts = "NO"
+  if (parsed_json.contains("batchPuts")) {
+    batchPuts = parsed_json.get("batchPuts").get.toString.trim
+  }
   val clusterBuilder = Cluster.builder()
   var cluster: Cluster = _
   var session: Session = _
@@ -324,17 +329,43 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         keyValuePairs.foreach(keyValuePair => {
           var key = keyValuePair._1
           var value = keyValuePair._2
-	  var byteBuf = ByteBuffer.wrap(value.serializedInfo.toArray[Byte]);      
-	  batch.add(prepStmt.bind(value.serializerType, 
+	  var byteBuf = ByteBuffer.wrap(value.serializedInfo.toArray[Byte]);
+	  // Need to sort out the issue by doing more experimentation
+	  // When we use a batch statement, and when uploading severaljars when we save a model
+	  // object, I am receiving an exception as follows
+	  //com.datastax.driver.core.exceptions.WriteTimeoutException: Cassandra timeout during 
+	  // write query at consistency ONE (1 replica were required but only 0 acknowledged the write)
+	  // Based on my reading on cassandra, I have the upped the parameter write_request_timeout_in_ms
+	  // to as much as: 60000( 60 seconds). Now, I see a different exception as shown below
+	  // com.datastax.driver.core.exceptions.NoHostAvailableException: All host(s) tried for query failed 
+	  // The later error apparently is a misleading error indicating slowness with cassandra server
+	  // This may not be an issue in production like configuration
+	  // As a work around, I have created a optional configuration parameter to determine
+	  // whether updates are done in bulk or one at a time. By default we are doing this 
+	  // one at a time until we have a better solution.
+	  if( batchPuts.equalsIgnoreCase("YES") ){
+	    batch.add(prepStmt.bind(value.serializerType, 
 				      byteBuf,
 				      new java.lang.Long(key.timePartition),
 				      key.bucketKey.mkString(","),
 				      new java.lang.Long(key.transactionId),
 				      new java.lang.Integer(key.rowId)).
 		      setConsistencyLevel(consistencylevelWrite))
+	  }
+	  else{
+	    session.execute(prepStmt.bind(value.serializerType, 
+				      byteBuf,
+				      new java.lang.Long(key.timePartition),
+				      key.bucketKey.mkString(","),
+				      new java.lang.Long(key.transactionId),
+				      new java.lang.Integer(key.rowId)).
+		      setConsistencyLevel(consistencylevelWrite))
+	  }
 	})
       })
-      session.execute(batch);      
+      if( batchPuts.equalsIgnoreCase("YES") ){
+	session.execute(batch); 
+      }     
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
