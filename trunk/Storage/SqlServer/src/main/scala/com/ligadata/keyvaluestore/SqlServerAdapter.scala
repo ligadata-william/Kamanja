@@ -626,6 +626,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     }
   }
 
+  override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
+    CheckTableExists(containerName)
+    var tableName = toFullTableName(containerName)
+    var query = "select * from " + tableName
+    getData(tableName, query, callbackFunction)
+  }
+
   private def getKeys(tableName: String, query: String, callbackFunction: (Key) => Unit): Unit = {
     var con: Connection = null
     var stmt: Statement = null
@@ -662,13 +669,6 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         con.close
       }
     }
-  }
-
-  override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
-    CheckTableExists(containerName)
-    var tableName = toFullTableName(containerName)
-    var query = "select * from " + tableName
-    getData(tableName, query, callbackFunction)
   }
 
   override def getKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {

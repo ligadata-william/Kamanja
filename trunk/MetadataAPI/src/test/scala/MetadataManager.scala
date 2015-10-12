@@ -97,7 +97,7 @@ class MetadataManager(var config: MetadataAPIProperties) {
       logger.error("Failed to parse the entries in " + ConfigDefaults.dataStorePropertiesFile)
       return
     }
-    // Loop through and set the rest of the values.
+    // Read datastore properties from src/test/resources/metadata/config/DataStore.properties
     val eProps1 = prop.propertyNames();
     while (eProps1.hasMoreElements()) {
       val key = eProps1.nextElement().asInstanceOf[String]

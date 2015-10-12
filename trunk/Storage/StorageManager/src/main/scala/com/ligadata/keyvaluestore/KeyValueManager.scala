@@ -60,9 +60,10 @@ object KeyValueManager {
     val storeType = parsed_json.getOrElse("StoreType", "").toString.trim.toLowerCase
 
     storeType match {
-      /*
+
       // Other KV stored
-      case "cassandra" => return KeyValueCassandra.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
+      case "cassandra" => return CassandraAdapter.CreateStorageAdapter(kvManagerLoader, datastoreConfig)
+      /*
       case "hbase" => return KeyValueHBase.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
       // Simple file base implementations
       case "treemap" => return KeyValueTreeMap.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)

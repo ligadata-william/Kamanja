@@ -99,7 +99,7 @@ lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata,
 
 lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSamples")) dependsOn(Metadata, KamanjaBase, MetadataBootstrap, MetadataAPI, StorageBase, Exceptions)
 
-// lazy val StorageCassandra = project.in(file("Storage/Cassandra")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
+lazy val StorageCassandra = project.in(file("Storage/Cassandra")) dependsOn(StorageBase, Serialize, Exceptions, KamanjaUtils, KvBase)
 
 // lazy val StorageHashMap = project.in(file("Storage/HashMap")) dependsOn(StorageBase, Exceptions, KamanjaUtils)
 
@@ -113,7 +113,7 @@ lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSample
 
 lazy val StorageSqlServer = project.in(file("Storage/SqlServer")) dependsOn(StorageBase, Serialize, Exceptions, KamanjaUtils)
 
-lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, KamanjaBase, KamanjaUtils, StorageSqlServer)
+lazy val StorageManager = project.in(file("Storage/StorageManager")) dependsOn(StorageBase, Exceptions, KamanjaBase, KamanjaUtils, StorageSqlServer, StorageCassandra)
 
 lazy val AuditAdapterBase = project.in(file("AuditAdapters/AuditAdapterBase")) dependsOn(Exceptions)
 
