@@ -89,8 +89,21 @@ class APIService extends LigadataSSLConfiguration with Runnable{
 
   private def StartService(args: Array[String]) : Unit = {
     try{
-      var configFile = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
+      var configFile = ""
       if (args.length == 0) {
+        try {
+          configFile = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
+        } catch {
+          case nsee: java.util.NoSuchElementException => {
+            logger.warn("Either a CONFIG FILE parameter must be passed to start this service or KAMANJA_HOME must be set")
+            return
+          }
+          case e: Exception => {
+            e.printStackTrace()
+            return
+          }
+        }
+
         logger.warn("Config File defaults to " + configFile)
         logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
         logger.warn("The config file supplied is a complete path name of a  json file similar to one in github/Kamanja/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
