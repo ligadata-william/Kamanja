@@ -333,7 +333,7 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	  // Need to sort out the issue by doing more experimentation
 	  // When we use a batch statement, and when uploading severaljars when we save a model
 	  // object, I am receiving an exception as follows
-	  //com.datastax.driver.core.exceptions.WriteTimeoutException: Cassandra timeout during 
+	  // com.datastax.driver.core.exceptions.WriteTimeoutException: Cassandra timeout during 
 	  // write query at consistency ONE (1 replica were required but only 0 acknowledged the write)
 	  // Based on my reading on cassandra, I have the upped the parameter write_request_timeout_in_ms
 	  // to as much as: 60000( 60 seconds). Now, I see a different exception as shown below
