@@ -60,7 +60,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
       assert(null != db)
       db match {
-	case "sqlserver" | "mysql" => {
+	case "sqlserver" | "mysql" | "hbase" | "cassandra" => {
 	  var ds = MetadataAPIImpl.GetMainDS
 	  var containerList:Array[String] = Array("config_objects","jar_store","model_config_objects","metadata_objects","transaction_id")
 	  ds.TruncateContainer(containerList)
