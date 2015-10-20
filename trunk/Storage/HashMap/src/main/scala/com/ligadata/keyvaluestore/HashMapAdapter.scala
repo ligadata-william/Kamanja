@@ -682,13 +682,14 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     logger.info("Trying to shutdown hashmap db")
     try {
       logger.info("Commit any outstanding transactions")
-      db.commit(); //persist changes into disk
-      logger.info("Close all map objects")
-      tablesMap.foreach(map => {
-	logger.info("Closing the map " + map._1)
-        map._2.close();
-      })
-      logger.info("Close db object")
+      db.commit() //persist changes into disk
+      //logger.info("Close all map objects")
+      //tablesMap.foreach(map => {
+      //logger.info("Closing the map " + map._1)
+      //  map._2.close();
+      //})
+      logger.info("Close db ...")
+      db.close()
     } catch {
       case e: NullPointerException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)

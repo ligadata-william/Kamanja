@@ -1038,9 +1038,6 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     }
   }
   override def afterAll = {
-    if (zkServer != null) {
-      zkServer.instance.shutdown
-    }
     logger.info("Truncating dbstore")
     var logFile = new java.io.File("logs")
     if( logFile != null ){
@@ -1054,11 +1051,12 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     assert(null != db)
     db match {
       case "hashmap" => {
-	logFile = new java.io.File("default.hdb.p")
+	val loc = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+	logFile = new java.io.File(loc + "/default.hdb.p")
 	if( logFile != null ){
 	  TestUtils.deleteFile(logFile)
 	}
-	logFile = new java.io.File("default.hdb")
+	logFile = new java.io.File(loc + "/default.hdb")
 	if( logFile != null ){
 	  TestUtils.deleteFile(logFile)
 	}
@@ -1069,5 +1067,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     }
     TruncateDbStore
     MetadataAPIImpl.shutdown
+  }
+  if (zkServer != null) {
+    zkServer.instance.shutdown
   }
 }
