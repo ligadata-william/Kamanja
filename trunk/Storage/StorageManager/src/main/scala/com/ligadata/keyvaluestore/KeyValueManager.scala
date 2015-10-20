@@ -64,10 +64,10 @@ object KeyValueManager {
       // Other KV stores
       case "cassandra" => return CassandraAdapter.CreateStorageAdapter(kvManagerLoader, datastoreConfig)
       case "hbase" => return HBaseAdapter.CreateStorageAdapter(kvManagerLoader, datastoreConfig)
+      case "hashmap" => return HashMapAdapter.CreateStorageAdapter(kvManagerLoader, datastoreConfig)
       /*
       // Simple file base implementations
       case "treemap" => return KeyValueTreeMap.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
-      case "hashmap" => return KeyValueHashMap.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
       case "redis" => return KeyValueRedis.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
       */
       // Other relational stores such as sqlserver, mysql

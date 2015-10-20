@@ -6,7 +6,7 @@ scalaVersion := "2.10.4"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-libraryDependencies += "org.mapdb" % "mapdb" % "1.0.6"
+libraryDependencies += "org.mapdb" % "mapdb" % "1.0.7"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.0" % "test"
 
