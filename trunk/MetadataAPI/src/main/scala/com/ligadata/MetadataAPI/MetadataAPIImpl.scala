@@ -164,7 +164,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
   /**
    *  getHealthCheck - will return all the health-check information for the nodeId specified.
    *  @param nodeId a cluster node: String - if no parameter specified, return health-check for all nodes
-   * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+   *  @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
    *               method. If Security and/or Audit are configured, this value must be a value other than None.
    */
     def getHealthCheck(nodeId: String, userid: Option[String]): String = {
@@ -3932,7 +3932,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param msgConsumed the message consumed (only relevant for JPMML ingestion)
      * @return
      */
-    override def UpdateModel(modelType: com.ligadata.MetadataAPI.MetadataAPI.ModelType.ModelType
+    override def UpdateModel(modelType: ModelType
                     , input: String
                     , userid: Option[String] = None
                     , modelName: Option[String] = None
