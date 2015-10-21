@@ -98,13 +98,20 @@ case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 case class APIResultInfo(statusCode: Int, functionName: String, resultData: String, description: String)
 case class APIResultJsonProxy(APIResults: APIResultInfo)
 
+object MetadataAPIGlobalLogger {
+    val loggerName = this.getClass.getName()
+    val logger = Logger.getLogger(loggerName)
+}
+
+trait LogTrait {
+    val logger = MetadataAPIGlobalLogger.logger
+}
+
 // The implementation class
-object MetadataAPIImpl extends MetadataAPI {
+object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
   lazy val sysNS = "System"
   // system name space
-  lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
   lazy val metadataAPIConfig = new Properties()
   var zkc: CuratorFramework = null
@@ -155,7 +162,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   /**
    *  getHealthCheck - will return all the health-check information for the nodeId specified.
-   *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes
+   *  @param nodeId: String - if no parameter specified, return health-check for all nodes
    */
   def getHealthCheck(nodeId: String = ""): String = {
     val ids = parse(nodeId).values.asInstanceOf[List[String]]
@@ -2893,16 +2900,195 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  override def AddModel(input:String, modelType: ModelType, modelName: Option[String], userid: Option[String]): String = {
-    modelType match {
-      case ModelType.PMML =>
-        AddModel(input, userid)
-      case ModelType.JAVA | ModelType.SCALA =>
-        modelName.fold(throw new RuntimeException("Model name should be provided for Java/Scala models"))(name => {
-          AddModelFromSource(input, modelType.toString, name, userid)
-        })
-      case ModelType.JPMML =>
-        throw new RuntimeException("Not implemented yet")
+    /** Add model. Several model types are currently supported.  They describe the content of the ''input'' argument:
+      *
+      *   - SCALA - a Scala source string
+      *   - JAVA - a Java source string
+      *   - PMML - a Kamanja Pmml source string
+      *   - JPMML - a JPMML source string
+      *   - BINARY - the path to a jar containing the model
+      *
+      * The remaining arguments, while noted as optional, are required for some model types.  In particular,
+      * the ''modelName'', ''version'', and ''msgConsumed'' must be specified for the JPMML model type.  The ''userid'' is
+      * required for systems that have been configured with a SecurityAdapter or AuditAdapter.
+      * @see [[http://kamanja.org/security/ security wiki]] for more information. The audit adapter, if configured,
+      *       will also be invoked to take note of this user's action.
+      * @see [[http://kamanja.org/auditing/ auditing wiki]] for more information about auditing.
+      * NOTE: The BINARY model is not supported at this time.  The model submitted for this type will via a jar file.
+      *
+      * @param modelType the type of the model submission (any {SCALA,JAVA,PMML,JPMML,BINARY}
+      * @param input the text element to be added dependent upon the modelType specified.
+      * @param optUserid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+      *               method.
+      * @param optModelName the namespace.name of the JPMML model to be added to the Kamanja metadata
+      * @param optVersion the model version to be used to describe this JPMML model
+      * @param optMsgConsumed the namespace.name of the message to be consumed by a JPMML model
+      * @param optMsgVersion the version of the message to be consumed. By default Some(-1)
+      * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+      * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+      * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+     */
+  override   def AddModel( modelType: ModelType
+                           , input: String
+                           , optUserid: Option[String] = None
+                           , optModelName: Option[String] = None
+                           , optVersion: Option[String] = None
+                           , optMsgConsumed: Option[String] = None
+                           , optMsgVersion: Option[String] = Some("-1") ): String  = {
+        val modelResult : String = modelType match {
+            case ModelType.PMML => {
+                AddModel(input, optUserid)
+            }
+            case ModelType.JAVA | ModelType.SCALA => {
+                val result : String = optModelName.fold(throw new RuntimeException("Model name should be provided for Java/Scala models"))(name => {
+                    AddModelFromSource(input, modelType.toString, name, optUserid)
+                })
+                result
+            }
+            case ModelType.JPMML => {
+                val modelName: String = optModelName.orNull
+                val version: String = optVersion.orNull
+                val msgConsumed: String = optMsgConsumed.orNull
+                val msgVer : String = optMsgVersion.getOrElse("-1")
+                val result: String = if (modelName != null && version != null && msgConsumed != null) {
+                    val res : String = AddJPMMLModel(modelName
+                                                    , version
+                                                    , msgConsumed
+                                                    , msgVer
+                                                    , input
+                                                    , optUserid)
+                    res
+                } else {
+                    val inputRep: String = if (input != null && input.size > 100) input.substring(0, 99)
+                                            else if (input != null) input
+                                            else "no model text"
+                    val apiResult = new ApiResult(ErrorCodeConstants.Failure
+                                                , "AddModel"
+                                                , null
+                                                , s"One or more JPMML arguments have not been specified... modelName = $modelName, version = $version, input = $inputRep error = ${ErrorCodeConstants.Add_Model_Failed}")
+                    apiResult.toString
+                }
+                result
+            }
+
+            case ModelType.BINARY =>
+                new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, s"BINARY model type NOT SUPPORTED YET ...${ErrorCodeConstants.Add_Model_Failed}").toString
+
+            case _ => {
+                    val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, s"Unknown model type ${modelType.toString} error = ${ErrorCodeConstants.Add_Model_Failed}")
+                    apiResult.toString
+            }
+        }
+        modelResult
+    }
+
+
+    /**
+     * Add a JPMML model to the metadata.
+     *
+     * JPMML models are evaluated, not compiled. To create the model definition, an instance of the evaluator
+     * is obtained from the jpmml-evaluator component and the ModelDef is constructed and added to the store.
+     * @see com.ligadata.MetadataAPI.JpmmlSupport for more information
+     *
+     * @param modelName the namespace.name of the model to be injested.
+     * @param version the version as string in the form "MMMMMM.mmmmmmmm.nnnnnn" (3 nodes .. could be fewer chars per node)
+     * @param msgConsumed the namespace.name of the message that this model is to consume.  NOTE: the
+     *                    fields used in the pmml model and the fields in the message must match.  If
+     *                    the message does not supply all input fields in the model, there should be a default
+     *                    specified for those not filled in that mining variable.
+     * @param msgVersion the version of the message that this JPMML model will consume
+     * @param pmmlText the actual PMML (xml) that is submitted by the client.
+     * @param userid  the user that has submitted this pmml for addition
+     *
+     */
+
+  private def AddJPMMLModel(  modelName : String
+                            , version : String
+                            , msgConsumed : String
+                            , msgVersion : String
+                            , pmmlText : String
+                            , userid : Option[String]
+                            ): String = {
+    try {
+        val buffer : StringBuilder = new StringBuilder
+        val modelNameNodes : Array[String] = modelName.split('.')
+        val modelNm : String = modelNameNodes.last
+        modelNameNodes.take(modelNameNodes.size - 1).addString(buffer,".")
+        val modelNmSpace : String = buffer.toString
+        buffer.clear
+        val msgNameNodes : Array[String] = msgConsumed.split('.')
+        val msgName : String = msgNameNodes.last
+        msgNameNodes.take(msgNameNodes.size - 1).addString(buffer,".")
+        val msgNamespace : String = buffer.toString
+        val jpmmlSupport : JpmmlSupport = new JpmmlSupport(mdMgr
+                                                        , modelNmSpace
+                                                        , modelNm
+                                                        , version
+                                                        , msgNamespace
+                                                        , msgName
+                                                        , msgVersion
+                                                        , pmmlText)
+
+        val modDef : ModelDef = jpmmlSupport.CreateModel
+
+        // ModelDef may be null if the model evaluation failed
+        val latestVersion : Option[ModelDef] = if (modDef == null) None else GetLatestModel(modDef)
+        val isValid: Boolean = if (latestVersion.isDefined) IsValidVersion(latestVersion.get, modDef) else true
+
+        if (isValid && modDef != null) {
+            logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, pmmlText, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
+            // save the jar file first
+            UploadJarsToDB(modDef)
+            val apiResult = AddModel(modDef)
+            logger.debug("Model is added..")
+            var objectsAdded = new Array[BaseElemDef](0)
+            objectsAdded = objectsAdded :+ modDef
+            val operations = for (op <- objectsAdded) yield "Add"
+            logger.debug("Notify engine via zookeeper")
+            NotifyEngine(objectsAdded, operations)
+            apiResult
+        } else {
+            val reasonForFailure: String = if (modDef != null) {
+                ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required
+            } else {
+                ErrorCodeConstants.Add_Model_Failed
+            }
+            val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
+            val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure
+                , "AddModel"
+                , null
+                , s"$reasonForFailure : $modDefName.$modDefVer)")
+            apiResult.toString()
+        }
+    } catch {
+        case e: ModelCompilationFailedException => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:" + stackTrace)
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure
+                                        , "AddModel"
+                                        , null
+                                        , s"Error : ${e.toString} + ${ErrorCodeConstants.Add_Model_Failed}")
+            apiResult.toString()
+        }
+        case e: AlreadyExistsException => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:" + stackTrace)
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure
+                                        , "AddModel"
+                                        , null
+                                        , s"Error : ${e.toString} + ${ErrorCodeConstants.Add_Model_Failed}")
+            apiResult.toString()
+        }
+        case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:" + stackTrace)
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure
+                                        , "AddModel"
+                                        , null
+                                        , s"Error : ${e.toString} + ${ErrorCodeConstants.Add_Model_Failed}")
+            apiResult.toString()
+        }
     }
   }
 
@@ -3025,62 +3211,82 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def UpdateModel(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
+    /**
+     * Update the model with new source.
+     *
+     *
+
+     * @param modelType e.g., java, scala, pmml, jpmml, binary
+     * @param input the source of the model to ingest
+     * @param userid required if the security and/or audit adapters are installed
+     * @param modelName the name of the model to be ingested (JPMML)
+     *                  or the model's config for java and scala
+     * @param version the version number of the model to be updated (only relevant for JPMML ingestion)
+     * @param msgConsumed the message consumed (only relevant for JPMML ingestion)
+     * @return
+     */
+    override def UpdateModel(modelType: ModelType
+                    , input: String
+                    , userid: Option[String] = None
+                    , modelName: Option[String] = None
+                    , version: Option[String] = None
+                    , msgConsumed: Option[String] = None ): String = {
     try {
-      var compProxy = new CompilerProxy
-      compProxy.setSessionUserId(userid)
-      val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
+        val sourceLang : String = modelType.toString
+        val compProxy = new CompilerProxy
+        compProxy.setSessionUserId(userid)
+        val modelNm : String = modelName.orNull
+        val modDef : ModelDef =  compProxy.compileModelFromSource(input, modelNm, sourceLang)
 
-      val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
-      val isValid: Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
+        val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
+        val isValid: Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
 
-      if (isValid && modDef != null) {
-        logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, sourceCode, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
-        val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
-        if( latestVersion != None ){
-          RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+        if (isValid && modDef != null) {
+            logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, input, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
+            val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
+            if( latestVersion != None ){
+              RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+            }
+            logger.info("Begin uploading dependent Jars, please wait.")
+            UploadJarsToDB(modDef)
+            logger.info("Finished uploading dependent Jars.")
+            val apiResult = AddModel(modDef)
+            var objectsUpdated = new Array[BaseElemDef](0)
+            var operations = new Array[String](0)
+            if( latestVersion != None ){
+              objectsUpdated = objectsUpdated :+ latestVersion.get
+              operations = operations :+ "Remove"
+            }
+            objectsUpdated = objectsUpdated :+ modDef
+            operations = operations :+ "Add"
+            NotifyEngine(objectsUpdated, operations)
+            apiResult
+        } else {
+            val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
+            val modDefName: String = if (modDef != null) modDef.FullName else "(source compile failed)"
+            val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
+            apiResult.toString()
         }
-        logger.info("Begin uploading dependent Jars, please wait.")
-        UploadJarsToDB(modDef)
-        logger.info("Finished uploading dependent Jars.")
-        val apiResult = AddModel(modDef)
-        var objectsUpdated = new Array[BaseElemDef](0)
-        var operations = new Array[String](0)
-        if( latestVersion != None ){
-          objectsUpdated = objectsUpdated :+ latestVersion.get
-          operations = operations :+ "Remove"
-        }
-        objectsUpdated = objectsUpdated :+ modDef
-        operations = operations :+ "Add"
-        NotifyEngine(objectsUpdated, operations)
-        apiResult
-      }
-      else{
-        val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
-        val modDefName: String = if (modDef != null) modDef.FullName else "(source compile failed)"
-        val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
-        apiResult.toString()
-      }
     } catch {
-      case e: ModelCompilationFailedException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:"+stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
-        apiResult.toString()
-      }
-      case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:"+stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:"+stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
-        apiResult.toString()
-      }
+          case e: ModelCompilationFailedException => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:"+stackTrace)
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+            apiResult.toString()
+          }
+          case e: AlreadyExistsException => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:"+stackTrace)
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+            apiResult.toString()
+          }
+          case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:"+stackTrace)
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+            apiResult.toString()
+          }
     }
   }
 

@@ -479,7 +479,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
 	And("Call AddModel MetadataAPI Function to add Model from " + file.getPath)
 	var modStr = Source.fromFile(file).mkString
-	res = MetadataAPIImpl.AddModel(modStr, ModelType.PMML, None, None)
+	res = MetadataAPIImpl.AddModel(ModelType.PMML, modStr, None, None)
 	res should include regex ("\"Status Code\" : 0")
 
 	And("GetModelDef API to fetch the model that was just added")
@@ -499,7 +499,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
 	And("AddModel again to add Model from " + file.getPath)
 	//modStr = Source.fromFile(file).mkString
-	res = MetadataAPIImpl.AddModel(modStr, ModelType.PMML, None, None)
+	res = MetadataAPIImpl.AddModel(ModelType.PMML, modStr, None, None)
 	res should include regex ("\"Status Code\" : 0")
 
 	And("GetModelDef API to fetch  the model that was just added")
