@@ -16,8 +16,7 @@
 
 package com.ligadata.models.samples.models
 
-import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase._
 import com.ligadata.samples.messages.{ CustAlertHistory, GlobalPreferences, CustPreferences, CustTransaction }
 import RddUtils._
 import RddDate._
@@ -70,7 +69,7 @@ import java.io.{ DataInputStream, DataOutputStream }
 //
 
 object LowBalanceAlert extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
+  override def IsValidMessage(msg: MessageContainerBase, jPMMLInfo: Option[JPMMLInfo]): Boolean = return msg.isInstanceOf[CustTransaction]
   override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
   override def ModelName(): String = "LowBalanceAlert" // Model Name
   override def Version(): String = "0.0.1" // Model Version
@@ -209,7 +208,7 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
 //
 
 object LowBalanceAlert2 extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
+  override def IsValidMessage(msg: MessageContainerBase, jPMMLInfo: Option[JPMMLInfo]): Boolean = return msg.isInstanceOf[CustTransaction]
   override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert2(mdlCtxt)
   override def ModelName(): String = "LowBalanceAlert2" // Model Name
   override def Version(): String = "0.0.1" // Model Version
