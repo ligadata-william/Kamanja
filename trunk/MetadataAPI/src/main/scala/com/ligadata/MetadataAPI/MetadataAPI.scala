@@ -76,42 +76,45 @@ trait MetadataAPI {
    */
 
   /** Add new types 
-   * @param typesText an input String of types in a format defined by the next parameter formatType
-   * @param formatType format of typesText ( JSON or XML)
-   * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
-   * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
-   * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
-   * 
-   * Example:
-   * 
-   * {{{
-   * val sampleScalarTypeStr = """
-   * {
-   * "MetadataType" : "ScalarTypeDef",
-   * "NameSpace" : "system",
-   * "Name" : "my_char",
-   * "TypeTypeName" : "tScalar",
-   * "TypeNameSpace" : "System",
-   * "TypeName" : "Char",
-   * "PhysicalName" : "Char",
-   * "Version" : 100,
-   * "JarName" : "basetypes_2.10-0.1.0.jar",
-   * "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-   * "Implementation" : "com.ligadata.BaseTypes.CharImpl"
-   * }
-   * """
-   * var apiResult = MetadataAPIImpl.AddType(sampleScalarTypeStr,"JSON")
-   * var result = MetadataAPIImpl.getApiResult(apiResult)
-   * println("Result as Json String => \n" + result._2)
-   * }}}
-   * 
+    * @param typesText an input String of types in a format defined by the next parameter formatType
+    * @param formatType format of typesText ( JSON or XML)
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+    * 
+    * Example:
+    * 
+    * {{{
+    * val sampleScalarTypeStr = """
+    * {
+    * "MetadataType" : "ScalarTypeDef",
+    * "NameSpace" : "system",
+    * "Name" : "my_char",
+    * "TypeTypeName" : "tScalar",
+    * "TypeNameSpace" : "System",
+    * "TypeName" : "Char",
+    * "PhysicalName" : "Char",
+    * "Version" : 100,
+    * "JarName" : "basetypes_2.10-0.1.0.jar",
+    * "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+    * "Implementation" : "com.ligadata.BaseTypes.CharImpl"
+    * }
+    * """
+    * var apiResult = MetadataAPIImpl.AddType(sampleScalarTypeStr,"JSON")
+    * var result = MetadataAPIImpl.getApiResult(apiResult)
+    * println("Result as Json String => \n" + result._2)
+    * }}}
+    * 
    */
-  def AddType(typesText:String, formatType:String): String
+  def AddType(typesText:String, formatType:String, userid: Option[String] = None): String
 
   /** Update existing types
     * @param typesText an input String of types in a format defined by the next parameter formatType
     * @param formatType format of typesText ( JSON or XML)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -140,12 +143,13 @@ trait MetadataAPI {
     * }}}
     *
     */
-  def UpdateType(typesText:String, formatType:String, userid: Option[String]): String
+  def UpdateType(typesText:String, formatType:String, userid: Option[String] = None): String
 
   /** Remove Type for given typeName and version
     * @param typeName name of the Type
     * @version version of the Type
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -159,24 +163,27 @@ trait MetadataAPI {
     * }}}
     *
     */
-  def RemoveType(typeNameSpace:String, typeName:String, version:Long, userid: Option[String]): String
+  def RemoveType(typeNameSpace:String, typeName:String, version:Long, userid: Option[String] = None): String
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   /** Upload Jars into system. Dependency jars may need to upload first. Once we upload the jar,
-   * if we retry to upload it will throw an exception.
-   * @param jarPath fullPathName of the jar file
-   * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
-   * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
-   * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
-   *
+    * if we retry to upload it will throw an exception.
+    * @param jarPath fullPathName of the jar file
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+    *
    */
-  def UploadJar(jarPath:String): String
+  def UploadJar(jarPath:String, userid: Option[String] = None): String
 
   /** Add new functions 
     * @param functionsText an input String of functions in a format defined by the next parameter formatType
     * @param formatType format of functionsText ( JSON or XML)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -209,12 +216,13 @@ trait MetadataAPI {
     *    println("Result as Json String => \n" + result._2)
     *}}}
     */
-  def AddFunctions(functionsText:String, formatType:String, userid: Option[String]): String
+  def AddFunctions(functionsText:String, formatType:String, userid: Option[String] = None): String
 
   /** Update existing functions
     * @param functionsText an input String of functions in a format defined by the next parameter formatType
     * @param formatType format of functionsText ( JSON or XML)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -248,13 +256,14 @@ trait MetadataAPI {
     * }}}
     *
     */
-  def UpdateFunctions(functionsText:String, formatType:String, userid: Option[String]): String
+  def UpdateFunctions(functionsText:String, formatType:String, userid: Option[String] = None): String
 
   /** Remove function for given FunctionName and Version
     * @param nameSpace the function's namespace
     * @param functionName name of the function
     * @version version of the function
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -267,12 +276,13 @@ trait MetadataAPI {
     *}}}
     *
     */
-  def RemoveFunction(nameSpace:String, functionName:String, version:Long, userid: Option[String]): String
+  def RemoveFunction(nameSpace:String, functionName:String, version:Long, userid: Option[String] = None): String
 
   /** Add new concepts 
     * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
     * @param formatType format of conceptsText ( JSON or XML)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -295,12 +305,13 @@ trait MetadataAPI {
     *}}}
     *
     */
-  def AddConcepts(conceptsText:String, formatType:String, userid: Option[String]): String // Supported format is JSON/XML
+  def AddConcepts(conceptsText:String, formatType:String, userid: Option[String] = None): String // Supported format is JSON/XML
 
   /** Update existing concepts
     * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
     * @param formatType format of conceptsText ( JSON or XML)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -324,11 +335,12 @@ trait MetadataAPI {
     *}}}
     *
     */
-  def UpdateConcepts(conceptsText:String, formatType:String, userid: Option[String]): String
+  def UpdateConcepts(conceptsText:String, formatType:String, userid: Option[String] = None): String
 
   /** RemoveConcepts take all concepts names to be removed as an Array
     * @param concepts array of Strings where each string is name of the concept
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -341,13 +353,14 @@ trait MetadataAPI {
     *}}}
     *
     */
-  def RemoveConcepts(concepts:Array[String], userid: Option[String]): String
+  def RemoveConcepts(concepts:Array[String], userid: Option[String] = None): String
 
   /** Add message given messageText
     *
     * @param messageText text of the message (as JSON/XML string as defined by next parameter formatType)
     * @param formatType format of messageText ( JSON or XML)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -360,24 +373,26 @@ trait MetadataAPI {
     * println("Result as Json String => \n" + result._2)
     * }}}
     */
-  def AddMessage(messageText:String, formatType:String, userid: Option[String]): String 
+  def AddMessage(messageText:String, formatType:String, userid: Option[String] = None): String
 
   /** Update message given messageText
     *
     * @param messageText text of the message (as JSON/XML string as defined by next parameter formatType)
     * @param formatType format of messageText (as JSON/XML string)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
     */
-  def UpdateMessage(messageText:String, formatType:String, userid: Option[String]): String
+  def UpdateMessage(messageText:String, formatType:String, userid: Option[String] = None): String
 
   /** Remove message with MessageName and Vesion Number
     *
     * @param messageName Name of the given message
     * @param version   Version of the given message
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -388,7 +403,8 @@ trait MetadataAPI {
     *
     * @param containerText text of the container (as JSON/XML string as defined by next parameter formatType)
     * @param formatType format of containerText ( JSON or XML)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -401,24 +417,26 @@ trait MetadataAPI {
     * println("Result as Json String => \n" + result._2)
     * }}}
     */
-  def AddContainer(containerText:String, formatType:String, userid: Option[String]): String 
+  def AddContainer(containerText:String, formatType:String, userid: Option[String] = None): String 
 
   /** Update container given containerText
     *
     * @param containerText text of the container (as JSON/XML string as defined by next parameter formatType)
     * @param formatType format of containerText (as JSON/XML string)
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
     */
-  def UpdateContainer(containerText:String, formatType:String, userid: Option[String]): String
+  def UpdateContainer(containerText:String, formatType:String, userid: Option[String] = None): String
 
   /** Remove container with ContainerName and Vesion Number
     *
     * @param containerName Name of the given container
     * @param version   Version of the given container
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
@@ -444,7 +462,7 @@ trait MetadataAPI {
     * @param modelType the type of the model submission (any {SCALA,JAVA,PMML,JPMML,BINARY}
     * @param input the text element to be added dependent upon the modelType specified.
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
-    *               method.
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @param modelName the namespace.name of the JPMML model to be added to the Kamanja metadata
     * @param version the model version to be used to describe this JPMML model
     * @param msgConsumed the namespace.name of the message to be consumed by a JPMML model
@@ -481,7 +499,7 @@ trait MetadataAPI {
     * @param modelType the type of the model submission (any {SCALA,JAVA,PMML,JPMML,BINARY}
     * @param input the text element to be added dependent upon the modelType specified.
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
-    *               method.
+    *               method. If Security and/or Audit are configured, this value must be a value other than None
     * @param modelName the namespace.name of the JPMML model to be added to the Kamanja metadata
     * @param version the model version to be used to describe this JPMML model
     * @param msgConsumed the namespace.name of the message to be consumed by a JPMML model
@@ -504,19 +522,20 @@ trait MetadataAPI {
     *                  a value of 1000001000001 is the value for 1.000001.000001. Helper functions for constructing this
     *                  Long from a string can be found in the MdMgr object,
     *                  @see com.ligadata.kamanja.metadata.ConvertVersionToLong(String):Long for details.
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
     * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
     * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
     */
-  def RemoveModel(modelName:String, version:Long, userid: Option[String]): String
+  def RemoveModel(modelName:String, version:Long, userid: Option[String] = None): String
 
   /** Retrieve All available ModelDefs from Metadata Store
    *
    * @param formatType format of the return value, either JSON or XML
    * @return the ModelDef(s) either as a JSON or XML string depending on the parameter formatType
    */
-  def GetAllModelDefs(formatType: String) : String
+  def GetAllModelDefs(formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve specific ModelDef(s) from Metadata Store
    *
@@ -525,45 +544,53 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * ModelDef(s) either as a JSON or XML string depending on the parameter formatType
    */
-  def GetModelDef(objectName:String,formatType: String) : String
+  def GetModelDef(objectName:String,formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve a specific ModelDef from Metadata Store
-   *
-   * @param objectName Name of the ModelDef
-   * @param version  Version of the ModelDef
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the ModelDef either as a JSON or XML string depending on the parameter formatType
+    *
+    * @param objectName Name of the ModelDef
+    * @param version  Version of the ModelDef
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the ModelDef either as a JSON or XML string depending on the parameter formatType
    */
-  def GetModelDef( objectName:String,version:String, formatType: String) : String
+  def GetModelDef( objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
 
   /** Retrieve All available MessageDefs from Metadata Store
-   *
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the MessageDef(s) either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetAllMessageDefs(formatType: String) : String
+    *
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the MessageDef(s) either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetAllMessageDefs(formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve specific MessageDef(s) from Metadata Store
-   *
-   * @param objectName Name of the MessageDef
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the MessageDef(s) either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetMessageDef(objectName:String,formatType: String) : String
+    *
+    * @param objectName Name of the MessageDef
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the MessageDef(s) either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetMessageDef(objectName:String,formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve a specific MessageDef from Metadata Store
-   *
-   * @param objectName Name of the MessageDef
-   * @param version  Version of the MessageDef
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the MessageDef either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetMessageDef( objectName:String,version:String, formatType: String) : String
+    *
+    * @param objectName Name of the MessageDef
+    * @param version  Version of the MessageDef
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the MessageDef either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetMessageDef( objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
 
   /** Retrieve a specific MessageDef from Metadata Store
@@ -572,159 +599,180 @@ trait MetadataAPI {
     * @param objectName Name of the MessageDef
     * @param version  Version of the MessageDef
     * @param formatType format of the return value, either JSON or XML
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None
     * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
     * the MessageDef either as a JSON or XML string depending on the parameter formatType
     */
   def GetMessageDef(objectNameSpace:String,objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
-  /** Retrieve All available ContainerDefs from Metadata Store
-   *
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the ContainerDef(s) either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetAllContainerDefs(formatType: String) : String
-
   /** Retrieve specific ContainerDef(s) from Metadata Store
-   *
-   * @param objectName Name of the ContainerDef
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the ContainerDef(s) either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetContainerDef(objectName:String,formatType: String) : String
+    *
+    * @param objectName Name of the ContainerDef
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the ContainerDef(s) either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetContainerDef(objectName:String,formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve a specific ContainerDef from Metadata Store
-   *
-   * @param objectName Name of the ContainerDef
-   * @param version  Version of the ContainerDef
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the ContainerDef either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetContainerDef( objectName:String,version:String, formatType: String) : String
+    *
+    * @param objectName Name of the ContainerDef
+    * @param version  Version of the ContainerDef
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the ContainerDef either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetContainerDef( objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
   /** Retrieve a specific ContainerDef from Metadata Store
-   *
-   * @param objectNameSpace NameSpace of the ContainerDef
-   * @param objectName Name of the ContainerDef
-   * @param version  Version of the ContainerDef
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the ContainerDef either as a JSON or XML string depending on the parameter formatType
-   */
+    *
+    * @param objectNameSpace NameSpace of the ContainerDef
+    * @param objectName Name of the ContainerDef
+    * @param version  Version of the ContainerDef
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the ContainerDef either as a JSON or XML string depending on the parameter formatType
+    */
   def GetContainerDef(objectNameSpace:String,objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
-  /** Retrieve All available FunctionDefs from Metadata Store. Answer the count and a string representation
-   *  of them.
-   *
-   * @param formatType format of the return value, either JSON or XML
-   * @return the function count and the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType as a Tuple2[Int,String]
-   */
+   /** Retrieve All available FunctionDefs from Metadata Store. Answer the count and a string representation
+    *  of them.
+    *
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the function count and the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType as a Tuple2[Int,String]
+    */
 
-  def GetAllFunctionDefs(formatType: String, userid: Option[String]) : (Int,String)
+  def GetAllFunctionDefs(formatType: String, userid: Option[String] = None) : (Int,String)
 
   /** Retrieve specific FunctionDef(s) from Metadata Store
     *
     * @param objectName Name of the FunctionDef
     * @param formatType format of the return value, either JSON or XML
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
     * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType
     */
-  def GetFunctionDef(objectName:String,formatType: String, userid: Option[String]) : String
+  def GetFunctionDef(objectName:String,formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve a specific FunctionDef from Metadata Store
-   *
-   * @param objectName Name of the FunctionDef
-   * @param version  Version of the FunctionDef
-   * @param formatType format of the return value, either JSON or XML
-    * @param userid the user who has invoked this method, used by security and audit adapters.
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the FunctionDef either as a JSON or XML string depending on the parameter formatType
-   */
+    *
+    * @param objectName Name of the FunctionDef
+    * @param version  Version of the FunctionDef
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None..
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the FunctionDef either as a JSON or XML string depending on the parameter formatType
+    */
   def GetFunctionDef( objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
   /** Retrieve All available Concepts from Metadata Store
     *
     * @param formatType format of the return value, either JSON or XML
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
     * the Concept(s) either as a JSON or XML string depending on the parameter formatType
     */
-  def GetAllConcepts(formatType: String, userid: Option[String]) : String
+  def GetAllConcepts(formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve specific Concept(s) from Metadata Store
-   *
-   * @param objectName Name of the Concept
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the Concept(s) either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetConcept(objectName:String, formatType: String) : String
+    *
+    * @param objectName Name of the Concept
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None..
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the Concept(s) either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetConcept(objectName:String, formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve a specific Concept from Metadata Store
-   *
-   * @param objectName Name of the Concept
-   * @param version  Version of the Concept
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the Concept either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetConcept(objectName:String,version: String, formatType: String) : String
+    *
+    * @param objectName Name of the Concept
+    * @param version  Version of the Concept
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the Concept either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetConcept(objectName:String,version: String, formatType: String, userid: Option[String]) : String
 
 
   /** Retrieve All available derived concepts from Metadata Store
-   *
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the Derived Concept(s) either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetAllDerivedConcepts(formatType: String) : String
+    *
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the Derived Concept(s) either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetAllDerivedConcepts(formatType: String, userid: Option[String] = None) : String
 
 
   /** Retrieve specific Derived Concept(s) from Metadata Store
-   *
-   * @param objectName Name of the Derived Concept
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the Derived Concept(s) either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetDerivedConcept(objectName:String, formatType: String) : String
+    *
+    * @param objectName Name of the Derived Concept
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the Derived Concept(s) either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetDerivedConcept(objectName:String, formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve a specific Derived Concept from Metadata Store
-   *
-   * @param objectName Name of the Derived Concept
-   * @param version  Version of the Derived Concept
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the Derived Concept either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetDerivedConcept(objectName:String, version:String, formatType: String) : String
+    *
+    * @param objectName Name of the Derived Concept
+    * @param version  Version of the Derived Concept
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the Derived Concept either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetDerivedConcept(objectName:String, version:String, formatType: String, userid: Option[String]) : String
 
   /** Retrieves all available Types from Metadata Store
     *
     * @param formatType format of the return value, either JSON or XML
-    * @param userid the user who has invoked this method, used by security and audit adapters.
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
     * the available types as a JSON or XML string depending on the parameter formatType
     */
-  def GetAllTypes(formatType: String, userid: Option[String]) : String
+  def GetAllTypes(formatType: String, userid: Option[String] = None) : String
 
   /** Retrieve a specific Type  from Metadata Store
-   *
-   * @param objectName Name of the Type
-   * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the Type object either as a JSON or XML string depending on the parameter formatType
-   */
-  def GetType(objectName:String, formatType: String) : String
+    *
+    * @param objectName Name of the Type
+    * @param formatType format of the return value, either JSON or XML
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+    * the Type object either as a JSON or XML string depending on the parameter formatType
+    */
+  def GetType(objectName:String, formatType: String, userid: Option[String] = None) : String
   
-    /**
-   *  getHealthCheck - will return all the health-check information for the nodeId specified. 
-   *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
-   */
-  def getHealthCheck(nodeId: String): String 
+   /**
+    * getHealthCheck - will return all the health-check information for the nodeId specified.
+    *
+    * @parm - nodeId: String - if no parameter specified, return health-check for all nodes
+    * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
+    *               method. If Security and/or Audit are configured, this value must be a value other than None.
+    * @return status string
+    */
+  def getHealthCheck(nodeId: String, userid: Option[String] = None): String 
 }
