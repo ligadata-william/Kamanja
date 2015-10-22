@@ -152,6 +152,14 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     throw new ConnectionFailedException("Unable to find user in adapterConfig ")
   }
 
+  var SchemaName: String = null;
+  if (parsed_json.contains("SchemaName")) {
+    SchemaName = parsed_json.get("SchemaName").get.toString.trim
+  } else {
+    logger.info("The SchemaName is not supplied in adapterConfig, defaults to " + user)
+    SchemaName = user
+  }
+
   var password: String = null;
   if (parsed_json.contains("password")) {
     password = parsed_json.get("password").get.toString.trim
@@ -229,8 +237,78 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   // set the timezone to UTC for all time values
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
+  var schemaExists = IsSchemaExists(SchemaName)
+  if( ! schemaExists ){
+    logger.info("Unable to find the schema " + SchemaName + " in the database, attempt to create one ")
+    CreateSchema(SchemaName)
+  }    
+
   private def GetCurDtTmStr: String = {
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
+  }
+
+  private def IsSchemaExists(schemaName: String): Boolean = {
+    var con: Connection = null
+    var pstmt: PreparedStatement = null
+    var rs: ResultSet = null
+    var rowCount = 0
+    try {
+      con = dataSource.getConnection
+      var query = "SELECT count(*) FROM sys.schemas WHERE name = ?"
+      pstmt = con.prepareStatement(query)
+      pstmt.setString(1,schemaName)
+      rs = pstmt.executeQuery();
+      while (rs.next()) {
+        rowCount = rs.getInt(1)
+      }
+      if( rowCount > 0 ){
+	return true
+      }
+      else{
+	return false
+      }
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:" + stackTrace)
+        throw new Exception("Failed to verify schema existence for the schema " + schemaName + ":" + e.getMessage())
+      }
+    } finally {
+      if (rs != null) {
+        rs.close
+      }
+      if (pstmt != null) {
+        pstmt.close
+      }
+      if (con != null) {
+        con.close
+      }
+    }
+  }
+
+
+  private def CreateSchema(schemaName: String): Unit = {
+    var con: Connection = null
+    var stmt: Statement = null
+    try {
+      con = dataSource.getConnection
+      var query = "create schema " + schemaName
+      stmt = con.createStatement()
+      stmt.executeUpdate(query);
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:" + stackTrace)
+        throw new Exception("Failed to create schema  " + schemaName + ":" + e.getMessage())
+      }
+    } finally {
+      if (stmt != null) {
+        stmt.close
+      }
+      if (con != null) {
+        con.close
+      }
+    }
   }
 
   private def CheckTableExists(containerName: String): Unit = {
@@ -299,7 +377,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     // such as length of the table, special characters etc
     // database + "." + "dbo" + "." + containerName.replace('.','_')
     //database + "." + "dbo" + "." + toTableName(containerName)
-    toTableName(containerName)
+    SchemaName + "." + toTableName(containerName)
   }
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
@@ -1023,11 +1101,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con = dataSource.getConnection()
       // check if the container already dropped
       val dbm = con.getMetaData();
-      rs = dbm.getTables(null, null, tableName, null);
+      rs = dbm.getTables(null, SchemaName, tableName, null);
       if (!rs.next()) {
-        logger.debug("The table " + fullTableName + " may have beem dropped already ")
+        logger.debug("The table " +  fullTableName + " may have beem dropped already ")
       } else {
-        var query = "drop table " + fullTableName
+        var query = "drop table " +  fullTableName
         stmt = con.createStatement()
         stmt.executeUpdate(query);
       }
@@ -1070,7 +1148,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
       // check if the container already exists
       val dbm = con.getMetaData();
-      rs = dbm.getTables(null, null, tableName, null);
+      rs = dbm.getTables(null, SchemaName, tableName, null);
       if (rs.next()) {
         logger.debug("The table " + tableName + " already exists ")
       } else {
