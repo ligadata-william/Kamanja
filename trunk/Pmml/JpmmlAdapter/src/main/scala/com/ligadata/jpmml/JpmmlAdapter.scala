@@ -1,11 +1,18 @@
 package com.ligadata.jpmml
 
+import java.io.{PushbackInputStream, ByteArrayInputStream, InputStream}
+import java.nio.charset.StandardCharsets
 import java.util.{List => JList}
+import javax.xml.bind.{ValidationEvent, ValidationEventHandler}
+import javax.xml.transform.sax.SAXSource
 
 import com.ligadata.KamanjaBase._
 import com.ligadata.kamanja.metadata._
-import org.dmg.pmml.FieldName
+import org.dmg.pmml.{PMML, FieldName}
 import org.jpmml.evaluator._
+import org.jpmml.model.{JAXBUtil, ImportFilter}
+import org.xml.sax.InputSource
+import org.xml.sax.helpers.XMLReaderFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{Map => MutableMap}
@@ -95,6 +102,23 @@ class JpmmlAdapter( modelContext: ModelContext, factory : ModelBaseObj, modelEva
     }
 }
 
+/**
+ * JPMMLInfo contains the additional information needed to both recognize the need to instantiate a model for a given message presented to the
+ * model factory's IsValidMessage method as well as that information to instantiate an instance of the model that will process that message.
+ * This state information is collected and maintained for JPMML models only.
+ * @see ModelInfo
+ * @see ModelContext
+ *
+ * @param jpmmlText the pmml source that will be sent to the JPMML evaluator factory to create a suitable evaluator to process the message.
+ * @param msgConsumed the incoming message's namespace.name.version that this pmml model will consume.  It is mapped to the input fields in the
+ *                    PMML model by the ModelAdapter instance.
+ * @param modelName the modelNamespace.name of the model that will process the message.  Unlike most model factories, JPMML's model factory handles
+ *                  all JPMML models.  We need to know which of the JPMML ModelDef instances is being used.
+ * @param modelVersion the model version.
+ */
+case class JPMMLInfo(val jpmmlText : String, val msgConsumed : String, val modelName : String, val modelVersion : Long)
+
+
 object JpmmlAdapter extends ModelBaseObj {
 
     /** Key for modelMsgMap */
@@ -121,6 +145,9 @@ object JpmmlAdapter extends ModelBaseObj {
      * contain the source
      * @param modelDefinitions
      * @return true if initialization was successful
+     *
+     * FIXME: if this map gets replaced when the engine is active, there needs to be a lock on this function to prevent
+     * FIXME: unpredictable things from occurring.
      */
     def initializeModelMsgMap(modelDefinitions : Array[ModelDef]) : Boolean = {
         modelDefinitions.foreach(modelDef => {
@@ -130,52 +157,84 @@ object JpmmlAdapter extends ModelBaseObj {
         (modelMsgMap != null && modelMsgMap.size >= 0)
     }
 
+    private var mdMgr : MdMgr = null
+    private var factoryName : String = null
+    private var factoryVersion : String = null
+
+    /**
+     * Set the mdmgr needed to manage the instances and answer IsValidMessage question.
+     * ''pre-condition: this function is called before any message processing commences.''
+     *
+     * @param mdmgr the Kamanja engine's MdMgr
+     */
+    def FactoryInitialize(mdmgr : MdMgr)  : Unit = {
+        mdMgr = mdmgr
+        val optModel : Option[ModelDef] = if (mdMgr != null) {
+            val currentVersion : Long = -1
+            mdMgr.Model("com.ligadata.jpmml.JpmmlAdapter", currentVersion, true)
+        } else {
+            None
+        }
+        val factoryModel : ModelDef = optModel.orNull
+        if (factoryModel != null) {
+            factoryName = factoryModel.FullName
+            factoryVersion = MdMgr.ConvertLongVersionToString(factoryModel.Version)
+        }
+    }
+
     /** See if any of the models consume the supplied message */
-    def IsValidMessage(msg: MessageContainerBase, jPMMLInfo: Option[JPMMLInfo]): Boolean = {
-        val fullName : String = msg.FullName
-        val versionStr : String = msg.Version
+    def IsValidMessage(msg: MessageContainerBase, modelName : String, modelVersion : String): Boolean = {
+        val msgFullName : String = msg.FullName
+        val msgVersion : String = msg.Version
         //val completeName : String = s"$fullName.$versionStr"
-        val completeName : ModelNameVersion = ModelNameVersion(fullName,versionStr)
-        val yum : Boolean = modelMsgMap.contains(completeName)
+        val completeName : ModelNameVersion = ModelNameVersion(modelName,modelVersion)
+        val modelDef : ModelDef = modelMsgMap.getOrElse(completeName, null)
+        val yum : Boolean = if (modelDef != null) {
+            (msgFullName == modelDef.FullName && msgVersion == MdMgr.ConvertLongVersionToString(modelDef.Version))
+        } else {
+            false
+        }
         yum
     }
 
-    override def CreateNewModel(mc: ModelContext): ModelBase = {
+    /**
+     * Answer a model instance to the caller, obtaining a pre-existing one in the cache if possible.
+     * @param mCtx the ModelContext object supplied by the engine with the message and model name to instantiate/fetch
+     * @return an instance of the Model that can process the message found in the ModelContext
+     */
+    override def CreateNewModel(mCtx: ModelContext): ModelBase = {
         /** First determine if we have an instance of this model for this thread */
         val threadId : String = Thread.currentThread.getId.toString
-        val fullName : String = mc.msg.FullName
-        val versionStr : String = mc.msg.Version
-        val jpmmlInfo : JPMMLInfo = mc.jpmmlInfo.getOrElse(null)
-        /** FIXME: it would be unusual, but check for bad JPMMLInfo sent here */
-        val modelName : String = if (jpmmlInfo != null) jpmmlInfo.modelName else "ModelNotFound"
-        val modelVer : String = if (jpmmlInfo != null) jpmmlInfo.modelVersion.toString else "modelVersionUnknown"
+        val msgName : String = mCtx.msg.FullName
+        val msgVer : String = mCtx.msg.Version
+        val modelName : String = mCtx.modelName
+        val modelVer : String = mCtx.modelVersion.toString
 
-        val modelInstanceKey : ModelMessageThreadId = ModelMessageThreadId(modelName, modelVer, fullName,versionStr,threadId)
-        /** if an instance has been constructed of this model for this instance, use it */
+        /** Instantiate the instance cache key */
+        val modelInstanceKey : ModelMessageThreadId = ModelMessageThreadId(modelName, modelVer, msgName, msgVer, threadId)
+
+        /** if an instance has already been constructed of this model for this thread, use it */
         val optOptModel : Option[Option[ModelBase]] = instanceMap.get(modelInstanceKey)
         val optModel : Option[ModelBase] = optOptModel.getOrElse(None)
-        val model : ModelBase = optModel.getOrElse(null)
-
+        val model : ModelBase = optModel.orNull
         val useThisModel : ModelBase = if (model != null) {
             model
         } else {
-            val optModelDef : Option[ModelDef] = modelMsgMap.get(ModelNameVersion(fullName,versionStr))
-            val modelDef : ModelDef = optModelDef.getOrElse(null)
+            val optModelDef : Option[ModelDef] = modelMsgMap.get(ModelNameVersion(msgVer,msgVer))
+            val modelDef : ModelDef = optModelDef.orNull
 
             if (modelDef != null) {
-                /** create an instance of the model here FIXME use the code from the metadata api to build an instance */
                 val modelName : String = modelDef.FullName
-                val version : String = modelDef.Version.toString
+                val version : String = MdMgr.ConvertLongVersionToString(modelDef.Version)
 
-                //val builtModel : ModelBase = new JpmmlAdapter(mc)
-                val builtModel : ModelBase = new JpmmlAdapter( mc, this, null)
+                /** Ingest the pmml here and build an evaluator */
+                val modelEvaluator: ModelEvaluator[_] = CreateEvaluator(modelDef.jpmmlText)
+                val builtModel : ModelBase = new JpmmlAdapter( mCtx, this, modelEvaluator)
                 /** store the instance in the instance map for future reference */
                 instanceMap.put(modelInstanceKey, Some(builtModel))
 
                 builtModel
             } else {
-                val jpmmlInfo : JPMMLInfo = mc.jpmmlInfo.getOrElse(null)
-                val modelName : String = if (jpmmlInfo != null) s"${jpmmlInfo.modelName}.${jpmmlInfo.modelVersion}" else "unknonwn model"
 
                 //logger.error(s"model could not be built for modelName=$modelName")  /// FIXME add logger to classes
                 null
@@ -184,15 +243,51 @@ object JpmmlAdapter extends ModelBaseObj {
         useThisModel
     }
 
-    /// FIXME : these must return the correct model name based upon the ModelContext for the current model.  We many need
-    /// FIXME : to pass the model context from the caller in
     def ModelName(): String = {
-        ///this.getClass.getName
-        "JpmmlAdapter"
+        factoryName
     }
     def Version(): String = {
-        "000001.000000.000000"
+        factoryVersion
     }
 
+    /**
+     * Answer a ModelBaseResult from which to give the model results.
+     * @return a ModelResultBase derivative appropriate for the model
+     */
     def CreateResultObject(): ModelResultBase = new MappedModelResults
+
+    /**
+     * Create the appropriate JPMML evaluator based upon the pmml text supplied.
+     * 
+     * @param pmmlText the PMML (xml) text for a JPMML consumable model
+     * @return the appropriate JPMML ModelEvaluator
+     */
+    private def CreateEvaluator(pmmlText : String) : ModelEvaluator[_] = {
+
+        val inputStream: InputStream = new ByteArrayInputStream(pmmlText.getBytes(StandardCharsets.UTF_8))
+        val is = new PushbackInputStream(inputStream)
+
+        val reader = XMLReaderFactory.createXMLReader()
+        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+        val filter = new ImportFilter(reader)
+        val source = new SAXSource(filter, new InputSource(is))
+        val unmarshaller = JAXBUtil.createUnmarshaller
+        unmarshaller.setEventHandler(SimpleValidationEventHandler)
+
+        val pmml: PMML = unmarshaller.unmarshal(source).asInstanceOf[PMML]
+        val modelEvaluatorFactory = ModelEvaluatorFactory.newInstance()
+        val modelEvaluator = modelEvaluatorFactory.newModelManager(pmml)
+        modelEvaluator
+    }
+    
+    private object SimpleValidationEventHandler extends ValidationEventHandler {
+        def handleEvent(event: ValidationEvent): Boolean = {
+            val severity: Int = event.getSeverity
+            severity match {
+                case ValidationEvent.ERROR => false
+                case ValidationEvent.FATAL_ERROR => false
+                case _ => true
+            }
+        }
+    }
 }
