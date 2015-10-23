@@ -60,7 +60,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
       assert(null != db)
       db match {
-	case "sqlserver" | "mysql" | "hbase" | "cassandra" => {
+	case "sqlserver" | "mysql" | "hbase" | "cassandra" | "hashmap" | "treemap" => {
 	  var ds = MetadataAPIImpl.GetMainDS
 	  var containerList:Array[String] = Array("config_objects","jar_store","model_config_objects","metadata_objects","transaction_id")
 	  ds.TruncateContainer(containerList)
@@ -1057,6 +1057,17 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 	  TestUtils.deleteFile(logFile)
 	}
 	logFile = new java.io.File(loc + "/default.hdb")
+	if( logFile != null ){
+	  TestUtils.deleteFile(logFile)
+	}
+      }
+      case "treemap" => {
+	val loc = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+	logFile = new java.io.File(loc + "/default.db.p")
+	if( logFile != null ){
+	  TestUtils.deleteFile(logFile)
+	}
+	logFile = new java.io.File(loc + "/default.db")
 	if( logFile != null ){
 	  TestUtils.deleteFile(logFile)
 	}

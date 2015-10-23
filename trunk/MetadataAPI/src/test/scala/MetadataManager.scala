@@ -124,7 +124,7 @@ class MetadataManager(var config: MetadataAPIProperties) {
       logger.info("metadataDataStore => " + dsJson)
     }
     else{
-      if( config.database.equalsIgnoreCase("hashmap") ){
+      if( config.database.equalsIgnoreCase("hashmap") || config.database.equalsIgnoreCase("treemap") ){
 	md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.dataDirectory)
 	dsJson="{\"StoreType\": \"" + config.database + "\",\"SchemaName\": \"" + config.databaseSchema + "\",\"Location\": \"" + config.dataDirectory + "\"}"
       }
@@ -159,6 +159,9 @@ class MetadataManager(var config: MetadataAPIProperties) {
 	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditHBaseAdapter")
       }
       case "hashmap" => {
+	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditHashMapAdapter")
+      }
+      case "treemap" => {
 	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditHashMapAdapter")
       }
       case "sqlserver" | "mysql" => {
