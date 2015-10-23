@@ -3305,7 +3305,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Remove message with Message Name and Version Number
      * @param messageName Name of the given message
-     * @param version   Version of the given message
+     * @param version  Version of the object   Version of the given message
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value should be other than None
      * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -6550,8 +6550,6 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param cfgStr
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
-     *               Supply one.
      * @param objectList
      * @param isFromNotify
      * @return
