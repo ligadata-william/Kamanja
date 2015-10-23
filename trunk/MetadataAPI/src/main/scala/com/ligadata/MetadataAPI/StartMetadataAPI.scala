@@ -318,7 +318,7 @@ object StartMetadataAPI {
 
       case e: Exception => {
           /** tentative answer of unidentified command type failure. */
-          response = e.getStackTraceString
+          response = s"Unexpected action! action = $action"
 
           /** one more try ... going the alternate route */
           val altResponse: String = AltRoute(originalArgs)
