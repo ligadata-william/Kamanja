@@ -3835,8 +3835,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val storeInfo = tableStoreMap("config_objects")
       storeInfo._2.get(storeInfo._1, { (k: Key, v: Value) =>
         {
-          //logger.debug("key => " + KeyAsStr(key))
-          val strKey = k.bucketKey(0)
+          val strKey = k.bucketKey.mkString(".")
           val i = strKey.indexOf(".")
           val objType = strKey.substring(0, i)
           val typeName = strKey.substring(i + 1)
