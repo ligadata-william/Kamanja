@@ -1178,7 +1178,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def PutArrayOfBytesToJar(ba: Array[Byte], jarName: String) = {
-    logger.debug("Downloading the jar contents into the file " + jarName)
+    logger.info("Downloading the jar contents into the file " + jarName)
     try {
       val iFile = new File(jarName)
       val bos = new BufferedOutputStream(new FileOutputStream(iFile));
@@ -1408,6 +1408,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       var allJars = GetDependantJars(obj)
       logger.debug("Found " + allJars.length + " dependant jars. Jars:" + allJars.mkString(","))
+      logger.info("Found " + allJars.length + " dependant jars. It make take several minutes first time to download all of these jars:" + allJars.mkString(","))
       if (allJars.length > 0) {
         val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
         val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
@@ -1438,6 +1439,9 @@ object MetadataAPIImpl extends MetadataAPI {
               val jarName = dirPath + "/" + jar
               PutArrayOfBytesToJar(ba, jarName)
             }
+	    else{
+	      logger.info("The jar " + curJar + " was already downloaded... ")
+	    }
           } catch {
             case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
