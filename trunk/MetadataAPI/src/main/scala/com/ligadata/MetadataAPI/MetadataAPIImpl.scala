@@ -3772,7 +3772,7 @@ object MetadataAPIImpl extends MetadataAPI {
           processedContainersSet += storeInfo._1
           storeInfo._2.getKeys(storeInfo._1, { (key: Key) =>
             {
-              val strKey = key.bucketKey(0)
+              val strKey = key.bucketKey.mkString(".")
               val i = strKey.indexOf(".")
               val objType = strKey.substring(0, i)
               val typeName = strKey.substring(i + 1)
@@ -3898,7 +3898,7 @@ object MetadataAPIImpl extends MetadataAPI {
       {
         processed += 1
         val conf = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[Map[String, List[String]]]
-        MdMgr.GetMdMgr.AddModelConfig(k.bucketKey(0), conf)
+        MdMgr.GetMdMgr.AddModelConfig(k.bucketKey.mkString("."), conf)
       }
     })
 
