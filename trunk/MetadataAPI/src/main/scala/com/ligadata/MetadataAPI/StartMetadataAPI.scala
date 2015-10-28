@@ -102,8 +102,21 @@ object StartMetadataAPI {
     }
     catch {
       case nosuchelement: NoSuchElementException => {
-        println(action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json")
-        //response = action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json"
+          /** preserve the original response ... */
+          response = s"Invalid command action! action=$action"
+
+          /** one more try ... going the alternate route */
+          val altResponse: String = AltRoute(args)
+          if (altResponse != null) {
+            response = altResponse
+          } else {
+            /* if the AltRoute doesn't produce a valid result, we will complain with the original failure */
+            printf(response)
+            usage
+          }
+
+          println(action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json")
+          //response = action+ " is an unrecognized command. \n USAGE: kamanja <action> <optional input> \n e.g. kamanja add message $HOME/msg.json"
       }
       case e: Throwable => e.getStackTrace.toString
     } finally {
@@ -111,6 +124,9 @@ object StartMetadataAPI {
     }
   }
 
+  def usage : Unit = {
+      println(s"Usage:\n  kamanja <action> <optional input> \n e.g. kamanja add message ${'$'}HOME/msg.json" )
+  }
 
   def route(action: Action.Value, input: String, param: String = "", originalArgs : Array[String], userId : Option[String]): String = {
     var response = ""
@@ -308,27 +324,15 @@ object StartMetadataAPI {
         case Action.DUMPALLCLUSTERCFGS=>response =DumpService.dumpAllClusterCfgs
         case Action.DUMPALLADAPTERS=>response =DumpService.dumpAllAdapters
         case _ => {
-
+            println(s"Unexpected action! action=$action")
             throw new RuntimeException(s"Unexpected action! action=$action")
-            //sys.exit(1)  suppress this until the alternate approach is considered in the exception handler
          }
       }
     }
     catch {
 
       case e: Exception => {
-          /** tentative answer of unidentified command type failure. */
-          response = s"Unexpected action! action = $action"
 
-          /** one more try ... going the alternate route */
-          val altResponse: String = AltRoute(originalArgs)
-          if (altResponse != null) {
-            response = altResponse
-          } else {
-              /* if the AltRoute doesn't produce a valid result, we will complain with the original failure */
-              printf(response)
-              sys.exit(1)
-          }
       }
 
     }
@@ -349,8 +353,12 @@ object StartMetadataAPI {
     */
   def AltRoute(origArgs : Array[String]) : String = {
 
-       /** trim off the config argument */
-       val argsSansConfig : Array[String] = origArgs.tail
+       /** trim off the config argument and if debugging the "debug" argument as well */
+       val argsSansConfig : Array[String] = if (origArgs != null && origArgs.size > 0 && origArgs(0).toLowerCase == "debug") {
+           origArgs.tail.tail
+       } else {
+           origArgs.tail
+       }
 
        /** Put the command back together */
        val buffer : StringBuilder = new StringBuilder
@@ -370,7 +378,7 @@ object StartMetadataAPI {
                    if (modelTypeToBeAdded == "jpmml") {
 
                        val modelName : Option[String] = if (argMap.contains("name")) Some(argMap("name")) else None
-                       val modelVer : Option[String] = if (argMap.contains("version")) Some(argMap("version")) else None
+                       val modelVer : Option[String] = if (argMap.contains("modelversion")) Some(argMap("version")) else None
                        val msgName : Option[String] = if (argMap.contains("message")) Some(argMap("message")) else None
                        val msgVer : Option[String] = if (argMap.contains("messageversion")) Some(argMap("messageversion")) else Some("-1")
                        val pmmlSrc : Option[String] = if (argMap.contains("pmml")) Some(argMap("pmml")) else None
