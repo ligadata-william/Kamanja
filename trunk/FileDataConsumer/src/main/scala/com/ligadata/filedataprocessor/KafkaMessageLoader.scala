@@ -3,7 +3,9 @@ package com.ligadata.filedataprocessor
 import java.io.{IOException, File, PrintWriter}
 import java.nio.file.StandardCopyOption._
 import java.nio.file.{Paths, Files}
+import java.text.SimpleDateFormat
 import java.util.Properties
+import java.util.Date
 
 import com.ligadata.Exceptions._
 import com.ligadata.KamanjaBase._
@@ -21,9 +23,11 @@ import org.apache.log4j.Logger
  */
 class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutable.Map[String, String]) {
   var fileBeingProcessing: String = ""
+  var numberOfMessagesProcessedInFile: Int = 0
   var lastOffsetProcessed: Int = 0
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
+  var frmt: SimpleDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss")
 
   private var fileCache: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
 
@@ -52,12 +56,13 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
 
   def pushData(messages: Array[KafkaMessage]): Unit = {
     // First, if we are handling failover, then the messages could be of size 0.
-    logger.debug("SMART FILE CONSUMER **** processing "+messages.size+"messages")
-    println("SMART FILE CONSUMER **** processing "+messages.size+"messages")
+    logger.debug("SMART FILE CONSUMER **** processing chunk of "+messages.size+" messages")
+    println("SMART FILE CONSUMER **** processing chunk of "+messages.size+" messages")
     if (messages.size == 0) return
 
     // If we start processing a new file, then mark so in the zk.
     if (fileBeingProcessing.compareToIgnoreCase(messages(0).relatedFileName) != 0) {
+      numberOfMessagesProcessedInFile = 0
       fileBeingProcessing = messages(0).relatedFileName
       val zkFname = "{" + "\""+fileBeingProcessing+ "\":" + 0 + "}"
       zkc.setData.forPath(znodePath, zkFname.getBytes)
@@ -72,12 +77,12 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
           logger.debug(partIdx + " SMART FILE CONSUMER \nKafkaMessage:\n  File: " + msg.relatedFileName + ", offset:  " + msg.offsetInFile + " Message Partition ID is " +
             objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString + "\n " + new String(msg.msg))
           try {
-            //if ( msg.offsetInFile > 1) throw new Exception("FUKCYEAH")
             producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
               objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
               new String(msg.msg).getBytes("UTF8")))
 
-            println(new String(msg.msg) + " SUCCESS ")
+          //  println(partIdx+" SUCCESS!. " + new String(msg.msg))
+            numberOfMessagesProcessedInFile += 1
             val zkFname = "{" + "\"" + fileBeingProcessing + "\":" + msg.offsetInFile + "}"
             zkc.setData.forPath(znodePath, zkFname.getBytes)
           } catch {
@@ -93,6 +98,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
           // output the status message to the KAFAKA_STATUS_TOPIC
           writeStatusMsg(msg)
           closeOutFile(msg)
+          numberOfMessagesProcessedInFile = 0
         }
       } catch {
         case mfe: KVMessageFormatingException => {
@@ -137,8 +143,9 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    */
   private def writeStatusMsg(msg: KafkaMessage): Unit = {
     try {
+      var cdate: Date = new Date
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC, "").length > 0) {
-        var statusMsg = "processed " + msg.relatedFileName + " with " + msg.offsetInFile + " events"
+        var statusMsg = frmt.format(cdate) + "," + msg.relatedFileName + "," + numberOfMessagesProcessedInFile
         var statusPartitionId = "it does not matter"
         producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC),
           statusPartitionId.getBytes("UTF8"),
@@ -162,7 +169,8 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    * @param msg
    */
   private def writeErrorMsg (msg:KafkaMessage) : Unit = {
-    var errorMsg = (new String(msg.msg)) + " - " + msg.relatedFileName
+    var cdate: Date = new Date
+    var errorMsg = frmt.format(cdate) + "," + msg.relatedFileName +"," + (new String(msg.msg))
     logger.warn(partIdx + " SMART FILE CONSUMER: invalid message in file "+ msg.relatedFileName)
     println(partIdx + " SMART FILE CONSUMER: invalid message in file "+ msg.relatedFileName)
     producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC),

@@ -369,7 +369,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
       if (readlen > 0) {
         totalLen += readlen
         len += readlen
-        var BufferToChunk = new BufferToChunk(readlen, buffer.slice(0,maxlen), chunkNumber, fileName, offset)
+        var BufferToChunk = new BufferToChunk(readlen, buffer.slice(0,readlen), chunkNumber, fileName, offset)
+        println("SMART FILE CONSUMER " + partitionId + " Created a buffer of size " + readlen )
         enQBuffer(BufferToChunk)
         chunkNumber += 1
       }
@@ -401,6 +402,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     // Done with this file... mark is as closed
     try {
       markFileAsFinished(fileName)
+      if (bis != null) bis.close
+      bis = null
     } catch {
       case nsee: NoSuchElementException => {
         logger.warn("SMART FILE CONSUMER: partition " +partitionId + " Unable to detect file as being processed " + fileName)
