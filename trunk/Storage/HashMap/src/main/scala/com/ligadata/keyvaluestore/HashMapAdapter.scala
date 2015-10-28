@@ -121,33 +121,8 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   val InMemory = getOptionalField("inmemory", parsed_json, adapterSpecificConfig_json, "false").toString.trim.toBoolean
   val withTransactions = getOptionalField("withtransaction", parsed_json, adapterSpecificConfig_json, "false").toString.trim.toBoolean
 
-  var mapName = "default"
-  if (parsed_json.contains("mapName")) {
-    mapName = parsed_json.get("mapName").get.toString.trim
-  }
-
   logger.info("Datastore initialization complete")
 
-  // var db: DB = null
-
-  /*
-  if (InMemory == true) {
-    db = DBMaker.newMemoryDB().make()
-  } else {
-    val dir = new File(path);
-    if (!dir.exists()) {
-      // attempt to create the directory here
-      dir.mkdir();
-    }
-    db = DBMaker.newFileDB(new File(path + "/" + mapName + ".hdb"))
-      .closeOnJvmShutdown()
-      .mmapFileEnable()
-      .transactionDisable()
-      .commitFileSyncDisable()
-      .make()
-  }
-  */
-  
   private def createTable(tableName: String): Unit = {
     var db: DB = null
     if (InMemory == true) {
@@ -715,18 +690,11 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
 	logger.info("Committing transactions for db " + db._1)
 	db._2.commit();
       })
-      //db.commit() //persist changes into disk
       logger.info("Close all map objects")
       tablesMap.foreach(map => {
 	logger.info("Closing the map " + map._1)
         map._2.close();
       })
-      //logger.info("Close db ...")
-      //dbStoreMap.foreach(db => {
-      //logger.info("Closing the db " + db._1)
-      //db._2.close();
-      //})
-      //db.close()
     } catch {
       case e: NullPointerException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)

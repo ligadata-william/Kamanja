@@ -76,7 +76,6 @@ object KeyValueManager {
 
       // Default, Load it from Class
       case _ => {
-        /*
         val (className, jarName, dependencyJars) = getClassNameJarNameDepJarsFromJson(parsed_json)
         logger.debug("className:%s, jarName:%s, dependencyJars:%s".format(className, jarName, dependencyJars))
         if (className != null && className.size > 0 && jarName != null && jarName.size > 0) {
@@ -135,7 +134,7 @@ object KeyValueManager {
               val objinst = obj.instance
               if (objinst.isInstanceOf[StorageAdapterObj]) {
                 val storageAdapterObj = objinst.asInstanceOf[StorageAdapterObj]
-                return storageAdapterObj.CreateStorageAdapter(kvManagerLoader, datastoreConfig, tableName)
+                return storageAdapterObj.CreateStorageAdapter(kvManagerLoader, datastoreConfig)
               } else {
                 logger.error("Failed to instantiate Storage Adapter with configuration:" + adapterConfig)
                 return null
@@ -152,10 +151,6 @@ object KeyValueManager {
             return null
           }
         }
-*/
-        val errMsg = "Failed to instantiate Storage Adapter with configuration:" + adapterConfig
-        logger.error(errMsg)
-        throw new Exception(errMsg)
       }
     }
     val errMsg = "Failed to instantiate Storage Adapter with configuration:" + adapterConfig

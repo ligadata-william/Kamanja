@@ -55,6 +55,8 @@ class TreeMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
 
+  private var dbStoreMap: scala.collection.mutable.Map[String,DB] = new scala.collection.mutable.HashMap()
+
   private var tablesMap: scala.collection.mutable.Map[String,BTreeMap[Array[Byte], Array[Byte]]] = new scala.collection.mutable.HashMap()
 
   if (adapterConfig.size == 0) {
@@ -117,34 +119,28 @@ class TreeMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   val InMemory = getOptionalField("inmemory", parsed_json, adapterSpecificConfig_json, "false").toString.trim.toBoolean
   val withTransactions = getOptionalField("withtransaction", parsed_json, adapterSpecificConfig_json, "false").toString.trim.toBoolean
 
-  var mapName = "default"
-  if (parsed_json.contains("mapName")) {
-    mapName = parsed_json.get("mapName").get.toString.trim
-  }
-
-  var db: DB = null
-
-  if (InMemory == true) {
-    db = DBMaker.newMemoryDB().make()
-  } else {
-    val dir = new File(path);
-    if (!dir.exists()) {
-      // attempt to create the directory here
-      dir.mkdir();
-    }
-    db = DBMaker.newFileDB(new File(path + "/" + mapName + ".db"))
-      .closeOnJvmShutdown()
-      .mmapFileEnable()
-      .transactionDisable()
-      .commitFileSyncDisable()
-      .make()
-  }
-
   private def createTable(tableName: String): Unit = {
-    var map = db.createTreeMap(tableName)
-      .comparator(Fun.BYTE_ARRAY_COMPARATOR)
-      .makeOrGet[Array[Byte], Array[Byte]]();
-    tablesMap.put(tableName,map)
+    var db: DB = null
+    if (InMemory == true) {
+      db = DBMaker.newMemoryDB().make()
+    } else {
+      val dir = new File(path);
+      if (!dir.exists()) {
+	// attempt to create the directory here
+	dir.mkdir();
+      }
+      db = DBMaker.newFileDB(new File(path + "/" + tableName + ".db"))
+	.closeOnJvmShutdown()
+	.mmapFileEnable()
+	.transactionDisable()
+	.commitFileSyncDisable()
+	.make()
+      dbStoreMap.put(tableName,db)
+      var map = db.createTreeMap(tableName)
+	.comparator(Fun.BYTE_ARRAY_COMPARATOR)
+	.makeOrGet[Array[Byte], Array[Byte]]();
+      tablesMap.put(tableName,map)
+    }
   }
 
   @throws(classOf[FileNotFoundException])
@@ -162,9 +158,9 @@ class TreeMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def dropTable(tableName: String): Unit = {
-    var f = new File(path + "/" + mapName + ".hdb")
+    var f = new File(path + "/" + tableName + ".db")
     deleteFile(f)
-    f = new File(path + "/" + mapName + ".hdb.p")
+    f = new File(path + "/" + tableName + ".db.p")
     deleteFile(f)
   }
 
@@ -244,8 +240,12 @@ class TreeMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def Commit: Unit = {
-    if (withTransactions)
-      db.commit() //persist changes into disk
+    //if (withTransactions)
+    dbStoreMap.foreach(db => {
+      logger.debug("Committing transactions for db " + db._1)
+      db._2.commit();
+    })
+    //db.commit() //persist changes into disk
   }
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
@@ -682,14 +682,15 @@ class TreeMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     logger.info("Trying to shutdown treemap db")
     try {
       logger.info("Commit any outstanding transactions")
-      db.commit() //persist changes into disk
-      //logger.info("Close all map objects")
-      //tablesMap.foreach(map => {
-      //logger.info("Closing the map " + map._1)
-      //  map._2.close();
-      //})
-      logger.info("Close db ...")
-      db.close()
+      dbStoreMap.foreach(db => {
+	logger.info("Committing transactions for db " + db._1)
+	db._2.commit();
+      })
+      logger.info("Close all map objects")
+      tablesMap.foreach(map => {
+	logger.info("Closing the map " + map._1)
+        map._2.close();
+      })
     } catch {
       case e: NullPointerException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -731,7 +732,9 @@ class TreeMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
 
   private def DropContainer(containerName: String): Unit = lock.synchronized {
     try {
-      TruncateContainer(containerName)
+      CheckTableExists(containerName)
+      var tableName = toFullTableName(containerName)
+      dropTable(tableName)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
