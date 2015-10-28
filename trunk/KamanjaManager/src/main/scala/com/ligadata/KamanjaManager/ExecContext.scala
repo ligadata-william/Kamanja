@@ -47,7 +47,20 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey)
   var cntr: Long = 0
+  var previousLoader: com.ligadata.Utils.KamanjaClassLoader = null
   def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit = {
+    try {
+      val curLoader = KamanjaConfiguration.metadataLoader.loader // Protecting from changing it between below statements
+      if (curLoader != null && previousLoader != curLoader) { // Checking for every messages and setting when changed. We can set for every message, but the problem is it tries to do SecurityManager check every time.
+        Thread.currentThread().setContextClassLoader(curLoader);
+        previousLoader = curLoader
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to setContextClassLoader. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+      }
+    }
+
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
