@@ -367,13 +367,5 @@ class HashMapAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfter
     if( logFile != null ){
       deleteFile(logFile)
     }
-    logFile = new java.io.File(dataDirectory + "/default.hdb.p")
-    if( logFile != null ){
-      deleteFile(logFile)
-    }
-    logFile = new java.io.File(dataDirectory + "/default.hdb")
-    if( logFile != null ){
-      deleteFile(logFile)
-    }
   }
 }

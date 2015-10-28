@@ -66,7 +66,22 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 	  ds.TruncateContainer(containerList)
 	}
 	case _ => {
-	  MetadataAPIImpl.TruncateDbStore
+	  logger.info("TruncateDbStore is not supported for database " + db)
+	}
+      }
+  }
+
+  private def DropDbStore = {
+      val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+      assert(null != db)
+      db match {
+	case "sqlserver" | "mysql" | "hbase" | "cassandra" | "hashmap" | "treemap" => {
+	  var ds = MetadataAPIImpl.GetMainDS
+	  var containerList:Array[String] = Array("config_objects","jar_store","model_config_objects","metadata_objects","transaction_id")
+	  ds.DropContainer(containerList)
+	}
+	case _ => {
+	  logger.info("DropDbStore is not supported for database " + db)
 	}
       }
   }
@@ -1050,27 +1065,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
     assert(null != db)
     db match {
-      case "hashmap" => {
-	val loc = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
-	logFile = new java.io.File(loc + "/default.hdb.p")
-	if( logFile != null ){
-	  TestUtils.deleteFile(logFile)
-	}
-	logFile = new java.io.File(loc + "/default.hdb")
-	if( logFile != null ){
-	  TestUtils.deleteFile(logFile)
-	}
-      }
-      case "treemap" => {
-	val loc = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
-	logFile = new java.io.File(loc + "/default.db.p")
-	if( logFile != null ){
-	  TestUtils.deleteFile(logFile)
-	}
-	logFile = new java.io.File(loc + "/default.db")
-	if( logFile != null ){
-	  TestUtils.deleteFile(logFile)
-	}
+      case "hashmap" | "treemap" => {
+	DropDbStore
       }
       case _ => {
 	logger.info("cleanup...")

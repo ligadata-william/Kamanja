@@ -52,10 +52,14 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
+
+  logger.setLevel(Level.DEBUG)
+
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
 
   private var tablesMap: scala.collection.mutable.Map[String,HTreeMap[Array[Byte], Array[Byte]]] = new scala.collection.mutable.HashMap()
+  private var dbStoreMap: scala.collection.mutable.Map[String,DB] = new scala.collection.mutable.HashMap()
 
   if (adapterConfig.size == 0) {
     throw new Exception("Not found valid HashMap Configuration.")
@@ -86,13 +90,13 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       try {
         val json = parse(adapterSpecificStr)
         if (json == null || json.values == null) {
-          logger.error("Failed to parse Cassandra Adapter Specific JSON configuration string:" + adapterSpecificStr)
-          throw new Exception("Failed to parse Cassandra Adapter Specific JSON configuration string:" + adapterSpecificStr)
+          logger.error("Failed to parse HashMap Adapter Specific JSON configuration string:" + adapterSpecificStr)
+          throw new Exception("Failed to parse HashMap Adapter Specific JSON configuration string:" + adapterSpecificStr)
         }
         adapterSpecificConfig_json = json.values.asInstanceOf[Map[String, Any]]
       } catch {
         case e: Exception => {
-          logger.error("Failed to parse Cassandra Adapter Specific JSON configuration string:%s. Reason:%s Message:%s".format(adapterSpecificStr, e.getCause, e.getMessage))
+          logger.error("Failed to parse HashMap Adapter Specific JSON configuration string:%s. Reason:%s Message:%s".format(adapterSpecificStr, e.getCause, e.getMessage))
           throw e
         }
       }
@@ -122,8 +126,11 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     mapName = parsed_json.get("mapName").get.toString.trim
   }
 
-  var db: DB = null
+  logger.info("Datastore initialization complete")
 
+  // var db: DB = null
+
+  /*
   if (InMemory == true) {
     db = DBMaker.newMemoryDB().make()
   } else {
@@ -139,12 +146,30 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       .commitFileSyncDisable()
       .make()
   }
-
+  */
+  
   private def createTable(tableName: String): Unit = {
-    var map = db.createHashMap(tableName)
-      .hasher(Hasher.BYTE_ARRAY)
-      .makeOrGet[Array[Byte], Array[Byte]]()
-    tablesMap.put(tableName,map)
+    var db: DB = null
+    if (InMemory == true) {
+      db = DBMaker.newMemoryDB().make()
+    } else {
+      val dir = new File(path);
+      if (!dir.exists()) {
+	// attempt to create the directory here
+	dir.mkdir();
+      }
+      db = DBMaker.newFileDB(new File(path + "/" + tableName + ".hdb"))
+	.closeOnJvmShutdown()
+	.mmapFileEnable()
+	.transactionDisable()
+	.commitFileSyncDisable()
+	.make()
+      dbStoreMap.put(tableName,db)
+      var map = db.createHashMap(tableName)
+	.hasher(Hasher.BYTE_ARRAY)
+	.makeOrGet[Array[Byte], Array[Byte]]()
+      tablesMap.put(tableName,map)
+    }
   }
 
   @throws(classOf[FileNotFoundException])
@@ -162,9 +187,9 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def dropTable(tableName: String): Unit = {
-    var f = new File(path + "/" + mapName + ".hdb")
+    var f = new File(path + "/" + tableName + ".hdb")
     deleteFile(f)
-    f = new File(path + "/" + mapName + ".hdb.p")
+    f = new File(path + "/" + tableName + ".hdb.p")
     deleteFile(f)
   }
 
@@ -244,8 +269,12 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def Commit: Unit = {
-    if (withTransactions)
-      db.commit() //persist changes into disk
+    //if (withTransactions)
+    dbStoreMap.foreach(db => {
+      logger.debug("Committing transactions for db " + db._1)
+      db._2.commit();
+    })
+    //db.commit() //persist changes into disk
   }
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
@@ -682,14 +711,22 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     logger.info("Trying to shutdown hashmap db")
     try {
       logger.info("Commit any outstanding transactions")
-      db.commit() //persist changes into disk
-      //logger.info("Close all map objects")
-      //tablesMap.foreach(map => {
-      //logger.info("Closing the map " + map._1)
-      //  map._2.close();
+      dbStoreMap.foreach(db => {
+	logger.info("Committing transactions for db " + db._1)
+	db._2.commit();
+      })
+      //db.commit() //persist changes into disk
+      logger.info("Close all map objects")
+      tablesMap.foreach(map => {
+	logger.info("Closing the map " + map._1)
+        map._2.close();
+      })
+      //logger.info("Close db ...")
+      //dbStoreMap.foreach(db => {
+      //logger.info("Closing the db " + db._1)
+      //db._2.close();
       //})
-      logger.info("Close db ...")
-      db.close()
+      //db.close()
     } catch {
       case e: NullPointerException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -731,7 +768,9 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
 
   private def DropContainer(containerName: String): Unit = lock.synchronized {
     try {
-      TruncateContainer(containerName)
+      CheckTableExists(containerName)
+      var tableName = toFullTableName(containerName)
+      dropTable(tableName)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
