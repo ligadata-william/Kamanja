@@ -106,18 +106,15 @@ class HashMapAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfter
     logger.info("----------------------------------------------------")
   }
 
-  @throws(classOf[FileNotFoundException])
-  def deleteFile(path:File):Boolean = {
-    if(!path.exists()){
-      throw new FileNotFoundException(path.getAbsolutePath)
-    }
-    var ret = true
-    if (path.isDirectory){
-      for(f <- path.listFiles) {
-        ret = ret && deleteFile(f)
+  def deleteFile(path:File):Unit = {
+    if(path.exists()){
+      if (path.isDirectory){
+	for(f <- path.listFiles) {
+          deleteFile(f)
+	}
       }
+      path.delete()
     }
-    return ret && path.delete()
   }
 
   describe("Unit Tests for all hashmapadapter operations") {

@@ -53,7 +53,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
 
-  logger.setLevel(Level.DEBUG)
+  //logger.setLevel(Level.DEBUG)
 
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()

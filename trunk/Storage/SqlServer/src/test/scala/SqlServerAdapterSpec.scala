@@ -40,6 +40,7 @@ import com.ligadata.keyvaluestore.SqlServerAdapter
 
 case class Customer(name:String, address: String, homePhone: String)
 
+@Ignore
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -102,18 +103,15 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     logger.info("----------------------------------------------------")
   }
 
-  @throws(classOf[FileNotFoundException])
-  def deleteFile(path:File):Boolean = {
-    if(!path.exists()){
-      throw new FileNotFoundException(path.getAbsolutePath)
-    }
-    var ret = true
-    if (path.isDirectory){
-      for(f <- path.listFiles) {
-        ret = ret && deleteFile(f)
+  def deleteFile(path:File):Unit = {
+    if(path.exists()){
+      if (path.isDirectory){
+	for(f <- path.listFiles) {
+          deleteFile(f)
+	}
       }
+      path.delete()
     }
-    return ret && path.delete()
   }
 
   describe("Unit Tests for all sqlserveradapter operations") {
