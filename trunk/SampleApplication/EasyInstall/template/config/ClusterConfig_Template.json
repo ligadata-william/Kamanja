@@ -4,7 +4,7 @@
       "ClusterId": "ligadata1",
       "DataStore": {"StoreType": "hashmap","SchemaName": "testdata","Location": "{InstallDirectory}/storage"},
       "StatusInfo": {
-        "ClassName": "com.ligadata.keyvaluestore.KeyValueHashMap$",
+        "ClassName": "com.ligadata.keyvaluestore.HashMapAdapter$",
         "JarName": "hashmap_2.10-0.1.0.jar",
         "DependencyJars": [
           "exceptions_2.10-1.0.jar",

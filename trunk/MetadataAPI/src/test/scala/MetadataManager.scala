@@ -97,7 +97,7 @@ class MetadataManager(var config: MetadataAPIProperties) {
       logger.error("Failed to parse the entries in " + ConfigDefaults.dataStorePropertiesFile)
       return
     }
-    // Loop through and set the rest of the values.
+    // Read datastore properties from src/test/resources/metadata/config/DataStore.properties
     val eProps1 = prop.propertyNames();
     while (eProps1.hasMoreElements()) {
       val key = eProps1.nextElement().asInstanceOf[String]
@@ -117,13 +117,14 @@ class MetadataManager(var config: MetadataAPIProperties) {
     md.metadataAPIConfig.setProperty("DATABASE_SCHEMA", config.databaseSchema)
     var dsJson:String = null
 
-    if( config.database.equalsIgnoreCase("sqlserver") ){
+    
+    if( config.database.equalsIgnoreCase("sqlserver") || config.database.equalsIgnoreCase("mysql") ){
       md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.dataDirectory)
       dsJson = md.metadataAPIConfig.getProperty("metadatadatastore")
       logger.info("metadataDataStore => " + dsJson)
     }
     else{
-      if( config.database.equalsIgnoreCase("hashmap") ){
+      if( config.database.equalsIgnoreCase("hashmap") || config.database.equalsIgnoreCase("treemap") ){
 	md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.dataDirectory)
 	dsJson="{\"StoreType\": \"" + config.database + "\",\"SchemaName\": \"" + config.databaseSchema + "\",\"Location\": \"" + config.dataDirectory + "\"}"
       }
@@ -160,7 +161,10 @@ class MetadataManager(var config: MetadataAPIProperties) {
       case "hashmap" => {
 	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditHashMapAdapter")
       }
-      case "sqlserver" => {
+      case "treemap" => {
+	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditHashMapAdapter")
+      }
+      case "sqlserver" | "mysql" => {
 	md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditCassandraAdapter")
       }
       case _ => {

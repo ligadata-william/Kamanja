@@ -52,18 +52,15 @@ object TestUtils {
     }
   }
 
-  @throws(classOf[FileNotFoundException])
-  def deleteFile(path:File):Boolean = {
-    if(!path.exists()){
-      throw new FileNotFoundException(path.getAbsolutePath)
-    }
-    var ret = true
-    if (path.isDirectory){
-      for(f <- path.listFiles) {
-        ret = ret && deleteFile(f)
+  def deleteFile(path:File):Unit = {
+    if(path.exists()){
+      if (path.isDirectory){
+	for(f <- path.listFiles) {
+          deleteFile(f)
+	}
       }
+      logger.debug("AUTOMATION-TESTUTILS: Deleting file '" + path + "'")
+      path.delete()
     }
-    logger.debug("AUTOMATION-TESTUTILS: Deleting file '" + path + "'")
-    return ret && path.delete()
   }
 }

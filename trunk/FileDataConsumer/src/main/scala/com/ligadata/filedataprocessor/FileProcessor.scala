@@ -335,6 +335,9 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     var fileName = file.name
     var offset = file.offset
 
+    // record the file offset for the last message to be able to tell.
+    setOffsetForFile(fileName, 0)
+
     // Start the worker bees... should only be started the first time..
     if (workerBees == null) {
       workerBees = Executors.newFixedThreadPool(NUMBER_OF_BEES)
@@ -402,9 +405,11 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     try {
       markFileAsFinished(fileName)
     } catch {
-      case nsee: NoSuchElementException => {
+      case nsee: java.util.NoSuchElementException => {
         logger.warn("SMART FILE CONSUMER: partition " +partitionId + " Unable to detect file as being processed " + fileName)
         logger.warn("SMART FILE CONSUMER: Check to make sure the input directory does not still contain this file")
+        val stackTrace = StackTrace.ThrowableTraceString(nsee)
+        logger.warn(stackTrace)
       }
     }
 
@@ -474,6 +479,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
             // If the the new length of the file is the same as a second ago... this file is done, so move it
             // onto the ready to process q.  Else update the latest length
+
             if (fileTuple._2 == d.length) {
               if (d.length > 0) {
                 logger.info("SMART_FILE_CONSUMER partition "+partitionId + "  File READY TO PROCESS " + d.toString)

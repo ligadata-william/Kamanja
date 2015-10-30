@@ -1,16 +1,10 @@
-name := "Cassandra"
+name := "MySql"
 
 version := "0.1.0"
 
 scalaVersion := "2.10.4"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
-
-libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-parent" % "2.1.2"
-
-libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.2"
-
-libraryDependencies += "org.apache.cassandra" % "cassandra-thrift" % "2.0.3"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.0" % "test"
 
@@ -22,4 +16,4 @@ libraryDependencies += "log4j" % "log4j" % "1.2.17"
 
 libraryDependencies += "commons-dbcp" % "commons-dbcp" % "1.4"
 
-libraryDependencies += "org.apache.thrift" % "libthrift" % "0.9.2"
+libraryDependencies += "mysql" % "mysql-connector-java" % "5.1.36"

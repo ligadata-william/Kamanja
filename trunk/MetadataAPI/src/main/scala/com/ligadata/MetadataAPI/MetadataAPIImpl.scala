@@ -1178,7 +1178,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def PutArrayOfBytesToJar(ba: Array[Byte], jarName: String) = {
-    logger.debug("Downloading the jar contents into the file " + jarName)
+    logger.info("Downloading the jar contents into the file " + jarName)
     try {
       val iFile = new File(jarName)
       val bos = new BufferedOutputStream(new FileOutputStream(iFile));
@@ -1408,6 +1408,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       var allJars = GetDependantJars(obj)
       logger.debug("Found " + allJars.length + " dependant jars. Jars:" + allJars.mkString(","))
+      logger.info("Found " + allJars.length + " dependant jars. It make take several minutes first time to download all of these jars:" + allJars.mkString(","))
       if (allJars.length > 0) {
         val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
         val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
@@ -1438,6 +1439,9 @@ object MetadataAPIImpl extends MetadataAPI {
               val jarName = dirPath + "/" + jar
               PutArrayOfBytesToJar(ba, jarName)
             }
+	    else{
+	      logger.info("The jar " + curJar + " was already downloaded... ")
+	    }
           } catch {
             case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -3768,7 +3772,7 @@ object MetadataAPIImpl extends MetadataAPI {
           processedContainersSet += storeInfo._1
           storeInfo._2.getKeys(storeInfo._1, { (key: Key) =>
             {
-              val strKey = key.bucketKey(0)
+              val strKey = key.bucketKey.mkString(".")
               val i = strKey.indexOf(".")
               val objType = strKey.substring(0, i)
               val typeName = strKey.substring(i + 1)
@@ -3835,8 +3839,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val storeInfo = tableStoreMap("config_objects")
       storeInfo._2.get(storeInfo._1, { (k: Key, v: Value) =>
         {
-          //logger.debug("key => " + KeyAsStr(key))
-          val strKey = k.bucketKey(0)
+          val strKey = k.bucketKey.mkString(".")
           val i = strKey.indexOf(".")
           val objType = strKey.substring(0, i)
           val typeName = strKey.substring(i + 1)
@@ -3895,7 +3898,7 @@ object MetadataAPIImpl extends MetadataAPI {
       {
         processed += 1
         val conf = serializer.DeserializeObjectFromByteArray(v.serializedInfo).asInstanceOf[Map[String, List[String]]]
-        MdMgr.GetMdMgr.AddModelConfig(k.bucketKey(0), conf)
+        MdMgr.GetMdMgr.AddModelConfig(k.bucketKey.mkString("."), conf)
       }
     })
 
