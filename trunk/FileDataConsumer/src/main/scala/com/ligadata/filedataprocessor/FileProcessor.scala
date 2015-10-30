@@ -460,7 +460,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
 
   /**
-   *
+   *  Look at the files on the DEFERRED QUEUE... if we see that it stops growing, then move the file onto the READY
+   *  to process QUEUE.
    */
   private def monitorBufferingFiles: Unit = {
     // This guys will keep track of when to exgernalize a WARNING Message.  Since this loop really runs every second,
