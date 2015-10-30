@@ -848,9 +848,88 @@ class ConstantMethodGenerator {
             }
          }
        })
-      
-       
 	 """
+  }
+
+ //Handling the KeyValue Data with Native name for Fixed Messages
+
+ def getFixedMsgNativeKeyValueData(fixedKeyValueData: String) : String  = {
+
+    var retFixedKeyValueData: String = ""
+
+    if (fixedKeyValueData != null && fixedKeyValueData.trim() != "") {
+
+      retFixedKeyValueData = """
+    override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = {
+
+    var keyValues: scala.collection.mutable.Map[String, (String, Any)] = scala.collection.mutable.Map[String, (String, Any)]()
+
+    try {
+         """ + fixedKeyValueData + """  
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:" + stackTrace)
+        throw e
+      }
+    }
+    return keyValues.toMap
+  }
+    """
+
+    } else {
+      retFixedKeyValueData = """
+    override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = { 
+   
+    	return null
+    }
+    """
+
+    }
+    retFixedKeyValueData
+  }
+
+  //Handling the KeyValue Data with Native name for Mapped Messages
+
+  def getMappedMsgNativeKeyValueData() = {
+
+    """
+    override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = {
+	  var keyValues: scala.collection.mutable.Map[String, (String, Any)] = scala.collection.mutable.Map[String, (String, Any)]()
+	  try {
+      	if(fields != null) {
+	      	fields.foreach(field => {
+	        	if (nativeKeyMap != null && nativeKeyMap.contains(field._1))
+	          		keyValues(field._1) = (nativeKeyMap(field._1), field._2._2);
+	  			else
+	  				keyValues(field._1) = (field._1, field._2._2);
+	      	})
+	  	}
+	  } catch {
+      	case e: Exception => {
+        	val stackTrace = StackTrace.ThrowableTraceString(e)
+        	LOG.debug("StackTrace:" + stackTrace)
+        	throw e
+      	}
+	  }
+	  return keyValues.toMap
+	}
+"""
+  }
+  
+  //NativeKey Variable in Message
+  
+  def getNativeKeyMapVar(nativeKeyMap: String ) = {
+    var nativeKeymap : String = ""
+    
+    if(nativeKeyMap != null && nativeKeyMap.trim() != "" && nativeKeyMap.size > 0)
+    	nativeKeymap = nativeKeyMap.substring(0, nativeKeyMap.length()-2)
+    
+    """
+    var nativeKeyMap  =  scala.collection.mutable.Map[String, String]("""+nativeKeymap+""")
+    """    
+    
+    
   }
 
 }
