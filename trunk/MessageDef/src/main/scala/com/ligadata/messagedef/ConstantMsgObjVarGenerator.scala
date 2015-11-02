@@ -944,6 +944,16 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
     computeTmPartition
   }
+  
+  def getTimePartition(msg: Message) : String = {
+    """
+    def getTimePartition() : """+msg.Name +""" = {
+		timePartitionData = ComputeTimePartitionData
+		 return this;
+	}
+    
+    """    
+  }
 
   def transactionIdFuncs(message: Message): String = {
 
