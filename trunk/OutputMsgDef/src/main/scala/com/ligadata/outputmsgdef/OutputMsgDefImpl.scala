@@ -237,7 +237,7 @@ object OutputMsgDefImpl {
       val name = partionKeyParts(namespaceWords)
 
       val (childs, typeOf) = getModelMsgContainerChilds(containerDef, messageDef, modelDef)
-      typeof = typeOf
+      typeof = typeOf.toLowerCase()
       log.debug("namespace:%s, name:%s, typeof:%s, namespaceWords:%d".format(namespace, name, typeof, namespaceWords))
 
       for (i <- (namespaceWords + 1) until partionKeyParts.size) {
@@ -265,7 +265,7 @@ object OutputMsgDefImpl {
           fieldsInfo += ((fieldName, fieldType, tType, tTypeType))
         }
       }
-      fullname = namespace + "." + name
+      fullname = (namespace + "." + name).toLowerCase()
       log.debug("fullname:%s".format(fullname))
 
     } catch {
