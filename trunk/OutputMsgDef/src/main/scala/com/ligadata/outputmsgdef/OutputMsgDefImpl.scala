@@ -104,7 +104,7 @@ object OutputMsgDefImpl {
       //var Fields : Map[(String, String), Set[(Array[(String, String)], String)]] = _  // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields(Array[(String, String)](("inpatient_claims", "System.arrayOfInpatientClaims"), ("claim_id", "System.Long"))) & corresponding Default Value (if not present NULL)
       var Fields: scala.collection.mutable.Map[(String, String), scala.collection.mutable.Set[(Array[(String, String)], String)]] = scala.collection.mutable.Map()
       var fieldscheck: Set[(String, String)] = Set[(String, String)]()
-      var partionFieldKeys = Array[(String, Array[(String, String)], String, String)]()
+      var partionFieldKeys = Array[(String, Array[(String, String, String, String)], String, String)]()
 
       if (paritionKeys != null && paritionKeys.size > 0) {
         paritionKeys.foreach(partionkey => {
@@ -200,9 +200,9 @@ object OutputMsgDefImpl {
     finds.map(m => (m.group(1).toLowerCase.trim, m.start, m.end)).toArray // Making sure we take only the model/messag/container full qualified name withoyut ${ and }. And for start & end offsets we take full matched string with ${ and } 
   }
 
-  private def getFieldsInfo(fullpartionkey: String): (String, Array[(String, String)], String, String) = {
-    var fieldsInfo: ArrayBuffer[(String, String)] = new ArrayBuffer[(String, String)]()
-    var partitionKeys = Array[(String, Array[(String, String)], String, String)]()
+  private def getFieldsInfo(fullpartionkey: String): (String, Array[(String, String, String, String)], String, String) = {
+    var fieldsInfo: ArrayBuffer[(String, String, String, String)] = new ArrayBuffer[(String, String, String, String)]()
+    var partitionKeys = Array[(String, Array[(String, String, String, String)], String, String)]()
     var fullname: String = ""
     var typeof: String = ""
     try {
@@ -249,7 +249,12 @@ object OutputMsgDefImpl {
         if (i == (namespaceWords + 1)) {
           val fld = partionKeyParts(i).toString().toLowerCase()
           val fldType = getFieldTypeFromMsgCtr(childs, fld)
-          fieldsInfo += ((fld, fldType))
+
+          val typ = MdMgr.GetMdMgr.Type(fldType, -1, true)
+          val tType = if (typ == None) "" else typ.get.tType.toString().toLowerCase()
+          val tTypeType = if (typ == None) "" else typ.get.tTypeType.toString().toLowerCase()
+
+          fieldsInfo += ((fld, fldType, tType, tTypeType))
 
         } else if (i > (namespaceWords + 1)) {
           fieldsInfo.foreach(f => log.info("====fieldInfos========" + f._1 + "======" + f._2))
@@ -257,7 +262,12 @@ object OutputMsgDefImpl {
           val parentType = parent._2.toLowerCase()
           val fieldName = partionKeyParts(i).toString().toLowerCase()
           val fieldType = getFieldType(fieldName, parentType)
-          fieldsInfo += ((fieldName, fieldType))
+
+          val typ = MdMgr.GetMdMgr.Type(fieldType, -1, true)
+          val tType = if (typ == None) "" else typ.get.tType.toString().toLowerCase()
+          val tTypeType = if (typ == None) "" else typ.get.tTypeType.toString().toLowerCase()
+
+          fieldsInfo += ((fieldName, fieldType, tType, tTypeType))
         }
       }
       fullname = namespace + "." + name

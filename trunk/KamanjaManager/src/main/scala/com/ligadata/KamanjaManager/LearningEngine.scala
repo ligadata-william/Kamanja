@@ -36,6 +36,7 @@ import com.ligadata.Exceptions.StackTrace
 class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey) {
   val LOG = Logger.getLogger(getClass);
   var cntr: Long = 0
+  var outputGen = new OutputMsgGenerator()
 
   private def RunAllModels(transId: Long, inputData: Array[Byte], finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
     var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
@@ -159,7 +160,6 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           if (outputMsgs != None && outputMsgs != null && outputMsgs.get.size > 0) {
             LOG.info("msg " + msg.FullName)
             LOG.info(" outputMsgs.size" + outputMsgs.get.size)
-            var outputGen = new OutputMsgGenerator()
             val resultedoutput = outputGen.generateOutputMsg(msg, resMap, outputMsgs.get.toArray)
             returnOutput ++= resultedoutput.map(resout => (resout._1, resout._2.mkString(","), resout._3))
           } else {
