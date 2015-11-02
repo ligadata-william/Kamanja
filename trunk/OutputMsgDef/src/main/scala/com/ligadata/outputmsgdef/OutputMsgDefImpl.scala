@@ -108,7 +108,9 @@ object OutputMsgDefImpl {
 
       if (paritionKeys != null && paritionKeys.size > 0) {
         paritionKeys.foreach(partionkey => {
-          val (fullname, fieldsInfo, typeOf, fullpartionkey) = getFieldsInfo(partionkey)
+          val tmpPartKey1 = partionkey.trim
+          val tmpPartKey2 = tmpPartKey1.substring(2, tmpPartKey1.length() - 1) // Just full qualified name of the model/message/container
+          val (fullname, fieldsInfo, typeOf, fullpartionkey) = getFieldsInfo(tmpPartKey2)
           log.debug("fullname:%s, fieldsInfo:%s, typeOf:%s, fullpartionkey:%s".format(fullname, fieldsInfo.mkString("~~"), typeOf, fullpartionkey))
           partionFieldKeys = partionFieldKeys :+ (fullname, fieldsInfo.toArray, typeOf, fullpartionkey)
           var defaultValue: String = null
@@ -136,17 +138,17 @@ object OutputMsgDefImpl {
         dataDeclaration.foreach(dd => { dd.foreach(d => { dataDeclrtion(d._1.toLowerCase()) = d._2 }) })
       }
 
-      val allOutputFormatFlds = extractOutputFormat(outputFormat)
-      // var outputFormatFields = Map[(String, Array[(String, String)], String, String)]()
+      val allOutputFormatFieldsAndStartEndOffsets = extractStringStartEndOffsetsFromOutputFormat(outputFormat)
 
-      if (allOutputFormatFlds != null && allOutputFormatFlds.size > 0) {
-        allOutputFormatFlds.foreach(outputFormatFld => {
-          val outputFmtFld = outputFormatFld.substring(2, outputFormatFld.length() - 1).toLowerCase()
+      if (allOutputFormatFieldsAndStartEndOffsets != null && allOutputFormatFieldsAndStartEndOffsets.size > 0) {
+        allOutputFormatFieldsAndStartEndOffsets.foreach(outputFormatFldStartEndOffset => {
+          val outputFmtFld = outputFormatFldStartEndOffset._1
           var defaultValue: String = null
           if (dfaults.contains(outputFmtFld)) {
             defaultValue = dfaults(outputFmtFld)
           }
-          val (fullname, fieldsInfo, typeOf, fullFieldkey) = getFieldsInfo(outputFormatFld)
+
+          val (fullname, fieldsInfo, typeOf, fullFieldkey) = getFieldsInfo(outputFmtFld) // Just take full qualified name of the model/message/container
 
           var fldInfo: Array[(String, String)] = fieldsInfo.asInstanceOf[Array[(String, String)]]
           var value: Array[(String, String)] = Array[(String, String)]()
@@ -163,8 +165,21 @@ object OutputMsgDefImpl {
         })
       }
 
-      outputMsgDef = MdMgr.GetMdMgr.MakeOutputMsg(nameSpace.toLowerCase(), name.toLowerCase(), version, outputQ, partionFieldKeys, dfaults, dataDeclrtion, Fields, outputFormat)
-
+      // Creating the list of Constant String & matched pattern tuples
+      var formatSplittedArray = ArrayBuffer[(String, String)]()
+      var nextStrStartIdx = 0
+      if (allOutputFormatFieldsAndStartEndOffsets != null && allOutputFormatFieldsAndStartEndOffsets.size > 0) {
+        allOutputFormatFieldsAndStartEndOffsets.foreach(outputFormatFldStartEndOffset => {
+          val constStr = outputFormat.substring(nextStrStartIdx, outputFormatFldStartEndOffset._2)
+          val matchedPattern = outputFormatFldStartEndOffset._1
+          nextStrStartIdx = outputFormatFldStartEndOffset._3
+          formatSplittedArray += ((constStr, matchedPattern))
+        })
+      }
+      // Last constant string, if we still have any 
+      if (nextStrStartIdx < outputFormat.size)
+        formatSplittedArray += ((outputFormat.substring(nextStrStartIdx), ""))
+      outputMsgDef = MdMgr.GetMdMgr.MakeOutputMsg(nameSpace.toLowerCase(), name.toLowerCase(), version, outputQ, partionFieldKeys, dfaults, dataDeclrtion, Fields, outputFormat, formatSplittedArray.toArray)
     } catch {
       case e: ObjectNolongerExistsException => {
         log.error(s"Either Model or Message or Container do not exists in Metadata. Error: " + e.getMessage)
@@ -179,24 +194,20 @@ object OutputMsgDefImpl {
     outputMsgDef
   }
 
-  private def extractOutputFormat(outputformat: String): Array[String] = {
+  private def extractStringStartEndOffsetsFromOutputFormat(outputformat: String): Array[(String, Int, Int)] = {
     val extractor = """\$\{([^}]+)\}""".r
-    val finds = extractor.findAllIn(outputformat)
-    val allOutputFnds = finds.map(fld => fld.toLowerCase()).toArray
-    allOutputFnds
+    val finds = extractor.findAllIn(outputformat).matchData
+    finds.map(m => (m.group(1).toLowerCase.trim, m.start, m.end)).toArray // Making sure we take only the model/messag/container full qualified name withoyut ${ and }. And for start & end offsets we take full matched string with ${ and } 
   }
 
-  private def getFieldsInfo(Fieldkey: String): (String, Array[(String, String)], String, String) = {
+  private def getFieldsInfo(fullpartionkey: String): (String, Array[(String, String)], String, String) = {
     var fieldsInfo: ArrayBuffer[(String, String)] = new ArrayBuffer[(String, String)]()
     var partitionKeys = Array[(String, Array[(String, String)], String, String)]()
     var fullname: String = ""
-    var fullpartionkey: String = ""
     var typeof: String = ""
     try {
-      if (Fieldkey == null || Fieldkey.trim() == "")
+      if (fullpartionkey == null || fullpartionkey.trim() == "")
         throw new Exception("Field do not exists")
-
-      fullpartionkey = Fieldkey.substring(2, Fieldkey.length() - 1)
 
       val partionKeyParts = fullpartionkey.split("\\.")
       if (partionKeyParts.size < 3)

@@ -55,7 +55,7 @@ class OutputMsgGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("\nStackTrace:"+stackTrace)
+        log.error("\nStackTrace:" + stackTrace)
         throw e
       }
     }
@@ -67,25 +67,32 @@ class OutputMsgGenerator {
    * @return Array of queue name, partition keys and outputformat
    */
   private def extract(exitstingOutputMsgDefs: Array[OutputMsgDef]): Array[(String, Array[String], String)] = {
-    val extractor = """\$\{([^}]+)\}""".r
     val output: ArrayBuffer[(String, Array[String], String)] = new ArrayBuffer[(String, Array[String], String)]()
 
     try {
-      var newOutputFormat: String = ""
-      var paritionKeys: Array[String] = Array[String]()
+      val sb = new StringBuilder()
       exitstingOutputMsgDefs.foreach(outputMsgDef => {
-        val outputformat = outputMsgDef.OutputFormat
-        newOutputFormat = extractor.replaceAllIn(outputformat, GetValue _) //.replaceAllIn(outputMsgDef.OutputFormat, GetValue _)
-        outputMsgDef.ParitionKeys.foreach(partitionKey => {
-          log.info("partitionKey._1.toLowerCase() " + partitionKey._1.toLowerCase())
-          var key: StringBuffer = new StringBuffer()
-          partitionKey._2.foreach(prtkey => {
-            key = key.append("." + prtkey._1)
-          })
-          val pkey = partitionKey._1 + key
-          val parttionkey = myMap.getOrElse(pkey, "")
-          paritionKeys +:= ValueToString(parttionkey, ",")
+        sb.clear()
+
+        outputMsgDef.FormatSplittedArray.foreach(t => {
+          if (t._1 != null && t._1.size > 0)
+            sb.append(t._1)
+          if (t._2 != null && t._2.size > 0)
+            sb.append(ValueToString(myMap.getOrElse(t._2, null), ","))
         })
+
+        val newOutputFormat = sb.toString()
+        var paritionKeys =
+          outputMsgDef.ParitionKeys.map(partitionKey => {
+            log.info("partitionKey._1.toLowerCase() " + partitionKey._1.toLowerCase())
+            sb.clear()
+            partitionKey._2.foreach(prtkey => {
+              sb.append("." + prtkey._1)
+            })
+            val pkey = partitionKey._1 + sb
+            val parttionkey = myMap.getOrElse(pkey, "")
+            ValueToString(parttionkey, ",")
+          })
 
         val queueName = outputMsgDef.Queue
         val returnVal = (queueName, paritionKeys, newOutputFormat)
@@ -94,7 +101,7 @@ class OutputMsgGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("\nStackTrace:"+stackTrace)
+        log.error("\nStackTrace:" + stackTrace)
         throw e
       }
     }
@@ -114,8 +121,8 @@ class OutputMsgGenerator {
   private def getOutputMsgdef(Msg: MessageContainerBase, ModelReslts: scala.collection.mutable.Map[String, Array[(String, Any)]], allOutputMsgs: Array[OutputMsgDef]): (Boolean, Array[OutputMsgDef], scala.collection.mutable.Map[String, Any]) = {
     var outputMsgDefExists = false
     var finalOutputMsgs: ArrayBuffer[OutputMsgDef] = new ArrayBuffer[OutputMsgDef]()
-    var value: Any = null
     try {
+      val sb = new StringBuilder()
       var count: Int = 0
       var mymap: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
       allOutputMsgs.foreach(outputMsg => {
@@ -126,17 +133,17 @@ class OutputMsgGenerator {
         })
 
         outputMsg.Fields.foreach(field => {
+          var value: Any = null
           val msgOrMdlFullName = field._1._1
           log.info("msgOrMdlFullName : " + msgOrMdlFullName)
           field._2.foreach(fld => {
+            sb.clear()
 
-            var key: StringBuffer = new StringBuffer()
             fld._1.foreach(f => {
-              key = key.append("." + f._1)
+              sb.append("." + f._1)
             })
-            val mapkey = msgOrMdlFullName + key
-            val fieldNames = key.toString().split("\\.")
-            val fieldName = fieldNames(1)
+            val mapkey = msgOrMdlFullName + sb
+            val fieldName = fld._1(0)._1
             log.info("mapkey " + mapkey)
             if (msgOrMdlFullName.toLowerCase().equals(Msg.FullName.toLowerCase())) {
               /////
@@ -177,7 +184,7 @@ class OutputMsgGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("\nStackTrace:"+stackTrace)
+        log.error("\nStackTrace:" + stackTrace)
         throw e
       }
     }
@@ -301,7 +308,7 @@ class OutputMsgGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("\nStackTrace:"+stackTrace)
+        log.error("\nStackTrace:" + stackTrace)
         throw e
       }
     }

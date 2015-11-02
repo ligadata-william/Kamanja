@@ -799,6 +799,7 @@ class OutputMsgDef extends BaseElemDef {
   var Defaults: Map[String, String] = _ // Local Variables. So, we are not expecting qualified names here.
   var Fields: Map[(String, String), Set[(Array[(String, String)], String)]] = _ // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields & corresponding Default Value (if not present NULL)
   var OutputFormat: String = _ // Format String
+  var FormatSplittedArray: Array[(String, String)] = _ // OutputFormat split to substitute like (constant & substitute variable) tuples 
 }
 
 object ModelCompilationConstants {
