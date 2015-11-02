@@ -102,7 +102,7 @@ object OutputMsgDefImpl {
       })
       var i: Int = 1
       //var Fields : Map[(String, String), Set[(Array[(String, String)], String)]] = _  // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields(Array[(String, String)](("inpatient_claims", "System.arrayOfInpatientClaims"), ("claim_id", "System.Long"))) & corresponding Default Value (if not present NULL)
-      var Fields: scala.collection.mutable.Map[(String, String), scala.collection.mutable.Set[(Array[(String, String)], String)]] = scala.collection.mutable.Map()
+      var Fields: scala.collection.mutable.Map[(String, String), scala.collection.mutable.Set[(Array[(String, String, String, String)], String)]] = scala.collection.mutable.Map()
       var fieldscheck: Set[(String, String)] = Set[(String, String)]()
       var partionFieldKeys = Array[(String, Array[(String, String, String, String)], String, String)]()
 
@@ -117,15 +117,13 @@ object OutputMsgDefImpl {
           if (dfaults.contains(partionkey)) {
             defaultValue = dfaults(partionkey)
           }
-          var fldInfo: Array[(String, String)] = fieldsInfo.asInstanceOf[Array[(String, String)]]
-          var value: Array[(String, String)] = Array[(String, String)]()
-          value = fldInfo
+          
           if (Fields.contains((fullname, typeOf))) {
             log.debug("1-fullname:%s, typeOf:%s".format(fullname, typeOf))
-            Fields((fullname, typeOf)) += ((value, defaultValue))
+            Fields((fullname, typeOf)) += ((fieldsInfo, defaultValue))
           } else {
-            var valueVal: scala.collection.mutable.Set[(Array[(String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String)], String)]()
-            valueVal += ((fldInfo, defaultValue))
+            var valueVal: scala.collection.mutable.Set[(Array[(String, String, String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String, String, String)], String)]()
+            valueVal += ((fieldsInfo, defaultValue))
             log.debug("2-fullname:%s, typeOf:%s".format(fullname, typeOf))
             Fields((fullname, typeOf)) = (valueVal)
           }
@@ -150,15 +148,12 @@ object OutputMsgDefImpl {
 
           val (fullname, fieldsInfo, typeOf, fullFieldkey) = getFieldsInfo(outputFmtFld) // Just take full qualified name of the model/message/container
 
-          var fldInfo: Array[(String, String)] = fieldsInfo.asInstanceOf[Array[(String, String)]]
-          var value: Array[(String, String)] = Array[(String, String)]()
-          value = fldInfo
           if (Fields.contains((fullname, typeOf))) {
             log.debug("3-fullname:%s, typeOf:%s".format(fullname, typeOf))
-            Fields((fullname, typeOf)) += ((value, defaultValue))
+            Fields((fullname, typeOf)) += ((fieldsInfo, defaultValue))
           } else {
-            var valueVal: scala.collection.mutable.Set[(Array[(String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String)], String)]()
-            valueVal += ((fldInfo, defaultValue))
+            var valueVal: scala.collection.mutable.Set[(Array[(String, String, String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String, String, String)], String)]()
+            valueVal += ((fieldsInfo, defaultValue))
             log.debug("4-fullname:%s, typeOf:%s".format(fullname, typeOf))
             Fields((fullname, typeOf)) = (valueVal)
           }

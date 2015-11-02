@@ -2915,7 +2915,7 @@ class MdMgr {
 
     @throws(classOf[AlreadyExistsException])
     @throws(classOf[NoSuchElementException])
-    def AddOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String, String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String)], String)]], outputFormat: String, formatSplittedArray: Array[(String, String)]): Unit = {
+    def AddOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String, String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String, String, String)], String)]], outputFormat: String, formatSplittedArray: Array[(String, String)]): Unit = {
       AddOutputMsg(MakeOutputMsg(nameSpace, name, ver, queue, partionKeys, defaults, dataDeclrtion, fields, outputFormat, formatSplittedArray))
     }
 
@@ -2934,7 +2934,7 @@ class MdMgr {
      *  @return OutputMsgDef
      */
 
-    def MakeOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String, String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String)], String)]], outputFormat: String, formatSplittedArray: Array[(String, String)]): OutputMsgDef = {
+    def MakeOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String, String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String, String, String)], String)]], outputFormat: String, formatSplittedArray: Array[(String, String)]): OutputMsgDef = {
 
       val latestActiveMessage = OutputMessage(nameSpace, name, -1, false)
       if (latestActiveMessage != None) {

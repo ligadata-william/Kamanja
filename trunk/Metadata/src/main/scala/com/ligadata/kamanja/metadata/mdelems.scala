@@ -799,7 +799,7 @@ class OutputMsgDef extends BaseElemDef {
   var ParitionKeys: Array[(String, Array[(String, String, String, String)], String, String)] = _ // Output Partition Key. Message/Model Full Qualified Name as first value in tuple, Rest of the field name as second value in tuple (filed name, field type, tType string, tTypeType string) and "Mdl" Or "Msg" String as the third value in tuple.
   var DataDeclaration: Map[String, String] = _
   var Defaults: Map[String, String] = _ // Local Variables. So, we are not expecting qualified names here.
-  var Fields: Map[(String, String), Set[(Array[(String, String)], String)]] = _ // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields & corresponding Default Value (if not present NULL)
+  var Fields: Map[(String, String), Set[(Array[(String, String, String, String)], String)]] = _ // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple(filed name, field type, tType string, tTypeType string) and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields & corresponding Default Value (if not present NULL)
   var OutputFormat: String = _ // Format String
   var FormatSplittedArray: Array[(String, String)] = _ // OutputFormat split to substitute like (constant & substitute variable) tuples 
 }
