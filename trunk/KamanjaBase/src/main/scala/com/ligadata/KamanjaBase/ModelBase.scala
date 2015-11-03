@@ -25,18 +25,18 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
 import com.ligadata.KvBase.{ TimeRange }
-import com.ligadata.KvBase.{ Key, Value, TimeRange/* , KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper */ }
+import com.ligadata.KvBase.{ Key, Value, TimeRange /* , KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper */ }
 
 object MinVarType extends Enumeration {
   type MinVarType = Value
   val Unknown, Active, Predicted, Supplementary, FeatureExtraction = Value
   def StrToMinVarType(tsTypeStr: String): MinVarType = {
     tsTypeStr.toLowerCase.trim() match {
-      case "active" => Active
-      case "predicted" => Predicted
-      case "supplementary" => Supplementary
+      case "active"            => Active
+      case "predicted"         => Predicted
+      case "supplementary"     => Supplementary
       case "featureextraction" => FeatureExtraction
-      case _ => Unknown
+      case _                   => Unknown
     }
   }
 }
@@ -274,12 +274,12 @@ trait EnvContext {
 */
   def getAllAdapterUniqKvDataInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String, String)]))] // Get Status information from Final table. No Transaction required here.
 
-//  def getAllIntermediateCommittingInfo: Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information. Once we commit we don't have this, because we remove after commit
+  //  def getAllIntermediateCommittingInfo: Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information. Once we commit we don't have this, because we remove after commit
 
-//  def getAllIntermediateCommittingInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information.
+  //  def getAllIntermediateCommittingInfo(keys: Array[String]): Array[(String, (Long, String, List[(String, String)]))] // Getting intermediate committing information.
 
-//  def removeCommittedKey(transId: Long, key: String): Unit
-//  def removeCommittedKeys(keys: Array[String]): Unit
+  //  def removeCommittedKey(transId: Long, key: String): Unit
+  //  def removeCommittedKeys(keys: Array[String]): Unit
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
   def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit
@@ -304,7 +304,7 @@ trait EnvContext {
   def ReloadKeys(tempTransId: Long, containerName: String, keys: List[Key]): Unit
 
   // Set Reload Flag
-//  def setReloadFlag(transId: Long, containerName: String): Unit
+  //  def setReloadFlag(transId: Long, containerName: String): Unit
 
   def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit
   def GetValidateAdapterInformation: Array[(String, String)]
@@ -349,6 +349,9 @@ class ModelContext(val txnContext: TransactionContext, val msg: MessageContainer
 }
 
 class TransactionContext(val transId: Long, val gCtx: EnvContext, val tenantId: String) {
+  private var valuesMap = new java.util.HashMap[String, Any]()
   def getPropertyValue(clusterId: String, key: String): String = { gCtx.getPropertyValue(clusterId, key) }
+  def setContextValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
+  def getContextValue(key: String): Any = { valuesMap.get(key) }
 }
 

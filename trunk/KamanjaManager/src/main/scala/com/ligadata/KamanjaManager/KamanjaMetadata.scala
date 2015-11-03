@@ -54,10 +54,10 @@ class KamanjaMetadata {
   // Metadata manager
   val messageObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   val containerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
-  val modelObjects = new HashMap[String, MdlInfo]
+  val modelObjsMap = new HashMap[String, MdlInfo]
 
   def ValidateAllRequiredJars(tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
-    tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Boolean = {
+                              tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Boolean = {
     val allJarsToBeValidated = scala.collection.mutable.Set[String]();
 
     if (tmpMsgDefs != None) { // Not found any messages
@@ -88,14 +88,14 @@ class KamanjaMetadata {
   }
 
   def LoadMdMgrElems(tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
-    tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
+                     tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
     PrepareMessages(tmpMsgDefs)
     PrepareContainers(tmpContainerDefs)
     PrepareModels(tmpModelDefs)
 
-    LOG.info("Loaded Metadata Messages:" + messageObjects.map(container => container._1).mkString(","))
+    LOG.info("Loaded Metadata Messages:" + messageObjects.map(msg => msg._1).mkString(","))
     LOG.info("Loaded Metadata Containers:" + containerObjects.map(container => container._1).mkString(","))
-    LOG.info("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
+    LOG.info("Loaded Metadata Models:" + modelObjsMap.map(mdl => mdl._1).mkString(","))
   }
 
   private[this] def CheckAndPrepMessage(clsName: String, msg: MessageDef): Boolean = {
@@ -344,7 +344,7 @@ class KamanjaMetadata {
         if (objinst.isInstanceOf[ModelBaseObj]) {
           val modelobj = objinst.asInstanceOf[ModelBaseObj]
           val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
-          modelObjects(mdlName) = new MdlInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
+          modelObjsMap(mdlName) = new MdlInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
           LOG.info("Created Model:" + mdlName)
           return true
         } else {
@@ -495,7 +495,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
-  private[this] var modelObjects = new HashMap[String, MdlInfo]
+  private[this] var modelObjs = new HashMap[String, MdlInfo]
+  private[this] var modelExecOrderedObjects = Array[MdlInfo]()
   private[this] var zkListener: ZooKeeperListener = _
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
@@ -503,8 +504,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   //LOG.setLevel(Level.TRACE)
 
   private def UpdateKamanjaMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
-    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
-    removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
+                                     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
+                                     removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
 
     var exp: Exception = null
 
@@ -525,8 +526,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   }
 
   private def localUpdateKamanjaMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
-    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
-    removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
+                                          mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
+                                          removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
     //BUGBUG:: Assuming there is no issues if we remove the objects first and then add the new objects. We are not adding the object in the same order as it added in the transaction. 
 
     // First removing the objects
@@ -534,7 +535,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     if (removedModels != null && removedModels.size > 0) {
       removedModels.foreach(mdl => {
         val elemName = (mdl._1.trim + "." + mdl._2.trim).toLowerCase
-        modelObjects -= elemName
+        modelObjs -= elemName
       })
     }
 
@@ -577,7 +578,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
 
     // Adding Models
     if (mdlObjects != null && mdlObjects.size > 0)
-      modelObjects ++= mdlObjects
+      modelObjs ++= mdlObjects
 
     // If messages/Containers removed or added, jsut change the parents chain
     if ((removedMessages != null && removedMessages.size > 0) ||
@@ -621,6 +622,34 @@ object KamanjaMetadata extends MdBaseResolveInfo {
         m._2.parents.reverse
       })
     }
+
+    // Order Models (if property is given) if we added any
+    if (mdlObjects != null && mdlObjects.size > 0) {
+      // Order Models Execution
+      val tmpExecOrderStr = mdMgr.GetUserProperty(KamanjaConfiguration.clusterId, "modelsexecutionorder")
+      val ExecOrderStr = if (tmpExecOrderStr != null) tmpExecOrderStr.trim.toLowerCase.split(",").map(s => s.trim).filter(s => s.size > 0) else Array[String]()
+
+      if (ExecOrderStr.size > 0 && modelObjs != null) {
+        var mdlsOrder = ArrayBuffer[(String, MdlInfo)]()
+        ExecOrderStr.foreach(mdlNm => {
+          val m = modelObjs.getOrElse(mdlNm, null)
+          if (m != null)
+            mdlsOrder += ((mdlNm, m))
+        })
+
+        var orderedMdlsSet = ExecOrderStr.toSet
+        modelObjs.foreach(kv => {
+          val mdlNm = kv._1.toLowerCase()
+          if (orderedMdlsSet.contains(mdlNm) == false)
+            mdlsOrder += ((mdlNm, kv._2))
+        })
+
+        LOG.error("Models Order changed from %s to %s".format(modelObjs.map(kv => kv._1).mkString(","), mdlsOrder.map(kv => kv._1).mkString(",")))
+        modelExecOrderedObjects = mdlsOrder.map(kv => kv._2).toArray
+      } else {
+        modelExecOrderedObjects = if (modelObjs != null) modelObjs.map(kv => kv._2).toArray else Array[MdlInfo]()
+      }
+    }
   }
 
   def InitBootstrap: Unit = {
@@ -637,7 +666,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     try {
       obj.LoadMdMgrElems(tmpMsgDefs, tmpContainerDefs, tmpModelDefs)
       // Lock the global object here and update the global objects
-      UpdateKamanjaMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, null, null, null)
+      UpdateKamanjaMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjsMap, null, null, null)
     } catch {
       case e: Exception => {
         LOG.error("Failed to load messages, containers & models from metadata manager. Reason:%s Message:%s".format(e.getCause, e.getMessage))
@@ -719,7 +748,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               }
             }
             case "Remove" | "Deactivate" => { removedValues += 1 }
-            case _ => {}
+            case _                       => {}
           }
         }
         case "MessageDef" => {
@@ -739,7 +768,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               }
             }
             case "Remove" => { removedValues += 1 }
-            case _ => {}
+            case _        => {}
           }
         }
         case "ContainerDef" => {
@@ -759,7 +788,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
               }
             }
             case "Remove" => { removedValues += 1 }
-            case _ => {}
+            case _        => {}
           }
         }
         case _ => {}
@@ -898,7 +927,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     })
 
     // Lock the global object here and update the global objects
-    UpdateKamanjaMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
+    UpdateKamanjaMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjsMap, removedModels, removedMessages, removedContainers)
   }
 
   override def getMessgeOrContainerInstance(MsgContainerType: String): MessageContainerBase = {
@@ -1018,9 +1047,9 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     v
   }
 
-  def getAllModels: Map[String, MdlInfo] = {
+  def getAllModels: Array[MdlInfo] = {
     var exp: Exception = null
-    var v: Map[String, MdlInfo] = null
+    var v: Array[MdlInfo] = null
 
     reent_lock.readLock().lock();
     try {
@@ -1069,8 +1098,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   }
 
   private def localgetModel(mdlName: String): MdlInfo = {
-    if (modelObjects == null) return null
-    modelObjects.getOrElse(mdlName.toLowerCase, null)
+    if (modelObjs == null) return null
+    modelObjs.getOrElse(mdlName.toLowerCase, null)
   }
 
   private def localgetContainer(containerName: String): MsgContainerObjAndTransformInfo = {
@@ -1096,9 +1125,9 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     }).toMap
   }
 
-  private def localgetAllModels: Map[String, MdlInfo] = {
-    if (modelObjects == null) return null
-    modelObjects.toMap
+  private def localgetAllModels: Array[MdlInfo] = {
+    if (modelExecOrderedObjects == null) return null
+    modelExecOrderedObjects
   }
 
   private def localgetAllContainers: Map[String, MsgContainerObjAndTransformInfo] = {

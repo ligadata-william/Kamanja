@@ -44,7 +44,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
     if (finalTopMsgOrContainer != null) {
       val tmpMdls = KamanjaMetadata.getAllModels
-      val models = if (tmpMdls != null) tmpMdls.map(mdl => mdl._2).toArray else Array[MdlInfo]()
+      val models = if (tmpMdls != null) tmpMdls else Array[MdlInfo]()
 
       val outputAlways: Boolean = false;
 
