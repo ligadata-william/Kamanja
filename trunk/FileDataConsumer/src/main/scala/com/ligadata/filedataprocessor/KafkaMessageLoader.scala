@@ -25,11 +25,12 @@ import scala.collection.mutable.ArrayBuffer
  * Created by danielkozin on 9/24/15.
  */
 class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutable.Map[String, String]) {
-  var fileBeingProcessing: String = ""
+  var fileBeingProcessed: String = ""
   var numberOfMessagesProcessedInFile: Int = 0
+  var currentOffset: Int = 0
   var startFileProcessingTimeStamp: Long = 0
+  var numberOfValidEvents: Int = 0
   var endFileProcessingTimeStamp: Long = 0
-  var totalMsgCreationTime: Long = 0
   val RC_RETRY: Int = 3
 
   var lastOffsetProcessed: Int = 0
@@ -75,16 +76,16 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
   def pushData(messages: Array[KafkaMessage]): Unit = {
     // First, if we are handling failover, then the messages could be of size 0.
     logger.debug("SMART FILE CONSUMER **** processing chunk of "+messages.size+" messages")
-    println("SMART FILE CONSUMER **** processing chunk of "+messages.size+" messages, IGNORE_KAFKA = " + debug_IgnoreKafka + ", IGNORE_ZK = " + isZKIgnore)
     if (messages.size == 0) return
 
     // If we start processing a new file, then mark so in the zk.
-    if (fileBeingProcessing.compareToIgnoreCase(messages(0).relatedFileName) != 0) {
+    if (fileBeingProcessed.compareToIgnoreCase(messages(0).relatedFileName) != 0) {
       numberOfMessagesProcessedInFile = 0
+      currentOffset = 0
+      numberOfValidEvents = 0
       startFileProcessingTimeStamp = 0 //scala.compat.Platform.currentTime
-      totalMsgCreationTime = 0
-      fileBeingProcessing = messages(0).relatedFileName
-      val zkFname = "{" + "\""+fileBeingProcessing+ "\":" + 0 + "}"
+       fileBeingProcessed = messages(0).relatedFileName
+      val zkFname = "{" + "\""+fileBeingProcessed+ "\":" + 0 + "}"
       zkc.setData.forPath(znodePath, zkFname.getBytes)
     }
 
@@ -93,34 +94,37 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
 
     val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
 
-    var numberOfValidEvents: Int = 0
-    var numberOfInvalidEvents: Int = 0
     var isLast = false
-    var isDummyLast = false
-
     messages.foreach(msg => {
       if (!msg.isLastDummy) {
+        numberOfValidEvents += 1
         var inputData: InputData = null
         try {
           inputData = CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
+          currentOffset += 1
           numberOfMessagesProcessedInFile += 1
         } catch {
           case mfe: KVMessageFormatingException =>
             writeErrorMsg(msg)
-            numberOfInvalidEvents += 1
         }
 
-        // Successfully created a message,  add it to the array buffer of crap to sent to kafka
-        keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
-                                         objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
-                                         new String(msg.msg).getBytes("UTF8"))
+        // Only add those messages that we have not previously processed....
+        if (msg.offsetInFile == FileProcessor.NOT_RECOVERY_SITUATION ||
+            ( msg.offsetInFile >= 0  &&
+              msg.offsetInFile < currentOffset)) {
+          keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+                                          objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
+                                          new String(msg.msg).getBytes("UTF8"))
+        } else {
+          // This is just for reporting purposes... do not report messages that were below the recovery offset
+          numberOfMessagesProcessedInFile = numberOfMessagesProcessedInFile - 1
+        }
+
         if (msg.isLast) {
           isLast = true
-          println("FUCKFUCKFUCK  YEAH  -  LAST")
-        }
+            }
       } else {
-        println("FUCKFUCKFUCK  YEAH  DUMMY LAST")
-        isDummyLast = true
+        isLast = true
       }
     })
 
@@ -128,8 +132,8 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     try {
       if (keyMessages.size > 0) {
         producer.send(keyMessages: _*)
-        writeStatusMsg(fileBeingProcessing)
-        val zkFname = "{" + "\"" + fileBeingProcessing + "\":" + numberOfValidEvents + "}"
+        writeStatusMsg(fileBeingProcessed)
+        val zkFname = "{" + "\"" + fileBeingProcessed + "\":" + numberOfValidEvents + "}"
         zkc.setData.forPath(znodePath, zkFname.getBytes)
       }
     } catch {
@@ -142,12 +146,14 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
         throw e
     }
 
-    if (isLast || isDummyLast) {
+    if (isLast) {
       // output the status message to the KAFAKA_STATUS_TOPIC
-      writeStatusMsg(fileBeingProcessing, true)
-      closeOutFile(fileBeingProcessing)
+      writeStatusMsg(fileBeingProcessed, true)
+      closeOutFile(fileBeingProcessed)
       numberOfMessagesProcessedInFile = 0
+      currentOffset = 0
       startFileProcessingTimeStamp = 0
+      numberOfValidEvents = 0
     }
   }
 
@@ -157,7 +163,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    */
   private def closeOutFile (fileName: String): Unit = {
     try {
-      println("***************** _ CLOSING " + fileName)
+      println(partIdx + " SMART FILE CONSUMER - cleaning up after " + fileName)
       // Either move or rename the file.
       var fileStruct = fileName.split("/")
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null) != null) {
@@ -169,9 +175,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
         (new File(fileName)).renameTo(new File(fileName + "_COMPLETE"))
       }
 
-      println(fileCache)
       fileCache.remove(fileName)
-      println(fileCache)
       // SetData in Zookeeper... set null...
       clearRecoveryArea
     } catch {
