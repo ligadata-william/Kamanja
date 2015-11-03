@@ -76,7 +76,7 @@ class CompilerProxy {
         modelVersion, msgDefClassFilePath, elements, sourceCode,
         totalDeps,
         MetadataAPIImpl.getModelMessagesContainers(modelConfigName, None),
-        nonTypeDeps)
+        nonTypeDeps,false)
     } catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during AddModel. ERROR " + e.getMessage)
@@ -96,7 +96,7 @@ class CompilerProxy {
       val msgDefClassFilePath = compiler_work_dir + "/tempCode." + sourceLang
       val ((modelNamespace, modelName, modelVersion, pname), repackagedCode, tempPackage) = parseSourceForMetadata(sourceCode, "tempCode", sourceLang, msgDefClassFilePath, classPath, elements)
       return generateModelDef(repackagedCode, sourceLang, pname, classPath, tempPackage, modelName,
-        modelVersion, msgDefClassFilePath, elements, sourceCode, totalDeps, typeDeps, nonTypeDeps)
+        modelVersion, msgDefClassFilePath, elements, sourceCode, totalDeps, typeDeps, nonTypeDeps,true)
     } catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during recompile. ERROR " + e.getMessage)
@@ -470,10 +470,13 @@ class CompilerProxy {
    * compileModelFromSource - Generate a jarfile from a sourceCode.
    *
    */
-  //private def generateModelDef (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {
+  // The last parameter of generateModelDef represents whether we are recompiling a model due to a change
+  // on a dependant message(or container) or compiling for the first time. 
+  // MdMgr.MakeModelDef requires this information and function behaves differently depending on whether 
+  // we are compiling first time or recompiling an existing model.
   private def generateModelDef(repackagedCode: String, sourceLang: String, pname: String, classPath: String, modelNamespace: String, modelName: String,
     modelVersion: String, msgDefClassFilePath: String, elements: Set[BaseElemDef], originalSource: String,
-    deps: scala.collection.immutable.Set[String], typeDeps: List[String], notTypeDeps: scala.collection.immutable.Set[String]): ModelDef = {
+    deps: scala.collection.immutable.Set[String], typeDeps: List[String], notTypeDeps: scala.collection.immutable.Set[String], recompile: Boolean = false): ModelDef = {
     try {
       // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
       val packageName = modelNamespace + ".V" + MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))
@@ -508,7 +511,7 @@ class CompilerProxy {
         List[(String, String, String)](),
         MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)), "",
         deps.toArray[String],
-        false)
+        recompile,false)
 
       // Need to set some values by hand here.
       modDef.jarName = jarFileName
@@ -539,11 +542,19 @@ class CompilerProxy {
     // in modelCreation.
     var inVars: List[(String, String, String, String, Boolean, String)] = List[(String, String, String, String, Boolean, String)]()
     elements.foreach(elem => {
+      // inputVars of model definition represents the container/message object on which model depends
+      // It is not derived from individual members of these messages and containers
+      // However if these members of messages(or containers) are represent message objects,
+      // they should be captured recursively. For now, the elements represent all the dependant
+      // messages and containers as defined in model-compile-config file(as a json string)
+      inVars = (elem.NameSpace, elem.Name, elem.NameSpace, elem.Name, false, null) :: inVars
+      /*
       if (elem.asInstanceOf[ContainerDef].containerType.isInstanceOf[StructTypeDef]) {
-        elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[StructTypeDef].memberDefs.foreach(attr => { inVars = (attr.NameSpace, attr.Name, attr.typeDef.NameSpace, attr.typeDef.Name, false, null) :: inVars })
+          elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[StructTypeDef].memberDefs.foreach(attr => { inVars = (attr.NameSpace, attr.Name, attr.typeDef.NameSpace, attr.typeDef.Name, false, null) :: inVars })
       } else if (elem.asInstanceOf[ContainerDef].containerType.isInstanceOf[MappedMsgTypeDef]) {
         elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[MappedMsgTypeDef].attrMap.foreach(attr => { inVars = (attr._2.NameSpace, attr._2.Name, attr._2.typeDef.NameSpace, attr._2.typeDef.Name, false, null) :: inVars })
       }
+      */
     })
     inVars
   }

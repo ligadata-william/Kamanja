@@ -159,6 +159,12 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   if (parsed_json.contains("batchPuts")) {
     batchPuts = parsed_json.get("batchPuts").get.toString.trim
   }
+
+  var tableNameLength = 48
+  if (parsed_json.contains("tableNameLength")) {
+    tableNameLength = parsed_json.get("tableNameLength").get.toString.trim.toInt
+  }
+
   val clusterBuilder = Cluster.builder()
   var cluster: Cluster = _
   var session: Session = _
@@ -282,7 +288,13 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     // Taking first 48 characters may result in  duplicate table names
     // So I am reversing the long string to ensure unique name
     // Need to be documented, at the least.
-    containerName.toLowerCase.replace('.', '_').replace('-', '_').reverse.substring(0,48)
+    var t = containerName.toLowerCase.replace('.', '_').replace('-', '_')
+    if ( t.length > tableNameLength ){
+      t.reverse.substring(0,tableNameLength-1)
+    }
+    else{
+      t
+    }
   }
 
   private def toFullTableName(containerName: String): String = {
