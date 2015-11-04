@@ -228,6 +228,8 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     logger.info("DataStore created successfully")
   } catch {
     case e: Exception => {
+      val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.error("Stacktrace:" + stackTrace)
       throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
     }
   }
@@ -290,7 +292,7 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     // Need to be documented, at the least.
     var t = containerName.toLowerCase.replace('.', '_').replace('-', '_')
     if ( t.length > tableNameLength ){
-      t.reverse.substring(0,tableNameLength-1)
+      t.reverse.substring(0,tableNameLength)
     }
     else{
       t
