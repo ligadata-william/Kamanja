@@ -32,6 +32,8 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
   var numberOfValidEvents: Int = 0
   var endFileProcessingTimeStamp: Long = 0
   val RC_RETRY: Int = 3
+  var retryCount = 0
+  val MAX_RETRY = 10
 
   var lastOffsetProcessed: Int = 0
   lazy val loggerName = this.getClass.getName
@@ -122,28 +124,20 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
 
         if (msg.isLast) {
           isLast = true
-            }
+        }
       } else {
         isLast = true
       }
     })
 
-    // Push the messages to Kafka
-    try {
-      if (keyMessages.size > 0) {
-        producer.send(keyMessages: _*)
-        writeStatusMsg(fileBeingProcessed)
-        val zkFname = "{" + "\"" + fileBeingProcessed + "\":" + numberOfValidEvents + "}"
-        zkc.setData.forPath(znodePath, zkFname.getBytes)
-      }
-    } catch {
-      case ftsme: FailedToSendMessageException => ftsme.printStackTrace
-      case qfe: QueueFullException => qfe.printStackTrace()
-      case e: Exception =>
-        logger.error(partIdx + " Could not add to the queue due to an Exception " + e.getMessage)
-        e.printStackTrace
-        shutdown
-        throw e
+    // Write to kafka
+    doKafkaSend(keyMessages)
+    // Make sure you dont write extra for DummyLast
+    if (!isLast) {
+      writeStatusMsg(fileBeingProcessed)
+      val zkFname = "{" + "\"" + fileBeingProcessed + "\":" + numberOfValidEvents + "}"
+      zkc.setData.forPath(znodePath, zkFname.getBytes)
+
     }
 
     if (isLast) {
@@ -155,6 +149,68 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
       startFileProcessingTimeStamp = 0
       numberOfValidEvents = 0
     }
+  }
+
+
+  /**
+   *
+   * @param messages
+   */
+  private def doKafkaSend(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Unit = {
+    var isSendSuccessful = false
+    while (!isSendSuccessful) {
+      var sendResult = sendToKafka(messages)
+      if (sendResult == FileProcessor.KAFKA_SEND_SUCCESS) {
+        isSendSuccessful = true
+        retryCount = 0
+      }
+      else {
+        // Full Q, sleep for a bit, then retry.
+        if (sendResult == FileProcessor.KAFKA_SEND_Q_FULL) {
+          logger.warn("SMART FILE CONSUMER: Target Q is temporarily full, retrying.")
+          Thread.sleep(500)
+        }
+
+        // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
+        //  3 times.
+        if (sendResult == FileProcessor.KAFKA_SEND_DEAD_PRODUCER) {
+          if (retryCount < MAX_RETRY) {
+            logger.warn("SMART FILE CONSUMER: Error sending to kafka, Retrying " + retryCount +"/3")
+            retryCount += 1
+
+          } else {
+            logger.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
+            throw new FatalKafkaCommunicationError("Unable to send to Kafka, MAX_RETRY reached")
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   *
+   * @param messages
+   * @return
+   */
+  private def sendToKafka (messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
+
+    try {
+      if (messages.size > 0) {
+        producer.send(messages: _*)
+        println("FUCKYEAH... WE GOT A LIFTOFF")
+        return FileProcessor.KAFKA_SEND_SUCCESS
+      }
+    } catch {
+      case ftsme: FailedToSendMessageException => return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
+      case qfe: QueueFullException => return FileProcessor.KAFKA_SEND_Q_FULL
+      case e: Exception =>
+        logger.error(partIdx + " Could not add to the queue due to an Exception " + e.getMessage)
+        e.printStackTrace
+        shutdown
+        throw e
+    }
+
+    0
   }
 
   /**
@@ -189,7 +245,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    */
   private def writeStatusMsg(fileName: String, isTotal: Boolean = false): Unit = {
     try {
-      var cdate: Date = new Date
+      val cdate: Date = new Date
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC, "").length > 0) {
         endFileProcessingTimeStamp = scala.compat.Platform.currentTime
         var statusMsg:String = null
@@ -197,12 +253,16 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
           statusMsg = SmartFileAdapterConstants.KAFKA_LOAD_STATUS + frmt.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - startFileProcessingTimeStamp)
         else
           statusMsg = SmartFileAdapterConstants.TOTAL_FILE_STATUS + frmt.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - fileCache(fileName))
-        var statusPartitionId = "it does not matter"
-        if (debug_IgnoreKafka.equalsIgnoreCase("false")) {
-          producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC),
-            statusPartitionId.getBytes("UTF8"),
-            new String(statusMsg).getBytes("UTF8")))
-        }
+        val statusPartitionId = "it does not matter"
+
+        // Write a Status Message
+        val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
+        keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC), statusPartitionId.getBytes("UTF8"), new String(statusMsg).getBytes("UTF8"))
+        doKafkaSend(keyMessages)
+        //producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC),
+        //    statusPartitionId.getBytes("UTF8"),
+        //    new String(statusMsg).getBytes("UTF8")))
+
 
         println("Status pushed ->" + statusMsg)
         logger.debug("Status pushed ->" + statusMsg)
@@ -223,15 +283,19 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    * @param msg
    */
   private def writeErrorMsg (msg:KafkaMessage) : Unit = {
-    var cdate: Date = new Date
-    var errorMsg = frmt.format(cdate) + "," + msg.relatedFileName +"," + (new String(msg.msg))
+    val cdate: Date = new Date
+    val errorMsg = frmt.format(cdate) + "," + msg.relatedFileName +"," + (new String(msg.msg))
     logger.warn(partIdx + " SMART FILE CONSUMER: invalid message in file "+ msg.relatedFileName)
     println(partIdx + " SMART FILE CONSUMER: invalid message in file "+ msg.relatedFileName)
-    if (debug_IgnoreKafka.equalsIgnoreCase("false")) {
-      producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC),
-        "rare event".getBytes("UTF8"),
-        errorMsg.getBytes("UTF8")))
-    }
+
+    // Write a Error Message
+    val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
+    keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
+    doKafkaSend(keyMessages)
+    //  producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC),
+     //   "rare event".getBytes("UTF8"),
+     //   errorMsg.getBytes("UTF8")))
+
   }
 
   /**

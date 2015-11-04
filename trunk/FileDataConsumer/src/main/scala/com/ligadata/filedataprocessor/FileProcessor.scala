@@ -24,11 +24,16 @@ case class KafkaMessage (msg: Array[Char], offsetInFile: Int, isLast: Boolean, i
 case class EnqueuedFile (name: String, offset: Int)
 
 object FileProcessor {
-  private var initReconveryLock = new Object
+  private var initRecoveryLock = new Object
   private var numberOfReadyConsumers = 0
 
   val DEBUG_MAIN_CONSUMER_THREAD_ACTION = 1000
   val NOT_RECOVERY_SITUATION = -1
+
+  val KAFKA_SEND_SUCCESS = 0
+  val KAFKA_SEND_Q_FULL = 1
+  val KAFKA_SEND_DEAD_PRODUCER = 2
+
 }
 /**
  *
@@ -45,7 +50,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   lazy val logger = Logger.getLogger(loggerName)
   var fileConsumers: ExecutorService = Executors.newFixedThreadPool(3)
 
-  var isCosuming = true
+  var isConsuming = true
   var isProducing = true
 
   private var workerBees: ExecutorService = null
@@ -55,16 +60,14 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var msgQ: scala.collection.mutable.Queue[Array[KafkaMessage]] = scala.collection.mutable.Queue[Array[KafkaMessage]]()
   private var bufferQ: scala.collection.mutable.Queue[BufferToChunk] = scala.collection.mutable.Queue[BufferToChunk]()
   private var blg = new BufferLeftoversArea(-1, null, -1)
-  //private var fileOffsetTracker: scala.collection.mutable.Map[String,Int] = scala.collection.mutable.Map[String,Int]()
-  private var bufferingQ_map: scala.collection.mutable.Map[String,Long] = scala.collection.mutable.Map[String,Long]()
+  private val bufferingQ_map: scala.collection.mutable.Map[String,Long] = scala.collection.mutable.Map[String,Long]()
 
   // Locks used for Q synchronization.
-  private var fileQLock = new Object
-  private var msgQLock = new Object
-  private var bufferQLock = new Object
-  private var beeLock = new Object
-  private var trackerLock = new Object
-  private var bufferingQLock = new Object
+  private val fileQLock = new Object
+  private val msgQLock = new Object
+  private val bufferQLock = new Object
+  private val beeLock = new Object
+  private val bufferingQLock = new Object
 
   private var msgCount = 0
 
@@ -135,20 +138,6 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
       bufferingQ_map(file) = new File(file).length
     }
   }
-
- /* private def getKnownOffset(file: String): Int = {
-    msgQLock.synchronized {
-      return fileOffsetTracker(file)
-    }
-  }
-
-
-  private def markFileAsFinished(file:String): Unit = {
-    msgQLock.synchronized {
-      var currentoffset = fileOffsetTracker(file)
-      fileOffsetTracker(file) = currentoffset
-    }
-  }*/
 
   /**
    *
@@ -240,7 +229,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
      var fileNameToProcess: String = ""
 
     // basically, keep running until shutdown.
-     while (isCosuming) {
+     while (isConsuming) {
        var messages: scala.collection.mutable.LinkedHashSet[KafkaMessage] = null
        var leftOvers: Array[Char] = new Array[Char](0)
 
@@ -418,7 +407,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
    *  This is the "FILE CONSUMER"
    */
   private def doSomeConsuming(): Unit = {
-    while (isCosuming) {
+    while (isConsuming) {
       val fileToProcess = deQFile
       var curTimeStart: Long = 0
       var curTimeEnd: Long = 0
@@ -469,7 +458,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
     // This guys will keep track of when to exgernalize a WARNING Message.  Since this loop really runs every second,
     // we want to throttle the warning messages.
     var specialWarnCounter: Int = 1
-    while (isCosuming) {
+    while (isConsuming) {
       // Scan all the files that we are buffering, if there is not difference in their file size.. move them onto
       // the FileQ, they are ready to process.
       bufferingQLock.synchronized {
@@ -568,7 +557,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
       isRecoveryOps = false
       // No locking is needed. this counter is only increasing
-      FileProcessor.initReconveryLock.synchronized {
+      FileProcessor.initRecoveryLock.synchronized {
         FileProcessor.numberOfReadyConsumers +=  1
         println("SMART FILE CONSUMER: Consumer " + partitionId + " finished recovery operations.")
         logger.info("SMART FILE CONSUMER: Consumer " + partitionId + " finished recovery operations.")
@@ -603,7 +592,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
       // Ok, finished processing existing files in the directory.
       // No locking is needed. this counter is only increasing
-      FileProcessor.initReconveryLock.synchronized {
+      FileProcessor.initRecoveryLock.synchronized {
         FileProcessor.numberOfReadyConsumers +=  1
         println("SMART FILE CONSUMER: Consumer " + partitionId + " finished startup operations.")
         logger.info("SMART FILE CONSUMER: Consumer " + partitionId + " finished startup operations.")
@@ -618,7 +607,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
       // Begin the listening process, TAKE()
       breakable {
-        while (isCosuming) {
+        while (isConsuming) {
           println("SMART_FILE_CONSUMER partition " + partitionId + " awaiting work")
           val key = watchService.take()
           val dir = keys.getOrElse(key, null)
@@ -718,7 +707,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
    *
    */
   private def shutdown: Unit = {
-    isCosuming = false
+    isConsuming = false
     isProducing = false
     if (fileConsumers != null) {
       fileConsumers.shutdown()
