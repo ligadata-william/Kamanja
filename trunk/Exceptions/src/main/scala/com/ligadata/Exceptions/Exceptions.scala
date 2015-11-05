@@ -16,6 +16,8 @@
 
 package com.ligadata.Exceptions
 
+// TODO: Need to standardize exception names to indicate generic vs. subsystem/component specific exceptions
+
 case class UnsupportedObjectException(e: String) extends Exception(e)
 case class Json4sParsingException(e: String) extends Exception(e)
 case class FunctionListParsingException(e: String) extends Exception(e)
@@ -65,6 +67,12 @@ case class ProtoBufSerializationException(e: String) extends Throwable(e)
 
 case class KVMessageFormatingException(e: String) extends Exception(e)
 case class FatalKafkaCommunicationError(e: String) extends Exception(e)
+
+// CacheByDay exceptions
+case class CbdInvalidTimeRangeError(e: String) extends Exception(e)
+case class CdbDateNotInRangeError(e: String) extends Exception(e)
+
+
 
 
 
