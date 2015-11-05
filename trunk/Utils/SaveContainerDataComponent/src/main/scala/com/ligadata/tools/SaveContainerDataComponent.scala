@@ -496,28 +496,33 @@ class SaveContainerDataCompImpl extends LogTrait with MdBaseResolveInfo {
 }
 
 class SaveContainerDataComponent {
-  val impl = new SaveContainerDataCompImpl
+  private val impl = new SaveContainerDataCompImpl
 
+  /* Initialize MetadataManager, DataStore & Transaction Service */
   @throws(classOf[Exception])
   def Init(cfgfile: String): Unit = {
     impl.Init(cfgfile)
   }
 
+  /* Get New Message/Container data Instances for the given Message/Container */
   @throws(classOf[Exception])
   def GetMessageContainerBase(typ: String): MessageContainerBase = {
     impl.GetMessageContainerBase(typ)
   }
 
+  /* Get New TransactionId */
   @throws(classOf[Exception])
   def GetNewTransactionId(): Long = {
     impl.GetNewTransactionId
   }
 
+  /* Save given Message/Container data Instances for the given container name. Caller can request to set new transactionid (so that he does not need to set it) and new rownumber. */
   @throws(classOf[Exception])
   def SaveMessageContainerBase(typ: String, data: Array[MessageContainerBase], setNewTransactionId: Boolean, setNewRowNumber: Boolean): Unit = {
     impl.SaveMessageContainerBase(typ, data, setNewTransactionId, setNewRowNumber)
   }
 
+  /* Shutdown services and reset everything */
   def Shutdown: Unit = {
     impl.Shutdown
   }
