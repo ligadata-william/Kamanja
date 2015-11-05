@@ -68,11 +68,6 @@ case class ProtoBufSerializationException(e: String) extends Throwable(e)
 case class KVMessageFormatingException(e: String) extends Exception(e)
 case class FatalKafkaCommunicationError(e: String) extends Exception(e)
 
-// CacheByDay exceptions
-case class CbdInvalidTimeRangeError(e: String) extends Exception(e)
-case class CdbDateNotInRangeError(e: String) extends Exception(e)
-
-
 
 
 

@@ -19,9 +19,6 @@ package com.ligadata.modelLibs.cache
 import scala.collection.mutable._
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
-import com.ligadata.Utils.Utils
-import com.ligadata.Exceptions.StackTrace
-import com.ligadata.Exceptions._
 import java.util.{Calendar, Date}
 import scala.math.abs
 
@@ -29,11 +26,14 @@ trait LogTrait {
   val loggerName = this.getClass.getName()
   val logger = Logger.getLogger(loggerName)
 }
+// CacheByDay exceptions
+case class CbdInvalidTimeRangeError(e: String) extends Exception(e)
+case class CdbDateNotInRangeError(e: String) extends Exception(e)
 
 object CacheByDate {
   // convert epoch time into number of days since epoch (starting zero, first day 1970-01-01 = 0)
   def secsInDay = 24 * 60 * 60
-  def EpocToDayNum(epochTime : Int) = epochTime / (24 * 60 * 60) 
+  def EpochToDayNum(epochTime : Int) = epochTime / (24 * 60 * 60) 
 }
 
 import CacheByDate._
@@ -54,7 +54,7 @@ class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash 
   def SetRange(startDt: Int, endDt: Int) {
     if(startDt > endDt)
       throw CbdInvalidTimeRangeError("Invalid Time Range, start: %d > end: %d".format(startDt, endDt))
-    val (sdt, edt) = (EpocToDayNum(startDt), EpocToDayNum(endDt + secsInDay))
+    val (sdt, edt) = (EpochToDayNum(startDt), EpochToDayNum(endDt + secsInDay))
     val numRangeDays = edt - sdt
     if(numRangeDays > maxNumDays)
       throw CbdInvalidTimeRangeError("Invalid Time Range, range size: %d exceeds maxNumDays: %d, start: %d, end: %d".format(numRangeDays, maxNumDays, startDt, endDt))
@@ -68,7 +68,7 @@ class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash 
 
   // Allows to extend or shrink range by N days; if numDays is -ve, it could shrink or extend depending on range start or end
   def ExtendEndByDays(numDays : Int) = SetRange(StartRange, EndRange + numDays*secsInDay)
-  def ExtendStartByDays(numDays : Int) = SetRange(StartRange*numDays*secsInDay, EndRange)
+  def ExtendStartByDays(numDays : Int) = SetRange(StartRange + numDays*secsInDay, EndRange)
   
   // compare a given epoch time with the active date range and return -1, 0, +1 depending on whether given date is 
   // less, in range or greater than the range.
@@ -85,15 +85,18 @@ class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash 
     
   def Sub(key: T) = subCaches(abs(fnHash(key)) % numSubHashes)
   def Exist(key: T): Boolean =  Sub(key).Exist(key)
-  def Add(dt: Int, key: T) : Boolean = Sub(key).Add(dt, key)
-  def Expire(dt : Int) = subCaches.foreach(sc => { sc.Expire(dt) })
+  def Add(dt: Int, key: T) : Boolean = Sub(key).Add(EpochToDayNum(dt), key)
+//def Expire(dt : Int) = subCaches.foreach(sc => { sc.Expire(dt) })
   
-  def AddKeys(dt: Int, keys: Array[T]) = keys.foreach(key => { Add(dt, key) })
+  def AddKeys(dt: Int, keys: Array[T]) = {
+    val dtNum = EpochToDayNum(dt)
+    keys.foreach(key => { Sub(key).Add(dtNum, key) })
+  }
   
-  case class DayBucket(dt : Int, hashIdx : Int) { val keys = new ArrayBuffer[T]()   }
 
-  // A class that represent sub cache that is associated with hash number (0 .. num of sub hashes)
-  class SubCache {
+   // A class that represent sub cache that is associated with hash number (0 .. num of sub hashes)
+  private[CacheByDate] class SubCache {
+    case class DayBucket(dt : Int, hashIdx : Int) { val keys = new ArrayBuffer[T]()   }
     // simple get and set methods to indicate in which slot this sub cache belongs - useful for debugging/tracing purposes
     def Idx(idx: Int) = { idxSC = idx }
     def Idx = idxSC
@@ -129,7 +132,7 @@ class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash 
         setKeys += key
         true
       }
-      else true
+      else false
     }
     // add a key in 
     def Add(dt: Int, key: T) : Boolean = Add(Bucket(dt), key)
@@ -142,20 +145,19 @@ class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash 
     // rebuild set of keys from existing date buckets - this needs to be done after expiring one or more days
     def Rebuild = {
       setKeys.clear
-      dateMap.foreach(elem => elem._2.keys.foreach(key => { setKeys += key }))
+      dateMap.foreach(elem => setKeys ++= elem._2.keys)
     }
-    var isExpired = false;
     var idxSC = -1            // index of this object in sub cache array
     var stRange = -1
     var endRange = -1
     // set of keys
     val setKeys = Set[T]()
+    // map of day number to day bucket
     val dateMap = collection.mutable.Map[Int, DayBucket]()
   }
   
   private var subCaches = new Array[SubCache](numSubHashes)
   private var stRange = -1
   private var endRange = -1
-  var idx = 0
-  subCaches.foreach(sc => { sc.Idx(idx); idx += 1 })
+  subCaches.foldLeft(0)((idx, sc) => { sc.Idx(idx); idx + 1 })
 }
