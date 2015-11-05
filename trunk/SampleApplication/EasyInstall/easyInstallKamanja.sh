@@ -87,7 +87,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package KamanjaManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly FileDataConsumer/assembly
+sbt clean package KamanjaManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly FileDataConsumer/assembly SaveContainerDataComponent/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -353,6 +353,10 @@ cp $srcPath/SecurityAdapters/SecurityAdapterBase/target/scala-2.10/*.jar $system
 
 # an extra copy to make sure ?
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/*.jar $systemlib
+
+cp $srcPath/Utils/SaveContainerDataComponent/target/scala-2.10/savecontainerdatacomponent*.jar $systemlib
+cp $srcPath/Utils/SaveContainerDataComponent/target/scala-2.10/SaveContainerDataComponent* $systemlib
+cp $srcPath/Utils/UtilsForModels/target/scala-2.10/utilsformodels*.jar $systemlib
 
 # sample configs
 #echo "copy sample configs..."

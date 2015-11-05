@@ -16,11 +16,13 @@
 
 package com.ligadata.modelLibs.cache
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable._
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
 import java.util.{Calendar, Date}
 import scala.math.abs
+import com.ligadata.modelLibs.cache.javafunctions.{ Function1 => JFunction1 }
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -33,7 +35,11 @@ case class CdbDateNotInRangeError(e: String) extends Exception(e)
 object CacheByDate {
   // convert epoch time into number of days since epoch (starting zero, first day 1970-01-01 = 0)
   def secsInDay = 24 * 60 * 60
-  def EpochToDayNum(epochTime : Int) = epochTime / (24 * 60 * 60) 
+  def EpochToDayNum(epochTime : Int) = epochTime / secsInDay 
+}
+
+object JavaFnUtils {
+  def toScalaFunction1[T, R](fun: JFunction1[T, R]): T => R = x => fun.call(x)
 }
 
 import CacheByDate._
@@ -46,7 +52,12 @@ import CacheByDate._
 
 //  Date is epochtime (should be begin or end of time)
 //
-class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash : T => Long) extends LogTrait {
+class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash : T => java.lang.Long) extends LogTrait {
+  // This method is declared to call from Java
+  def this(numDays : Int, maxNumDays: Int, numSubHashes: Int, f: JFunction1[T, java.lang.Long]) {
+    this(numDays : Int, maxNumDays: Int, numSubHashes: Int, JavaFnUtils.toScalaFunction1(f));
+  }  
+
   // Client can adjust the startDt and endDt (inclusive range) in order to expire lowest date or call Expire() to individually remove dates
   // Even though it takes range, it actually maintain information at individual date level which allows to have set of
   // dates rather than strict date range.
