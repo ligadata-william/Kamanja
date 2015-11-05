@@ -14,6 +14,7 @@ import util.control.Breaks._
 import java.io._
 import java.nio.file._
 import scala.actors.threadpool.{Executors, ExecutorService }
+import scala.collection.mutable.PriorityQueue
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.Files.copy
 import java.nio.file.Paths.get
@@ -21,7 +22,7 @@ import java.nio.file.Paths.get
 case class BufferLeftoversArea (workerNumber: Int, leftovers: Array[Char], relatedChunk: Int)
 case class BufferToChunk(len: Int, payload: Array[Char], chunkNumber: Int, relatedFileName: String, firstValidOffset: Int)
 case class KafkaMessage (msg: Array[Char], offsetInFile: Int, isLast: Boolean, isLastDummy: Boolean, relatedFileName: String)
-case class EnqueuedFile (name: String, offset: Int)
+case class EnqueuedFile (name: String, offset: Int, createDate: Long)
 
 object FileProcessor {
   private var initRecoveryLock = new Object
@@ -33,6 +34,8 @@ object FileProcessor {
   val KAFKA_SEND_SUCCESS = 0
   val KAFKA_SEND_Q_FULL = 1
   val KAFKA_SEND_DEAD_PRODUCER = 2
+
+  val RECOVERY_DUMMY_START_TIME = 100
 
 }
 /**
@@ -56,7 +59,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var workerBees: ExecutorService = null
 
   // QUEUES used in file processing... will be synchronized.s
-  private var fileQ: scala.collection.mutable.Queue[EnqueuedFile] = new scala.collection.mutable.Queue[EnqueuedFile]()
+  //private var fileQ: scala.collection.mutable.Queue[EnqueuedFile] = new scala.collection.mutable.Queue[EnqueuedFile]()
+  private var fileQ: scala.collection.mutable.PriorityQueue[EnqueuedFile] = new scala.collection.mutable.PriorityQueue[EnqueuedFile]()(Ordering.by(OldestFile))
   private var msgQ: scala.collection.mutable.Queue[Array[KafkaMessage]] = scala.collection.mutable.Queue[Array[KafkaMessage]]()
   private var bufferQ: scala.collection.mutable.Queue[BufferToChunk] = scala.collection.mutable.Queue[BufferToChunk]()
   private var blg = new BufferLeftoversArea(-1, null, -1)
@@ -84,6 +88,11 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
   private var readyToProcessKey = ""
 
   private var isRecoveryOps = true
+
+  // Stuff used by the File Priority Queue.
+  def OldestFile(file: EnqueuedFile): Long = {
+    file.createDate * -1
+  }
 
   /**
    * Called by the Directory Listener to initialize
@@ -144,9 +153,9 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
    * @param file
    * @param offset
    */
-  private def enQFile(file: String, offset: Int): Unit = {
+  private def enQFile(file: String, offset: Int, createDate: Long): Unit = {
     fileQLock.synchronized {
-      fileQ += new EnqueuedFile(file, offset)
+      fileQ += new EnqueuedFile(file, offset, createDate)
     }
   }
 
@@ -473,7 +482,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
             if (fileTuple._2 == d.length) {
               if (d.length > 0) {
                 logger.info("SMART_FILE_CONSUMER partition "+partitionId + "  File READY TO PROCESS " + d.toString)
-                enQFile(fileTuple._1, FileProcessor.NOT_RECOVERY_SITUATION )
+                enQFile(fileTuple._1, FileProcessor.NOT_RECOVERY_SITUATION, d.lastModified)
                 bufferingQ_map.remove(fileTuple._1)
               } else {
                 if ((specialWarnCounter % 500) == 0 ) {
@@ -541,7 +550,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
             println("SMART FILE CONSUMER: Consumer " + partitionId + " recovery of file "+ fileToReprocess._1.asInstanceOf[String])
             logger.info("SMART FILE CONSUMER: Consumer " + partitionId + " recovery of file "+ fileToReprocess._1.asInstanceOf[String])
             if (!kml.checkIfFileBeingProcessed(fileToReprocess._1.asInstanceOf[String])) {
-              enQFile(fileToReprocess._1.asInstanceOf[String], fileToReprocess._2.asInstanceOf[BigInt].intValue)
+              enQFile(fileToReprocess._1.asInstanceOf[String], fileToReprocess._2.asInstanceOf[BigInt].intValue, FileProcessor.RECOVERY_DUMMY_START_TIME)
               if (d.exists && d.isDirectory) {
                 //var files = d.listFiles.filter(file => {file.isFile && file.getName.equals(fileToReprocess._1.asInstanceOf[String])})
                 var files = d.listFiles.filter(file => {file.isFile && (dirToWatch + "/"+file.getName).equals(fileToReprocess._1.asInstanceOf[String])})
@@ -572,7 +581,8 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
 
       // Process all the existing files in the directory that are not marked complete.
       if (d.exists && d.isDirectory) {
-        val files = d.listFiles.filter(_.isFile).sortWith(_.toString < _.toString).toList
+        //val files = d.listFiles.filter(_.isFile).sortWith(_.toString < _.toString).toList
+        val files = d.listFiles.filter(_.isFile).sortWith(_.lastModified < _.lastModified).toList
         files.foreach(file => {
           if (!kml.checkIfFileBeingProcessed(file.toString)) {
             var assignment =  scala.math.abs(file.toString.hashCode) % partitionSelectionNumber
@@ -589,6 +599,7 @@ class FileProcessor(val path:Path, val partitionId: Int) extends Runnable {
           }
         })
       }
+
 
       // Ok, finished processing existing files in the directory.
       // No locking is needed. this counter is only increasing

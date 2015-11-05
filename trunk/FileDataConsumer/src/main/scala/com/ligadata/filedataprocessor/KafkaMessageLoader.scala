@@ -197,7 +197,6 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     try {
       if (messages.size > 0) {
         producer.send(messages: _*)
-        println("FUCKYEAH... WE GOT A LIFTOFF")
         return FileProcessor.KAFKA_SEND_SUCCESS
       }
     } catch {
