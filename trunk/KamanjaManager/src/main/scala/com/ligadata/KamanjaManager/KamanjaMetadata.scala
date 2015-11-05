@@ -496,8 +496,9 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   private[this] val mdMgr = GetMdMgr
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   private[this] var modelObjs = new HashMap[String, MdlInfo]
-  private[this] var modelExecOrderedObjects = Array[MdlInfo]()
+  private[this] var modelExecOrderedObjects = Array[(String, MdlInfo)]()
   private[this] var zkListener: ZooKeeperListener = _
+  private[this] var mdlsChangedCntr: Long = 0
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
 
@@ -563,6 +564,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
         val containerInfos = containerNames.map(c => { ContainerNameAndDatastoreInfo(c, null) })
         envCtxt.RegisterMessageOrContainers(containerInfos) // Containers
+        envCtxt.CacheContainers(KamanjaConfiguration.clusterId) // Load data for Caching
       }
     }
 
@@ -573,6 +575,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
         val messagesInfos = topMessageNames.map(c => { ContainerNameAndDatastoreInfo(c, null) })
         envCtxt.RegisterMessageOrContainers(messagesInfos) // Messages
+        envCtxt.CacheContainers(KamanjaConfiguration.clusterId) // Load data for Caching
       }
     }
 
@@ -645,10 +648,11 @@ object KamanjaMetadata extends MdBaseResolveInfo {
         })
 
         LOG.error("Models Order changed from %s to %s".format(modelObjs.map(kv => kv._1).mkString(","), mdlsOrder.map(kv => kv._1).mkString(",")))
-        modelExecOrderedObjects = mdlsOrder.map(kv => kv._2).toArray
+        modelExecOrderedObjects = mdlsOrder.toArray
       } else {
-        modelExecOrderedObjects = if (modelObjs != null) modelObjs.map(kv => kv._2).toArray else Array[MdlInfo]()
+        modelExecOrderedObjects = if (modelObjs != null) modelObjs.toArray else Array[(String, MdlInfo)]()
       }
+      mdlsChangedCntr += 1
     }
   }
 
@@ -1047,9 +1051,9 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     v
   }
 
-  def getAllModels: Array[MdlInfo] = {
+  def getAllModels: (Array[(String, MdlInfo)], Long) = {
     var exp: Exception = null
-    var v: Array[MdlInfo] = null
+    var v: Array[(String, MdlInfo)] = null
 
     reent_lock.readLock().lock();
     try {
@@ -1065,7 +1069,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     }
     if (exp != null)
       throw exp
-    v
+    (v, mdlsChangedCntr)
   }
 
   def getAllContainers: Map[String, MsgContainerObjAndTransformInfo] = {
@@ -1125,8 +1129,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     }).toMap
   }
 
-  private def localgetAllModels: Array[MdlInfo] = {
-    if (modelExecOrderedObjects == null) return null
+  private def localgetAllModels: Array[(String, MdlInfo)] = {
     modelExecOrderedObjects
   }
 
@@ -1146,5 +1149,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       zkListener.Shutdown
     zkListener = null
   }
+
+  def GetModelsChangedCounter = mdlsChangedCntr
 }
 

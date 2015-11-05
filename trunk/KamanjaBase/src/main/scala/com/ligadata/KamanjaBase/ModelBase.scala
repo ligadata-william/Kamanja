@@ -316,6 +316,9 @@ trait EnvContext {
    *  @return a MesssageContainerBase of that ilk
    */
   def NewMessageOrContainer(fqclassname: String): MessageContainerBase
+
+  // Just get the cached container key and see what are the containers we need to cache
+  def CacheContainers(clusterId: String): Unit
 }
 
 abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseObj) {
@@ -325,7 +328,10 @@ abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseO
   final def TenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
   final def TransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else null // transId
 
+  def init(partitionHash: Int): Unit = {}  // Instance initialization. Once per instance 
+  def shutdown(): Unit = {}  // Shutting down the instance 
   def execute(outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
+  def isModelInstanceReusable(): Boolean = false // Can we reuse the instances created for this model?
 }
 
 trait ModelBaseObj {

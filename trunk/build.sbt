@@ -133,3 +133,5 @@ lazy val KvBase = project.in(file("KvBase"))
 
 lazy val FileDataConsumer = project.in(file("FileDataConsumer")) dependsOn(Exceptions, MetadataAPI)
 
+lazy val SaveContainerDataComponent = project.in(file("Utils/SaveContainerDataComponent")) dependsOn (Metadata, KamanjaBase, MetadataBootstrap, MetadataAPI, StorageManager, Exceptions, TransactionService)
+

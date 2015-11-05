@@ -297,6 +297,7 @@ object KamanjaMdCfg {
           val allMsgsContainers = topMessageNames ++ containerNames
           val containerInfos = allMsgsContainers.map(c => { ContainerNameAndDatastoreInfo(c, null) })
           envCtxt.RegisterMessageOrContainers(containerInfos) // Messages & Containers
+          envCtxt.CacheContainers(KamanjaConfiguration.clusterId) // Load data for Caching
 
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
