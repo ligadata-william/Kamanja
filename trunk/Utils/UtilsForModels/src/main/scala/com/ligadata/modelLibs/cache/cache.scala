@@ -46,7 +46,7 @@ import CacheByDate._
 
 //  Date is epochtime (should be begin or end of time)
 //
-class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash : T => Int) extends LogTrait {
+class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash : T => Long) extends LogTrait {
   // Client can adjust the startDt and endDt (inclusive range) in order to expire lowest date or call Expire() to individually remove dates
   // Even though it takes range, it actually maintain information at individual date level which allows to have set of
   // dates rather than strict date range.
@@ -83,7 +83,7 @@ class CacheByDate[T] (numDays : Int, maxNumDays: Int, numSubHashes: Int, fnHash 
     else 0
   }
     
-  def Sub(key: T) = subCaches(abs(fnHash(key)) % numSubHashes)
+  def Sub(key: T) = subCaches((abs(fnHash(key)) % numSubHashes).toInt)
   def Exist(key: T): Boolean =  Sub(key).Exist(key)
   def Add(dt: Int, key: T) : Boolean = Sub(key).Add(EpochToDayNum(dt), key)
 //def Expire(dt : Int) = subCaches.foreach(sc => { sc.Expire(dt) })
