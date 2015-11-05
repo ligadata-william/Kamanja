@@ -40,13 +40,13 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
   var outputGen = new OutputMsgGenerator()
   var models = Array[(String, MdlInfo, Boolean, ModelBase)]() // ModelName, ModelInfo, IsModelInstanceReusable, Global ModelBase if the model is IsModelInstanceReusable == true  
 
-  private def RunAllModels(transId: Long, inputData: Array[Byte], finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
+  private def RunAllModels(transId: Long, inputData: Array[Byte], finalTopMsgOrContainer: MessageContainerBase, txnCtxt: TransactionContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
     var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
     val partHashCd = uk.hashCode()
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
-      val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, ""), finalTopMsgOrContainer, inputData, uk)
+      val mdlCtxt = new ModelContext(txnCtxt, finalTopMsgOrContainer, inputData, uk)
       val mdlChngCntr = KamanjaMetadata.GetModelsChangedCounter
       if (mdlChngCntr != mdlsChangedCntr) {
         LOG.info("Refreshing models for Partition:%s (hashCode:%d) from %d to %d".format(uk, partHashCd, mdlsChangedCntr, mdlChngCntr))
@@ -166,7 +166,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
   }
 
   // Returns Adapter/Queue Name, Partition Key & Output String
-  def execute(transId: Long, inputData: Array[Byte], msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean, allOutputQueueNames: Array[String]): Array[(String, String, String)] = {
+  def execute(transId: Long, inputData: Array[Byte], msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, txnCtxt: TransactionContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean, allOutputQueueNames: Array[String]): Array[(String, String, String)] = {
     // LOG.debug("LE => " + msgData)
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
     val returnOutput = ArrayBuffer[(String, String, String)]() // Adapter/Queue name, PartitionKey & output message 
@@ -181,7 +181,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
         var msg: BaseMsg = null
         if (isValidPartitionKey && primaryKeyList != null) {
-          val fndmsg = envContext.getObject(transId, msgType, partKeyDataList, primaryKeyList)
+          val fndmsg = txnCtxt.gCtx.getObject(transId, msgType, partKeyDataList, primaryKeyList)
           if (fndmsg != null) {
             msg = fndmsg.asInstanceOf[BaseMsg]
           }
@@ -194,14 +194,14 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
         msg.populate(inputdata)
         var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
-          envContext.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
-          allMdlsResults = envContext.getModelsResult(transId, partKeyDataList)
+          txnCtxt.gCtx.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
+          allMdlsResults = txnCtxt.gCtx.getModelsResult(transId, partKeyDataList)
         }
         if (allMdlsResults == null)
           allMdlsResults = scala.collection.mutable.Map[String, SavedMdlResult]()
         // Run all models
         val mdlsStartTime = System.nanoTime
-        val results = RunAllModels(transId, inputData, msg, envContext, uk, uv, xformedMsgCntr, totalXformedMsgs)
+        val results = RunAllModels(transId, inputData, msg, txnCtxt, uk, uv, xformedMsgCntr, totalXformedMsgs)
         LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
         if (results.size > 0) {
@@ -240,7 +240,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           }
 
           if (isValidPartitionKey) {
-            envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
+            txnCtxt.gCtx.saveModelsResult(transId, partKeyDataList, allMdlsResults)
           }
         }
       } else {

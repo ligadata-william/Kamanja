@@ -1249,7 +1249,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Final Commit for the given transaction
   // BUGBUG:: For now we are committing all the data into default datastore. Not yet handled message level datastore.
-  override def commitData(transId: Long, key: String, value: String, outResults: List[(String, String, String)]): Unit = {
+  override def commitData(transId: Long, key: String, value: String, outResults: List[(String, String, String)], forceCommit: Boolean): Unit = {
 
     // This block of code just does in-memory updates for caching containers
     val txnCtxt = getTransactionContext(transId, false)
@@ -1271,8 +1271,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     })
 
-    removeTransactionContext(transId)
-    return
+    if (forceCommit == false) {
+      removeTransactionContext(transId)
+      return
+    }
 
     val outputResults = if (outResults != null) outResults else List[(String, String, String)]()
 

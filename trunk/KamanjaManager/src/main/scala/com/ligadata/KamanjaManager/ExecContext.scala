@@ -17,7 +17,7 @@
 
 package com.ligadata.KamanjaManager
 
-import com.ligadata.KamanjaBase.{ EnvContext, DataDelimiters }
+import com.ligadata.KamanjaBase.{ EnvContext, DataDelimiters, TransactionContext }
 import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, InputAdapterCallerContext }
 
 import org.apache.log4j.Logger
@@ -53,6 +53,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
       val transId = transService.getNextTransId
+      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.envCtxt, "")
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       var outputResults = ArrayBuffer[(String, String, String)]() // Adapter/Queue name, Partition Key & output message 
@@ -65,7 +66,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
           xformedMsgCntr += 1
-          var output = engine.execute(transId, data, xformed._1, xformed._2, xformed._3, kamanjaCallerCtxt.envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, ignoreOutput, allOutputAdaptersNames)
+          var output = engine.execute(transId, data, xformed._1, xformed._2, xformed._3, txnCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, ignoreOutput, allOutputAdaptersNames)
           if (output != null) {
             outputResults ++= output
           }
@@ -95,7 +96,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val containerData = kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
         // 
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
-        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList)
+        val forceCommitFlg = txnCtxt.getContextValue("forcecommit")
+        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFlg != null)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
 
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
@@ -295,7 +297,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        kamanjaCallerCtxt.envCtxt.commitData(transId, null, null, null)
+        kamanjaCallerCtxt.envCtxt.commitData(transId, null, null, null, false)
       }
     } catch {
       case e: Exception => {

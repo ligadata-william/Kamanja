@@ -287,7 +287,7 @@ trait EnvContext {
 
   // Final Commit for the given transaction
   // outputResults has AdapterName, PartitionKey & Message
-  def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String, String)]): Unit
+  def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String, String)], forceCommit: Boolean): Unit
 
   // Save State Entries on local node & on Leader
   // def PersistLocalNodeStateEntries: Unit
