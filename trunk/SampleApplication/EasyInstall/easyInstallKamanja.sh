@@ -339,13 +339,13 @@ cp $ivyPath/cache/com.codahale.metrics/metrics-core/bundles/metrics-core-3.0.2.j
 cp $ivyPath/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-testkit/jars/spray-testkit-1.3.1.jar $systemlib
 
-#cp $srcPath/Storage/Cassandra/target/scala-2.10/*.jar $systemlib
-#cp $srcPath/Storage/HashMap/target/scala-2.10/*.jar $systemlib
-#cp $srcPath/Storage/HBase/target/scala-2.10/*.jar $systemlib
+cp $srcPath/Storage/Cassandra/target/scala-2.10/*.jar $systemlib
+cp $srcPath/Storage/HashMap/target/scala-2.10/*.jar $systemlib
+cp $srcPath/Storage/HBase/target/scala-2.10/*.jar $systemlib
 #cp $srcPath/Storage/Redis/target/scala-2.10/*.jar $systemlib
 cp $srcPath/Storage/StorageBase/target/scala-2.10/storagebase_2.10-1.0.jar $systemlib
 cp $srcPath/Storage/StorageManager/target/scala-2.10/*.jar $systemlib
-#cp $srcPath/Storage/TreeMap/target/scala-2.10/*.jar $systemlib
+cp $srcPath/Storage/TreeMap/target/scala-2.10/*.jar $systemlib
 #cp $srcPath/Storage/Voldemort/target/scala-2.10/*.jar $systemlib
 cp $srcPath/InputOutputAdapters/InputOutputAdapterBase/target/scala-2.10/*.jar $systemlib
 cp $srcPath/KamanjaUtils/target/scala-2.10/kamanjautils_2.10-1.0.jar $systemlib

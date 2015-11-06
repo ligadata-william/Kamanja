@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+/*
+ * When testing mysql for MetadataAPI operations on my Centos 6.6,
+ * I ran into few exceptions. Had to configure the following
+ * mysql paramters in /etc/my.cnf
+max_allowed_packet=500M
+#
+# Remove leading # and set to the amount of RAM for the most important data
+# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
+innodb_buffer_pool_size=512M
+innodb_log_file_size=256M
+
+* Also, we need to configure more parameters to allow for bucketKey
+* size of 1024 characters
+* For now, I changed it to bucketKey(512) to avoid the following error
+* "Specified key was too long; max key length is 767 bytes"
+*/
+
 package com.ligadata.keyvaluestore
 import java.sql.DriverManager
 import java.sql.{ Statement, PreparedStatement, CallableStatement, DatabaseMetaData, ResultSet }
@@ -61,7 +78,7 @@ class DriverShim(d: Driver) extends Driver {
   def getParentLogger(): java.util.logging.Logger = this.driver.getParentLogger()
 }
 
-class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
+class MySqlAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
 
   private[this] val lock = new Object
 
@@ -79,21 +96,21 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   //val classLoader = URLClassLoader
 
   if (adapterConfig.size == 0) {
-    throw new Exception("Not found valid SqlServer Configuration.")
+    throw new Exception("Not found valid MySql Configuration.")
   }
 
-  logger.debug("SqlServer configuration:" + adapterConfig)
+  logger.debug("MySql configuration:" + adapterConfig)
   var parsed_json: Map[String, Any] = null
   try {
     val json = parse(adapterConfig)
     if (json == null || json.values == null) {
-      logger.error("Failed to parse SqlServer JSON configuration string:" + adapterConfig)
-      throw new Exception("Failed to parse SqlServer JSON configuration string:" + adapterConfig)
+      logger.error("Failed to parse MySql JSON configuration string:" + adapterConfig)
+      throw new Exception("Failed to parse MySql JSON configuration string:" + adapterConfig)
     }
     parsed_json = json.values.asInstanceOf[Map[String, Any]]
   } catch {
     case e: Exception => {
-      logger.error("Failed to parse SqlServer JSON configuration string:%s. Reason:%s Message:%s".format(adapterConfig, e.getCause, e.getMessage))
+      logger.error("Failed to parse MySql JSON configuration string:%s. Reason:%s Message:%s".format(adapterConfig, e.getCause, e.getMessage))
       throw e
     }
   }
@@ -107,13 +124,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       try {
         val json = parse(adapterSpecificStr)
         if (json == null || json.values == null) {
-          logger.error("Failed to parse SqlServer Adapter Specific JSON configuration string:" + adapterSpecificStr)
-          throw new Exception("Failed to parse SqlServer Adapter Specific JSON configuration string:" + adapterSpecificStr)
+          logger.error("Failed to parse MySql Adapter Specific JSON configuration string:" + adapterSpecificStr)
+          throw new Exception("Failed to parse MySql Adapter Specific JSON configuration string:" + adapterSpecificStr)
         }
         adapterSpecificConfig_json = json.values.asInstanceOf[Map[String, Any]]
       } catch {
         case e: Exception => {
-          logger.error("Failed to parse SqlServer Adapter Specific JSON configuration string:%s. Reason:%s Message:%s".format(adapterSpecificStr, e.getCause, e.getMessage))
+          logger.error("Failed to parse MySql Adapter Specific JSON configuration string:%s. Reason:%s Message:%s".format(adapterSpecificStr, e.getCause, e.getMessage))
           throw e
         }
       }
@@ -150,14 +167,6 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     user = parsed_json.get("user").get.toString.trim
   } else {
     throw new ConnectionFailedException("Unable to find user in adapterConfig ")
-  }
-
-  var SchemaName: String = null;
-  if (parsed_json.contains("SchemaName")) {
-    SchemaName = parsed_json.get("SchemaName").get.toString.trim
-  } else {
-    logger.info("The SchemaName is not supplied in adapterConfig, defaults to " + user)
-    SchemaName = user
   }
 
   var password: String = null;
@@ -209,16 +218,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     sqlServerInstance = sqlServerInstance + ":" + portNumber
   }
 
-  var jdbcUrl = "jdbc:sqlserver://" + sqlServerInstance + ";databaseName=" + database + ";user=" + user + ";password=" + password
+  var jdbcUrl = "jdbc:mysql://" + sqlServerInstance + "/" + database + "?user=" + user + "?password=" + password
+  var jdbcUrl1 = "jdbc:mysql://" + sqlServerInstance + "/" + database
 
-  //logger.info("jdbcUrl  => " + jdbcUrl)
+  logger.info("jdbcUrl  => " + jdbcUrl)
 
   var jars = new Array[String](0)
   var jar = jarpaths + "/" + jdbcJar
   jars = jars :+ jar
   LoadJars(jars)
 
-  val driverType = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+  val driverType = "com.mysql.jdbc.Driver"
   Class.forName(driverType, true, clsLoader)
 
   val d = Class.forName(driverType, true, clsLoader).newInstance.asInstanceOf[Driver]
@@ -227,88 +237,19 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
   // setup connection pooling using apache-commons-dbcp
   val dataSource = new BasicDataSource
-  dataSource.setUrl(jdbcUrl)
+  dataSource.setDriverClassName(driverType)
+  dataSource.setUrl(jdbcUrl1)
   dataSource.setUsername(user)
   dataSource.setPassword(password)
-  dataSource.setMaxActive(maxActiveConnections);
-  dataSource.setMaxIdle(maxIdleConnections);
-  dataSource.setInitialSize(initialSize);
+  //dataSource.setMaxActive(maxActiveConnections);
+  //dataSource.setMaxIdle(maxIdleConnections);
+  //dataSource.setInitialSize(initialSize);
 
   // set the timezone to UTC for all time values
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
-  var schemaExists = IsSchemaExists(SchemaName)
-  if( ! schemaExists ){
-    logger.info("Unable to find the schema " + SchemaName + " in the database, attempt to create one ")
-    CreateSchema(SchemaName)
-  }    
-
   private def GetCurDtTmStr: String = {
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
-  }
-
-  private def IsSchemaExists(schemaName: String): Boolean = {
-    var con: Connection = null
-    var pstmt: PreparedStatement = null
-    var rs: ResultSet = null
-    var rowCount = 0
-    try {
-      con = dataSource.getConnection
-      var query = "SELECT count(*) FROM sys.schemas WHERE name = ?"
-      pstmt = con.prepareStatement(query)
-      pstmt.setString(1,schemaName)
-      rs = pstmt.executeQuery();
-      while (rs.next()) {
-        rowCount = rs.getInt(1)
-      }
-      if( rowCount > 0 ){
-	return true
-      }
-      else{
-	return false
-      }
-    } catch {
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to verify schema existence for the schema " + schemaName + ":" + e.getMessage())
-      }
-    } finally {
-      if (rs != null) {
-        rs.close
-      }
-      if (pstmt != null) {
-        pstmt.close
-      }
-      if (con != null) {
-        con.close
-      }
-    }
-  }
-
-
-  private def CreateSchema(schemaName: String): Unit = {
-    var con: Connection = null
-    var stmt: Statement = null
-    try {
-      con = dataSource.getConnection
-      var query = "create schema " + schemaName
-      stmt = con.createStatement()
-      stmt.executeUpdate(query);
-    } catch {
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Stacktrace:" + stackTrace)
-        throw new Exception("Failed to create schema  " + schemaName + ":" + e.getMessage())
-      }
-    } finally {
-      if (stmt != null) {
-        stmt.close
-      }
-      if (con != null) {
-        con.close
-      }
-    }
   }
 
   private def CheckTableExists(containerName: String): Unit = {
@@ -377,7 +318,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     // such as length of the table, special characters etc
     // database + "." + "dbo" + "." + containerName.replace('.','_')
     //database + "." + "dbo" + "." + toTableName(containerName)
-    SchemaName + "." + toTableName(containerName)
+    toTableName(containerName)
   }
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
@@ -495,6 +436,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo),
             value.serializedInfo.length)
           // Add it to the batch
+	  //pstmt.executeUpdate();
+	  //totalRowsInserted = totalRowsInserted + 1
           pstmt.addBatch()
         })
         var insertCount = pstmt.executeBatch();
@@ -527,6 +470,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt: PreparedStatement = null
     var cstmt: CallableStatement = null
     var tableName = toFullTableName(containerName)
+    var totalRowsDeleted = 0;
     try {
       CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
@@ -547,7 +491,6 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       })
       var deleteCount = pstmt.executeBatch();
       con.commit()
-      var totalRowsDeleted = 0;
       deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
       logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
     } catch {
@@ -574,6 +517,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var pstmt: PreparedStatement = null
     var cstmt: CallableStatement = null
     var tableName = toFullTableName(containerName)
+    var totalRowsDeleted = 0;
     try {
       logger.info("begin time => " + dateFormat.format(time.beginTime))
       logger.info("end time => " + dateFormat.format(time.endTime))
@@ -596,7 +540,6 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       })
       var deleteCount = pstmt.executeBatch();
       con.commit()
-      var totalRowsDeleted = 0;
       deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
       logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
     } catch {
@@ -1041,7 +984,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   override def beginTx(): Transaction = {
-    new SqlServerAdapterTx(this)
+    new MySqlAdapterTx(this)
   }
 
   override def endTx(tx: Transaction): Unit = {}
@@ -1101,11 +1044,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con = dataSource.getConnection()
       // check if the container already dropped
       val dbm = con.getMetaData();
-      rs = dbm.getTables(null, SchemaName, tableName, null);
+      rs = dbm.getTables(null, null, tableName, null);
       if (!rs.next()) {
-        logger.debug("The table " +  fullTableName + " may have beem dropped already ")
+        logger.debug("The table " + fullTableName + " may have beem dropped already ")
       } else {
-        var query = "drop table " +  fullTableName
+        var query = "drop table " + fullTableName
         stmt = con.createStatement()
         stmt.executeUpdate(query);
       }
@@ -1148,16 +1091,16 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
       // check if the container already exists
       val dbm = con.getMetaData();
-      rs = dbm.getTables(null, SchemaName, tableName, null);
+      rs = dbm.getTables(null, null, tableName, null);
       if (rs.next()) {
         logger.debug("The table " + tableName + " already exists ")
       } else {
-        var query = "create table " + fullTableName + "(timePartition bigint,bucketKey varchar(1024), transactionId bigint, rowId Int, serializerType varchar(128), serializedInfo varbinary(max))"
+        var query = "create table " + fullTableName + "(timePartition bigint,bucketKey varchar(512), transactionId bigint, rowId Int, serializerType varchar(128), serializedInfo longblob)"
         stmt = con.createStatement()
         stmt.executeUpdate(query);
         stmt.close
         var clustered_index_name = "ix_" + tableName
-        query = "create clustered index " + clustered_index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
+        query = "create unique index " + clustered_index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
         stmt = con.createStatement()
         stmt.executeUpdate(query);
         stmt.close
@@ -1194,7 +1137,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 }
 
-class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
+class MySqlAdapterTx(val parent: DataStore) extends Transaction {
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
@@ -1257,7 +1200,7 @@ class SqlServerAdapterTx(val parent: DataStore) extends Transaction {
 
 }
 
-// To create SqlServer Datastore instance
-object SqlServerAdapter extends StorageAdapterObj {
-  override def CreateStorageAdapter(kvManagerLoader: KamanjaLoaderInfo, datastoreConfig: String): DataStore = new SqlServerAdapter(kvManagerLoader, datastoreConfig)
+// To create MySql Datastore instance
+object MySqlAdapter extends StorageAdapterObj {
+  override def CreateStorageAdapter(kvManagerLoader: KamanjaLoaderInfo, datastoreConfig: String): DataStore = new MySqlAdapter(kvManagerLoader, datastoreConfig)
 }

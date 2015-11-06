@@ -60,13 +60,28 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
       assert(null != db)
       db match {
-	case "sqlserver" => {
+	case "sqlserver" | "mysql" | "hbase" | "cassandra" | "hashmap" | "treemap" => {
 	  var ds = MetadataAPIImpl.GetMainDS
 	  var containerList:Array[String] = Array("config_objects","jar_store","model_config_objects","metadata_objects","transaction_id")
 	  ds.TruncateContainer(containerList)
 	}
 	case _ => {
-	  MetadataAPIImpl.TruncateDbStore
+	  logger.info("TruncateDbStore is not supported for database " + db)
+	}
+      }
+  }
+
+  private def DropDbStore = {
+      val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+      assert(null != db)
+      db match {
+	case "sqlserver" | "mysql" | "hbase" | "cassandra" | "hashmap" | "treemap" => {
+	  var ds = MetadataAPIImpl.GetMainDS
+	  var containerList:Array[String] = Array("config_objects","jar_store","model_config_objects","metadata_objects","transaction_id")
+	  ds.DropContainer(containerList)
+	}
+	case _ => {
+	  logger.info("DropDbStore is not supported for database " + db)
 	}
       }
   }
@@ -1038,9 +1053,6 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     }
   }
   override def afterAll = {
-    if (zkServer != null) {
-      zkServer.instance.shutdown
-    }
     logger.info("Truncating dbstore")
     var logFile = new java.io.File("logs")
     if( logFile != null ){
@@ -1053,15 +1065,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
     assert(null != db)
     db match {
-      case "hashmap" => {
-	logFile = new java.io.File("default.hdb.p")
-	if( logFile != null ){
-	  TestUtils.deleteFile(logFile)
-	}
-	logFile = new java.io.File("default.hdb")
-	if( logFile != null ){
-	  TestUtils.deleteFile(logFile)
-	}
+      case "hashmap" | "treemap" => {
+	DropDbStore
       }
       case _ => {
 	logger.info("cleanup...")
@@ -1069,5 +1074,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     }
     TruncateDbStore
     MetadataAPIImpl.shutdown
+  }
+  if (zkServer != null) {
+    zkServer.instance.shutdown
   }
 }

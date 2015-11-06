@@ -34,8 +34,10 @@
 //     
 package com.ligadata.models.samples.models
 
+import com.ligadata.KvBase.{ Key, Value, TimeRange }
 import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase.{ ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+
 import System._
 import RddUtils._
 import RddDate._

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ligadata.automation.unittests.sqlserveradapter
+package com.ligadata.automation.unittests.treemapadapter
 
 import org.scalatest._
 import Matchers._
@@ -36,12 +36,11 @@ import com.ligadata.Serialize._
 import com.ligadata.Utils.Utils._
 import com.ligadata.Utils.{ KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.StorageBase.StorageAdapterObj
-import com.ligadata.keyvaluestore.SqlServerAdapter
+import com.ligadata.keyvaluestore.TreeMapAdapter
 
 case class Customer(name:String, address: String, homePhone: String)
 
-@Ignore
-class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
+class TreeMapAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
   var adapter:DataStore = null
@@ -56,16 +55,18 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
   private val kvManagerLoader = new KamanjaLoaderInfo
+  private var treemapAdapter:TreeMapAdapter = null
+  //private var dataDirectory = getClass.getResource("/DataDirectory")
+  private var dataDirectory = "."
 
   override def beforeAll = {
     try {
       logger.info("starting...");
 
       serializer = SerializerManager.GetSerializer("kryo")
-      logger.info("Initialize SqlServerAdapter")
-      val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""
-      adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
+      logger.info("Initialize TreeMapAdapter")
+      var dataStoreInfo="{\"StoreType\": \"" + "treemap" + "\",\"SchemaName\": \"" + "unit_tests" + "\",\"Location\": \"" + dataDirectory + "\"}"
+      adapter = TreeMapAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
    }
     catch {
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
@@ -92,6 +93,8 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     logger.info("rowId => " + key.rowId)
     logger.info("serializerType => " + value.serializerType)
     logger.info("serializedInfo length => " + value.serializedInfo.length)
+    val cust = serializer.DeserializeObjectFromByteArray(value.serializedInfo).asInstanceOf[Customer]
+    logger.info("serializedObject => " + cust)
     logger.info("----------------------------------------------------")
   }
 
@@ -114,7 +117,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     }
   }
 
-  describe("Unit Tests for all sqlserveradapter operations") {
+  describe("Unit Tests for all treemapadapter operations") {
 
     // validate property setup
     it ("Validate api operations") {
@@ -134,6 +137,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	adapter.CreateContainer(containers)
       }
 
+
       And("Test Put api")
       var keys = new Array[Key](0) // to be used by a delete operation later on
       for( i <- 1 to 10 ){
@@ -145,7 +149,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var key = new Key(currentTime.getTime(),keyArray,i,i)
 	keys = keys :+ key
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
-	var custNumber = "4256667777" + i
+	var custNumber = "425666777" + i
 	var obj = new Customer(custName,custAddress,custNumber)
 	var v = serializer.SerializeObjectToByteArray(obj)
 	var value = new Value("kryo",v)
@@ -159,10 +163,10 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	adapter.get(containerName,readCallBack _)
       }
 
-      val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
+      treemapAdapter = adapter.asInstanceOf[TreeMapAdapter]
 
       And("Check the row count after adding a bunch")
-      var cnt = sqlServerAdapter.getRowCount(containerName,null)
+      var cnt = treemapAdapter.getRowCount(containerName)
       assert(cnt == 10)
 
       And("Get all the keys for the rows that were just added")
@@ -176,7 +180,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after deleting a bunch")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = treemapAdapter.getRowCount(containerName)
       assert(cnt == 0)
 
       for( i <- 1 to 100 ){
@@ -186,7 +190,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	keyArray = keyArray :+ custName
 	var key = new Key(currentTime.getTime(),keyArray,i,i)
 	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
-	var custNumber = "4256667777" + i
+	var custNumber = "425666777" + i
 	var obj = new Customer(custName,custAddress,custNumber)
 	var v = serializer.SerializeObjectToByteArray(obj)
 	var value = new Value("kryo",v)
@@ -196,7 +200,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after adding a hundred rows")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = treemapAdapter.getRowCount(containerName)
       assert(cnt == 100)
 
       And("Test truncate container")
@@ -207,7 +211,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after truncating the container")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = treemapAdapter.getRowCount(containerName)
       assert(cnt == 0)
 
       And("Test Bulk Put api")
@@ -243,7 +247,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after adding a bunch")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = treemapAdapter.getRowCount(containerName)
       assert(cnt == 10)
 
       And("Get all the keys for the rows that were just added")
@@ -267,7 +271,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after deleting a bunch based on time range")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = treemapAdapter.getRowCount(containerName)
       assert(cnt == 8)
 
       And("Test Get for a time range")
@@ -346,6 +350,11 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var containers = new Array[String](0)
 	containers = containers :+ containerName
 	adapter.DropContainer(containers)
+      }
+
+      And("Shutdown treemap session")
+      noException should be thrownBy {
+	adapter.Shutdown
       }
 
     }

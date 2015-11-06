@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ligadata.automation.unittests.sqlserveradapter
+package com.ligadata.automation.unittests.mysqladapter
 
 import org.scalatest._
 import Matchers._
@@ -36,12 +36,11 @@ import com.ligadata.Serialize._
 import com.ligadata.Utils.Utils._
 import com.ligadata.Utils.{ KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.StorageBase.StorageAdapterObj
-import com.ligadata.keyvaluestore.SqlServerAdapter
+import com.ligadata.keyvaluestore.MySqlAdapter
 
 case class Customer(name:String, address: String, homePhone: String)
 
-@Ignore
-class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
+class MySqlAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
   var adapter:DataStore = null
@@ -62,10 +61,10 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       logger.info("starting...");
 
       serializer = SerializerManager.GetSerializer("kryo")
-      logger.info("Initialize SqlServerAdapter")
+      logger.info("Initialize MySqlAdapter")
       val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""
-      adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
+      val dataStoreInfo = """{"StoreType": "mysql","hostname": "localhost","database": "kamanja","user":"root","password":"ligadata2014","jarpaths":"/media/home2/java_examples/mysql-connector-java-5.1.36","jdbcJar":"mysql-connector-java-5.1.36-bin.jar"}"""
+      adapter = MySqlAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
    }
     catch {
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
@@ -103,18 +102,21 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
     logger.info("----------------------------------------------------")
   }
 
-  def deleteFile(path:File):Unit = {
-    if(path.exists()){
-      if (path.isDirectory){
-	for(f <- path.listFiles) {
-          deleteFile(f)
-	}
-      }
-      path.delete()
+  @throws(classOf[FileNotFoundException])
+  def deleteFile(path:File):Boolean = {
+    if(!path.exists()){
+      throw new FileNotFoundException(path.getAbsolutePath)
     }
+    var ret = true
+    if (path.isDirectory){
+      for(f <- path.listFiles) {
+        ret = ret && deleteFile(f)
+      }
+    }
+    return ret && path.delete()
   }
 
-  describe("Unit Tests for all sqlserveradapter operations") {
+  describe("Unit Tests for all mysqladapter operations") {
 
     // validate property setup
     it ("Validate api operations") {
@@ -159,10 +161,10 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	adapter.get(containerName,readCallBack _)
       }
 
-      val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
+      val mysqlAdapter = adapter.asInstanceOf[MySqlAdapter]
 
       And("Check the row count after adding a bunch")
-      var cnt = sqlServerAdapter.getRowCount(containerName,null)
+      var cnt = mysqlAdapter.getRowCount(containerName,null)
       assert(cnt == 10)
 
       And("Get all the keys for the rows that were just added")
@@ -176,7 +178,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after deleting a bunch")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = mysqlAdapter.getRowCount(containerName,null)
       assert(cnt == 0)
 
       for( i <- 1 to 100 ){
@@ -196,7 +198,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after adding a hundred rows")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = mysqlAdapter.getRowCount(containerName,null)
       assert(cnt == 100)
 
       And("Test truncate container")
@@ -207,7 +209,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after truncating the container")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = mysqlAdapter.getRowCount(containerName,null)
       assert(cnt == 0)
 
       And("Test Bulk Put api")
@@ -243,7 +245,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after adding a bunch")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = mysqlAdapter.getRowCount(containerName,null)
       assert(cnt == 10)
 
       And("Get all the keys for the rows that were just added")
@@ -267,7 +269,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       }
 
       And("Check the row count after deleting a bunch based on time range")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = mysqlAdapter.getRowCount(containerName,null)
       assert(cnt == 8)
 
       And("Test Get for a time range")
