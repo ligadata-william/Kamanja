@@ -25,12 +25,13 @@ object CleanKafka {
   val logger = org.apache.log4j.Logger.getLogger(this.getClass)
 
   def deleteTopic(topicName: String, zookeeperConnectString: String): Unit = {
-    logger.info(s"CLEAN-UTIL: Deleting kafka topic '$topicName'")
     val zkClient: ZkClient = new ZkClient(zookeeperConnectString, 30000, 30000, ZKStringSerializer)
-    if(AdminUtils.topicExists(zkClient, topicName))
+    if(AdminUtils.topicExists(zkClient, topicName)) {
+      logger.info(s"CLEAN-UTIL: Deleting kafka topic '$topicName'")
       AdminUtils.deleteTopic(zkClient, topicName)
+    }
     else {
-      logger.warn(s"CLEAN-UTIL: Kafka topic '$topicName' does not exist. Skipping delete...")
+      logger.warn(s"CLEAN-UTIL: Unable to locate Kafka topic '$topicName'. Skipping delete...")
       return
     }
 

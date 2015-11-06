@@ -24,6 +24,7 @@ object CleanUtil {
 
   val usage =
     """Usage: CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-kafka] [--clean-zookeeper] [--clean-testdata [List of messages/containers]] [--clean-metadata] [--cleanstatusinfo]
+           or CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-all [List of messages/containers]]
     """.stripMargin
 
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
@@ -44,6 +45,10 @@ object CleanUtil {
         nextOption(map ++ Map('cleanmetadata -> true), tail)
       case "--clean-statusinfo" :: tail =>
         nextOption(map ++ Map('cleanstatusinfo -> true), tail)
+      case "--clean-all" :: value :: tail if !isSwitch(value) =>
+        nextOption(map ++ Map('cleanall -> value), tail)
+      case "--clean-all" :: tail =>
+        nextOption(map ++ Map('cleanall -> true), tail)
       case option :: tail => {
         throw new InvalidArgumentException(s"CLEAN-UTIL: Unknown option or invalid usage of option $option.\n$usage")
       }
@@ -61,43 +66,60 @@ object CleanUtil {
       else {
         val options = nextOption(Map(), args.toList)
         val configFile = options.getOrElse('config, null)
-        val cleanKafka = options.getOrElse('cleankafka, false)
-        val cleanZookeeper = options.getOrElse('cleanzookeeper, false)
-        val cleanTestdata = options.getOrElse('cleantestdata, false)
-        val cleanMetadata = options.getOrElse('cleanmetadata, false)
-        val cleanStatusinfo = options.getOrElse('cleanstatusinfo, false)
-
         config = new CleanerConfiguration(configFile.asInstanceOf[String])
-
-        if(cleanKafka.asInstanceOf[Boolean]) {
+        val cleanAll = options.getOrElse('cleanall, false)
+        if (cleanAll.asInstanceOf[Boolean]) {
           config.topicList.foreach(topic => {
             CleanKafka.deleteTopic(topic, config.zookeeperInfo.connStr)
           })
-        }
-
-        if(cleanZookeeper.asInstanceOf[Boolean]) {
           CleanZookeeper.deletePath(config.zookeeperInfo)
-        }
-
-        if(cleanMetadata.asInstanceOf[Boolean]) {
           CleanStores.cleanMetadata(config.metadataStore)
-        }
-
-        if(cleanStatusinfo.asInstanceOf[Boolean]) {
           CleanStores.cleanStatusInfo(config.statusInfo)
-        }
-
-        if(cleanTestdata.isInstanceOf[Boolean]) {
-
-          if(cleanTestdata.asInstanceOf[Boolean]) {
-            CleanStores.cleanDatastore(config.dataStore, None)
+          if (cleanAll.isInstanceOf[Boolean]) {
+            if (cleanAll.asInstanceOf[Boolean]) {
+              CleanStores.cleanDatastore(config.dataStore, None)
+            }
+            else {
+              CleanStores.cleanDatastore(config.dataStore, Some(cleanAll.asInstanceOf[String].split(',')))
+            }
           }
         }
         else {
-          CleanStores.cleanDatastore(config.dataStore, Some(cleanTestdata.asInstanceOf[String].split(',')))
+          val cleanKafka = options.getOrElse('cleankafka, false)
+          val cleanZookeeper = options.getOrElse('cleanzookeeper, false)
+          val cleanTestdata = options.getOrElse('cleantestdata, false)
+          val cleanMetadata = options.getOrElse('cleanmetadata, false)
+          val cleanStatusinfo = options.getOrElse('cleanstatusinfo, false)
+
+          if (cleanKafka.asInstanceOf[Boolean]) {
+            config.topicList.foreach(topic => {
+              CleanKafka.deleteTopic(topic, config.zookeeperInfo.connStr)
+            })
+          }
+
+          if (cleanZookeeper.asInstanceOf[Boolean]) {
+            CleanZookeeper.deletePath(config.zookeeperInfo)
+          }
+
+          if (cleanMetadata.asInstanceOf[Boolean]) {
+            CleanStores.cleanMetadata(config.metadataStore)
+          }
+
+          if (cleanStatusinfo.asInstanceOf[Boolean]) {
+            CleanStores.cleanStatusInfo(config.statusInfo)
+          }
+
+          if (cleanTestdata.isInstanceOf[Boolean]) {
+
+            if (cleanTestdata.asInstanceOf[Boolean]) {
+              CleanStores.cleanDatastore(config.dataStore, None)
+            }
+          }
+          else {
+            CleanStores.cleanDatastore(config.dataStore, Some(cleanTestdata.asInstanceOf[String].split(',')))
+          }
         }
       }
-
     }
     catch {
       case e: MissingArgumentException => logger.error(e)
@@ -105,7 +127,9 @@ object CleanUtil {
       case e: Exception => logger.error("Unexpected Exception caught:\n" + e)
     }
     finally {
-      config.shutdown
+      if(config != null) {
+        config.shutdown
+      }
     }
   }
 }

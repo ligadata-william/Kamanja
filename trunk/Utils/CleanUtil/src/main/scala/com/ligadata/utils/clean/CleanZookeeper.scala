@@ -29,12 +29,16 @@ object CleanZookeeper {
     val retryPolicy = new ExponentialBackoffRetry(1000, 3)
     val zkc = CuratorFrameworkFactory.newClient(zkInfo.connStr, 6000, 6000, retryPolicy)
     try {
-      logger.info("Deleting Zookeeper node " + zkInfo.nodeBasePath)
       zkc.start()
-      zkc.delete().deletingChildrenIfNeeded.forPath(zkInfo.nodeBasePath)
-
-      if (zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
-        throw new Exception("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath)
+      if(zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
+        logger.warn(s"CLEAN-UTIL: Failed to find zookeeper path '${zkInfo.nodeBasePath}'. Skipping delete...")
+      }
+      else {
+        logger.info("Deleting Zookeeper node " + zkInfo.nodeBasePath)
+        zkc.delete().deletingChildrenIfNeeded.forPath(zkInfo.nodeBasePath)
+        if (zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
+          throw new Exception("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath)
+        }
       }
     }
     finally {

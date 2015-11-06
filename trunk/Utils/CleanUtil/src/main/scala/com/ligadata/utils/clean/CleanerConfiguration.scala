@@ -36,11 +36,14 @@ class CleanerConfiguration(metadataConfigFile: String) {
 
   // Constructor
   try {
-    println("CLEAN-UTIL: Constructor entered. Calling MetadataAPIImpl.InitMdMgrFromBootStrap")
     MetadataAPIImpl.InitMdMgrFromBootStrap(metadataConfigFile, false)
     initialize
   }
   catch {
+    case e: IllegalArgumentException => {
+      shutdown
+      throw e
+    }
     case e: Exception => {
       shutdown
       throw new Exception("CLEAN-UTIL: Failed to initialize with exception:\n" + e)
@@ -64,19 +67,22 @@ class CleanerConfiguration(metadataConfigFile: String) {
     })
     if(topicNames.length == 0)
       logger.error("CLEAN-UTIL: Failed to retrieve topic names from cluster configuration. Please ensure you've uploaded cluster configuration to metadata")
+    logger.info("CLEAN-UTIL: Fetched topic names: " + topicNames)
     topicNames
   }
 
   private def initialize(): Unit = {
-    logger.info("CLEAN-UTIL: Retrieving Zookeeper Node Base Path from cluster configuration")
     val clusterCfgs: Array[ClusterCfgInfo] = MdMgr.GetMdMgr.ClusterCfgs.values.toArray
+    if(clusterCfgs.length == 0 || clusterCfgs == null)
+      throw new Exception("CLEAN-UTIL: Failed to retrieve cluster configuration. Please ensure you've uploaded cluster configuration to metadata.")
     clusterCfgs.foreach(clusterCfg => {
       // Retrieving Zookeeper configuration
+      logger.info("CLEAN-UTIL: Retrieving Zookeeper Node Base Path from cluster configuration")
       val zkJson = parse(clusterCfg.CfgMap("ZooKeeperInfo"))
       val nodeBasePath = (zkJson \ "ZooKeeperNodeBasePath").values.toString
       val connStr: String = (zkJson \ "ZooKeeperConnectString").values.toString
       if (zkJson == "None" || nodeBasePath == "None" || connStr == "None")
-        throw new Exception("CLEAN-UTIL: Failed to retrieve zookeeper configuration. Please ensure you've uploaded cluster configuration to metadata.")
+        throw new IllegalArgumentException("CLEAN-UTIL: Failed to retrieve zookeeper configuration. Please ensure you've uploaded cluster configuration to metadata.")
       zookeeperInfo = new ZooKeeperInfo(nodeBasePath, connStr)
       // End Zookeeper configuration
 
@@ -91,19 +97,18 @@ class CleanerConfiguration(metadataConfigFile: String) {
       statusInfo = KeyValueManager.Get(jarPaths, clusterCfg.cfgMap("StatusInfo"))
 
       // Get MetadataStore storage adapter
-      val mdDataStoreConfig = MetadataAPIImpl.metadataAPIConfig.getProperty("METADATA_DATASTORE")
-      metadataStore = KeyValueManager.Get(jarPaths, mdDataStoreConfig)
-      //metadataStore = MetadataAPIImpl.GetMainDS
+      metadataStore = MetadataAPIImpl.GetMainDS
 
+      // Retrieving a list of Kafka topic names from configuration.
+      // TODO: How to handle different input/output adapters. Right now I'm assuming kafka here.
       topicList = getTopicNames
     })
   }
 
   def shutdown: Unit = {
     MetadataAPIImpl.shutdown
-    dataStore.Shutdown
-    statusInfo.Shutdown
-    metadataStore.Shutdown
+    if(dataStore != null) dataStore.Shutdown
+    if(statusInfo != null) statusInfo.Shutdown
   }
 
 }
