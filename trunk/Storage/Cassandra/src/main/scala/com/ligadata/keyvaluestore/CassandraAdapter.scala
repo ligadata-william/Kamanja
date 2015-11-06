@@ -159,6 +159,12 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   if (parsed_json.contains("batchPuts")) {
     batchPuts = parsed_json.get("batchPuts").get.toString.trim
   }
+
+  var tableNameLength = 48
+  if (parsed_json.contains("tableNameLength")) {
+    tableNameLength = parsed_json.get("tableNameLength").get.toString.trim.toInt
+  }
+
   val clusterBuilder = Cluster.builder()
   var cluster: Cluster = _
   var session: Session = _
@@ -222,6 +228,8 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     logger.info("DataStore created successfully")
   } catch {
     case e: Exception => {
+      val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.error("Stacktrace:" + stackTrace)
       throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
     }
   }
@@ -277,7 +285,18 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     // we need to check for other restrictions as well
     // such as length of the table, special characters etc
     //containerName.replace('.','_')
-    containerName.toLowerCase.replace('.', '_').replace('-', '_')
+    // Cassandra has a limit of 48 characters for table name, so take the first 48 characters only
+    // Even though we don't allow duplicate containers within the same namespace,
+    // Taking first 48 characters may result in  duplicate table names
+    // So I am reversing the long string to ensure unique name
+    // Need to be documented, at the least.
+    var t = containerName.toLowerCase.replace('.', '_').replace('-', '_')
+    if ( t.length > tableNameLength ){
+      t.reverse.substring(0,tableNameLength)
+    }
+    else{
+      t
+    }
   }
 
   private def toFullTableName(containerName: String): String = {

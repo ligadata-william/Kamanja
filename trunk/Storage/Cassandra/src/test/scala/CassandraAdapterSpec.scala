@@ -120,7 +120,25 @@ class CassandraAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
     // validate property setup
     it ("Validate api operations") {
-      val containerName = "sys.customer1"
+      var containerName = "com.ligadata.kamanja.timepartition.timepartitionmsg"
+      And("Do tests with " + containerName + " just to validate table names longer than 48 characters")
+      And("Test drop  container")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.DropContainer(containers)
+      }
+
+      And("Test create container")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.CreateContainer(containers)
+      }
+
+
+      containerName = "sys.customer1"
+      And("Do the remaining tests with " + containerName)
 
       And("Test drop container")
       noException should be thrownBy {

@@ -5748,7 +5748,7 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.CloseDbStore
     MetadataAPIImpl.InitSecImpl
     if (startHB) InitHearbeat
-    initZkListeners
+    initZkListeners(startHB)
   }
 
   def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean) {
@@ -5762,7 +5762,7 @@ object MetadataAPIImpl extends MetadataAPI {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
 
-    initZkListeners
+    initZkListeners(startHB)
     val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
     val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
     MetadataAPIImpl.OpenDbStore(jarPaths, GetMetadataAPIConfig.getProperty("METADATA_DATASTORE"))
@@ -5788,7 +5788,7 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * Create a listener to monitor Meatadata Cache
    */
-  def initZkListeners: Unit = {
+  def initZkListeners(startHB: Boolean): Unit = {
     // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
     var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH")
     var hbPathEngine = znodePath
@@ -5806,8 +5806,10 @@ object MetadataAPIImpl extends MetadataAPI {
         CreateClient.CreateNodeIfNotExists(zkConnectString, znodePath)
         zkListener = new ZooKeeperListener
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000)
-        zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathEngine, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
-        zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathMetadata, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
+        if (startHB) {
+          zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathEngine, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
+          zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathMetadata, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
+        }
       } catch {
         case e: Exception => {
           logger.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
