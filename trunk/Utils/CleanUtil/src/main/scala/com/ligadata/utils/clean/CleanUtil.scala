@@ -96,8 +96,6 @@ object CleanUtil {
         else {
           CleanStores.cleanDatastore(config.dataStore, Some(cleanTestdata.asInstanceOf[String].split(',')))
         }
-
-
       }
 
     }
@@ -110,33 +108,4 @@ object CleanUtil {
       config.shutdown
     }
   }
-
-  /*
-  def main(args: Array[String]) {
-    try {
-      var myConfigFile: String = null
-      if (args.length == 0) {
-        logger.error("Config File must be supplied, pass a config file as a command line argument:  --config /your-install-path/MetadataAPIConfig.properties")
-        return
-      } else {
-        val options = nextOption(Map(), args.toList)
-        val cfgfile = options.getOrElse('config, null)
-        if (cfgfile == null) {
-          logger.error("Need configuration file as parameter")
-          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
-        }
-        myConfigFile = cfgfile.asInstanceOf[String]
-      }
-      MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile, true)
-
-      StartTest
-    } catch {
-      case e: Throwable => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
-      }
-    } finally {
-      MetadataAPIImpl.shutdown
-    }
-  } */
 }
