@@ -1118,7 +1118,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (containersInfo != null) {
       containersInfo.foreach(ci => {
         val c = ci.containerName.toLowerCase
-        if (_mgr.Container(c, -1, true) != None)
+        if (_mgr.Container(c, -1, false) != None)
           _containersNames.add(c)
         else
           _containersNames.remove(c) // remove it incase if it exists in set
@@ -1216,8 +1216,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     localSaveModelsResult(transId, key, value)
   }
 
-  override def getChangedData(tempTransId: Long, includeMessages: Boolean, includeContainers: Boolean): scala.collection.immutable.Map[String, Array[Key]] = {
-    val changedContainersData = scala.collection.mutable.Map[String, Array[Key]]()
+  override def getChangedData(tempTransId: Long, includeMessages: Boolean, includeContainers: Boolean): scala.collection.immutable.Map[String, List[Key]] = {
+    val changedContainersData = scala.collection.mutable.Map[String, List[Key]]()
 
     // Commit Data and Removed Transaction information from status
     val txnCtxt = getTransactionContext(tempTransId, false)
@@ -1227,10 +1227,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val messagesOrContainers = txnCtxt.getAllMessagesAndContainers
 
     messagesOrContainers.foreach(v => {
-      // val mc = _messagesOrContainers.getOrElse(v._1, null)
-      val canConsiderThis = ((includeMessages && includeContainers) ||
-        (includeMessages && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ ( /* mc.isContainer == false && */ v._2.isContainer == false)) ||
-        (includeContainers && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ ( /* mc.isContainer || */ v._2.isContainer)))
+      val canConsiderThis = if (includeMessages && includeContainers) {
+        true
+      } else {
+        val isContainer = _containersNames.contains(v._1)
+        ((includeMessages && isContainer == false) ||
+          (includeContainers && isContainer))
+      }
 
       if (canConsiderThis) {
         var foundPartKeys = new ArrayBuffer[Key](v._2.dataByTmPart.size())
@@ -1240,7 +1243,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           foundPartKeys += entry.getKey().key
         }
         if (foundPartKeys.size > 0)
-          changedContainersData(v._1) = foundPartKeys.toArray
+          changedContainersData(v._1) = foundPartKeys.toList
       }
     })
 
@@ -1292,7 +1295,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       localValues(key) = (transId, value, outputResults)
 
     val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String, String)])]()
-    val modelsResult = if (txnCtxt != null) txnCtxt.getAllModelsResult else Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
+    val modelsResult = /* if (txnCtxt != null) txnCtxt.getAllModelsResult else */ Map[Key, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
     if (_kryoSer == null) {
       _kryoSer = SerializerManager.GetSerializer("kryo")
