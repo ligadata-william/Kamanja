@@ -49,6 +49,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
   val engine = new LearningEngine(input, curPartitionKey)
   val allOutputAdaptersNames = if (kamanjaCallerCtxt.outputAdapters != null) kamanjaCallerCtxt.outputAdapters.map(o => o.inputConfig.Name.toLowerCase) else Array[String]()
   val allOuAdapters = if (kamanjaCallerCtxt.outputAdapters != null) kamanjaCallerCtxt.outputAdapters.map(o => (o.inputConfig.Name.toLowerCase, o)).toMap else Map[String, OutputAdapter]()
+  val adapterInfoMap = ProcessedAdaptersInfo.getOneInstance(this.hashCode(), true)
   def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiters: DataDelimiters): Unit = {
     try {
       val uk = uniqueKey.Serialize
@@ -100,6 +101,9 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val forceCommitFalg = forceCommitVal != null
         val containerData = if (forceCommitFalg) kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
         kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
+        
+        // Set the uk & uv
+        adapterInfoMap(uk) = uv
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
 
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {

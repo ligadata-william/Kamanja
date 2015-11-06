@@ -103,6 +103,8 @@ object KamanjaConfiguration {
   var adaptersAndEnvCtxtLoader = new KamanjaLoaderInfo(baseLoader, true, true)
   var metadataLoader = new KamanjaLoaderInfo(baseLoader, true, true)
 
+  var adapterInfoCommitTime = 5000 // Default 5 secs
+
   def Reset: Unit = {
     configFile = null
     allConfigs = null
@@ -128,6 +130,36 @@ object KamanjaConfiguration {
   }
 }
 
+object ProcessedAdaptersInfo {
+  private val lock = new Object
+  private val instances = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[String, String]]()
+  def getOneInstance(hashCode: Int, createIfNotExists: Boolean): scala.collection.mutable.Map[String, String] = {
+    lock.synchronized {
+      val inst = instances.getOrElse(hashCode, null)
+      if (inst != null) {
+        return inst
+      }
+      if (createIfNotExists == false)
+        return null
+
+      val newInst = scala.collection.mutable.Map[String, String]()
+      instances(hashCode) = newInst
+      return newInst
+    }
+  }
+
+  def getAllValues: Map[String, String] = {
+    var maps: List[scala.collection.mutable.Map[String, String]] = null
+    lock.synchronized {
+      maps = instances.map(kv => kv._2).toList
+    }
+
+    var retVals = scala.collection.mutable.Map[String, String]()
+    maps.foreach(m => retVals ++= m)
+    retVals.toMap
+  }
+}
+
 class KamanjaManager extends Observer {
   private val LOG = Logger.getLogger(getClass);
 
@@ -150,7 +182,7 @@ class KamanjaManager extends Observer {
   }
 
   private def Shutdown(exitCode: Int): Int = {
-  /*
+    /*
     if (KamanjaMetadata.envCtxt != null)
       KamanjaMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
 */
@@ -244,6 +276,15 @@ class KamanjaManager extends Observer {
       if (KamanjaConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")
         return false
+      }
+
+      try {
+        val adapterCommitTime = loadConfigs.getProperty("AdapterCommitTime".toLowerCase, "0").replace("\"", "").trim.toInt
+        if (adapterCommitTime > 0) {
+          KamanjaConfiguration.adapterInfoCommitTime = adapterCommitTime
+        }
+      } catch {
+        case e: Exception => {}
       }
 
       try {
@@ -451,8 +492,47 @@ class KamanjaManager extends Observer {
       }
     }
 
+    var prevAdapterValues = Map[String, String]()
+    var nextAdapterValuesCommit = System.currentTimeMillis + KamanjaConfiguration.adapterInfoCommitTime
+
     LOG.warn("KamanjaManager is running now. Waiting for user to terminate with SIGTERM, SIGINT or SIGABRT signals")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
+      if (KamanjaMetadata.envCtxt != null && nextAdapterValuesCommit < System.currentTimeMillis) {
+        // Try to commit now
+        var changedValues: List[(String, String)] = null
+        val newValues = ProcessedAdaptersInfo.getAllValues
+        if (prevAdapterValues.size == 0) {
+          changedValues = newValues.toList
+        } else {
+          var changedArr = ArrayBuffer[(String, String)]()
+          newValues.foreach(v1 => {
+            val oldVal = prevAdapterValues.getOrElse(v1._1, null)
+            if (oldVal == null || v1._2.equals(oldVal) == false) { // It is not found or changed, simple take it
+              changedArr += v1
+            }
+          })
+          changedValues = changedArr.toList
+        }
+        // Commit here
+        try {
+          if (changedValues.size > 0)
+            KamanjaMetadata.envCtxt.setAdapterUniqKeyAndValues(changedValues)
+          prevAdapterValues = newValues
+          nextAdapterValuesCommit = System.currentTimeMillis + KamanjaConfiguration.adapterInfoCommitTime
+        } catch {
+          case e: Exception => {
+            LOG.error("Failed to commit adapter changes. if we can not save this we will reprocess the information when service restarts. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("StackTrace:" + stackTrace)
+          }
+          case e: Throwable => {
+            LOG.error("Failed to commit adapter changes. if we can not save this we will reprocess the information when service restarts. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("StackTrace:" + stackTrace)
+          }
+        }
+
+      }
       cntr = cntr + 1
       if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {
         val dispWarn = (lookingForDups && timeOutEndTime > 0)

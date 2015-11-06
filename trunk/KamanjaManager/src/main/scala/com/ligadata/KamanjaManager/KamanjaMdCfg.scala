@@ -76,6 +76,13 @@ object KamanjaMdCfg {
       return false
     }
 
+    val adapterCommitTime = cluster.cfgMap.getOrElse("AdapterCommitTime", null)
+    if (adapterCommitTime != null) {
+      val tm = adapterCommitTime.trim().toInt
+      if (tm > 0)
+        KamanjaConfiguration.adapterInfoCommitTime = tm
+    }
+
     KamanjaConfiguration.jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
     if (KamanjaConfiguration.jarPaths.size == 0) {
       LOG.error("Not found valid JarPaths.")

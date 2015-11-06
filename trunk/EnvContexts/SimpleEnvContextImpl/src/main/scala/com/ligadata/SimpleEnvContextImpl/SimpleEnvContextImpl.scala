@@ -1701,4 +1701,22 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     localSetObject(transId, containerName, tmValues.toArray, partKeyValues.toArray, finalValues.toArray)
   }
+
+  override def setAdapterUniqKeyAndValues(keyAndValues: List[(String, String)]): Unit = {
+    val dataForContainer = ArrayBuffer[(Key, Value)]()
+    val emptyLst = List[(String, String, String)]()
+    keyAndValues.foreach(v1 => {
+      _adapterUniqKeyValData(v1._1) = (0, v1._2, emptyLst)
+      val json = ("T" -> 0) ~
+        ("V" -> v1._2) ~
+        ("Qs" -> emptyLst.map(qsres => { qsres._1 })) ~
+        ("Res" -> emptyLst.map(qsres => { qsres._2 }))
+      val compjson = compact(render(json))
+      dataForContainer += ((Key(KvBaseDefalts.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
+    })
+    if (dataForContainer.size > 0) {
+      _defaultDataStore.put(Array(("AdapterUniqKvData", dataForContainer.toArray)))
+    }
+  }
+
 }
