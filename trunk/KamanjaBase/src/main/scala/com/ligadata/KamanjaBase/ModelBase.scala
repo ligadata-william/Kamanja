@@ -322,7 +322,7 @@ trait EnvContext {
   def CacheContainers(clusterId: String): Unit
 }
 
-abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseObj) {
+abstract class ModelBase(var modelContext: ModelContext, val factory: ModelBaseObj) {
   final def EnvContext() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null // gCtx
   final def ModelName() = factory.ModelName() // Model Name
   final def Version() = factory.Version() // Model Version

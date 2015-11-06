@@ -1018,6 +1018,7 @@ object KamanjaLeader {
                       while (i < nodes.size && allNodesUp) {
                         if (participents.contains(nodes(i).nodeId) == false)
                           allNodesUp = false
+                        i += 1
                       }
 
                       if (allNodesUp) {
@@ -1038,7 +1039,7 @@ object KamanjaLeader {
                   } else { // if all nodes are up, no need to wait any more
                     LOG.warn("All Participents are {%s} up. Going to distribute the work now".format(cs.participants.mkString(",")))
                   }
-                } else if (lastParticipentChngDistTime < System.currentTimeMillis) {
+                } else if (lastParticipentChngDistTime > System.currentTimeMillis) {
                   // Still waiting to distribute
                   execDefaultPath = false
                 }

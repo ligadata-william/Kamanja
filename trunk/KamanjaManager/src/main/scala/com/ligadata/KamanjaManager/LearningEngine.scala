@@ -122,6 +122,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
             // Checking whether this message has any fields/concepts to execute in this model
             ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
             val curMd = if (q._3) {
+              q._4.modelContext = mdlCtxt
               q._4
             } else {
               val tInst = md.mdl.CreateNewModel(mdlCtxt)
