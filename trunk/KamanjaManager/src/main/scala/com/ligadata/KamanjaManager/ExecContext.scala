@@ -19,6 +19,7 @@ package com.ligadata.KamanjaManager
 
 import com.ligadata.KamanjaBase.{ EnvContext, DataDelimiters, TransactionContext }
 import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, InputAdapterCallerContext }
+import com.ligadata.KvBase.{ Key }
 
 import org.apache.log4j.Logger
 import org.json4s._
@@ -93,11 +94,12 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         }
 
         val commitStartTime = System.nanoTime
-        val containerData = kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
         // 
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
-        val forceCommitFlg = txnCtxt.getContextValue("forcecommit")
-        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFlg != null)
+        val forceCommitVal = txnCtxt.getContextValue("forcecommit")
+        val forceCommitFalg = forceCommitVal != null
+        val containerData = if (forceCommitFalg) kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
+        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
 
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
@@ -139,20 +141,18 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         // kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNanoSecs, sendOutStartTime))
 
-        /*
         if (containerData != null && containerData.size > 0) {
           val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
               ("C" -> kv._1) ~
                 ("K" -> kv._2.map(k =>
-                  ("tm" -> k._1) ~
-                    ("bk" -> k._2) ~
-                    ("tx" -> k._3)))))
+                  ("tm" -> k.timePartition) ~
+                    ("bk" -> k.bucketKey.toList) ~
+                    ("tx" -> k.transactionId)))))
           val sendJson = compact(render(datachangedata))
           // Do we need to log this?
           KamanjaLeader.SetNewDataToZkc(KamanjaConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
         }
-*/
       }
     } catch {
       case e: Exception => {
