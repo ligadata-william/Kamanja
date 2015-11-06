@@ -76,11 +76,12 @@ object KamanjaMdCfg {
       return false
     }
 
-    val adapterCommitTime = cluster.cfgMap.getOrElse("AdapterCommitTime", null)
+    val adapterCommitTime = mdMgr.GetUserProperty(nd.ClusterId, "AdapterCommitTime")
     if (adapterCommitTime != null) {
       val tm = adapterCommitTime.trim().toInt
       if (tm > 0)
         KamanjaConfiguration.adapterInfoCommitTime = tm
+      LOG.debug("AdapterCommitTime: " + KamanjaConfiguration.adapterInfoCommitTime)
     }
 
     KamanjaConfiguration.jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
@@ -304,7 +305,6 @@ object KamanjaMdCfg {
           val allMsgsContainers = topMessageNames ++ containerNames
           val containerInfos = allMsgsContainers.map(c => { ContainerNameAndDatastoreInfo(c, null) })
           envCtxt.RegisterMessageOrContainers(containerInfos) // Messages & Containers
-          envCtxt.CacheContainers(KamanjaConfiguration.clusterId) // Load data for Caching
 
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt

@@ -647,7 +647,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
             mdlsOrder += ((mdlNm, kv._2))
         })
 
-        LOG.error("Models Order changed from %s to %s".format(modelObjs.map(kv => kv._1).mkString(","), mdlsOrder.map(kv => kv._1).mkString(",")))
+        LOG.warn("Models Order changed from %s to %s".format(modelObjs.map(kv => kv._1).mkString(","), mdlsOrder.map(kv => kv._1).mkString(",")))
         modelExecOrderedObjects = mdlsOrder.toArray
       } else {
         modelExecOrderedObjects = if (modelObjs != null) modelObjs.toArray else Array[(String, MdlInfo)]()
