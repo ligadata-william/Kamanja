@@ -131,8 +131,21 @@ object KamanjaConfiguration {
 }
 
 object ProcessedAdaptersInfo {
+  private val LOG = Logger.getLogger(getClass);
   private val lock = new Object
   private val instances = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[String, String]]()
+  private var prevAdapterCommittedValues = Map[String, String]()
+  private def getAllValues: Map[String, String] = {
+    var maps: List[scala.collection.mutable.Map[String, String]] = null
+    lock.synchronized {
+      maps = instances.map(kv => kv._2).toList
+    }
+
+    var retVals = scala.collection.mutable.Map[String, String]()
+    maps.foreach(m => retVals ++= m)
+    retVals.toMap
+  }
+
   def getOneInstance(hashCode: Int, createIfNotExists: Boolean): scala.collection.mutable.Map[String, String] = {
     lock.synchronized {
       val inst = instances.getOrElse(hashCode, null)
@@ -148,15 +161,53 @@ object ProcessedAdaptersInfo {
     }
   }
 
-  def getAllValues: Map[String, String] = {
+  def clearInstances: Unit = {
     var maps: List[scala.collection.mutable.Map[String, String]] = null
     lock.synchronized {
-      maps = instances.map(kv => kv._2).toList
+      instances.clear()
+      prevAdapterCommittedValues
     }
+  }
+  
+  def CommitAdapterValues: Boolean = {
+    var committed = false
+    if (KamanjaMetadata.envCtxt != null) {
+      // Try to commit now
+      var changedValues: List[(String, String)] = null
+      val newValues = getAllValues
+      if (prevAdapterCommittedValues.size == 0) {
+        changedValues = newValues.toList
+      } else {
+        var changedArr = ArrayBuffer[(String, String)]()
+        newValues.foreach(v1 => {
+          val oldVal = prevAdapterCommittedValues.getOrElse(v1._1, null)
+          if (oldVal == null || v1._2.equals(oldVal) == false) { // It is not found or changed, simple take it
+            changedArr += v1
+          }
+        })
+        changedValues = changedArr.toList
+      }
+      // Commit here
+      try {
+        if (changedValues.size > 0)
+          KamanjaMetadata.envCtxt.setAdapterUniqKeyAndValues(changedValues)
+        prevAdapterCommittedValues = newValues
+        committed = true
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to commit adapter changes. if we can not save this we will reprocess the information when service restarts. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("StackTrace:" + stackTrace)
+        }
+        case e: Throwable => {
+          LOG.error("Failed to commit adapter changes. if we can not save this we will reprocess the information when service restarts. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("StackTrace:" + stackTrace)
+        }
+      }
 
-    var retVals = scala.collection.mutable.Map[String, String]()
-    maps.foreach(m => retVals ++= m)
-    retVals.toMap
+    }
+    committed
   }
 }
 
@@ -492,46 +543,13 @@ class KamanjaManager extends Observer {
       }
     }
 
-    var prevAdapterValues = Map[String, String]()
     var nextAdapterValuesCommit = System.currentTimeMillis + KamanjaConfiguration.adapterInfoCommitTime
 
     LOG.warn("KamanjaManager is running now. Waiting for user to terminate with SIGTERM, SIGINT or SIGABRT signals")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
       if (KamanjaMetadata.envCtxt != null && nextAdapterValuesCommit < System.currentTimeMillis) {
-        // Try to commit now
-        var changedValues: List[(String, String)] = null
-        val newValues = ProcessedAdaptersInfo.getAllValues
-        if (prevAdapterValues.size == 0) {
-          changedValues = newValues.toList
-        } else {
-          var changedArr = ArrayBuffer[(String, String)]()
-          newValues.foreach(v1 => {
-            val oldVal = prevAdapterValues.getOrElse(v1._1, null)
-            if (oldVal == null || v1._2.equals(oldVal) == false) { // It is not found or changed, simple take it
-              changedArr += v1
-            }
-          })
-          changedValues = changedArr.toList
-        }
-        // Commit here
-        try {
-          if (changedValues.size > 0)
-            KamanjaMetadata.envCtxt.setAdapterUniqKeyAndValues(changedValues)
-          prevAdapterValues = newValues
+        if (ProcessedAdaptersInfo.CommitAdapterValues)
           nextAdapterValuesCommit = System.currentTimeMillis + KamanjaConfiguration.adapterInfoCommitTime
-        } catch {
-          case e: Exception => {
-            LOG.error("Failed to commit adapter changes. if we can not save this we will reprocess the information when service restarts. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:" + stackTrace)
-          }
-          case e: Throwable => {
-            LOG.error("Failed to commit adapter changes. if we can not save this we will reprocess the information when service restarts. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:" + stackTrace)
-          }
-        }
-
       }
       cntr = cntr + 1
       if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {

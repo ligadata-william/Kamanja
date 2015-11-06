@@ -101,9 +101,10 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val forceCommitFalg = forceCommitVal != null
         val containerData = if (forceCommitFalg) kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
         kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
-        
+
         // Set the uk & uv
-        adapterInfoMap(uk) = uv
+        if (adapterInfoMap != null)
+          adapterInfoMap(uk) = uv
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
 
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {

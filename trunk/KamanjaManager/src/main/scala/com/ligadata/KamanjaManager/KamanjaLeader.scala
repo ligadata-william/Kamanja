@@ -617,6 +617,9 @@ object KamanjaLeader {
               if (distributionExecutor.isShutdown)
                 break
 
+              // Save the state and Clear the maps
+              ProcessedAdaptersInfo.CommitAdapterValues
+              ProcessedAdaptersInfo.clearInstances
               // envCtxt.PersistLocalNodeStateEntries
               envCtxt.clearIntermediateResults
 
@@ -634,6 +637,8 @@ object KamanjaLeader {
         }
         case "distribute" => {
           envCtxt.clearIntermediateResults // We may not need it here. But anyway safe side
+          // Clear the maps
+          ProcessedAdaptersInfo.clearInstances
           var distributed = true
           try {
             // get Unique Keys for this nodeId
