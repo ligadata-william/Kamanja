@@ -300,7 +300,6 @@ class CompilerProxy {
       }
       case e: AlreadyExistsException => {
         logger.debug("Failed to compile the message definition " + e.toString)
-        //e.printStackTrace
         throw new MsgCompilationFailedException(e.getMessage())
       }
     }
@@ -589,6 +588,7 @@ class CompilerProxy {
       // Java Models need to import the Factory Classes as well.
       if (sourceLang.equalsIgnoreCase("java"))
         typeImports = typeImports + "\nimport " + elem.physicalName + "Factory;"
+
     })
 
     // Remove all the existing reference to the dependent types code, they are not really valid
@@ -811,6 +811,7 @@ class CompilerProxy {
     var depElems: Set[BaseElemDef] = Set[BaseElemDef]()
     var totalDeps: Set[String] = Set[String]()
     var classPathDeps: Set[String] = Set[String]()
+
     // Get classpath and jarpath ready
     var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
     if (classPath.size == 0) classPath = "."
@@ -833,11 +834,13 @@ class CompilerProxy {
         if (elem == null)
           logger.warn("Unknown dependency " + dep)
         else {
+          elem.dependencyJarNames.foreach(aDep => {msgContDepSet = msgContDepSet + aDep})
           depElems += elem
           logger.info("Resolved dependency " + dep + " to " + elem.jarName)
           msgContDepSet = msgContDepSet + elem.jarName
         }
       })
+
       combinedDeps = combinedDeps ++ msgContDepSet
       msgJars = msgContDepSet.map(j => Utils.GetValidJarFile(jarPaths, j)).mkString(":")
     }
@@ -896,9 +899,10 @@ class CompilerProxy {
    * getClassPath -
    *
    */
-  private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String, Set[BaseElemDef], scala.collection.immutable.Set[String], scala.collection.immutable.Set[String]) = buildClassPath(MetadataAPIImpl.getModelDependencies(modelName, userId),
-    MetadataAPIImpl.getModelMessagesContainers(modelName, userId),
-    cpDeps)
+  private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String, Set[BaseElemDef], scala.collection.immutable.Set[String], scala.collection.immutable.Set[String])
+           = buildClassPath(MetadataAPIImpl.getModelDependencies(modelName, userId),
+                            MetadataAPIImpl.getModelMessagesContainers(modelName, userId),
+                            cpDeps)
 
   /**
    * createSavedSourceCode - use this to create a string that a recompile model can use for recompile when a dependent type

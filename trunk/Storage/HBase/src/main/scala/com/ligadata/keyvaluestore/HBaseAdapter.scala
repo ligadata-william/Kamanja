@@ -145,7 +145,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   }
 
   val hostnames = if (parsed_json.contains("hostlist")) parsed_json.getOrElse("hostlist", "localhost").toString.trim else parsed_json.getOrElse("Location", "localhost").toString.trim
-  val namespace = if (parsed_json.contains("schema")) parsed_json.getOrElse("schema", "default").toString.trim else parsed_json.getOrElse("SchemaName", "default").toString.trim
+  val namespace = if (parsed_json.contains("SchemaName")) parsed_json.getOrElse("SchemaName", "default").toString.trim else parsed_json.getOrElse("SchemaName", "default").toString.trim
 
   val config = HBaseConfiguration.create();
 
@@ -202,6 +202,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     connection = HConnectionManager.createConnection(config);
   } catch {
     case e: Exception => {
+      val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.error("Stacktrace:" + stackTrace)
       throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
     }
   }
@@ -276,7 +278,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     // we need to check for other restrictions as well
     // such as length of the table, special characters etc
     //containerName.replace('.','_')
-    containerName.toLowerCase.replace('.', '_').replace('-', '_')
+    namespace + ':' + containerName.toLowerCase.replace('.', '_').replace('-', '_')
   }
 
   private def toFullTableName(containerName: String): String = {

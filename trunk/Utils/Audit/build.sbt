@@ -43,5 +43,3 @@ libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.4.1"
 libraryDependencies += "org.mapdb" % "mapdb" % "1.0.6"
 
 libraryDependencies ++= Seq("net.debasishg" %% "redisclient" % "2.13")
-
-scalacOptions += "-deprecation"
