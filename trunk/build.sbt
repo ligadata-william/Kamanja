@@ -133,3 +133,4 @@ lazy val KvBase = project.in(file("KvBase"))
 
 lazy val FileDataConsumer = project.in(file("FileDataConsumer")) dependsOn(Exceptions, MetadataAPI)
 
+lazy val CleanUtil = project.in(file("Utils/CleanUtil")) dependsOn(MetadataAPI)
