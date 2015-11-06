@@ -39,7 +39,7 @@ object CleanStores {
   }
 
   def cleanStatusInfo(dataStore: DataStore): Unit = {
-    logger.info("Dropping tables from ")
+    //logger.info("Dropping tables from ")
   }
 
 }
