@@ -169,8 +169,11 @@ class OutputMsgGenerator {
 
         // mymap.foreach(map => log.info("map " + map._1 + "value " + map._2))
         if (notFoundCount == 0) { // BUGBUG:: Taking only if all models & messages found
+          log.debug("All fields are accessable for output message definitioin: " + outputMsg.FullName)
           outputMsgDefExists = true
           finalOutputMsgs += outputMsg
+        } else {
+          log.debug("Not found all fields for message definition:%s. Found:%d, Notfound:%d".format(outputMsg.FullName, foundCount, notFoundCount))
         }
       })
       log.info("outputMsgDefExists  " + outputMsgDefExists)
