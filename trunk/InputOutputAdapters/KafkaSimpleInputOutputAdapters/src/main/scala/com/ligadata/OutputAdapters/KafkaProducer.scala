@@ -77,11 +77,11 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
 
   var reqCntr: Int = 0
 
-  val producers = new Array[Producer[Array[Byte], Array[Byte]]](producersCnt)
+  val producers = new Array[Producer[String, Array[Byte]]](producersCnt)
 
   for (i <- 0 until producersCnt) {
     LOG.info("Creating Producer:" + (i + 1))
-    producers(i) = new Producer[Array[Byte], Array[Byte]](new ProducerConfig(props))
+    producers(i) = new Producer[String, Array[Byte]](new ProducerConfig(props))
   }
 
   // To send an array of messages. messages.size should be same as partKeys.size
@@ -92,9 +92,9 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
     }
     if (messages.size == 0) return
     try {
-      val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
+      val keyMessages = new ArrayBuffer[KeyedMessage[String, Array[Byte]]](messages.size)
       for (i <- 0 until messages.size) {
-        keyMessages += new KeyedMessage(qc.topic, partKeys(i), messages(i))
+        keyMessages += new KeyedMessage(qc.topic, new String(partKeys(i)), messages(i))
       }
       if (reqCntr > 500000000)
         reqCntr = 0

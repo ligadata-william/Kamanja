@@ -49,7 +49,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
   props.put("batch.num.messages", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "200"))
 
   // create the producer object
-  val producer = new Producer[Array[Byte], Array[Byte]](new ProducerConfig(props))
+  val producer = new Producer[String, Array[Byte]](new ProducerConfig(props))
 
   var delimiters = new DataDelimiters
   delimiters.keyAndValueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.KV_SEPARATOR,"\\x01")
@@ -94,15 +94,16 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     if (startFileProcessingTimeStamp == 0)
       startFileProcessingTimeStamp = scala.compat.Platform.currentTime
 
-    val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
+    val keyMessages = new ArrayBuffer[KeyedMessage[String, Array[Byte]]](messages.size)
 
     var isLast = false
     messages.foreach(msg => {
       if (!msg.isLastDummy) {
         numberOfValidEvents += 1
         var inputData: InputData = null
+        val msgStr = new String(msg.msg)
         try {
-          inputData = CreateKafkaInput(new String(msg.msg), SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
+          inputData = CreateKafkaInput(msgStr, SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
           currentOffset += 1
           numberOfMessagesProcessedInFile += 1
         } catch {
@@ -114,9 +115,11 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
         if (msg.offsetInFile == FileProcessor.NOT_RECOVERY_SITUATION ||
             ( msg.offsetInFile >= 0  &&
               msg.offsetInFile < currentOffset)) {
+          val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString(",")
+          logger.info("PartitionKey:%s, Msg:%s".format(partitionKey, msgStr))
           keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
-                                          objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString.getBytes("UTF8"),
-                                          new String(msg.msg).getBytes("UTF8"))
+                                          partitionKey,
+                                          msgStr.getBytes("UTF8"))
         } else {
           // This is just for reporting purposes... do not report messages that were below the recovery offset
           numberOfMessagesProcessedInFile = numberOfMessagesProcessedInFile - 1
@@ -156,7 +159,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    *
    * @param messages
    */
-  private def doKafkaSend(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Unit = {
+  private def doKafkaSend(messages: ArrayBuffer[KeyedMessage[String, Array[Byte]]]): Unit = {
     var isSendSuccessful = false
     while (!isSendSuccessful) {
       var sendResult = sendToKafka(messages)
@@ -192,7 +195,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    * @param messages
    * @return
    */
-  private def sendToKafka (messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
+  private def sendToKafka (messages: ArrayBuffer[KeyedMessage[String, Array[Byte]]]): Int = {
 
     try {
       if (messages.size > 0) {
@@ -255,8 +258,8 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
         val statusPartitionId = "it does not matter"
 
         // Write a Status Message
-        val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
-        keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC), statusPartitionId.getBytes("UTF8"), new String(statusMsg).getBytes("UTF8"))
+        val keyMessages = new ArrayBuffer[KeyedMessage[String, Array[Byte]]](1)
+        keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC), statusPartitionId, new String(statusMsg).getBytes("UTF8"))
         doKafkaSend(keyMessages)
         //producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC),
         //    statusPartitionId.getBytes("UTF8"),
@@ -288,8 +291,8 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
     println(partIdx + " SMART FILE CONSUMER: invalid message in file "+ msg.relatedFileName)
 
     // Write a Error Message
-    val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
-    keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
+    val keyMessages = new ArrayBuffer[KeyedMessage[String, Array[Byte]]](1)
+    keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event", errorMsg.getBytes("UTF8"))
     doKafkaSend(keyMessages)
     //  producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC),
      //   "rare event".getBytes("UTF8"),
