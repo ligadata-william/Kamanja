@@ -37,9 +37,4 @@ object CleanStores {
     }
     dataStore.DropContainer(tableArr)
   }
-
-  def cleanStatusInfo(dataStore: DataStore): Unit = {
-    //logger.info("Dropping tables from ")
-  }
-
 }

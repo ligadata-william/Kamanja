@@ -24,7 +24,7 @@ object CleanUtil {
 
   val usage =
     """Usage: CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-kafka] [--clean-zookeeper] [--clean-testdata [List of messages/containers]] [--clean-metadata] [--cleanstatusinfo]
-           or CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-all [List of messages/containers]]
+       or CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-all [List of messages/containers]]
     """.stripMargin
 
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
@@ -43,8 +43,6 @@ object CleanUtil {
         nextOption(map ++ Map('cleanzookeeper -> true), tail)
       case "--clean-metadata" :: tail =>
         nextOption(map ++ Map('cleanmetadata -> true), tail)
-      case "--clean-statusinfo" :: tail =>
-        nextOption(map ++ Map('cleanstatusinfo -> true), tail)
       case "--clean-all" :: value :: tail if !isSwitch(value) =>
         nextOption(map ++ Map('cleanall -> value), tail)
       case "--clean-all" :: tail =>
@@ -74,7 +72,6 @@ object CleanUtil {
           })
           CleanZookeeper.deletePath(config.zookeeperInfo)
           CleanStores.cleanMetadata(config.metadataStore)
-          CleanStores.cleanStatusInfo(config.statusInfo)
           if (cleanAll.isInstanceOf[Boolean]) {
             if (cleanAll.asInstanceOf[Boolean]) {
               CleanStores.cleanDatastore(config.dataStore, None)
@@ -89,7 +86,20 @@ object CleanUtil {
           val cleanZookeeper = options.getOrElse('cleanzookeeper, false)
           val cleanTestdata = options.getOrElse('cleantestdata, false)
           val cleanMetadata = options.getOrElse('cleanmetadata, false)
-          val cleanStatusinfo = options.getOrElse('cleanstatusinfo, false)
+
+          // Determining if any options were given. If none are given, error out and print usage.
+          if(!cleanKafka.asInstanceOf[Boolean] && !cleanZookeeper.asInstanceOf[Boolean] &&
+             !cleanMetadata.asInstanceOf[Boolean]) {
+            // If the previous 3 were true, check testData's type. If it's a boolean and that boolean is false
+            // then error out with usage. Otherwise, it should be a string, indicating it's been provided by the user.
+            if(cleanTestdata.isInstanceOf[Boolean]){
+              if(!cleanTestdata.asInstanceOf[Boolean]) {
+                logger.error("CLEAN-UTIL: No options given exception --config. Please give at least one clean option.")
+                logger.error(usage)
+                return
+              }
+            }
+          }
 
           if (cleanKafka.asInstanceOf[Boolean]) {
             config.topicList.foreach(topic => {
@@ -103,10 +113,6 @@ object CleanUtil {
 
           if (cleanMetadata.asInstanceOf[Boolean]) {
             CleanStores.cleanMetadata(config.metadataStore)
-          }
-
-          if (cleanStatusinfo.asInstanceOf[Boolean]) {
-            CleanStores.cleanStatusInfo(config.statusInfo)
           }
 
           if (cleanTestdata.isInstanceOf[Boolean]) {

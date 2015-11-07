@@ -30,7 +30,6 @@ class CleanerConfiguration(metadataConfigFile: String) {
 
   var zookeeperInfo: ZooKeeperInfo = null
   var dataStore: DataStore = null
-  var statusInfo: DataStore = null
   var metadataStore: DataStore = null
   var topicList: List[String] = List()
 
@@ -93,9 +92,6 @@ class CleanerConfiguration(metadataConfigFile: String) {
       // Get DataStore storage adapter
       dataStore = KeyValueManager.Get(jarPaths, clusterCfg.cfgMap("DataStore"))
 
-      // Get StatusInfo storage adapter
-      statusInfo = KeyValueManager.Get(jarPaths, clusterCfg.cfgMap("StatusInfo"))
-
       // Get MetadataStore storage adapter
       metadataStore = MetadataAPIImpl.GetMainDS
 
@@ -108,7 +104,6 @@ class CleanerConfiguration(metadataConfigFile: String) {
   def shutdown: Unit = {
     MetadataAPIImpl.shutdown
     if(dataStore != null) dataStore.Shutdown
-    if(statusInfo != null) statusInfo.Shutdown
   }
 
 }

@@ -23,23 +23,23 @@ import org.apache.curator.retry.ExponentialBackoffRetry
  * Created by will on 11/4/15.
  */
 object CleanZookeeper {
-  val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  private lazy val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  private lazy val retryPolicy = new ExponentialBackoffRetry(1000, 3)
 
   def deletePath(zkInfo: ZooKeeperInfo): Unit = {
-    val retryPolicy = new ExponentialBackoffRetry(1000, 3)
     val zkc = CuratorFrameworkFactory.newClient(zkInfo.connStr, 6000, 6000, retryPolicy)
     try {
       zkc.start()
-      if(zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
-        logger.warn(s"CLEAN-UTIL: Failed to find zookeeper path '${zkInfo.nodeBasePath}'. Skipping delete...")
-      }
-      else {
+      //if(zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
+      //  logger.warn(s"CLEAN-UTIL: Failed to find zookeeper path '${zkInfo.nodeBasePath}'. Skipping delete...")
+      //}
+      //else {
         logger.info("Deleting Zookeeper node " + zkInfo.nodeBasePath)
         zkc.delete().deletingChildrenIfNeeded.forPath(zkInfo.nodeBasePath)
         if (zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
           throw new Exception("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath)
         }
-      }
+      //}
     }
     finally {
       zkc.close()
