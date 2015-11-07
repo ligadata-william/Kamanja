@@ -29,7 +29,7 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
     if (key != null) {
       try {
         if (key.isInstanceOf[Array[Byte]]) {
-          return (Arrays.hashCode(key.asInstanceOf[Array[Byte]]) % numPartitions)
+          return (scala.math.abs(Arrays.hashCode(key.asInstanceOf[Array[Byte]])) % numPartitions)
         } else if (key.isInstanceOf[String]) {
           return (key.asInstanceOf[String].hashCode() % numPartitions)
         }
