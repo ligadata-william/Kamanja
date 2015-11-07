@@ -67,8 +67,11 @@ class CacheByDate[T](numDays: Int, maxNumDays: Int, numSubHashes: Int, fnHash: T
       throw CbdInvalidTimeRangeError("Invalid Time Range, start: %d > end: %d".format(startDt, endDt))
     val (sdt, edt) = (EpochToDayNum(startDt), EpochToDayNum(endDt + secsInDay))
     val numRangeDays = edt - sdt
+/*
+    //BUGBUG:: For now we are not check this
     if (numRangeDays > maxNumDays)
       throw CbdInvalidTimeRangeError("Invalid Time Range, range size: %d exceeds maxNumDays: %d, start: %d, end: %d".format(numRangeDays, maxNumDays, startDt, endDt))
+*/
     subCaches.foreach { sc => sc.SetRange(sdt, edt) }
     stRange = sdt * secsInDay
     endRange = edt * secsInDay // point to beginning of the next day of given end date
