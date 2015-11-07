@@ -68,7 +68,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   props.put("metadata.broker.list", inConfiguration(SmartFileAdapterConstants.KAFKA_BROKER));
   props.put("request.required.acks", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "1"))
   props.put("batch.num.messages", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "200"))
-  props.put("partitioner.class", "CustPartitioner");
+  props.put("partitioner.class", "com.ligadata.filedataprocessor.CustPartitioner");
 
   // create the producer object
   val producer = new Producer[Array[Byte], Array[Byte]](new ProducerConfig(props))
