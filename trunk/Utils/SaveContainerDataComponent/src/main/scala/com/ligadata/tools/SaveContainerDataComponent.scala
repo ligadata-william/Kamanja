@@ -381,12 +381,12 @@ class SaveContainerDataCompImpl extends LogTrait with MdBaseResolveInfo {
           val messageObj = objinst.asInstanceOf[BaseMsgObj]
           logger.debug("Created Message Object for " + typ)
           _baseObjs(typeName) = messageObj
-          messageObj.CreateNewMessage
+          return messageObj.CreateNewMessage
         } else if (objinst.isInstanceOf[BaseContainerObj]) {
           val containerObj = objinst.asInstanceOf[BaseContainerObj]
           logger.debug("Created Container Object for " + typ)
           _baseObjs(typeName) = containerObj
-          containerObj.CreateNewContainer
+          return containerObj.CreateNewContainer
         } else {
           val msgStr = "Failed to instantiate message or conatiner. type:%s (class:%s)".format(typ, clsName)
           logger.error(msgStr)
