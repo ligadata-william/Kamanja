@@ -47,115 +47,128 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
     if (finalTopMsgOrContainer != null) {
       val mdlCtxt = new ModelContext(txnCtxt, finalTopMsgOrContainer, inputData, uk)
-      val mdlChngCntr = KamanjaMetadata.GetModelsChangedCounter
-      if (mdlChngCntr != mdlsChangedCntr) {
-        LOG.info("Refreshing models for Partition:%s (hashCode:%d) from %d to %d".format(uk, partHashCd, mdlsChangedCntr, mdlChngCntr))
-        val (tmpMdls, tMdlsChangedCntr) = KamanjaMetadata.getAllModels
-        val tModels = if (tmpMdls != null) tmpMdls else Array[(String, MdlInfo)]()
+      ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
+      try {
+        val mdlChngCntr = KamanjaMetadata.GetModelsChangedCounter
+        if (mdlChngCntr != mdlsChangedCntr) {
+          LOG.info("Refreshing models for Partition:%s (hashCode:%d) from %d to %d".format(uk, partHashCd, mdlsChangedCntr, mdlChngCntr))
+          val (tmpMdls, tMdlsChangedCntr) = KamanjaMetadata.getAllModels
+          val tModels = if (tmpMdls != null) tmpMdls else Array[(String, MdlInfo)]()
 
-        val map = scala.collection.mutable.Map[String, (MdlInfo, Boolean, ModelBase)]()
-        models.foreach(q => {
-          map(q._1) = ((q._2, q._3, q._4))
-        })
+          val map = scala.collection.mutable.Map[String, (MdlInfo, Boolean, ModelBase)]()
+          models.foreach(q => {
+            map(q._1) = ((q._2, q._3, q._4))
+          })
 
-        var newModels = ArrayBuffer[(String, MdlInfo, Boolean, ModelBase)]()
-        var newMdlsSet = scala.collection.mutable.Set[String]()
+          var newModels = ArrayBuffer[(String, MdlInfo, Boolean, ModelBase)]()
+          var newMdlsSet = scala.collection.mutable.Set[String]()
 
-        tModels.foreach(tup => {
-          val md = tup._2
-          val mInfo = map.getOrElse(tup._1, null)
-          var newInfo: (String, MdlInfo, Boolean, ModelBase) = null
-          if (mInfo != null) {
-            // Make sure previous model version is same as the current model version
-            if (md.mdl == mInfo._1.mdl && md.mdl.Version().equals(mInfo._1.mdl.Version())) {
-              newInfo = ((tup._1, mInfo._1, mInfo._2, mInfo._3)) // Taking  previous record only if the same instance of the object exists
-            } else {
-              // Shutdown previous entry, if exists
-              if (mInfo._2 && mInfo._3 != null) {
-                mInfo._3.shutdown()
+          tModels.foreach(tup => {
+            val md = tup._2
+            val mInfo = map.getOrElse(tup._1, null)
+            var newInfo: (String, MdlInfo, Boolean, ModelBase) = null
+            if (mInfo != null) {
+              // Make sure previous model version is same as the current model version
+              if (md.mdl == mInfo._1.mdl && md.mdl.Version().equals(mInfo._1.mdl.Version())) {
+                newInfo = ((tup._1, mInfo._1, mInfo._2, mInfo._3)) // Taking  previous record only if the same instance of the object exists
+              } else {
+                // Shutdown previous entry, if exists
+                if (mInfo._2 && mInfo._3 != null) {
+                  mInfo._3.shutdown()
+                }
+                val tInst = md.mdl.CreateNewModel(mdlCtxt)
+                val isReusable = tInst.isModelInstanceReusable()
+                var newInst: ModelBase = null
+                if (isReusable) {
+                  newInst = tInst
+                  newInst.init(partHashCd)
+                }
+                newInfo = ((tup._1, md, isReusable, newInst))
               }
+            } else {
+              var newInst: ModelBase = null
               val tInst = md.mdl.CreateNewModel(mdlCtxt)
               val isReusable = tInst.isModelInstanceReusable()
-              var newInst: ModelBase = null
               if (isReusable) {
                 newInst = tInst
                 newInst.init(partHashCd)
               }
               newInfo = ((tup._1, md, isReusable, newInst))
             }
-          } else {
-            var newInst: ModelBase = null
-            val tInst = md.mdl.CreateNewModel(mdlCtxt)
-            val isReusable = tInst.isModelInstanceReusable()
-            if (isReusable) {
-              newInst = tInst
-              newInst.init(partHashCd)
+            if (newInfo != null) {
+              newMdlsSet += tup._1
+              newModels += newInfo
             }
-            newInfo = ((tup._1, md, isReusable, newInst))
-          }
-          if (newInfo != null) {
-            newMdlsSet += tup._1
-            newModels += newInfo
-          }
-        })
+          })
 
-        // Make sure we did shutdown all the instances which are deleted
-        models.foreach(mInfo => {
-          if (newMdlsSet.contains(mInfo._1) == false) {
-            if (mInfo._3 && mInfo._4 != null)
-              mInfo._4.shutdown()
-          }
-        })
-
-        models = newModels.toArray
-        mdlsChangedCntr = tMdlsChangedCntr
-      }
-
-      val outputAlways: Boolean = false;
-
-      // Execute all modes here
-      models.foreach(q => {
-        val md = q._2
-        try {
-          if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
-            LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.mdl.ModelName))
-            // Checking whether this message has any fields/concepts to execute in this model
-            ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
-            val curMd = if (q._3) {
-              q._4.modelContext = mdlCtxt
-              q._4
-            } else {
-              val tInst = md.mdl.CreateNewModel(mdlCtxt)
-              tInst.init(partHashCd)
-              tInst
+          // Make sure we did shutdown all the instances which are deleted
+          models.foreach(mInfo => {
+            if (newMdlsSet.contains(mInfo._1) == false) {
+              if (mInfo._3 && mInfo._4 != null)
+                mInfo._4.shutdown()
             }
-            if (curMd != null) {
-              val res = curMd.execute(outputAlways)
-              if (res != null) {
-                results += new SavedMdlResult().withMdlName(md.mdl.ModelName).withMdlVersion(md.mdl.Version).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
+          })
+
+          models = newModels.toArray
+          mdlsChangedCntr = tMdlsChangedCntr
+        }
+
+        val outputAlways: Boolean = false;
+
+        // Execute all modes here
+        models.foreach(q => {
+          val md = q._2
+          try {
+            if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+              LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.mdl.ModelName))
+              // Checking whether this message has any fields/concepts to execute in this model
+              val curMd = if (q._3) {
+                q._4.modelContext = mdlCtxt
+                q._4
               } else {
-                // Nothing to output
+                val tInst = md.mdl.CreateNewModel(mdlCtxt)
+                tInst.init(partHashCd)
+                tInst
+              }
+              if (curMd != null) {
+                val res = curMd.execute(outputAlways)
+                if (res != null) {
+                  results += new SavedMdlResult().withMdlName(md.mdl.ModelName).withMdlVersion(md.mdl.Version).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
+                } else {
+                  // Nothing to output
+                }
+              } else {
+                LOG.error("Failed to create model " + md.mdl.ModelName())
               }
             } else {
-              LOG.error("Failed to create model " + md.mdl.ModelName())
             }
-          } else {
+          } catch {
+            case e: Exception => {
+              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.error("StackTrace:" + stackTrace)
+            }
+            case t: Throwable => {
+              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
+              val stackTrace = StackTrace.ThrowableTraceString(t)
+              LOG.error("StackTrace:" + stackTrace)
+            }
           }
-        } catch {
-          case e: Exception => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:" + stackTrace)
-          }
-          case t: Throwable => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
-            val stackTrace = StackTrace.ThrowableTraceString(t)
-            LOG.error("StackTrace:" + stackTrace)
-          }
-        } finally {
-          ThreadLocalStorage.modelContextInfo.remove
+        })
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to execute models. Reason: " + e.getCause + ". Message: " + e.getMessage)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("StackTrace:" + stackTrace)
         }
-      })
+        case t: Throwable => {
+          LOG.error("Failed to execute models. Reason: " + t.getCause + ". Message: " + t.getMessage)
+          val stackTrace = StackTrace.ThrowableTraceString(t)
+          LOG.error("StackTrace:" + stackTrace)
+        }
+      } finally {
+        ThreadLocalStorage.modelContextInfo.remove
+      }
     }
     return results.toArray
   }
