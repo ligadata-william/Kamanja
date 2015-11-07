@@ -379,12 +379,12 @@ class SaveContainerDataCompImpl extends LogTrait with MdBaseResolveInfo {
         val objinst = obj.instance
         if (objinst.isInstanceOf[BaseMsgObj]) {
           val messageObj = objinst.asInstanceOf[BaseMsgObj]
-          logger.debug("Created Message Object for " + typ)
+          logger.debug("Created Message Object for type:%s (class:%s)".format(typ, clsName))
           _baseObjs(typeName) = messageObj
           return messageObj.CreateNewMessage
         } else if (objinst.isInstanceOf[BaseContainerObj]) {
           val containerObj = objinst.asInstanceOf[BaseContainerObj]
-          logger.debug("Created Container Object for " + typ)
+          logger.debug("Created Container Object for type:%s (class:%s)".format(typ, clsName))
           _baseObjs(typeName) = containerObj
           return containerObj.CreateNewContainer
         } else {
@@ -404,7 +404,7 @@ class SaveContainerDataCompImpl extends LogTrait with MdBaseResolveInfo {
       }
     }
 
-    val msgStr = "Failed to find message or conatiner. type:%s (class:%s)".format(typ, clsName)
+    val msgStr = "Failed to find message or conatiner. type:%s (class:%s) isMsg:%s, isContainer:%s".format(typ, clsName, isMsg.toString(), isContainer.toString())
     logger.error(msgStr)
     throw new Exception(msgStr)
   }
