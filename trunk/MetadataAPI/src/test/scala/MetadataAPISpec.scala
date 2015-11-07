@@ -106,7 +106,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       zkServer.instance.startup
 
       logger.info("Initialize zooKeeper connection")
-      MetadataAPIImpl.initZkListeners
+      MetadataAPIImpl.initZkListeners(false)
 
       logger.info("Initialize datastore")
       var tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
