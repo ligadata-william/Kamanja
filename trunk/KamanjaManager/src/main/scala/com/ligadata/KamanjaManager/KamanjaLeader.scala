@@ -831,7 +831,7 @@ object KamanjaLeader {
 
                   if (loadableKeys.size > 0) {
                     try {
-                      logger.debug("Loading Keys => Txnid:%d, ContainerName:%s, Keys:%s".format(txnid, contName, loadableKeys.map(k => (k.timePartition, k.bucketKey.mkString("="), k.transactionId)).mkString(",")))
+                      logger.debug("Loading Keys => Txnid:%d, ContainerName:%s, Keys:%s".format(txnid, contName, loadableKeys.map(k => (k.timePartition, k.bucketKey.mkString("="), k.transactionId, k.rowId)).mkString(",")))
                       envCtxt.ReloadKeys(txnid, contName, loadableKeys.toList)
                     } catch {
                       case e: Exception => {
