@@ -4,8 +4,7 @@ import java.io.{ IOException, File, PrintWriter }
 import java.nio.file.StandardCopyOption._
 import java.nio.file.{ Paths, Files }
 import java.text.SimpleDateFormat
-import java.util.Properties
-import java.util.Date
+import java.util.{TimeZone, Properties, Date, Arrays}
 
 import com.ligadata.Exceptions._
 import com.ligadata.KamanjaBase._
@@ -19,7 +18,6 @@ import kafka.producer.{ KeyedMessage, ProducerConfig, Producer, Partitioner }
 import org.apache.curator.framework.CuratorFramework
 import org.apache.log4j.Logger
 import kafka.utils.VerifiableProperties
-import java.util.Arrays
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -59,7 +57,10 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   var lastOffsetProcessed: Int = 0
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  var frmt: SimpleDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss")
+
+  val dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
+  dateFormat.setTimeZone(TimeZone.getTimeZone("UTC")); // Setting the UTC timezone.
+  //var frmt: SimpleDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss")
 
   private var fileCache: scala.collection.mutable.Map[String, Long] = scala.collection.mutable.Map[String, Long]()
 
@@ -271,9 +272,9 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         endFileProcessingTimeStamp = scala.compat.Platform.currentTime
         var statusMsg: String = null
         if (!isTotal)
-          statusMsg = SmartFileAdapterConstants.KAFKA_LOAD_STATUS + frmt.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - startFileProcessingTimeStamp)
+          statusMsg = SmartFileAdapterConstants.KAFKA_LOAD_STATUS + dateFormat.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - startFileProcessingTimeStamp)
         else
-          statusMsg = SmartFileAdapterConstants.TOTAL_FILE_STATUS + frmt.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - fileCache(fileName))
+          statusMsg = SmartFileAdapterConstants.TOTAL_FILE_STATUS + dateFormat.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - fileCache(fileName))
         val statusPartitionId = "it does not matter"
 
         // Write a Status Message
@@ -304,7 +305,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    */
   private def writeErrorMsg(msg: KafkaMessage): Unit = {
     val cdate: Date = new Date
-    val errorMsg = frmt.format(cdate) + "," + msg.relatedFileName + "," + (new String(msg.msg))
+    val errorMsg = dateFormat.format(cdate) + "," + msg.relatedFileName + "," + (new String(msg.msg))
     logger.warn(partIdx + " SMART FILE CONSUMER: invalid message in file " + msg.relatedFileName)
     println(partIdx + " SMART FILE CONSUMER: invalid message in file " + msg.relatedFileName)
 
