@@ -166,7 +166,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
                 ("K" -> kv._2.map(k =>
                   ("tm" -> k.timePartition) ~
                     ("bk" -> k.bucketKey.toList) ~
-                    ("tx" -> k.transactionId)))))
+                    ("tx" -> k.transactionId) ~
+                    ("rid" -> k.rowId)))))
           val sendJson = compact(render(datachangedata))
           // Do we need to log this?
           KamanjaLeader.SetNewDataToZkc(KamanjaConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))

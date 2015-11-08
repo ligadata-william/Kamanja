@@ -779,7 +779,8 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
               ("K" -> kv._2.map(k =>
                 ("tm" -> k.timePartition) ~
                   ("bk" -> k.bucketKey.toList) ~
-                  ("tx" -> k.transactionId)))))
+                  ("tx" -> k.transactionId) ~
+                  ("rid" -> k.rowId)))))
         val sendJson = compact(render(datachangedata))
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {

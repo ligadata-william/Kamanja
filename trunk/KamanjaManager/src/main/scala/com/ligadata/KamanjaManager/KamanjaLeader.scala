@@ -711,7 +711,7 @@ object KamanjaLeader {
     // LOG.debug("ActionOnDataChngImpl => receivedJsonStr: " + receivedJsonStr)
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
-      LOG.debug("ActionOnDataChngImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+      // LOG.debug("ActionOnDataChngImpl => Exit. receivedJsonStr: " + receivedJsonStr)
       return
     }
 
@@ -719,7 +719,7 @@ object KamanjaLeader {
       // Perform the action here
       val json = parse(receivedJsonStr)
       if (json == null || json.values == null) { // Not doing any action if not found valid json
-        LOG.debug("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+        LOG.error("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
         return
       }
 
@@ -823,14 +823,15 @@ object KamanjaLeader {
                       if (bk != null) {
                         val tm = oneKey.getOrElse("tm", "0").toString().toLong
                         val tx = oneKey.getOrElse("tx", "0").toString().toLong
-                        loadableKeys += Key(tm, bk.asInstanceOf[List[String]].toArray, tx, 0)
+                        val rid = oneKey.getOrElse("rid", "0").toString().toInt
+                        loadableKeys += Key(tm, bk.asInstanceOf[List[String]].toArray, tx, rid)
                       }
                     }
                   })
 
                   if (loadableKeys.size > 0) {
                     try {
-                      logger.info("Loading Keys => Txnid:%d, ContainerName:%s, Keys:%s".format(txnid, contName, loadableKeys.map(k => (k.timePartition, k.bucketKey, k.transactionId)).mkString(",")))
+                      logger.debug("Loading Keys => Txnid:%d, ContainerName:%s, Keys:%s".format(txnid, contName, loadableKeys.map(k => (k.timePartition, k.bucketKey.mkString("="), k.transactionId)).mkString(",")))
                       envCtxt.ReloadKeys(txnid, contName, loadableKeys.toList)
                     } catch {
                       case e: Exception => {

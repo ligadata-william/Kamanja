@@ -1240,7 +1240,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         var it1 = v._2.dataByTmPart.entrySet().iterator()
         while (it1.hasNext()) {
           val entry = it1.next();
-          foundPartKeys += entry.getKey().key
+          val v = entry.getValue()
+          if (v.modified)
+            foundPartKeys += entry.getKey().key
         }
         if (foundPartKeys.size > 0)
           changedContainersData(v._1) = foundPartKeys.toList
@@ -1498,29 +1500,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     results.toArray
   }
 
-  private def collectKeyAndValues(k: Key, v: Value, readValues: ArrayBuffer[(Key, MessageContainerBase)]): Unit = {
-    val o = buildObject(k, v)
-    readValues += ((k, o))
-  }
-
   override def ReloadKeys(tempTransId: Long, containerName: String, keys: List[Key]): Unit = {
-    /*
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    if (container != null) {
-      val readValues = ArrayBuffer[(Key, MessageContainerBase)]()
+    if (containerName == null || keys == null || keys.size == 0) return ;
+    val contName = containerName.toLowerCase
+    var cacheContainer = _cachedContainers.getOrElse(contName, null)
+    if (cacheContainer != null) {
       val buildOne = (k: Key, v: Value) => {
-        collectKeyAndValues(k, v, readValues)
+        collectKeyAndValues(k, v, cacheContainer)
       }
-      _defaultDataStore.get(containerName, keys.toArray, buildOne)
-
-      readValues.foreach(kv => {
-        val primkey = kv._2.PrimaryKeyData
-        val putkey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(kv._1.bucketKey), kv._1, primkey != null && primkey.size > 0, primkey)
-        // container.dataByBucketKey.put(putkey, kv._2)
-        // container.dataByTmPart.put(putkey, kv._2)
-      })
+      _defaultDataStore.get(contName, keys.toArray, buildOne)
     }
-*/
   }
 
   private def getLocalRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
