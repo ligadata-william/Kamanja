@@ -244,12 +244,19 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def Commit: Unit = {
-    //if (withTransactions)
-    dbStoreMap.foreach(db => {
-      logger.debug("Committing transactions for db " + db._1)
-      db._2.commit();
-    })
-    //db.commit() //persist changes into disk
+    if (withTransactions){
+      dbStoreMap.foreach(db => {
+	logger.debug("Committing transactions for db " + db._1)
+	db._2.commit();
+      })
+    }
+  }
+
+  private def Commit(tableName:String): Unit = {
+    if (withTransactions){
+      var db = dbStoreMap(tableName)
+      db.commit();
+    }
   }
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
@@ -260,7 +267,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       var vba = ValueToByteArray(value)
       var map = tablesMap(tableName)
       map.put(kba,vba)
-      Commit
+      Commit(tableName)
     } catch {
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
