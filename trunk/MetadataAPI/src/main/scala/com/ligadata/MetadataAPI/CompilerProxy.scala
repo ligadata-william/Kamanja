@@ -295,11 +295,11 @@ class CompilerProxy {
       (classStrVer, msgDef, classStrNoVer)
     } catch {
       case e: Exception => {
-        logger.debug("Failed to compile the message definition " + e.toString)
+        logger.error("Failed to compile the message definition " + e.toString)
         throw new MsgCompilationFailedException(e.getMessage())
       }
       case e: AlreadyExistsException => {
-        logger.debug("Failed to compile the message definition " + e.toString)
+        logger.error("Failed to compile the message definition " + e.toString)
         throw new MsgCompilationFailedException(e.getMessage())
       }
     }
@@ -353,11 +353,10 @@ class CompilerProxy {
         val mvCmd: String = s"mv $topLevelPkg $compiler_work_dir/$moduleName/"
         val mvCmdRc: Int = Process(mvCmd).!
         if (mvCmdRc != 0) {
-          logger.warn(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
-          logger.warn(s"cmd used : $mvCmd")
+          logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+          logger.error(s"cmd used : $mvCmd")
         }
         mvCmdRc
-
       }
     }
 

@@ -391,7 +391,7 @@ object MetadataAPIImpl extends MetadataAPI {
       } catch {
         case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.debug("\nStackTrace:" + stackTrace)
+          logger.error("\nStackTrace:" + stackTrace)
           throw new UpdateStoreFailedException("Failed to save audit record" + aRec.toString + ":" + e.getMessage())
         }
       }
@@ -417,7 +417,7 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
+        logger.error("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "Failed to fetch all the audit objects:", null, "Error :" + e.toString)
         apiResultStr = apiResult.toString()
       }
