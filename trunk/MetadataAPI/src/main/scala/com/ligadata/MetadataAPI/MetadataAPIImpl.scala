@@ -581,9 +581,9 @@ object MetadataAPIImpl extends MetadataAPI {
         throw new ObjectNotFoundException("Object %s not found in container %s".format(bucketKeyStr, containerName))
       objs(0)
     } catch {
-      case e: KeyNotFoundException => {
+      case e: ObjectNotFoundException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("KeyNotFound Exception: Error => " + e.getMessage() + "\nStackTrace:" + stackTrace)
+        logger.debug("ObjectNotFound Exception: Error => " + e.getMessage() + "\nStackTrace:" + stackTrace)
         throw new ObjectNotFoundException(e.getMessage())
       }
       case e: Exception => {
@@ -867,8 +867,8 @@ object MetadataAPIImpl extends MetadataAPI {
       idStr.toLong + 1
     } catch {
       case e: ObjectNotFoundException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
+        //val stackTrace = StackTrace.ThrowableTraceString(e)
+        //logger.debug("\nStackTrace:" + stackTrace)
         // first time
         1
       }
@@ -887,8 +887,8 @@ object MetadataAPIImpl extends MetadataAPI {
       idStr.toLong
     } catch {
       case e: ObjectNotFoundException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
+        //val stackTrace = StackTrace.ThrowableTraceString(e)
+        //logger.debug("\nStackTrace:" + stackTrace)
         // first time
         0
       }
@@ -1368,6 +1368,11 @@ object MetadataAPIImpl extends MetadataAPI {
         true
       }
     } catch {
+      case e: ObjectNotFoundException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
+	true
+      }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
