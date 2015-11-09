@@ -54,7 +54,7 @@ object MessageService {
               case option => {
                 val messageDefs = getUserInputFromMainMenu(messages)
                 for (messageDef <- messageDefs) {
-                  response += MetadataAPIImpl.AddContainer(messageDef.toString, "JSON", userid)
+                  response += MetadataAPIImpl.AddMessage(messageDef.toString, "JSON", userid)
                 }
               }
             }
@@ -139,7 +139,7 @@ object MessageService {
       //input provided
       var message = new File(input.toString)
       val messageDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.AddContainer(messageDef, "JSON", userid)
+      response = MetadataAPIImpl.UpdateMessage(messageDef, userid)
     }
     //Got the message. Now add them
     response
