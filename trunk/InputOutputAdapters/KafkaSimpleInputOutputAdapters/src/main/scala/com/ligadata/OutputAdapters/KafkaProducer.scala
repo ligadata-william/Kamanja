@@ -100,7 +100,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   // To send an array of messages. messages.size should be same as partKeys.size
   override def send(messages: Array[Array[Byte]], partKeys: Array[Array[Byte]]): Unit = {
     if (messages.size != partKeys.size) {
-      LOG.error("Message and Partition Keys should has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size))
+      LOG.error("KAFKA PRODUCER: Message and Partition Keys should has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size))
       return
     }
     if (messages.size == 0) return
@@ -117,7 +117,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
 
         // Queue is full, wait and retry
         if (sendStatus == KafkaConstants.KAFKA_SEND_Q_FULL) {
-          LOG.warn("SMART FILE CONSUMER: Target Q is temporarily full, retrying.")
+          LOG.warn("KAFKA PRODUCER: Target Q is temporarily full, retrying.")
           Thread.sleep(500)
         }
 
@@ -125,11 +125,11 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         //  3 times.
         if (sendStatus == KafkaConstants.KAFKA_SEND_DEAD_PRODUCER) {
           if (retryCount < MAX_RETRY) {
-            LOG.warn("SMART FILE CONSUMER: Error sending to kafka, Retrying " + retryCount +"/3")
+            LOG.warn("KAFKA PRODUCER: Error sending to kafka, Retrying " + retryCount +"/"+MAX_RETRY)
             retryCount += 1
 
           } else {
-            LOG.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
+            LOG.error("KAFKA PRODUCER: Error sending to kafka,  MAX_RETRY reached... shutting down")
             throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", possibleCause.getOrElse(null))
           }
         }
