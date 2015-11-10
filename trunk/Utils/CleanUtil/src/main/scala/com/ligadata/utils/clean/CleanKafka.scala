@@ -37,6 +37,7 @@ object CleanKafka {
 
     val timeout = 5.seconds.fromNow
     while(timeout.hasTimeLeft()) {
+      Thread sleep 100
       if (!AdminUtils.topicExists(zkClient, topicName)) {
         logger.info(s"CLEAN-UTIL: Successfully deleted topic '$topicName'")
         return

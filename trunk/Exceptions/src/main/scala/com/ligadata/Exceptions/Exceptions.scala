@@ -66,5 +66,4 @@ case class ProtoBufSerializationException(e: String) extends Throwable(e)
 case class KVMessageFormatingException(e: String) extends Exception(e)
 case class FatalKafkaCommunicationError(e: String) extends Exception(e)
 
-
-
+case class CleanUtilException(message: String) extends Exception(message)

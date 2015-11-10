@@ -16,33 +16,31 @@
 
 package com.ligadata.utils.clean
 
+import com.ligadata.Exceptions.CleanUtilException
 import org.apache.curator.framework.{CuratorFrameworkFactory, CuratorFramework}
 import org.apache.curator.retry.ExponentialBackoffRetry
 
-/**
- * Created by will on 11/4/15.
- */
 object CleanZookeeper {
   private lazy val logger = org.apache.log4j.Logger.getLogger(this.getClass)
   private lazy val retryPolicy = new ExponentialBackoffRetry(1000, 3)
 
   def deletePath(zkInfo: ZooKeeperInfo): Unit = {
-    val zkc = CuratorFrameworkFactory.newClient(zkInfo.connStr, 6000, 6000, retryPolicy)
+    var zkc: CuratorFramework = null
     try {
+      zkc = CuratorFrameworkFactory.newClient(zkInfo.connStr, 6000, 6000, retryPolicy)
       zkc.start()
-      //if(zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
-      //  logger.warn(s"CLEAN-UTIL: Failed to find zookeeper path '${zkInfo.nodeBasePath}'. Skipping delete...")
-      //}
-      //else {
-        logger.info("Deleting Zookeeper node " + zkInfo.nodeBasePath)
-        zkc.delete().deletingChildrenIfNeeded.forPath(zkInfo.nodeBasePath)
-        if (zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
-          throw new Exception("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath)
-        }
-      //}
+      logger.info("Deleting Zookeeper node " + zkInfo.nodeBasePath)
+      zkc.delete().deletingChildrenIfNeeded.forPath(zkInfo.nodeBasePath)
+      if (zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
+        throw new CleanUtilException("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath)
+      }
     }
+      catch {
+        case e: CleanUtilException => throw(e)
+        case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath + " with the following exception:\n" + e)
+      }
     finally {
-      zkc.close()
+      if (zkc != null) zkc.close()
     }
   }
 }

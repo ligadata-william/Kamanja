@@ -16,21 +16,33 @@
 
 package com.ligadata.utils.clean
 
+import java.io.InputStream
+
 import com.ligadata.Exceptions._
+
+import scala.io.Source
 
 object CleanUtil {
   private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
   private type OptionMap = Map[Symbol, Any]
 
-  val usage =
+  private val stream: InputStream = getClass.getResourceAsStream("/help.txt")
+  private val helpStr: String = Source.fromInputStream(stream).mkString
+
+  private val usage =
     """Usage: CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-kafka] [--clean-zookeeper] [--clean-testdata [List of messages/containers]] [--clean-metadata] [--cleanstatusinfo]
        or CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-all [List of messages/containers]]
+       or CleanUtil --help
     """.stripMargin
+
+
 
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
     list match {
       case Nil => map
+      case "--help" :: tail =>
+        nextOption(map ++ Map('help -> true), tail)
       case "--config" :: value :: tail if !isSwitch(value) =>
         nextOption(map ++ Map('config -> value), tail)
       case "--clean-testdata" :: value :: tail if !isSwitch(value)=>
@@ -48,7 +60,7 @@ object CleanUtil {
       case "--clean-all" :: tail =>
         nextOption(map ++ Map('cleanall -> true), tail)
       case option :: tail => {
-        throw new InvalidArgumentException(s"CLEAN-UTIL: Unknown option or invalid usage of option $option.\n$usage")
+        throw new CleanUtilException(s"CLEAN-UTIL: Unknown option or invalid usage of option $option.\n$usage")
       }
     }
   }
@@ -63,55 +75,62 @@ object CleanUtil {
       }
       else {
         val options = nextOption(Map(), args.toList)
-        val configFile = options.getOrElse('config, null)
-        config = new CleanerConfiguration(configFile.asInstanceOf[String])
+        val helpOpt = options.getOrElse('help, false).asInstanceOf[Boolean]
+        if (helpOpt) {
+          println(helpStr)
+          return
+        }
+
+        val configFile = options.getOrElse('config, "").asInstanceOf[String]
         val cleanAll = options.getOrElse('cleanall, false)
-        if (cleanAll.asInstanceOf[Boolean]) {
+
+        if (cleanAll.isInstanceOf[String] || (cleanAll.isInstanceOf[Boolean] && cleanAll.asInstanceOf[Boolean])) {
+          config = new CleanerConfiguration(configFile)
           config.topicList.foreach(topic => {
             CleanKafka.deleteTopic(topic, config.zookeeperInfo.connStr)
           })
           CleanZookeeper.deletePath(config.zookeeperInfo)
           CleanStores.cleanMetadata(config.metadataStore)
+
           if (cleanAll.isInstanceOf[Boolean]) {
-            if (cleanAll.asInstanceOf[Boolean]) {
-              CleanStores.cleanDatastore(config.dataStore, None)
-            }
-            else {
-              CleanStores.cleanDatastore(config.dataStore, Some(cleanAll.asInstanceOf[String].split(',')))
-            }
+            CleanStores.cleanDatastore(config.dataStore, None)
+          }
+          else {
+            CleanStores.cleanDatastore(config.dataStore, Some(cleanAll.asInstanceOf[String].split(',')))
           }
         }
         else {
-          val cleanKafka = options.getOrElse('cleankafka, false)
-          val cleanZookeeper = options.getOrElse('cleanzookeeper, false)
+          val cleanKafka = options.getOrElse('cleankafka, false).asInstanceOf[Boolean]
+          val cleanZookeeper = options.getOrElse('cleanzookeeper, false).asInstanceOf[Boolean]
+          val cleanMetadata = options.getOrElse('cleanmetadata, false).asInstanceOf[Boolean]
+          // Not converting cleanTestdata to boolean since it could be a string as well.
           val cleanTestdata = options.getOrElse('cleantestdata, false)
-          val cleanMetadata = options.getOrElse('cleanmetadata, false)
 
           // Determining if any options were given. If none are given, error out and print usage.
-          if(!cleanKafka.asInstanceOf[Boolean] && !cleanZookeeper.asInstanceOf[Boolean] &&
-             !cleanMetadata.asInstanceOf[Boolean]) {
+          if(!cleanKafka && !cleanZookeeper && !cleanMetadata) {
             // If the previous 3 were true, check testData's type. If it's a boolean and that boolean is false
             // then error out with usage. Otherwise, it should be a string, indicating it's been provided by the user.
-            if(cleanTestdata.isInstanceOf[Boolean]){
-              if(!cleanTestdata.asInstanceOf[Boolean]) {
+            if (cleanTestdata.isInstanceOf[Boolean]) {
+              if (!cleanTestdata.asInstanceOf[Boolean]) {
                 logger.error("CLEAN-UTIL: No options given exception --config. Please give at least one clean option.")
                 logger.error(usage)
                 return
               }
             }
           }
+          config = new CleanerConfiguration(configFile)
 
-          if (cleanKafka.asInstanceOf[Boolean]) {
+          if (cleanKafka) {
             config.topicList.foreach(topic => {
               CleanKafka.deleteTopic(topic, config.zookeeperInfo.connStr)
             })
           }
 
-          if (cleanZookeeper.asInstanceOf[Boolean]) {
+          if (cleanZookeeper) {
             CleanZookeeper.deletePath(config.zookeeperInfo)
           }
 
-          if (cleanMetadata.asInstanceOf[Boolean]) {
+          if (cleanMetadata) {
             CleanStores.cleanMetadata(config.metadataStore)
           }
 
@@ -128,12 +147,12 @@ object CleanUtil {
       }
     }
     catch {
-      case e: MissingArgumentException => logger.error(e)
-      case e: InvalidArgumentException => logger.error(e)
-      case e: Exception => logger.error("Unexpected Exception caught:\n" + e)
+      case e: MissingArgumentException => logger.error("", e)
+      case e: CleanUtilException => logger.error("", e)
+      case e: Exception => logger.error("Unexpected Exception caught", e)
     }
     finally {
-      if(config != null) {
+      if(config != null && config != "") {
         config.shutdown
       }
     }

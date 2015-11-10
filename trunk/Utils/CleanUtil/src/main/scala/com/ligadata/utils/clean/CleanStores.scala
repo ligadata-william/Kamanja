@@ -23,14 +23,28 @@ import com.ligadata.StorageBase.DataStore
 object CleanStores {
   private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
 
+  // DataStore table names
+  private val CheckPointInformationTable = "checkpointinformation"
+  private val GlobalCountersTable = "globalcounters"
+  private val ModelResultsTable = "modelresults"
+  private val AdapterUniqKVDataTable = "adapteruniqkvdata"
+
+  // Metadata table names
+  private val ModelConfigObjectsTable = "model_config_objects"
+  private val MetadataObjectsTable = "metadata_objects"
+  private val TransactionIDTable = "transaction_id"
+  private val JarStoreTable = "jar_store"
+  private val ConfigObjectsTable = "config_objects"
+
+
   def cleanMetadata(dataStore: DataStore): Unit = {
     logger.info("Dropping tables from metadata...")
-    dataStore.DropContainer(Array("model_config_objects", "metadata_objects", "transaction_id", "jar_store", "config_objects"))
+    dataStore.DropContainer(Array(ModelConfigObjectsTable, MetadataObjectsTable, TransactionIDTable, JarStoreTable, ConfigObjectsTable))
   }
 
   def cleanDatastore(dataStore: DataStore, tables: Option[Array[String]]): Unit = {
     logger.info("Dropping tables from data store...")
-    var tableArr = Array("checkpointinformation", "globalcounters", "modelresults", "adapteruniqkvdata")
+    var tableArr = Array(CheckPointInformationTable, GlobalCountersTable, ModelResultsTable, AdapterUniqKVDataTable)
     tables match {
       case Some(tableArray) => tableArr = tableArr ++ tableArray
       case None =>

@@ -1,0 +1,80 @@
+The goal of CleanUtil is to provide a tool that will allow a user to clean up an environment being used under test. The tools capabilities extend to cleaning topics in kafka, deleting of the node base path being used by Kamanja in zookeeper and the dropping of tables from Metadata and Datastore in the database.
+
+***** IMPORTANT *****
+Please note this tool is NOT recommended for use in production environments. It is designed purely as a test tool and misuse of the tool can cause permanent loss of data.
+***** IMPORTANT *****
+
+How it Works:
+
+CleanUtil should be presented the same configuration file as is given to MetadataAPI for performing CRUD operations on metadata. This file must be passed in command line. You may find an example file at $KAMANJA_HOME/config/MetadataAPIConfig.properties. CleanUtil will take this properties file and use it to determine the database being used to store your cluster configuration (Alison, link to cluster configuration documentation here please). It will then read in the cluster configuration you have saved to ascertain the remaining data stores' store types, schema names and locations. It will also pull the zookeeper and input/output adapter configurations. From here, it will take the user operations to determine what (if any) parts of the environment to clean. Using this method, CleanUtil will be able to clean a clustered environment so long as the location the user is running this utility from has network access to the hosts on the environment.
+
+Usage:
+
+Prior to using, please turn off any running nodes of KamanjaManager but leave on all zookeeper nodes, kafka brokers and databases.
+
+To use CleanUtil-1.0, simply navigate to $KAMANJA_HOME/bin where the utility should be installed to.
+
+The usage is as shown here:
+
+CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-kafka] [--clean-zookeeper] [--clean-testdata [List of messages/containers]] [--clean-metadata] [--cleanstatusinfo]
+
+or
+
+CleanUtil --config /path/to/MetadataAPIConfig.properties [--clean-all [List of messages/containers]
+
+Explanation of options:
+
+--config: --config be given or it will fail immediately. The configuration file given should be the same configuration given when running any kamanja (MetadataAPI) commands ($KAMANJA_HOME/config/MetadataAPIConfig.properties is used by Kamanja by default). This tool will NOT default to any configuration file.
+
+--clean-kafka: a switch indicating CleanUtil should delete the kafka topics found in cluster configuration. When present in the command, it will pull the names of all topics from the adapter configuration and make calls using the Kafka API to delete the topics.
+
+Example: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-kafka
+
+--clean-zookeeper: a switch indicating CleanUtil should delete the ZooKeeperNodeBasePath from zookeeper found in cluster configuration. When presented as part of the command, it will pull the Zookeeper configuration from cluster configuration, read the ZooKeeperNodeBasePath and delete it from zookeeper.
+
+Example: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-zookeeper
+
+--clean-metadata: a switch indicating CleanUtil should delete all metadata from the database. It will determine the location and store type given in cluster configuration and proceed to drop all tables from its schema name. This includes metadata, model configuration and cluster configuration. NOTE: If you run --clean-metadata, you will need to add cluster configuration to metadata prior to running this tool again.
+
+Example: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-metadata
+
+--clean-testdata: a switch indicating CleanUtil should delete all testdata from the database except for persisted messages and containers. It will remove all tables related to the kafka adapter.
+
+Example1: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-testdata
+
+This switch also takes an optional comma-separated list of messages and/or containers. These messages/containers are then transformed into their associated table names and removed from the database. For instance, if you have message history stored and the namespace of the message is 'com.ligadata.messages' and the name of the message is 'customer' and you also have container information stored with namespace 'com.ligadata.containers' and name 'purchasehistory', you would run:
+
+Example2: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-testdata com.ligadata.messages.customer,com.ligadata.containers.purchasehistory
+
+and it would delete the standard tables from testdata as well as the specified message/container data from the database.
+
+--clean-all: a switch that indicates that all aspects of the environment should be cleaned. Running:
+
+Example: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-all
+
+is the same as running:
+
+Example: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-kafka --clean-zookeeper --clean-metadata --clean-testdata
+
+It also supported optional messages/containers as an argument to delete specific tables from the DataStore.
+
+Example: CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-kafka com.ligadata.messages.customer,com.ligadata.containers.purchasehistory
+
+Further Examples:
+
+If you wish to clean your environment but retain your metadata and persisted messages and containers:
+CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-kafka --clean-zookeeper --clean-testdata
+
+To clean your environment and delete persisted messages and containers while retaining your metadata:
+CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-kafka --clean-zookeeper --clean-testdata com.ligadata.messages.customer,com.ligadata.containers.purchasehistory
+
+To delete data from kafka but retain metadata and persisted messages and containers:
+CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-testdata
+
+or
+
+CleanUtil-1.0 --config $KAMANJA_HOME/config/MetadataAPIConfig.properties --clean-testdata com.ligadata.messages.customer,com.ligadata.containers.purchasehistory
+
+In both examples, the kafka adapter offset will be reset back to 0 upon starting KamanjaManager and it will re-process all messages currently in the input topic. This is good for demos where you want to show off results without having to perform metadata operations or push data again.
+
+If you're output is dependent on message history, the second example shows how to remove the message history to allow for subsequent runs that produce the same output. If you're model does not rely on message history of container information, the first option should be enough.
