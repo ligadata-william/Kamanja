@@ -77,11 +77,15 @@ object KamanjaMdCfg {
     }
 
     val adapterCommitTime = mdMgr.GetUserProperty(nd.ClusterId, "AdapterCommitTime")
-    if (adapterCommitTime != null) {
-      val tm = adapterCommitTime.trim().toInt
-      if (tm > 0)
-        KamanjaConfiguration.adapterInfoCommitTime = tm
-      LOG.debug("AdapterCommitTime: " + KamanjaConfiguration.adapterInfoCommitTime)
+    if (adapterCommitTime != null && adapterCommitTime.trim.size > 0) {
+      try {
+        val tm = adapterCommitTime.trim().toInt
+        if (tm > 0)
+          KamanjaConfiguration.adapterInfoCommitTime = tm
+        LOG.debug("AdapterCommitTime: " + KamanjaConfiguration.adapterInfoCommitTime)
+      } catch {
+        case e: Exception => {}
+      }
     }
 
     KamanjaConfiguration.jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet

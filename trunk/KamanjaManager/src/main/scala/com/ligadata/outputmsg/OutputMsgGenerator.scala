@@ -42,18 +42,20 @@ class OutputMsgGenerator {
    */
   def generateOutputMsg(message: MessageContainerBase, ModelReslts: scala.collection.mutable.Map[String, Array[(String, Any)]], allOutputMsgs: Array[OutputMsgDef]): Array[(String, Array[String], String)] = {
     try {
-      log.info("ModelReslts  " + ModelReslts.size)
-      log.info("allOutputMsgs  " + allOutputMsgs.size)
+      log.debug("ModelReslts:%s,allOutputMsgs:%s".format(ModelReslts.size, allOutputMsgs.size))
       val (outputMsgExits, exitstingOutputMsgDefs, map) = getOutputMsgdef(message, ModelReslts, allOutputMsgs)
       if (outputMsgExits) {
         val newOutputFormats = extract(exitstingOutputMsgDefs, map)
         // newOutputFormats.foreach(f => log.info("Final 1 " + f._1 + " 2   " + f._2.toList + " 3  " + f._3))
         newOutputFormats
-      } else throw new Exception("Output Msg Def in the sent list of OutputMsgDef do not match with either Model Results or Top level Msg")
+      } else {
+        log.info("Output Msg Def in the sent list of OutputMsgDef do not match with either Model Results or Top level Msg")
+        return Array[(String, Array[String], String)]()
+      }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("\nStackTrace:" + stackTrace)
+        log.error("Got Exception while preparing Output messages.\nStackTrace:" + stackTrace)
         throw e
       }
     }
