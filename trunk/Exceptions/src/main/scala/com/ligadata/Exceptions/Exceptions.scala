@@ -65,7 +65,7 @@ case class ProtoBufSerializationException(e: String) extends Throwable(e)
 
 case class KVMessageFormatingException(e: String) extends Exception(e)
 
-case class FatalKafkaAdapterException(e: String) extends Exception(e)
+case class FatalAdapterException(e: String) extends Exception(e)
 
 
 
