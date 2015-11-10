@@ -159,7 +159,7 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
   private def doKafkaSend(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Unit = {
     var isSendSuccessful = false
     while (!isSendSuccessful) {
-      var sendResult = sendToKafka(messages)
+      val (sendResult, possibleException) = sendToKafka(messages)
       if (sendResult == FileProcessor.KAFKA_SEND_SUCCESS) {
         isSendSuccessful = true
         retryCount = 0
@@ -175,12 +175,13 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
         //  3 times.
         if (sendResult == FileProcessor.KAFKA_SEND_DEAD_PRODUCER) {
           if (retryCount < MAX_RETRY) {
-            logger.warn("SMART FILE CONSUMER: Error sending to kafka, Retrying " + retryCount +"/3")
+            logger.warn("SMART FILE CONSUMER: Error sending to kafka, Retrying " + retryCount +"/" + MAX_RETRY)
             retryCount += 1
 
           } else {
             logger.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
-            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached")
+            shutdown
+            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached",possibleException.getOrElse(null) )
           }
         }
       }
@@ -192,24 +193,23 @@ class KafkaMessageLoader(partIdx: Int , inConfiguration: scala.collection.mutabl
    * @param messages
    * @return
    */
-  private def sendToKafka (messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
+  private def sendToKafka (messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): (Int, Option[Exception] ) = {
 
     try {
       if (messages.size > 0) {
         producer.send(messages: _*)
-        return FileProcessor.KAFKA_SEND_SUCCESS
+        return (FileProcessor.KAFKA_SEND_SUCCESS, None)
       }
     } catch {
-      case ftsme: FailedToSendMessageException => return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
-      case qfe: QueueFullException => return FileProcessor.KAFKA_SEND_Q_FULL
+      case ftsme: FailedToSendMessageException => return  (FileProcessor.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme))
+      case qfe: QueueFullException => return (FileProcessor.KAFKA_SEND_Q_FULL,None)
       case e: Exception =>
-        logger.error(partIdx + " Could not add to the queue due to an Exception " + e.getMessage)
-        e.printStackTrace
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error(partIdx + " Could not add to the queue due to an Exception " + stackTrace)
         shutdown
-        throw e
+        throw new FatalAdapterException("Unknown exception", e)
     }
-
-    0
+    (FileProcessor.KAFKA_SEND_SUCCESS, None)
   }
 
   /**
