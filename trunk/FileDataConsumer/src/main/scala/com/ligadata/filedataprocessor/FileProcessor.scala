@@ -162,6 +162,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
    */
   private def enQFile(file: String, offset: Int, createDate: Long): Unit = {
     fileQLock.synchronized {
+      logger.info("SMART FILE CONSUMER: "+ partitionId + " enq file " + file + " with priority " + createDate+" --- curretnly " + fileQ.size + " files on a QUEUE")
       fileQ += new EnqueuedFile(file, offset, createDate)
     }
   }
@@ -175,7 +176,10 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       if (fileQ.isEmpty) {
         return null
       }
-      return fileQ.dequeue
+      var ef = fileQ.dequeue()
+      logger.info("SMART FILE CONSUMER: "+ partitionId + " deq file " + ef.name + " with priority " + ef.createDate+" --- curretnly " + fileQ.size + " files left on a QUEUE")
+      return ef
+
     }
   }
 
