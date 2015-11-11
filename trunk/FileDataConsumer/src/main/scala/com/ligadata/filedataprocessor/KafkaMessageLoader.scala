@@ -203,7 +203,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
           } else {
             logger.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
-            throw new FatalKafkaCommunicationError("Unable to send to Kafka, MAX_RETRY reached")
+            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached")
           }
         }
       }
