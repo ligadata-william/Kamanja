@@ -27,7 +27,7 @@ import kafka.consumer.{ SimpleConsumer }
 import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions.{FatalAdapterException, StackTrace}
 import com.ligadata.KamanjaBase.DataDelimiters
 
 object KafkaSimpleConsumer extends InputAdapterObj {
@@ -40,6 +40,7 @@ object KafkaSimpleConsumer extends InputAdapterObj {
   var CURRENT_BROKER: String = _
   val FETCHSIZE = 64 * 1024
   val ZOOKEEPER_CONNECTION_TIMEOUT_MS = 3000
+
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new KafkaSimpleConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
 }
 
@@ -189,10 +190,16 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           //val consumer = brokerConfiguration(leadBroker)
           val brokerId = convertIp(leadBroker)
           val brokerName = brokerId.split(":")
-          val consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-            KafkaSimpleConsumer.FETCHSIZE,
-            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+          var consumer: SimpleConsumer = null
+          try {
+            consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
+                                          KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                          KafkaSimpleConsumer.FETCHSIZE,
+                                          KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+          } catch {
+            case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+          }
+
 
           // Keep processing until you fail enough times.
           while (!isQuiesced) {
@@ -203,8 +210,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
             // Check for errors
             if (fetchResp.hasError) {
-              LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " +
-                fetchResp.errorCode(qc.topic, partitionId))
+              LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " + fetchResp.errorCode(qc.topic, partitionId))
               numberOfErrors = numberOfErrors + 1
 
               if (numberOfErrors > KafkaSimpleConsumer.MAX_FAILURES) {
@@ -212,7 +218,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
                 if (consumer != null) {
                   consumer.close
                 }
-                return
+                throw new FatalAdapterException("Too many failures fetching from kafka adapters ", new Exception("Topic: "+qc.topic +", Partition: "+partitionId+", ErrorCode:"+fetchResp.errorCode(qc.topic,partitionId)))
               }
             }
 
@@ -292,12 +298,29 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
     qc.hosts.foreach(broker => {
       val brokerName = broker.split(":")
-      val partConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-        KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-        KafkaSimpleConsumer.FETCHSIZE,
-        KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+      var partConsumer: SimpleConsumer = null
       try {
-        val metaDataResp: kafka.api.TopicMetadataResponse = partConsumer.send(metaDataReq)
+        partConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
+                                          KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                          KafkaSimpleConsumer.FETCHSIZE,
+                                          KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+      } catch {
+        case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+      }
+
+      try {
+
+        // Keep retrying to connect until MAX number of tries is reached.
+        var retryCount = 0
+        val (metaDataResp,possibleException) = doSend(partConsumer,metaDataReq)
+        while(metaDataResp == null) {
+          if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
+            throw new FatalAdapterException("Failed to retrieve Topic Metadata for defined partitions", possibleException)
+          retryCount += 1
+          Thread.sleep(1000)
+          (metaDataResp,possibleException) = doSend(partConsumer,metaDataReq)
+        }
+
         val metaData = metaDataResp.topicsMetadata
         metaData.foreach(topicMeta => {
           topicMeta.partitionsMetadata.foreach(partitionMeta => {
@@ -312,15 +335,30 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           })
         })
       } catch {
-        case e: java.lang.InterruptedException => {
-          LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")
-        }
+        case fae: FatalAdapterException => throw fae
+        case e: Exception => throw new FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
     })
     return partitionNames.toArray
   }
+
+  /**
+   *
+   * @param consumer
+   * @param req
+   * @return
+   */
+  private def doSend(consumer: SimpleConsumer, req: TopicMetadataRequest): (kafka.api.TopicMetadataResponse,Exception) = {
+    try {
+      val metaDataResp: kafka.api.TopicMetadataResponse = consumer.send(req)
+      return (metaDataResp,null)
+    } catch {
+      case e: Exception => return (null,e)
+    }
+  }
+
 
   /**
    * Return an array of PartitionUniqueKey/PartitionUniqueRecordValues whre key is the partion and value is the offset
@@ -382,14 +420,33 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         brokers.foreach(broker => {
           // Create a connection to this broker to obtain the metadata for this broker.
           val brokerName = broker.split(":")
-          val llConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt, KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-            KafkaSimpleConsumer.FETCHSIZE, KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+          var llConsumer: SimpleConsumer = null
+          try {
+            llConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
+                                            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                            KafkaSimpleConsumer.FETCHSIZE,
+                                            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+          } catch {
+            case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+          }
           val topics: Array[String] = Array(qc.topic)
           val llReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
 
           // get the metadata on the llConsumer
           try {
-            val llResp: kafka.api.TopicMetadataResponse = llConsumer.send(llReq)
+         //   val llResp: kafka.api.TopicMetadataResponse = llConsumer.send(llReq)
+
+            // Keep retrying to connect until MAX number of tries is reached.
+            var retryCount = 0
+            val (llResp,possibleException) = doSend(llConsumer,llReq)
+            while(llResp == null) {
+              if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
+                throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", possibleException)
+              retryCount += 1
+              Thread.sleep(1000)
+              (llResp,possibleException) = doSend(llConsumer,llReq)
+            }
+
             val metaData = llResp.topicsMetadata
 
             // look at each piece of metadata, and analyze its partitions
@@ -408,10 +465,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               })
             })
           } catch {
-            case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              LOG.debug("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + stackTrace)
-            }
+            case fae: FatalAdapterException => throw fae
+            case e: Exception => throw new FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
           } finally {
             if (llConsumer != null) llConsumer.close()
           }
@@ -457,12 +512,17 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     var offset: Long = -1
     var llConsumer: kafka.javaapi.consumer.SimpleConsumer = null
     val brokerName = leadBroker.split(":")
-    try {
-      llConsumer = new kafka.javaapi.consumer.SimpleConsumer(brokerName(0), brokerName(1).toInt,
-        KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-        KafkaSimpleConsumer.FETCHSIZE,
-        KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
 
+    try{
+      llConsumer = new kafka.javaapi.consumer.SimpleConsumer(brokerName(0), brokerName(1).toInt,
+                                                               KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                                               KafkaSimpleConsumer.FETCHSIZE,
+                                                               KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+    } catch {
+      case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+    }
+
+    try {
       // Set up the request object
       val jtap: kafka.common.TopicAndPartition = kafka.common.TopicAndPartition(qc.topic.toString, partitionId)
       val requestInfo: java.util.HashMap[TopicAndPartition, PartitionOffsetRequestInfo] = new java.util.HashMap[TopicAndPartition, PartitionOffsetRequestInfo]()
@@ -470,7 +530,16 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       val offsetRequest: kafka.javaapi.OffsetRequest = new kafka.javaapi.OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion, clientName)
 
       // Issue the call
-      val response: kafka.javaapi.OffsetResponse = llConsumer.getOffsetsBefore(offsetRequest)
+      // val response: kafka.javaapi.OffsetResponse = llConsumer.getOffsetsBefore(offsetRequest)
+      var retryCount = 0
+      val (response,possibleException) = doSendJavaConsumer(llConsumer,offsetRequest)
+      while(response == null) {
+        if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
+          throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", possibleException)
+        retryCount += 1
+        Thread.sleep(1000)
+        (response,possibleException) = doSendJavaConsumer(llConsumer,offsetRequest)
+      }
 
       // Return the value, or handle the error
       if (response.hasError) {
@@ -480,6 +549,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         offset = offsets(0)
       }
     } catch {
+      case fae: FatalAdapterException => throw fae
       case e: java.lang.Exception => {
 
         LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}")
@@ -490,6 +560,21 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     return offset
   }
 
+
+  /**
+   *
+   * @param consumer
+   * @param req
+   * @return
+   */
+  private def doSendJavaConsumer(consumer: kafka.javaapi.consumer.SimpleConsumer, req: kafka.javaapi.OffsetRequest): (kafka.javaapi.OffsetResponse,Exception) = {
+    try {
+      val metaDataResp: kafka.javaapi.OffsetResponse = consumer.getOffsetsBefore(req)
+      return (metaDataResp,null)
+    } catch {
+      case e: Exception => return (null,e)
+    }
+  }
   /**
    *  Previous request failed, need to find a new leader
    */
@@ -541,6 +626,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
   /**
    * Private method to start a heartbeat task, and the code that the heartbeat task will execute.....
+   * NOT USED YET
    */
   private def startHeartBeat(): Unit = {
     // only start 1 heartbeat
