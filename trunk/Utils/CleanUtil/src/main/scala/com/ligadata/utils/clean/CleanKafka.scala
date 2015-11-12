@@ -44,6 +44,6 @@ object CleanKafka {
       }
     }
     logger.error(s"CLEAN-UTIL: Failed to delete kafka topic '$topicName'\n" +
-      s"Please ensure you have Kafka 0.8.2.0 or later and your kafka configuration has 'delete.topic.enable' set to 'true'")
+      s"Please ensure you have Kafka 0.8.2.0 or later, your kafka configuration has 'delete.topic.enable' set to 'true' and that kafka is running.")
   }
 }
