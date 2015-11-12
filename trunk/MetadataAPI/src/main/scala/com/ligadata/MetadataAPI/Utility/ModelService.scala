@@ -124,6 +124,7 @@ object ModelService {
                 }
             }
         }
+
         response
     }
 
@@ -448,6 +449,7 @@ object ModelService {
     def updateModeljava(input: String, dep: String = ""
                       , userid: Option[String] = Some("metadataapi")
                       ): String = {
+
         var modelDef=""
         var modelConfig=""
         var response: String = ""
@@ -485,7 +487,6 @@ object ModelService {
           //   println("Path provided. Added msg")
           //process message
           var model = new File(input.toString)
-
           if (model.exists()) {
             modelDef = Source.fromFile(model).mkString
             modelDefs=modelDefs:+modelDef
@@ -524,6 +525,7 @@ object ModelService {
                     println(errorMsg)
                     errorMsg
                   }
+
                 }
                 response+= MetadataAPIImpl.UpdateModel(ModelType.JAVA, modelDef, userid, Some(modelConfig))
               }
@@ -549,6 +551,7 @@ object ModelService {
         var response: String = ""
         var modelFileDir: String = ""
         var modelDefs= Array[String]()
+
         if (input == "") {
           //get the messages location from the config file. If error get the location from github
           modelFileDir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
@@ -756,6 +759,7 @@ object ModelService {
         } catch {
           case e: Exception => {
             //e.printStackTrace
+
             response=e.getStackTrace.toString
           }
         }

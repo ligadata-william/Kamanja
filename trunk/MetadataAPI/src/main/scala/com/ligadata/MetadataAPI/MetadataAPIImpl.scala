@@ -1438,7 +1438,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param obj <description please>
      * @param forceUploadMainJar <description please>
      * @param alreadyCheckedJars <description please>
-     */
+    */
   def UploadJarsToDB(obj: BaseElemDef, forceUploadMainJar: Boolean = true, alreadyCheckedJars: scala.collection.mutable.Set[String] = null): Unit = {
     val checkedJars: scala.collection.mutable.Set[String] = if (alreadyCheckedJars == null) scala.collection.mutable.Set[String]() else alreadyCheckedJars
 
@@ -4297,6 +4297,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
             /**
              * FIXME: The current strategy is that only the most recent version can be updated.
              * FIXME: This is not a satisfactory condition. It may be desirable to have 10 models all with
+
              * FIXME: the same name but differing only in their version numbers. If someone wants to tune
              * FIXME: #6 of the 10, that number six is not the latest.  It is just a unique model.
              *
@@ -4412,6 +4413,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                 val result = AddModel(modDef,optUserid)
                 var objectsUpdated = new Array[BaseElemDef](0)
                 var operations = new Array[String](0)
+
 
                 if( latestVersion != None ){
                     objectsUpdated = objectsUpdated :+ latestVersion
@@ -4787,6 +4789,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @return <description please>
+
      */
   def GetAllConceptsFromCache(active: Boolean, userid: Option[String] = None): Array[String] = {
     ConceptUtils.GetAllConceptsFromCache(active,userid)
@@ -5267,8 +5270,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * DoesContainerAlreadyExist
      * @param contDef <description please>
-     * @return <description please>
-     */
+     * @return <description please>     */
     def DoesContainerAlreadyExist(contDef: ContainerDef): Boolean = {
         IsContainerAlreadyExists(contDef)
     }
