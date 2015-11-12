@@ -86,6 +86,8 @@ object CleanUtil {
 
         if (cleanAll.isInstanceOf[String] || (cleanAll.isInstanceOf[Boolean] && cleanAll.asInstanceOf[Boolean])) {
           config = new CleanerConfiguration(configFile)
+          if(CleanZookeeper.isKamanjaClusterRunning(config.zookeeperInfo))
+            throw new CleanUtilException("CLEAN-UTIL: The Kamanja cluster is running. Aborting cleaning operation.")
           config.topicList.foreach(topic => {
             CleanKafka.deleteTopic(topic, config.zookeeperInfo.connStr)
           })
@@ -119,6 +121,8 @@ object CleanUtil {
             }
           }
           config = new CleanerConfiguration(configFile)
+          if(CleanZookeeper.isKamanjaClusterRunning(config.zookeeperInfo))
+            throw new CleanUtilException("CLEAN-UTIL: The Kamanja cluster is running. Aborting cleaning operation.")
 
           if (cleanKafka) {
             config.topicList.foreach(topic => {
