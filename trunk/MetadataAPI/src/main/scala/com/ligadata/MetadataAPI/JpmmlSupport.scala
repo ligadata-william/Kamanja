@@ -57,8 +57,6 @@ import org.xml.sax.helpers.XMLReaderFactory
  * @param msgNamespace the message namespace of the message that will be consumed by this model
  * @param msgName the message name
  * @param msgVersion the version of the message to be used for this model
- * @param optNewMsg the new message, valid only for UpdateModel (caused by update message) "re-compiles". This field
- *               should be None for CreateModel cases.
  * @param pmmlText the pmml to be ingested.
  */
 class JpmmlSupport(mgr : MdMgr
@@ -68,31 +66,14 @@ class JpmmlSupport(mgr : MdMgr
                    , val msgNamespace : String
                    , val msgName: String
                    , val msgVersion : String
-                   , val optNewMsg : Option[MessageDef]
                    , val pmmlText: String) extends LogTrait {
 
-    /**
-     * Alternate constructor for UpdateModel... no message specification is needed
-     * @param mgr the active metadata manager instance
-     * @param modelNamespace the namespace for the model
-     * @param modelName the name of the model
-     * @param version the version of the model in the form "MMMMMM.NNNNNN.mmmmmmm"
-     * @param optNewMsg the new message, valid only for UpdateModel (caused by update message) "re-compiles"
-     * @param pmmlText the pmml to be ingested.
-     */
-    def this(mgr : MdMgr
-            ,modelNamespace : String
-            ,modelName : String
-            ,version: String
-            ,optNewMsg : Option[MessageDef]
-            ,pmmlText: String) {
-        this(mgr, modelNamespace, modelName, version, null, null, null, optNewMsg, pmmlText)
-    }
-
-    /** Answer a ModelDef based upon the arguments supplied to the class constructor
+    /** Answer a ModelDef based upon the arguments supplied to the class constructor.
+      * @param recompile certain callers are creating a model to recompile the model when the message it consumes changes.
+      *                  pass this flag as true in those cases to avoid com.ligadata.Exceptions.AlreadyExistsException
       * @return a ModelDef
       */
-    def CreateModel : ModelDef = {
+    def CreateModel(recompile: Boolean = false) : ModelDef = {
         val reasonable : Boolean = (
                     mgr != null &&
                     modelNamespace != null && modelNamespace.nonEmpty &&
@@ -117,7 +98,7 @@ class JpmmlSupport(mgr : MdMgr
             val modelEvaluatorFactory = ModelEvaluatorFactory.newInstance()
             val modelEvaluator = modelEvaluatorFactory.newModelManager(pmml)
 
-            val m : ModelDef = if (modelEvaluator != null) {
+            val modelDe : ModelDef = if (modelEvaluator != null) {
                 /**
                  * Construct a ModelDef instance of com.ligadata.jpmml.JpmmlAdapter and the JPMML evaluator that will
                  * be used to interpret messages for the modelNamespace.modelName.version supplied here.  The supplied
@@ -138,17 +119,9 @@ class JpmmlSupport(mgr : MdMgr
                 val jarDeps : scala.Array[String] = if (shimModel != null) shimModel.dependencyJarNames else null
                 val phyName : String = if (shimModel != null) shimModel.typeString else null
 
-                /** Use the correct message here... either the namespace.name and version from the command line (AddModel case)
-                  * or the msg that was just created through a message update.
-                  */
-                val newMsg : MessageDef = optNewMsg.orNull
-                val (msgnmspc, msgnm, msgver) : (String,String,Long) = if (newMsg != null) {
-                    (newMsg.NameSpace, newMsg.Name, newMsg.Version)
-                } else {
-                    (msgNamespace, msgName, MdMgr.ConvertVersionToLong(msgVersion))
-                }
-                /** make sure new msg is there in case of the update, but fetch the message for the add case. */
-                val optInputMsg : Option[MessageDef] = mgr.Message(msgnmspc, msgnm, msgver, onlyActive)
+                /** make sure new msg is there. */
+                val msgver : Long = MdMgr.ConvertVersionToLong(msgVersion)
+                val optInputMsg : Option[MessageDef] = mgr.Message(msgNamespace, msgName, msgver, onlyActive)
                 val inputMsg : MessageDef = optInputMsg.orNull
                 val activeFieldNames : JList[FieldName] = modelEvaluator.getActiveFields
                 val outputFieldNames : JList[FieldName] = modelEvaluator.getOutputFields
@@ -160,7 +133,7 @@ class JpmmlSupport(mgr : MdMgr
                 val activeFields : scala.Array[DataField] = {
                     activeFieldNames.asScala.map(nm => modelEvaluator.getDataField(nm))
                 }.toArray
-                val modelDef : ModelDef = if (inputMsg != null) {
+                val modelD : ModelDef = if (inputMsg != null) {
                     val inVars: List[(String, String, String, String, Boolean, String)] =
                         List[(String,String,String,String,Boolean,String)](("msg"
                                                                       , inputMsg.typeString
@@ -176,7 +149,7 @@ class JpmmlSupport(mgr : MdMgr
                     val outputFieldVars: List[(String, String, String)] = outputFields.map(fld => {
                         val fldName: String = fld.getName.getValue
                         val dataType: String = fld.getDataType.value
-                        (fldName, "System", dataType)
+                        (fldName, MdMgr.SysNS, dataType)
                     }).toList
                     /** get the concrete data fields for either 'target' or 'predicted' ... type info found there. */
                     val targetDataFields: scala.Array[DataField] = {
@@ -187,7 +160,7 @@ class JpmmlSupport(mgr : MdMgr
                     val targVars: List[(String, String, String)] = targetDataFields.map(fld => {
                         val fldName: String = fld.getName.getValue
                         val dataType: String = fld.getDataType.value
-                        (fldName, "System", dataType)
+                        (fldName, MdMgr.SysNS, dataType)
                     }).toList
 
                     /**
@@ -198,35 +171,38 @@ class JpmmlSupport(mgr : MdMgr
 
                     val isReusable: Boolean = true
                     val supportsInstanceSerialization: Boolean = false // FIXME: not yet
-                    val recompile: Boolean = false
-                    val moDef: ModelDef = mgr.MakeModelDef(modelNamespace
-                        , modelName
-                        , phyName
-                        , ModelRepresentation.JPMML
-                        , isReusable
-                        , s"$msgNamespace.$msgName"
-                        , pmmlText
-                        , DetermineMiningModelType(modelEvaluator)
-                        , inVars
-                        , outVars
-                        , MdMgr.ConvertVersionToLong(version)
-                        , jarName
-                        , jarDeps
-                        , recompile
-                        , supportsInstanceSerialization)
+
+                    val withDots : Boolean = false
+                    val msgVersionFormatted : String = MdMgr.ConvertLongVersionToString(msgver, withDots)
+                    val model: ModelDef = mgr.MakeModelDef(modelNamespace
+                                                        , modelName
+                                                        , phyName
+                                                        , ModelRepresentation.JPMML
+                                                        , isReusable
+                                                        , s"$msgNamespace.$msgName.$msgVersionFormatted"
+                                                        , pmmlText
+                                                        , DetermineMiningModelType(modelEvaluator)
+                                                        , inVars
+                                                        , outVars
+                                                        , MdMgr.ConvertVersionToLong(version)
+                                                        , jarName
+                                                        , jarDeps
+                                                        , recompile
+                                                        , supportsInstanceSerialization)
 
                     /** dump the model def to the log for time being */
-                    logger.info(modelDefToString(moDef))
-                    moDef
+                    logger.info(modelDefToString(model))
+                    model
                 } else {
+                    logger.error(s"The supplied message def is not available in the metadata... msgName=$msgNamespace.$msgName.$msgVersion ... a model definition will not be created for model name=$modelNamespace.$modelName.$version")
                     null
                 }
-                modelDef
+                modelD
             } else {
-                logger.error(s"The supplied message def is not available in the metadata... msgName=$msgNamespace.$msgName, messageVersion=$msgVersion ... model definition was NOT created for model name=$modelNamespace.$modelName version=$version")
+                logger.error(s"The JPMML evaluator could not be created for model $modelNamespace.$modelName.$version ... a model definition will not be created for model name=$modelNamespace.$modelName.$version")
                 null
             }
-            m
+            modelDe
         } else {
             logger.error(s"One or more arguments to JpmmlSupport.CreateModel were bad .. model name = $modelNamespace.$modelName, message name=$msgNamespace.$msgName, version=$version, pmmlText=$pmmlText")
             null
@@ -234,26 +210,14 @@ class JpmmlSupport(mgr : MdMgr
         modelDef
     }
 
-    /** Update the model with the new PMML source.  Use the existing message in the current model.
-      *
+    /** Prepare a new model with the new PMML source supplied in the constructor.
       * @return a newly constructed model def that reflects the new PMML source
       */
     def UpdateModel : ModelDef = {
-        val model : ModelDef = null
-        model
-
-        /**
-         * 1. Get the message from the current model using the supplied model name and version
-         *
-         * really need the old version of the model
-         *
-         * then proceed with a call to CreateModel
-         *
-         * Remove model too!
-         *
-         * then fix up the ModelService to use the front door
-         */
-    }
+        logger.debug("UpdateModel is a synonym for CreateModel")
+        val recompile : Boolean = false
+        CreateModel(recompile)
+     }
 
 
         /**

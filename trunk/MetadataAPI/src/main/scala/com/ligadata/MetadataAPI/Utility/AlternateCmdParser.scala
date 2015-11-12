@@ -50,7 +50,7 @@ object AlternateCmdParser extends JavaTokenParsers {
       * @see apply(String) for more information.
       * @return Parser[List[(String,String)] representing a List of the parameter name/value pairs
       */
-    private def namedParameters:Parser[List[(String,String)]] = namedParameter.*
+    private def namedParameters: Parser[List[(String,String)]] = namedParameter.*
 
     /** match the command name and put remainder of the named elements in a list of tuple2 (to produce map)
       * @return a tuple containing the command name and a list of parameter name/value pairs
@@ -66,7 +66,7 @@ object AlternateCmdParser extends JavaTokenParsers {
       * @return a ParseResult containing a tuple with the command name and a list of parameter name/value pairs
       *
       */
-    private def apply(args: String):ParseResult[(String, List[(String,String)])] = parseAll(cmdWithParameters, args)
+    private def apply(args: String): ParseResult[(String, List[(String,String)])] = parseAll(cmdWithParameters, args)
 
     /**
      * Parse the supplied command string with the AlternateCmdParser. Answer the name of the command and a
@@ -81,7 +81,7 @@ object AlternateCmdParser extends JavaTokenParsers {
                 case Success(parms, _) => {
                     val (cmdName, keyValPairs): (String, List[(String, String)]) = parms
 
-                    val m: Map[String, String] = keyValPairs.map(pair => (pair._1.trim, pair._2.trim)).toMap
+                    val m: Map[String, String] = keyValPairs.map(pair => (pair._1.trim.toLowerCase, pair._2.trim)).toMap
                     (Some(cmdName), m)
                 }
                 case NoSuccess(msg, remaining) => {

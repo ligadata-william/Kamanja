@@ -170,7 +170,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     def getHealthCheck(nodeId: String, userid: Option[String]): String = {
         val nodeIdentifer : String = if (nodeId == null) "" else nodeId
         val ids = parse(nodeIdentifer).values.asInstanceOf[List[String]]
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
         apiResult.toString
     }
 
@@ -215,7 +215,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * createAuthObj - private method to instantiate an authObj
-     * @param classLoader
+     * @param classLoader a
      */
   private def createAuthObj(classLoader: KamanjaLoaderInfo): Unit = {
     // Load the location and name of the implementing class from the
@@ -248,7 +248,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * createAuditObj - private method to instantiate an authObj
-     * @param classLoader
+     * @param classLoader a
      */
   private def createAuditObj(classLoader: KamanjaLoaderInfo): Unit = {
     // Load the location and name of the implementing class froms the
@@ -263,14 +263,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     // Add the Jarfile to the class loader
     loadJar(classLoader, implJarName)
 
-    try {
-      Class.forName(implClassName, true, classLoader.loader)
-    } catch {
-      case e: Exception => {
-        logger.error("Failed to load Audit Adapter class %s with Reason:%s Message:%s".format(implClassName, e.getCause, e.getMessage))
-        throw e // Rethrow
-      }
-    }
+        try
+            Class.forName(implClassName, true, classLoader.loader)
+        catch {
+            case e: Exception => {
+                logger.error("Failed to load Audit Adapter class %s with Reason:%s Message:%s".format(implClassName, e.getCause, e.getMessage))
+                throw e // Rethrow
+            }
+        }
     // All is good, create the new class
     var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[AuditAdapter]]
     auditObj = className.newInstance
@@ -280,8 +280,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * loadJar- load the specified jar into the classLoader
-     * @param classLoader
-     * @param implJarName
+     * @param classLoader a
+     * @param implJarName a
      */
   private def loadJar(classLoader: KamanjaLoaderInfo, implJarName: String): Unit = {
     // Add the Jarfile to the class loader
@@ -308,11 +308,11 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * checkAuth
-     * @param usrid
-     * @param password
-     * @param role
-     * @param privilige
-     * @return
+     * @param usrid a
+     * @param password a
+     * @param role a
+     * @param privilige a
+     * @return <description please>
      */
   def checkAuth(usrid: Option[String], password: Option[String], role: Option[String], privilige: String): Boolean = {
 
@@ -339,9 +339,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * getPrivilegeName
-     * @param op
-     * @param objName
-     * @return
+     * @param op <description please>
+     * @param objName <description please>
+     * @return <description please>
      */
   def getPrivilegeName(op: String, objName: String): String = {
     // check if the Auth object exists
@@ -370,7 +370,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * setSSLCertificatePasswd
-     * @param pw
+     * @param pw <description please>
      */
   def setSSLCertificatePasswd(pw: String) = {
     passwd = pw
@@ -388,12 +388,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userOrRole the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
      *               Supply one.
-     * @param userPrivilege
-     * @param action
-     * @param objectText
-     * @param success
-     * @param transactionId
-     * @param objName
+     * @param userPrivilege <description please>
+     * @param action <description please>
+     * @param objectText <description please>
+     * @param success <description please>
+     * @param transactionId <description please>
+     * @param objName <description please>
      */
   def logAuditRec(userOrRole: Option[String], userPrivilege: Option[String], action: String, objectText: String, success: String, transactionId: String, objName: String) = {
     if (auditObj != null) {
@@ -433,14 +433,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Get an audit record from the audit adapter.
-     * @param startTime
-     * @param endTime
+     * @param startTime <description please>
+     * @param endTime <description please>
      * @param userOrRole the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
      *               Supply one.
-     * @param action
-     * @param objectAccessed
-     * @return
+     * @param action <description please>
+     * @param objectAccessed <description please>
+     * @return <description please>
      */
   def getAuditRec(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): String = {
     var apiResultStr = ""
@@ -459,7 +459,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "Failed to fetch all the audit objects:", null, "Error :" + e.toString)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "Failed to fetch all the audit objects:", null, "Error :" + e.toString)
         apiResultStr = apiResult.toString()
       }
     }
@@ -469,8 +469,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * parseDateStr
-     * @param dateStr
-     * @return
+     * @param dateStr <description please>
+     * @return <description please>
      */
   def parseDateStr(dateStr: String): Date = {
     try {
@@ -490,19 +490,19 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * getLeaderHost
-     * @param leaderNode
-     * @return
+     * @param leaderNode <description please>
+     * @return <description please>
      */
   def getLeaderHost(leaderNode: String): String = {
     val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
     if (nodes.length == 0) {
       logger.debug("No Nodes found ")
-      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available + " :" + leaderNode)
+      val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available + " :" + leaderNode)
       apiResult.toString()
     } else {
       val nhosts = nodes.filter(n => n.nodeId == leaderNode)
       if (nhosts.length == 0) {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available + " :" + leaderNode)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available + " :" + leaderNode)
         apiResult.toString()
       } else {
         val nhost = nhosts(0)
@@ -514,8 +514,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * getAuditRec
-     * @param filterParameters
-     * @return
+     * @param filterParameters <description please>
+     * @return <description please>
      */
   def getAuditRec(filterParameters: Array[String]): String = {
     var apiResultStr = ""
@@ -614,7 +614,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetMetadataAPIConfig
-     * @return
+     * @return <description please>
      */
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
@@ -622,7 +622,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * SetLoggerLevel
-     * @param level
+     * @param level <description please>
      */
   def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
@@ -644,26 +644,26 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * oStore
-     * @return
+     * @return <description please>
      */
   def oStore = otherStore
 
     /**
      * GetFunctionStore
-     * @return
+     * @return <description please>
      */
   def GetFunctionStore: DataStore = functionStore
 
     /**
      * GetJarStore
-     * @return
+     * @return <description please>
      */
   def GetJarStore: DataStore = jarStore
 
     /**
      * KeyAsStr
-     * @param k
-     * @return
+     * @param k <description please>
+     * @return <description please>
      */
   def KeyAsStr(k: Key): String = {
     val k1 = k.toArray[Byte]
@@ -672,8 +672,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * ValueAsStr
-     * @param v
-     * @return
+     * @param v <description please>
+     * @return <description please>
      */
   def ValueAsStr(v: Value): String = {
     val v1 = v.toArray[Byte]
@@ -682,9 +682,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetObject
-     * @param key
-     * @param store
-     * @return
+     * @param key <description please>
+     * @param store <description please>
+     * @return <description please>
      */
   def GetObject(key: Key, store: DataStore): IStorage = {
     try {
@@ -722,9 +722,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetObject
-     * @param key
-     * @param store
-     * @return
+     * @param key <description please>
+     * @param store <description please>
+     * @return <description please>
      */
   def GetObject(key: String, store: DataStore): IStorage = {
     var k = new Key
@@ -736,9 +736,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * SaveObjectList
-     * @param key
-     * @param value
-     * @param store
+     * @param key <description please>
+     * @param value <description please>
+     * @param store <description please>
      */
   def SaveObject(key: String, value: Array[Byte], store: DataStore) {
     val t = store.beginTx
@@ -771,9 +771,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * SaveObjectList
-     * @param keyList
-     * @param valueList
-     * @param store
+     * @param keyList <description please>
+     * @param valueList <description please>
+     * @param store <description please>
      */
   def SaveObjectList(keyList: Array[String], valueList: Array[Array[Byte]], store: DataStore) {
     var i = 0
@@ -805,8 +805,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Remove all of the elements with the supplied keys in the list from the supplied DataStore
-     * @param keyList
-     * @param store
+     * @param keyList <description please>
+     * @param store <description please>
      */
   def RemoveObjectList(keyList: Array[String], store: DataStore) {
     var i = 0
@@ -834,8 +834,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Answer which table the supplied BaseElemeDef is stored
-     * @param obj
-     * @return
+     * @param obj <description please>
+     * @return <description please>
      */
   def getTable(obj: BaseElemDef): String = {
     obj match {
@@ -866,8 +866,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * getObjectType
-     * @param obj
-     * @return
+     * @param obj <description please>
+     * @return <description please>
      */
   def getObjectType(obj: BaseElemDef): String = {
     val className = obj.getClass().getName();
@@ -882,8 +882,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * database connection( which itself can be mean different things depending on the type
      * of datastore, such as cassandra, hbase, etc..)
      *
-     * @param objList
-     * @param store
+     * @param objList <description please>
+     * @param store <description please>
      */
   def SaveObjectList(objList: Array[BaseElemDef], store: DataStore) {
     logger.debug("Save " + objList.length + " objects in a single transaction ")
@@ -916,7 +916,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * database connection( which itself can be mean different things depending on the type
      * of datastore, such as cassandra, hbase, etc..)
      *
-     * @param objList
+     * @param objList <description please>
      */
   def SaveObjectList(objList: Array[BaseElemDef]) {
     logger.debug("Save " + objList.length + " objects in a single transaction ")
@@ -985,7 +985,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * SaveOutputMsObjectList
-     * @param objList
+     * @param objList <description please>
      */
   def SaveOutputMsObjectList(objList: Array[BaseElemDef]) {
     SaveObjectList(objList, outputmsgStore)
@@ -993,9 +993,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * SaveObject
-     * @param key
-     * @param value
-     * @param store
+     * @param key <description please>
+     * @param value <description please>
+     * @param store <description please>
      */
   def SaveObject(key: String, value: String, store: DataStore) {
     var ba = serializer.SerializeObjectToByteArray(value)
@@ -1004,9 +1004,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateObject
-     * @param key
-     * @param value
-     * @param store
+     * @param key <description please>
+     * @param value <description please>
+     * @param store <description please>
      */
   def UpdateObject(key: String, value: Array[Byte], store: DataStore) {
     SaveObject(key, value, store)
@@ -1014,9 +1014,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * ZooKeeperMessage
-     * @param objList
-     * @param operations
-     * @return
+     * @param objList <description please>
+     * @param operations <description please>
+     * @return <description please>
      */
   def ZooKeeperMessage(objList: Array[BaseElemDef], operations: Array[String]): Array[Byte] = {
     try {
@@ -1033,8 +1033,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * NotifyEngine
-     * @param objList
-     * @param operations
+     * @param objList <description please>
+     * @param operations <description please>
      */
   def NotifyEngine(objList: Array[BaseElemDef], operations: Array[String]) {
     try {
@@ -1079,7 +1079,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetNewTranId
-     * @return
+     * @return <description please>
      */
   def GetNewTranId: Long = {
     try {
@@ -1104,7 +1104,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetTranId
-     * @return
+     * @return <description please>
      */
   def GetTranId: Long = {
     try {
@@ -1129,7 +1129,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * PutTranId
-     * @param tId
+     * @param tId <description please>
      */
   def PutTranId(tId: Long) = {
     try {
@@ -1147,9 +1147,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * SaveObject
-     * @param obj
+     * @param obj <description please>
      *  @param mdMgr the metadata manager receiver
-     * @return
+     * @return <description please>
      */
   def SaveObject(obj: BaseElemDef, mdMgr: MdMgr): Boolean = {
     try {
@@ -1277,7 +1277,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateObjectInDB
-     * @param obj
+     * @param obj <description please>
      */
   def UpdateObjectInDB(obj: BaseElemDef) {
     try {
@@ -1380,8 +1380,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetJarAsArrayOfBytes
-     * @param jarName
-     * @return
+     * @param jarName <description please>
+     * @return <description please>
      */
   def GetJarAsArrayOfBytes(jarName: String): Array[Byte] = {
     try {
@@ -1416,8 +1416,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * PutArrayOfBytesToJar
-     * @param ba
-     * @param jarName
+     * @param ba <description please>
+     * @param jarName <description please>
      */
   def PutArrayOfBytesToJar(ba: Array[Byte], jarName: String) = {
     logger.debug("Downloading the jar contents into the file " + jarName)
@@ -1435,9 +1435,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UploadJarsToDB
-     * @param obj
-     * @param forceUploadMainJar
-     * @param alreadyCheckedJars
+     * @param obj <description please>
+     * @param forceUploadMainJar <description please>
+     * @param alreadyCheckedJars <description please>
      */
   def UploadJarsToDB(obj: BaseElemDef, forceUploadMainJar: Boolean = true, alreadyCheckedJars: scala.collection.mutable.Set[String] = null): Unit = {
     val checkedJars: scala.collection.mutable.Set[String] = if (alreadyCheckedJars == null) scala.collection.mutable.Set[String]() else alreadyCheckedJars
@@ -1543,7 +1543,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UploadJarToDB
-     * @param jarName
+     * @param jarName <description please>
      */
   def UploadJarToDB(jarName: String) {
     try {
@@ -1553,7 +1553,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         var value = GetJarAsArrayOfBytes(jarName)
         logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
         SaveObject(key, value, jarStore)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
         apiResult.toString()
 
       }
@@ -1561,7 +1561,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJarToDB", null, "Error : " + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarName)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJarToDB", null, "Error : " + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarName)
         apiResult.toString()
       }
     }
@@ -1569,11 +1569,11 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UploadJarToDB
-     * @param jarName
-     * @param byteArray
+     * @param jarName <description please>
+     * @param byteArray <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def UploadJarToDB(jarName: String, byteArray: Array[Byte], userid: Option[String] = None): String = {
     try {
@@ -1582,13 +1582,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
       logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTJAR, jarName, AuditConstants.SUCCESS, "", jarName)
       SaveObject(key, value, jarStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJarToDB", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarName)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJarToDB", null, "Error : " + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarName)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJarToDB", null, "Error : " + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarName)
         apiResult.toString()
       }
     }
@@ -1596,9 +1596,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * IsDownloadNeeded
-     * @param jar
-     * @param obj
-     * @return
+     * @param jar <description please>
+     * @param obj <description please>
+     * @return <description please>
      */
   def IsDownloadNeeded(jar: String, obj: BaseElemDef): Boolean = {
     try {
@@ -1639,8 +1639,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetDependantJars of some base element (e.g., model, type, message, container, etc)
-     * @param obj
-     * @return
+     * @param obj <description please>
+     * @return <description please>
      */
   def GetDependantJars(obj: BaseElemDef): Array[String] = {
     try {
@@ -1666,7 +1666,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * DownloadJarFromDB
-     * @param obj
+     * @param obj <description please>
      */
   def DownloadJarFromDB(obj: BaseElemDef) {
     var curJar: String = ""
@@ -1728,10 +1728,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateObjectInCache
-     * @param obj
+     * @param obj <description please>
      * @param operation depending upon object type, operations to add, remove, et al
      * @param mdMgr the metadata manager receiver 
-     * @return
+     * @return <description please>
      */
   def UpdateObjectInCache(obj: BaseElemDef, operation: String, mdMgr: MdMgr): BaseElemDef = {
     var updatedObject: BaseElemDef = null
@@ -1820,9 +1820,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
   // For now only handle the Model COnfig... Engine Configs will come later
     /**
      * AddConfigObjToCache
-     * @param tid
-     * @param key
-     * @param mdlConfig
+     * @param tid <description please>
+     * @param key <description please>
+     * @param mdlConfig <description please>
      *  @param mdMgr the metadata manager receiver
      */
   def AddConfigObjToCache(tid: Long, key: String, mdlConfig: Map[String, List[String]], mdMgr: MdMgr) {
@@ -1842,7 +1842,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddObjectToCache
-     * @param o
+     * @param o <description please>
      *  @param mdMgr the metadata manager receiver
      */
   def AddObjectToCache(o: Object, mdMgr: MdMgr) {
@@ -1858,10 +1858,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       val key = obj.FullNameWithVer.toLowerCase
       val dispkey = obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version)
       obj match {
-        case o: ModelDef => {
-          logger.debug("Adding the model to the cache: name of the object =>  " + dispkey)
-          mdMgr.AddModelDef(o, true)
-        }
+        case o: ModelDef =>
+            logger.debug("Adding the model to the cache: name of the object =>  " + dispkey)
+            mdMgr.AddModelDef(o, true)
         case o: MessageDef => {
           logger.debug("Adding the message to the cache: name of the object =>  " + dispkey)
           mdMgr.AddMsg(o)
@@ -1951,8 +1950,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * ModifyObject
-     * @param obj
-     * @param operation
+     * @param obj a
+     * @param operation a
      */
   def ModifyObject(obj: BaseElemDef, operation: String) {
     try {
@@ -1972,8 +1971,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * DeleteObject
-     * @param key
-     * @param store
+     * @param key a
+     * @param store a
      */
   def DeleteObject(key: String, store: DataStore) {
     var k = new Key
@@ -1987,7 +1986,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * DeleteObject
-     * @param obj
+     * @param obj a
      */
   def DeleteObject(obj: BaseElemDef) {
     try {
@@ -2006,7 +2005,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * ActivateObject
-     * @param obj
+     * @param obj a
      */
   def ActivateObject(obj: BaseElemDef) {
     try {
@@ -2026,7 +2025,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * DeactivateObject
-     * @param obj
+     * @param obj a
      */
   def DeactivateObject(obj: BaseElemDef) {
     try {
@@ -2045,8 +2044,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * getApiResult
-     * @param apiResultJson
-     * @return
+     * @param apiResultJson a
+     * @return <description please>
      */
   @throws(classOf[Json4sParsingException])
   @throws(classOf[ApiResultParsingException])
@@ -2076,8 +2075,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * GetDataStoreHandle
      * @param jarPaths Set of paths where jars are located Set of paths where jars are located
      * @param dataStoreInfo information needed to access the data store (kv store dependent)
-     * @param tableName
-     * @return
+     * @param tableName <description please>
+     * @return <description please>
      */
   private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
     try {
@@ -2221,9 +2220,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddType
-     * @param typeText
-     * @param format
-     * @return
+     * @param typeText a
+     * @param format a
+     * @return <description please>
      */
   def AddType(typeText: String, format: String, userid: Option[String] = None): String = {
     TypeUtils.AddType(typeText,format)
@@ -2231,8 +2230,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddType
-     * @param typeDef
-     * @return
+     * @param typeDef a
+     * @return <description please>
      */
   def AddType(typeDef: BaseTypeDef): String = {
     TypeUtils.AddType(typeDef)
@@ -2240,11 +2239,11 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddTypes
-     * @param typesText
-     * @param format
+     * @param typesText a
+     * @param format a
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def AddTypes(typesText: String, format: String, userid: Option[String] = None): String = {
     TypeUtils.AddTypes(typesText,format,userid)
@@ -2252,7 +2251,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
   /**
     * Remove type for given TypeName and Version
-    * @param typeNameSpace
+    * @param typeNameSpace a
     * @param typeName name of the Type
     * @param version  Version of the object
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
@@ -2276,8 +2275,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
    /**
     * UpdateType
-    * @param typeJson
-    * @param format
+    * @param typeJson <description please>
+    * @param format <description please>
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
     *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -2302,7 +2301,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     * "Implementation" : "com.ligadata.BaseTypes.CharImpl"
     * }
     * """
-    * var apiResult = MetadataAPIImpl.UpdateType(sampleScalarTypeStr,"JSON")
+    * val apiResult = MetadataAPIImpl.UpdateType(sampleScalarTypeStr,"JSON")
     * var result = MetadataAPIImpl.getApiResult(apiResult)
     * println("Result as Json String => \n" + result._2)
     * }}}
@@ -2317,13 +2316,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Upload Jars into system. Dependency jars may need to upload first. Once we upload the jar, if we retry to upload it will throw an exception.
      * @param jarPath where the jars are
-     * @return
+     * @return a
      */
   def UploadJar(jarPath: String, userid: Option[String] = None): String = {
     try {
       val iFile = new File(jarPath)
       if (!iFile.exists) {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJar", null, ErrorCodeConstants.File_Not_Found + ":" + jarPath)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJar", null, ErrorCodeConstants.File_Not_Found + ":" + jarPath)
         apiResult.toString()
       } else {
         val jarName = iFile.getName()
@@ -2333,14 +2332,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         UploadJarToDB(jarPath)
         val operations = for (op <- objectsAdded) yield "Add"
         NotifyEngine(objectsAdded, operations)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJar", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarPath)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadJar", null, ErrorCodeConstants.Upload_Jar_Successful + ":" + jarPath)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJar", null, "Error :" + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarPath + "\nStackTrace:" + stackTrace)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadJar", null, "Error :" + e.toString() + ErrorCodeConstants.Upload_Jar_Failed + ":" + jarPath + "\nStackTrace:" + stackTrace)
         apiResult.toString()
       }
     }
@@ -2348,9 +2347,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /** '
       * AddDerivedConcept
-      * @param conceptsText
-      * @param format
-      * @return
+      * @param conceptsText a
+      * @param format a
+      * @return <description please>
       */
   def AddDerivedConcept(conceptsText: String, format: String): String = {
     ConceptUtils.AddDerivedConcept(conceptsText,format)
@@ -2359,7 +2358,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
     * AddConcepts
     * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
-    * @param format
+    * @param format <description please>
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
     *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -2378,7 +2377,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     *  "Version"  : 100 ]
     *  }
     *"""
-    *    var apiResult = MetadataAPIImpl.AddConcepts(sampleConceptStr,"JSON")
+    *    val apiResult = MetadataAPIImpl.AddConcepts(sampleConceptStr,"JSON")
     *    var result = MetadataAPIImpl.getApiResult(apiResult)
     *    println("Result as Json String => \n" + result._2)
     *}}}
@@ -2391,7 +2390,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
     * UpdateConcepts
     * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
-    * @param format
+    * @param format a
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
     *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -2410,7 +2409,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     *  "Version"  : 101 ]
     *  }
     *"""
-    *    var apiResult = MetadataAPIImpl.UpdateConcepts(sampleConceptStr,"JSON")
+    *    val apiResult = MetadataAPIImpl.UpdateConcepts(sampleConceptStr,"JSON")
     *    var result = MetadataAPIImpl.getApiResult(apiResult)
     *    println("Result as Json String => \n" + result._2)
     *
@@ -2423,10 +2422,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * RemoveConcept
-     * @param key
+     * @param key a
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def RemoveConcept(key: String, userid: Option[String] = None): String = {
     ConceptUtils.RemoveConcept(key,userid)
@@ -2435,11 +2434,11 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * RemoveConcept
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name a
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def RemoveConcept(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
     ConceptUtils.RemoveConcept(nameSpace,name,version,userid)
@@ -2469,9 +2468,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddContainerDef
-     * @param contDef
-     * @param recompile
-     * @return
+     * @param contDef a
+     * @param recompile a
+     * @return <description please>
      */
   def AddContainerDef(contDef: ContainerDef, recompile: Boolean = false): String = {
     var key = contDef.FullNameWithVer
@@ -2484,13 +2483,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       SaveObjectList(objectsAdded, metadataStore)
       val operations = for (op <- objectsAdded) yield "Add"
       NotifyEngine(objectsAdded, operations)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddContainerDef", null, ErrorCodeConstants.Add_Container_Successful + ":" + dispkey)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddContainerDef", null, ErrorCodeConstants.Add_Container_Successful + ":" + dispkey)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerDef", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Container_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerDef", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Container_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -2498,9 +2497,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddMessageDef
-     * @param msgDef
-     * @param recompile
-     * @return
+     * @param msgDef a
+     * @param recompile a
+     * @return <description please>
      */
   def AddMessageDef(msgDef: MessageDef, recompile: Boolean = false): String = {
     val dispkey = msgDef.FullName + "." + MdMgr.Pad0s2Version(msgDef.Version)
@@ -2512,13 +2511,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       SaveObjectList(objectsAdded, metadataStore)
       val operations = for (op <- objectsAdded) yield "Add"
       NotifyEngine(objectsAdded, operations)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddMessageDef", null, ErrorCodeConstants.Add_Message_Successful + ":" + dispkey)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddMessageDef", null, ErrorCodeConstants.Add_Message_Successful + ":" + dispkey)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddMessageDef", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Message_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddMessageDef", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Message_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -2526,10 +2525,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddMessageTypes
-     * @param msgDef
+     * @param msgDef a
      * @param mdMgr the metadata manager receiver
-     * @param recompile
-     * @return
+     * @param recompile a
+     * @return <description please>
      */
   def AddMessageTypes(msgDef: BaseElemDef, mdMgr: MdMgr, recompile: Boolean = false): Array[BaseElemDef] = {
     logger.debug("The class name => " + msgDef.getClass().getName())
@@ -2608,12 +2607,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddContainerOrMessage
-     * @param contOrMsgText
-     * @param format
+     * @param contOrMsgText message
+     * @param format its format
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @param recompile
-     * @return
+     * @param recompile a
+     * @return <description please>
      */
   private def AddContainerOrMessage(contOrMsgText: String, format: String, userid: Option[String], recompile: Boolean = false): String = {
     var resultStr: String = ""
@@ -2632,7 +2631,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
             isValid = IsValidVersion(latestVersion.get, msg)
           }
           if (!isValid) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + msg.Name + " Error:Invalid Version")
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + msg.Name + " Error:Invalid Version")
             apiResult.toString()
           }
 
@@ -2666,7 +2665,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
             isValid = IsValidVersion(latestVersion.get, cont)
           }
           if (!isValid) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + cont.Name + " Error:Invalid Version")
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + cont.Name + " Error:Invalid Version")
             apiResult.toString()
           }
 
@@ -2696,19 +2695,19 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       case e: ModelCompilationFailedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
         apiResult.toString()
       }
       case e: MsgCompilationFailedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
         apiResult.toString()
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddContainerOrMessage", contOrMsgText, "Error: " + e.toString + ErrorCodeConstants.Add_Container_Or_Message_Failed)
         apiResult.toString()
       }
     }
@@ -2717,7 +2716,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * AddMessage
      * @param messageText text of the message (as JSON/XML string as defined by next parameter formatType)
-     * @param format
+     * @param format a
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -2727,7 +2726,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      *         Example
      *
      *         {{{
-     *          var apiResult = MetadataAPIImpl.AddMessage(msgStr,"JSON"))
+     *          val apiResult = MetadataAPIImpl.AddMessage(msgStr,"JSON"))
      *          var result = MetadataAPIImpl.getApiResult(apiResult)
      *          println("Result as Json String => \n" + result._2)
      *          }}}
@@ -2738,10 +2737,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddMessage
-     * @param messageText
+     * @param messageText <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def AddMessage(messageText: String, userid: Option[String]): String = {
     AddMessage(messageText, "JSON", userid)
@@ -2750,7 +2749,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
     * AddContainer
     * @param containerText text of the container (as JSON/XML string as defined by next parameter formatType)
-    * @param format
+    * @param format a
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
     *               method. If Security and/or Audit are configured, this value must be a value other than None.
     * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -2760,7 +2759,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     *         Example
     *
     *         {{{
-    *          var apiResult = MetadataAPIImpl.AddContainer(msgStr,"JSON"))
+    *          val apiResult = MetadataAPIImpl.AddContainer(msgStr,"JSON"))
     *          var result = MetadataAPIImpl.getApiResult(apiResult)
     *          println("Result as Json String => \n" + result._2)
     *          }}}
@@ -2771,10 +2770,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddContainer
-     * @param containerText
+     * @param containerText a
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def AddContainer(containerText: String, userid: Option[String]): String = {
     AddContainer(containerText, "JSON", userid)
@@ -2782,8 +2781,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * RecompileMessage
-     * @param msgFullName
-     * @return
+     * @param msgFullName a
+     * @return <description please>
      */
   def RecompileMessage(msgFullName: String): String = {
     var resultStr: String = ""
@@ -2794,7 +2793,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       if (latestMsgDef == None) {
         val latestContDef = MdMgr.GetMdMgr.Container(msgFullName, -1, true)
         if (latestContDef == None) {
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName + " Error:No message or container named ")
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName + " Error:No message or container named ")
           return apiResult.toString()
         } else {
           messageText = latestContDef.get.objectDefinition
@@ -2809,13 +2808,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       case e: MsgCompilationFailedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName)
         apiResult.toString()
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Recompile_Message_Failed + ":" + msgFullName)
         apiResult.toString()
       }
     }
@@ -2824,7 +2823,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * UpdateMessage
      * @param messageText text of the message (as JSON/XML string as defined by next parameter formatType)
-     * @param format
+     * @param format a
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -2872,7 +2871,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
             }
             resultStr
           } else {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, ErrorCodeConstants.Update_Message_Failed + " Error:Invalid Version")
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, ErrorCodeConstants.Update_Message_Failed + " Error:Invalid Version")
             apiResult.toString()
           }
         }
@@ -2903,7 +2902,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
             }
             resultStr
           } else {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, ErrorCodeConstants.Update_Message_Failed + " Error:Invalid Version")
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, ErrorCodeConstants.Update_Message_Failed + " Error:Invalid Version")
             apiResult.toString()
           }
         }
@@ -2912,19 +2911,19 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       case e: MsgCompilationFailedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
         apiResult.toString()
       }
       case e: ObjectNotFoundException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
         apiResult.toString()
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", messageText, "Error :" + e.toString() + ErrorCodeConstants.Update_Message_Failed)
         apiResult.toString()
       }
     }
@@ -2932,8 +2931,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateContainer
-     * @param messageText
-     * @param format
+     * @param messageText <description please>
+     * @param format <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
@@ -2946,10 +2945,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateContainer
-     * @param messageText
+     * @param messageText a
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def UpdateContainer(messageText: String, userid: Option[String]): String = {
     UpdateMessage(messageText, "JSON", userid)
@@ -2957,10 +2956,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateMessage
-     * @param messageText
+     * @param messageText a
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def UpdateMessage(messageText: String, userid: Option[String]): String = {
     UpdateMessage(messageText, "JSON", userid)
@@ -2968,10 +2967,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateCompiledContainer - called from a few places to update a compiled ContainerDef
-     * @param msg
-     * @param latestVersion
-     * @param key
-     * @return
+     * @param msg a
+     * @param latestVersion a
+     * @param key a
+     * @return <description please>
      */
   private def UpdateCompiledContainer(msg: ContainerDef, latestVersion: Option[ContainerDef], key: String): String = {
     var isValid = true
@@ -2982,17 +2981,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
       AddContainerDef(msg)
     } else {
-      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledContainer", null, "Error : Failed to update compiled Container")
+      val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledContainer", null, "Error : Failed to update compiled Container")
       apiResult.toString()
     }
   }
 
     /**
      * UpdateCompiledContainer - called from a few places to update a compiled ContainerDef
-     * @param msg
-     * @param latestVersion
-     * @param key
-     * @return
+     * @param msg a
+     * @param latestVersion <description please>
+     * @param key a
+     * @return <description please>
      */
   private def UpdateCompiledMessage(msg: MessageDef, latestVersion: Option[MessageDef], key: String): String = {
     var isValid = true
@@ -3003,7 +3002,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
       AddMessageDef(msg)
     } else {
-      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledMessage", null, "Error : Failed to update compiled Message")
+      val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledMessage", null, "Error : Failed to update compiled Message")
       apiResult.toString()
     }
   }
@@ -3011,12 +3010,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Remove container with Container Name and Version Number
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name a
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @param zkNotify
-     * @return
+     * @param zkNotify <description please>
+     * @return <description please>
      */
   def RemoveContainer(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify: Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
@@ -3029,7 +3028,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("container not found => " + key)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveContainer", null, ErrorCodeConstants.Remove_Container_Failed_Not_Found + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveContainer", null, ErrorCodeConstants.Remove_Container_Failed_Not_Found + ":" + dispkey)
           apiResult.toString()
         case Some(m) =>
           logger.debug("container found => " + m.asInstanceOf[ContainerDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ContainerDef].Version))
@@ -3053,14 +3052,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
           val operations = for (op <- allObjectsArray) yield "Remove"
           NotifyEngine(allObjectsArray, operations)
 
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveContainer", null, ErrorCodeConstants.Remove_Container_Successful + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveContainer", null, ErrorCodeConstants.Remove_Container_Successful + ":" + dispkey)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveContainer", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Container_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveContainer", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Container_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -3069,12 +3068,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Remove message with Message Name and Version Number
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @param zkNotify
-     * @return
+     * @param zkNotify <description please>
+     * @return <description please>
      */
   def RemoveMessage(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify: Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
@@ -3087,7 +3086,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("Message not found => " + key)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveMessage", null, ErrorCodeConstants.Remove_Message_Failed_Not_Found + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveMessage", null, ErrorCodeConstants.Remove_Message_Failed_Not_Found + ":" + dispkey)
           apiResult.toString()
         case Some(m) =>
           val msgDef = m.asInstanceOf[MessageDef]
@@ -3116,14 +3115,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
           val operations = for (op <- allObjectsArray) yield "Remove"
           NotifyEngine(allObjectsArray, operations)
 
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveMessage", null, ErrorCodeConstants.Remove_Message_Successful + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveMessage", null, ErrorCodeConstants.Remove_Message_Successful + ":" + dispkey)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Message_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Message_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -3148,7 +3147,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      *   }}}
      * @param msgDef the name of the msgDef's type is used for the type name formation
      * @param mdMgr the metadata manager receiver
-     * @return
+     * @return <description please>
      */
   def GetAdditionalTypesAdded(msgDef: BaseElemDef, mdMgr: MdMgr): Array[BaseElemDef] = {
     var types = new Array[BaseElemDef](0)
@@ -3235,8 +3234,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Remove message with Message Name and Version Number based upon advice in supplied notification
-     * @param zkMessage
-     * @return
+     * @param zkMessage <description please>
+     * @return <description please>
      */
   def RemoveMessageFromCache(zkMessage: ZooKeeperNotification) = {
     try {
@@ -3272,8 +3271,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * RemoveContainerFromCache
-     * @param zkMessage
-     * @return
+     * @param zkMessage <description please>
+     * @return <description please>
      */
   def RemoveContainerFromCache(zkMessage: ZooKeeperNotification) = {
     try {
@@ -3336,11 +3335,11 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Deactivate the model that presumably is active and waiting for input in the working set of the cluster engines.
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def DeactivateModel(nameSpace: String, name: String, version: Long, userid: Option[String] = None): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
@@ -3355,9 +3354,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Deactivate a model FIXME: Explain what it means to do this locally.
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param version  Version of the object
-     * @return
+     * @return <description please>
      */
   private def DeactivateLocalModel(nameSpace: String, name: String, version: Long): Boolean = {
     var key = nameSpace + "." + name + "." + version
@@ -3394,11 +3393,11 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Activate the model with the supplied keys. The engine is notified and the model factory is loaded.
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def ActivateModel(nameSpace: String, name: String, version: Long, userid: Option[String] = None): String = {
     var key = nameSpace + "." + name + "." + version
@@ -3432,7 +3431,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
             var isSuccess = DeactivateLocalModel(currActiveModel.nameSpace, currActiveModel.name, currActiveModel.Version)
             if (!isSuccess) {
               logger.error("Error while trying to activate " + dispkey + ", unable to deactivate active model. model ")
-              var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey + " -Unable to deactivate existing model")
+              val apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey + " -Unable to deactivate existing model")
               apiResult.toString()
             }
           }
@@ -3445,7 +3444,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("No active model found => " + dispkey)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, ErrorCodeConstants.Activate_Model_Failed_Not_Active + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, ErrorCodeConstants.Activate_Model_Failed_Not_Active + ":" + dispkey)
           apiResult.toString()
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
@@ -3460,7 +3459,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
           NotifyEngine(objectsUpdated, operations)
 
           // No exceptions, we succeded
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "ActivateModel", null, ErrorCodeConstants.Activate_Model_Successful + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "ActivateModel", null, ErrorCodeConstants.Activate_Model_Successful + ":" + dispkey)
           apiResult.toString()
       }
     } catch {
@@ -3468,7 +3467,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -3477,11 +3476,11 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Remove model with Model Name and Version Number
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   private def RemoveModel(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
     var key = nameSpace + "." + name + "." + version
@@ -3494,7 +3493,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("model not found => " + dispkey)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveModel", null, ErrorCodeConstants.Remove_Model_Failed_Not_Found + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveModel", null, ErrorCodeConstants.Remove_Model_Failed_Not_Found + ":" + dispkey)
           apiResult.toString()
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
@@ -3504,14 +3503,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
           objectsUpdated = objectsUpdated :+ m
           var operations = for (op <- objectsUpdated) yield "Remove"
           NotifyEngine(objectsUpdated, operations)
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveModel", null, ErrorCodeConstants.Remove_Model_Successful + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveModel", null, ErrorCodeConstants.Remove_Model_Successful + ":" + dispkey)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveModel", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Model_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveModel", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Model_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -3561,17 +3560,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * The ModelDef returned by the compilers is added to the metadata.
-     * @param model
+     * @param model <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured,supply something other than None
-     * @return
+     * @return <description please>
      */
   def AddModel(model: ModelDef, userid : Option[String]): String = {
     var key = model.FullNameWithVer
     val dispkey = model.FullName + "." + MdMgr.Pad0s2Version(model.Version)
     try {
       SaveObject(model, MdMgr.GetMdMgr)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddModel", null, ErrorCodeConstants.Add_Model_Successful + ":" + dispkey)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddModel", null, ErrorCodeConstants.Add_Model_Successful + ":" + dispkey)
       apiResult.toString()
     } catch {
       case e: Exception => {
@@ -3585,12 +3584,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddModelFromSource - compiles and catalogs a custom Scala or Java model from source.
-     * @param sourceCode
-     * @param sourceLang
-     * @param modelName
+     * @param sourceCode <description please>
+     * @param sourceLang <description please>
+     * @param modelName <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   private def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String] = None): String = {
     try {
@@ -3611,16 +3610,16 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       apiResult
     } catch {
       case e: AlreadyExistsException => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required)
         apiResult.toString()
       }
       case e: MsgCompilationFailedException => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Model_Compilation_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Model_Compilation_Failed)
         apiResult.toString()
       }
       case e: Exception => {
         logger.error("Unknown compilation error occured: " + Throwables.getStackTraceAsString(e))
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
     }
@@ -3753,10 +3752,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                                                         , msgNamespace
                                                         , msgName
                                                         , msgVersion
-                                                        , None
                                                         , pmmlText)
-
-        val modDef : ModelDef = jpmmlSupport.CreateModel
+        val recompile : Boolean = false
+        val modDef : ModelDef = jpmmlSupport.CreateModel(recompile)
 
         // ModelDef may be null if the model evaluation failed
         val latestVersion : Option[ModelDef] = if (modDef == null) None else GetLatestModel(modDef)
@@ -3782,7 +3780,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
             }
             val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
             val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure
+            val apiResult = new ApiResult(ErrorCodeConstants.Failure
                 , "AddModel"
                 , null
                 , s"$reasonForFailure : $modDefName.$modDefVer)")
@@ -3821,7 +3819,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Add Model (format XML)
-     * @param pmmlText
+     * @param pmmlText <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @return json string result
@@ -3853,26 +3851,26 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
         val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
         val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
         apiResult.toString()
       }
     } catch {
       case e: ModelCompilationFailedException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
       case e: AlreadyExistsException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
         apiResult.toString()
       }
     }
@@ -3881,14 +3879,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Recompile the supplied model. Optionally the message definition is supplied that was just built.
      *
-     * @param mod the model definition that possibly needs to be reconstructed.
+     * @param modelToBeReplaced the model definition that possibly needs to be reconstructed.
      * @param userid the user id that has invoked this command
-     * @param optMsgDef the MessageDef constructed, assuming it was a message def. If a container def has been rebuilt,
+     * @param optNewMsgDef the MessageDef constructed, assuming it was a message def. If a container def has been rebuilt,
      *               this field will have a value of None.  This is only meaningful at this point when the model to
-     *               be rebuilt is a JPMML model.
+     *               be rebuilt is a JPMML model and the message supplied is its message.
      * @return the result string reflecting what happened with this operation.
      */
-    def RecompileModel(mod: ModelDef, userid : Option[String], optMsgDef : Option[MessageDef]): String = {
+    def RecompileModel(modelToBeReplaced: ModelDef, userid : Option[String], optNewMsgDef : Option[MessageDef]): String = {
         try {
             /** FIXME: This should really handle BINARY models too.  When we start supporting them, we cannot recompile
               * it but we can send notifications to consoles or some thing like this to help identify the need for
@@ -3898,38 +3896,38 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
               * a warning and rejection of the message update made. Perhaps adding a "force" flag to get the message
               * to compile despite this obstacle is warranted.
               */
-            val isJpmml : Boolean = mod.modelRepresentation == ModelRepresentation.JPMML
-            val msgDef : MessageDef = optMsgDef.orNull
-            val modDef: ModelDef = if (! isJpmml) {
+            val isJpmml : Boolean = modelToBeReplaced.modelRepresentation == ModelRepresentation.JPMML
+            val msgDef : MessageDef = optNewMsgDef.orNull
+            val replacementModel : ModelDef = if (! isJpmml) {
 
                 val compProxy = new CompilerProxy
                 //compProxy.setLoggerLevel(Level.TRACE)
 
                 // Recompile the model based upon its model type.Models can be either PMML or Custom Sourced.  See which one we are dealing with
                 // here.
-                if (mod.objectFormat == ObjFormatType.fXML) {
-                    val pmmlText = mod.ObjectDefinition
+                if (modelToBeReplaced.objectFormat == ObjFormatType.fXML) {
+                    val pmmlText = modelToBeReplaced.ObjectDefinition
                     val (classStrTemp, modDefTemp) = compProxy.compilePmml(pmmlText, true)
                     modDefTemp
                 } else {
-                    val saveModelParms = parse(mod.ObjectDefinition).values.asInstanceOf[Map[String, Any]]
+                    val saveModelParms = parse(modelToBeReplaced.ObjectDefinition).values.asInstanceOf[Map[String, Any]]
                     val custModDef: ModelDef = compProxy.recompileModelFromSource(
                         saveModelParms.getOrElse(ModelCompilationConstants.SOURCECODE, "").asInstanceOf[String],
                         saveModelParms.getOrElse(ModelCompilationConstants.PHYSICALNAME, "").asInstanceOf[String],
                         saveModelParms.getOrElse(ModelCompilationConstants.DEPENDENCIES, List[String]()).asInstanceOf[List[String]],
                         saveModelParms.getOrElse(ModelCompilationConstants.TYPES_DEPENDENCIES, List[String]()).asInstanceOf[List[String]],
-                        mod.ObjectFormat.toString)
+                        modelToBeReplaced.ObjectFormat.toString)
                     custModDef
                 }
             } else {
-                val reasonable : Boolean = (mod.FullName == msgDef.FullName)
+                val reasonable : Boolean = (msgDef != null && modelToBeReplaced.msgConsumed != msgDef.FullNameWithVer)
                 if (reasonable) {
                     val msgName: String = msgDef.Name
                     val msgNamespace: String = msgDef.NameSpace
                     val msgVersion: String = MdMgr.ConvertLongVersionToString(msgDef.Version)
-                    val modelNmSpace : String = mod.NameSpace
-                    val modelName : String = mod.Name
-                    val modelVersion : String = MdMgr.ConvertLongVersionToString(mod.Version)
+                    val modelNmSpace : String = modelToBeReplaced.NameSpace
+                    val modelName : String = modelToBeReplaced.Name
+                    val modelVersion : String = MdMgr.ConvertLongVersionToString(modelToBeReplaced.Version)
                     val jpmmlSupport: JpmmlSupport = new JpmmlSupport(mdMgr
                                                                     , modelNmSpace
                                                                     , modelName
@@ -3937,94 +3935,100 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                                                                     , msgNamespace
                                                                     , msgName
                                                                     , msgVersion
-                                                                    , optMsgDef
-                                                                    , mod.jpmmlText)
-                    val model : ModelDef = jpmmlSupport.CreateModel
+                                                                    , modelToBeReplaced.jpmmlText)
+                    val recompile : Boolean = true
+                    val model : ModelDef = jpmmlSupport.CreateModel(recompile)
                     model
                 } else {
                     /** this means that the dependencies are incorrect.. message is not the JPMML message of interest */
-                    logger.error(s"The message names for model ${mod.FullName} and the message just built (${msgDef.FullName}) don't match up. It suggests model dependencies and/or the model type are messed up.")
+                    val msgNameToPrint : String = if (msgDef != null) msgDef.FullName else "No message def supplied... name unknown"
+                    logger.error(s"The message names for model ${modelToBeReplaced.FullName} and the message just built ($msgNameToPrint) don't match up. It suggests model dependencies and/or the model type are messed up.")
                     null
                 }
             }
 
-            val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
-            val isValid: Boolean = (modDef != null)
-            if (isValid) {
-                RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
-                UploadJarsToDB(modDef)
-                val result = AddModel(modDef,userid)
+            // FIXME: Why do this?  the modDef supplied is the one to be replaced.
+            // val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
+            val isValid: Boolean = (replacementModel != null)
+            val isReasonable : Boolean = (modelToBeReplaced != null)
+            if (isValid && isReasonable) {
+                RemoveModel(modelToBeReplaced.nameSpace, modelToBeReplaced.name, modelToBeReplaced.ver, userid)
+                UploadJarsToDB(replacementModel)
+                val result = AddModel(replacementModel,userid)
                 var objectsUpdated = new Array[BaseElemDef](0)
                 var operations = new Array[String](0)
-                objectsUpdated = objectsUpdated :+ latestVersion.get
+                objectsUpdated = objectsUpdated :+ modelToBeReplaced
                 operations = operations :+ "Remove"
-                objectsUpdated = objectsUpdated :+ modDef
+                objectsUpdated = objectsUpdated :+ replacementModel
                 operations = operations :+ "Add"
                 NotifyEngine(objectsUpdated, operations)
                 result
             } else {
                 val reasonForFailure: String = ErrorCodeConstants.Add_Model_Failed
-                val modDefName: String = if (modDef != null) modDef.FullName else "(compilation failed)"
-                val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
+                val modDefName: String = if (modelToBeReplaced != null) modelToBeReplaced.FullName else "(compilation failed)"
+                val modDefVer: String = if (modelToBeReplaced != null) MdMgr.Pad0s2Version(modelToBeReplaced.Version) else MdMgr.UnknownVersion
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
                 apiResult.toString()
             }
         } catch {
             case e: ModelCompilationFailedException => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
                 logger.debug("\nStackTrace:" + stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, "Error in producing scala file or Jar file.." + ErrorCodeConstants.Add_Model_Failed)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, "Error in producing scala file or Jar file.." + ErrorCodeConstants.Add_Model_Failed)
                 apiResult.toString()
             }
             case e: AlreadyExistsException => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
                 logger.debug("\nStackTrace:" + stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
                 apiResult.toString()
             }
             case e: Exception => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
                 logger.debug("\nStackTrace:" + stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RecompileModel", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Model_Failed)
                 apiResult.toString()
             }
         }
     }
 
     /**
-     * Update the model with new source of type modelType.
+     * Update the model with new source of type modelType.  ''The message is assumed to be the same as the model
+     * being updated (unless optVersionBeingUpdated is supplied, it is the latest version available in the metadata).''
      *
-     * Except for the modelType and the input, all fields are marked optional. Note, however, that for some of the
-     * model types all arguments should have meaningful values.
+     * Except for the modelType and the input, all fields are marked optional. Note, however, all arguments should have
+     * meaningful values for JPMML model types.
      *
-     * @see AddModel for semantics.
+     * ''Important:'' For PMML, Scala, and Java models, currently only the ''most recent model'' cataloged with the name noted in the
+     * source file can be "updated".  Except for JPMML, it is not possible to have a number of models with the same name differing only by
+     * version and be able to update one of them explicitly.  This is a feature that is to be implemented in a future release
+     * for all models.
      *
-     * Note that the message and message version (as seen in AddModel) are not used.  Should a message change that is being
-     * used by one of the JPMML models, it will be automatically be updated immediately when the message compilation and
-     * metadata update has completed for it.
+     * For JPMML, if the optModelVersion is supplied with a value other than None, it will be used to select the model with this
+     * specific version to be updated (replaced).  Should this parameter be supplied with no value (None), like the other model types,
+     * the latest version of the model in the metadata with the full name will be updated (replaced).
      *
-     * Currently only the most recent model cataloged with the name noted in the source file can be "updated".  It is not
-     * possible to have a number of models with the same name differing only by version and be able to update one of them
-     * explicitly.  This is a feature that is to be implemented.
+     * ''Important:'' For all model types, ''the old version of the model is removed.''
      *
-     * If both the model and the message are changing, consider using AddModel to create a new JPMML model and then remove the older
-     * version if appropriate.
+     * If both the model and the message are changing, consider using AddModel to create a new JPMML model and then deactivate and
+     * remove the older version if appropriate.
      *
      * @param modelType the type of the model submission (any {SCALA,JAVA,PMML,JPMML,BINARY}
      * @param input the text element to be added dependent upon the modelType specified.
      * @param optUserid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method.
      * @param optModelName the namespace.name of the JPMML model to be added to the Kamanja metadata
-     * @param optVersion the model version to be used to describe this JPMML model
-     * @param optVersionBeingUpdated not used .. reserved for future release where explicit modelnamespace.modelname.modelversion
-     *                               can be updated (not just the latest version)
+     * @param optModelVersion the new version number to use for the updated model (only relevant for JPMML ingestion).  This value
+     *                        must be greater than the version being updated and unique for models with the optModelName moniker.
+     * @param optVersionBeingUpdated Reserved,  When/if specific version replacement is supported, this will contain the version value
+      *                               of the model to be replaced.
      * @return  result string indicating success or failure of operation
      */
     override def UpdateModel(modelType: ModelType.ModelType
                             , input: String
                             , optUserid: Option[String] = None
                             , optModelName: Option[String] = None
-                            , optVersion: Option[String] = None
+                            , optModelVersion: Option[String] = None
                             , optVersionBeingUpdated : Option[String] = None): String = {
         try {
 
@@ -4042,15 +4046,15 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
             val modelResult: String = modelType match {
                 case ModelType.PMML => {
-                    val result: String = UpdatePmmlModel(modelType, input, optUserid, optModelName, optVersion)
+                    val result: String = UpdatePmmlModel(modelType, input, optUserid, optModelName, optModelVersion)
                     result
                 }
                 case ModelType.JAVA | ModelType.SCALA => {
-                    val result: String = UpdateCustomModel(modelType, input, optUserid, optModelName, optVersion)
+                    val result: String = UpdateCustomModel(modelType, input, optUserid, optModelName, optModelVersion)
                     result
                 }
                 case ModelType.JPMML => {
-                    val result : String = UpdateJpmmlModel(modelType, input, optUserid, optModelName, optVersion, optVersionBeingUpdated)
+                    val result : String = UpdateJpmmlModel(modelType, input, optUserid, optModelName, optModelVersion, optVersionBeingUpdated)
                     result
                 }
                 case ModelType.BINARY =>
@@ -4067,19 +4071,29 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     }
 
     /**
-     * Update a JPMML model with the supplied inputs.  The input is presumed to be a new version of a JPMML model that
-     * is currently cataloged.  The user id should be supplied for any installation that is using the security or audit
-     * plugins. The model name, it's new version, and optionally the model version of the model to be updated is
-     * supplied. If this prior version is not supplied, it will be assumed that the current version of the model
-     * is the one to be replaced.
+     * Update a JPMML model with the supplied inputs.  It is effectively the equivalent of a RemoveModel followed by
+     * an AddModel.
+     *
+     * The input parameter is presumed to be a new version of a JPMML model that is currently
+     * cataloged.  The user id should be supplied for any installation that is using the security or audit
+     * plugins. The new model name and its version must be supplied.  The model version of the model to be updated may
+     * be optionally supplied. If supplied, it must match exactly the model to be replaced in the form 3 node string
+     * form (e.g. MMMMMM.NNNNNN.oooooo) where {M,N,o} are digits in [0-9] range.
+     *
+     * ''Important:''If the optModelVersion is supplied with a value other than None, it will be used to select the model with this
+     * specific version to be updated (replaced).  Should this value be supplied with no value (None), the latest version of the
+     * model in the metadata with the full name will be updated. ''The old version is removed.''.
      *
      * @param modelType the type of the model... JPMML in this case
      * @param input the new source to ingest for the model being updated/replaced
      * @param optUserid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @param optModelName the name of the model to be ingested (only relevant for JPMML ingestion)
-     * @param optModelVersion the version number of the model to be updated (only relevant for JPMML ingestion)
-     * @return result string indicating success or failure of operation
+     * @param optModelVersion the new version number to use for the updated model (only relevant for JPMML ingestion).  This value
+     *                        must be greater than the version being updated and unique for models with the optModelName moniker.
+     * @param optVersionBeingUpdated Reserved,  When/if specific version replacement is supported, this will contain the version value
+      *                               of the model to be replaced.  Currently only the most recent version can be replaced.
+     * @return result string indicating success or failure of the Remove and Add operations.
      */
     private def UpdateJpmmlModel(modelType: ModelType.ModelType
                                   , input: String
@@ -4090,8 +4104,20 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
 
         val modelName: String = optModelName.orNull
-        val version: String = optModelVersion.getOrElse("-1")
-        val result: String = if (modelName != null && version != null) {
+        val version: String = optModelVersion.orNull
+        val onlyActive: Boolean = false
+        val versionBeingUpgraded : String = optVersionBeingUpdated.getOrElse(null)
+        val latestVersion: Boolean = (versionBeingUpgraded == null || versionBeingUpgraded == MdMgr.LatestVersion)
+        val allModels : scala.collection.immutable.Set[ModelDef] = if (modelName != null) {
+            val allOfThemWithThisName = MdMgr.GetMdMgr.Models(modelName, onlyActive, latestVersion).orNull
+            if (allOfThemWithThisName == null) scala.collection.immutable.Set[ModelDef]() else allOfThemWithThisName
+        } else {
+            scala.collection.immutable.Set[ModelDef]()
+        }
+        val result: String = if (modelName != null &&
+                                version != null &&
+                                allModels.filter(m => MdMgr.ConvertLongVersionToString(m.Version) == version).isEmpty &&
+                                version != MdMgr.LatestVersion) {
             try {
                 val buffer: StringBuilder = new StringBuilder
                 val modelNameNodes: Array[String] = modelName.split('.')
@@ -4099,57 +4125,64 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                 modelNameNodes.take(modelNameNodes.size - 1).addString(buffer, ".")
                 val modelNmSpace: String = buffer.toString
 
-                val jpmmlSupport: JpmmlSupport = new JpmmlSupport(mdMgr
-                    , modelNmSpace
-                    , modelNm
-                    , version
-                    , None
-                    , input)
-
-                val modDef: ModelDef = jpmmlSupport.UpdateModel
-
-                /**
-                 * FIXME: The current strategy is that only the most recent version can be updated.
-                 * FIXME: This is not a satisfactory condition. It may be desirable to have 10 models all with
-                 * FIXME: the same name but differing only in their version numbers. If someone wants to tune
-                 * FIXME: #6 of the 10, that number six is not the latest.  It is just a unique model.
-                 *
-                 * For this reason, the version of the model that is to be changed should be supplied here and in the
-                 * more generic interface implementation that calls here.
-                 */
-
-                //def Model(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[ModelDef]
-                val tentativeVersionBeingUpdated : String = optVersionBeingUpdated.orNull
-                val versionBeingUpdated : String = if (tentativeVersionBeingUpdated != null) tentativeVersionBeingUpdated else "-1"
-                val versionLong : Long = MdMgr.ConvertVersionToLong(version)
+                /** Fetch the specific model from the metadata that is to be replaced or "updated" */
+                val specificVersion : String = optVersionBeingUpdated.getOrElse(MdMgr.LatestVersion)
+                val optSpecificVersion : Option[String] = Some(specificVersion)
+                val versionLong : Long = if (specificVersion != MdMgr.LatestVersion) MdMgr.ConvertVersionToLong(specificVersion) else -1
                 val onlyActive : Boolean = false /** allow active or inactive models to be updated */
-                val optVersionUpdated : Option[ModelDef] = MdMgr.GetMdMgr.Model(modelNmSpace, modelNm, versionLong, onlyActive)
-                val versionUpdated : ModelDef = optVersionUpdated.orNull
+                val optModelVersionBeingUpdated : Option[ModelDef] = MdMgr.GetMdMgr.Model(modelNmSpace, modelNm, versionLong, onlyActive)
+                val modelVersionBeingUpdated : ModelDef = optModelVersionBeingUpdated.orNull
+                val versionToBeUpdatedIsThere : Boolean = (modelVersionBeingUpdated != null)
 
-                // ModelDef may be null if the model evaluation failed
-                // old .... val latestVersion: Option[ModelDef] = if (modDef == null) None else GetLatestModel(modDef) was compared
-                // with modeDef in IsValidVersion
-                //val isValid: Boolean = if (latestVersion.isDefined) IsValidVersion(latestVersion.get, modDef) else true
-                val isValid: Boolean = if (optVersionUpdated.isDefined) IsValidVersion(versionUpdated, modDef) else true
+                /** Create the JpmmlSupport object that will build a new version of the model with the specific version's
+                  * message.
+                  */
+                val modDef: ModelDef = if (versionToBeUpdatedIsThere) {
+                    val specificMsgNameWVer: String = modelVersionBeingUpdated.msgConsumed
+                    val (msgNmspc, msgNm, msgVer): (String, String, String) = MdMgr.SplitFullNameWithVersion(modelVersionBeingUpdated.msgConsumed)
 
-                if (isValid && modDef != null) {
-                    logAuditRec(optUserid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, input, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
+                    val jpmmlSupport: JpmmlSupport = new JpmmlSupport(mdMgr
+                                                                    , modelNmSpace
+                                                                    , modelNm
+                                                                    , version
+                                                                    , msgNmspc
+                                                                    , msgNm
+                                                                    , msgVer
+                                                                    , input)
+                    /** sanity check... see if all three portions of the model name key are present */
+                    val model: ModelDef = if (msgNmspc != null && msgNm != null && msgVer != null) {
+                        jpmmlSupport.UpdateModel
+                    } else {
+                        logger.error("The specific model def that was to be updated did not have a namespace.name.version name... values are $msgNmSpc.$msgNm.$msgVer; the model add support is not insisting on full version qualified name... it is a bug... update is impossible until fixed")
+                        null
+                    }
+                    model
+                } else {
+                    logger.error(s"There is no model named $modelNmSpace.$modelNm.$specificVersion... update is impossible")
+                    null
+                }
+
+                val isValid: Boolean = if (optModelVersionBeingUpdated.isDefined) IsValidVersion(modelVersionBeingUpdated, modDef) else false
+
+                val rslt = if (isValid && modDef != null) {
+                    logAuditRec(optUserid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, input, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
 
                     /**
                      * FIXME: Considering the design goal of NON-STOP cluster model management, it seems that the window
-                     * FIXME: for something to go wrong is too likely with this current approach.  The old model is being
+                     * FIXME: for something to go wrong is "open far too wide" with this current approach.  The old model is being
                      * FIXME: deleted before the engine is notified.  Should the engine ask for metadata on that model
                      * FIXME: after the model being updated is removed but before the new version has been added, there
                      * FIXME: is likelihood that unpredictable behavior that would be difficult to diagnose could occur.
                      *
                      * FIXME: Furthermore, who is to say that the user doesn't want the model to be updated all right, but
-                     * FIXME: but that they are not sure that they want the old version to be removed.  In other words,
-                     * FIXME: "the model is to be updated" means "add the modified version of the model, and atomically
-                     * FIXME: swap the old active version (deactivate it) and the new version (activate it)?
+                     * FIXME: but that they are not sure that they want the old version to be removed.  In other words, doesn't
+                     * FIXME: "the model is to be updated" mean "add the modified version of the model, and 'atomically
+                     * FIXME: swap' (i.e., under mutex) the old active version (deactivate it) and the new version
+                     * FIXME: (activate it)?" Wouldn't this be a smaller window for problems?
                      *
                      * FIXME: We need to think it through... what the semantics of the Update is.  In fact we might want
                      * FIXME: to deprecate it altogether.  There should be just Add model, Activate model, Deactivate model,
-                     * FIXME: Swap Models (activate and deactivate same model/different versions atomically), and Remove
+                     * FIXME: Swap Models (activate and deactivate same model/different versions under mutex), and Remove
                      * FIXME: model. Removes would fail if they are active; they need to be deactivated before removal.
                      *
                      * FIXME: The design goals are to not stop the cluster and to not miss an incoming message. The windows
@@ -4157,20 +4190,26 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                      * FIXME: else is "offline" as it were.
                      *
                      */
-                    if( versionUpdated != null ){
-                        RemoveModel(versionUpdated.NameSpace, versionUpdated.Name, versionUpdated.Version, None)
+                    val removeResult : String = if ( modelVersionBeingUpdated != null ){
+                        RemoveModel(modelVersionBeingUpdated.NameSpace, modelVersionBeingUpdated.Name, modelVersionBeingUpdated.Version, None)
+                    } else {
+                        new ApiResult(ErrorCodeConstants.Failure
+                            , "RemvoveModel"
+                            , null
+                            , s"${ErrorCodeConstants.Remove_Model_Failed} the version specified for update was not present in metadata").toString
                     }
                     logger.info("Begin uploading dependent Jars, please wait...")
                     UploadJarsToDB(modDef)
                     logger.info("uploading dependent Jars complete")
 
-                    val apiResult = AddModel(modDef, optUserid)
+                    val addResult : String = AddModel(modDef, optUserid)
                     logger.debug("Model is added..")
                     var objectsAdded = new Array[BaseElemDef](0)
                     objectsAdded = objectsAdded :+ modDef
                     val operations = for (op <- objectsAdded) yield "Add"
                     logger.debug("Notify engine via zookeeper")
                     NotifyEngine(objectsAdded, operations)
+                    val apiResult : String = s"UpdateModel...Remove:\n$removeResult\n...Add:\n$addResult"
                     apiResult
                 } else {
                     val reasonForFailure: String = if (modDef != null) {
@@ -4178,48 +4217,51 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                     } else {
                         ErrorCodeConstants.Add_Model_Failed
                     }
+                    val specificVerNotThere : String = if (! versionToBeUpdatedIsThere) "Model specified for update not present" else null
                     val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
                     val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-                    var apiResult = new ApiResult(ErrorCodeConstants.Failure
-                        , "AddModel"
-                        , null
-                        , s"$reasonForFailure : $modDefName.$modDefVer)")
-                    apiResult.toString()
+                    val detailReason : String = if (specificVerNotThere != null) specificVerNotThere else s"$modDefName.$modDefVer"
+                    val apiResult = new ApiResult(ErrorCodeConstants.Failure
+                                                , "AddModel"
+                                                , null
+                                                , s"$reasonForFailure : $detailReason")
+                    apiResult.toString
                 }
+                rslt
             } catch {
                 case e: ModelCompilationFailedException => {
                     val stackTrace = StackTrace.ThrowableTraceString(e)
                     logger.debug("\nStackTrace:" + stackTrace)
                     val apiResult = new ApiResult(ErrorCodeConstants.Failure
-                        , s"UpdateModel(type = JPMML)"
-                        , null
-                        , s"Error : ${e.toString} + ${ErrorCodeConstants.Add_Model_Failed}")
-                    apiResult.toString()
+                                        , s"UpdateModel(type = JPMML)"
+                                        , null
+                                        , s"Error : ${e.toString} ${ErrorCodeConstants.Add_Model_Failed}")
+                    apiResult.toString
                 }
                 case e: AlreadyExistsException => {
                     val stackTrace = StackTrace.ThrowableTraceString(e)
-                    logger.debug("\nStackTrace:" + stackTrace)
+                    logger.debug(s"\nStackTrace: $stackTrace")
                     val apiResult = new ApiResult(ErrorCodeConstants.Failure
-                        , s"UpdateModel(type = JPMML)"
-                        , null
-                        , s"Error : ${e.toString} + ${ErrorCodeConstants.Add_Model_Failed}")
-                    apiResult.toString()
+                                                , s"UpdateModel(type = JPMML)"
+                                                , null
+                                                , s"Error : ${e.toString} ${ErrorCodeConstants.Add_Model_Failed}")
+                    apiResult.toString
                 }
                 case e: Exception => {
                     val stackTrace = StackTrace.ThrowableTraceString(e)
-                    logger.debug("\nStackTrace:" + stackTrace)
+                    logger.debug(s"\nStackTrace: $stackTrace")
                     val apiResult = new ApiResult(ErrorCodeConstants.Failure
                         , s"UpdateModel(type = JPMML)"
                         , null
-                        , s"Error : ${e.toString} + ${ErrorCodeConstants.Add_Model_Failed}")
-                    apiResult.toString()
+                        , s"Error : ${e.toString} ${ErrorCodeConstants.Add_Model_Failed}")
+                    apiResult.toString
                 }
             }
         } else {
             val apiResult = new ApiResult(ErrorCodeConstants.Failure
-                , s"UpdateModel(type = JPMML)"
+                , "UpdateModel(type = JPMML)"
                 , null
-                , s"The model name and new version was not supplied for this JPMML model : name=$modelName version=$version\nOptionally one should consider supplying the exact version of the model being updated, especially important when you are maintaining multiple versions with the same model name and tweaking versions of same for your 'a/b/c...' score comparisons.")
+                , s"The model name and/or new model version were not supplied for this JPMML model : name=$modelName version=$version")
             apiResult.toString()
 
         }
@@ -4243,12 +4285,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                                   , userid: Option[String] = None
                                   , modelName: Option[String] = None
                                   , version: Option[String] = None): String = {
-        val sourceLang : String = modelType.toString /** to get here it is either 'java' or 'scala' */
+
+        val sourceLang: String = modelType.toString
+        /** to get here it is either 'java' or 'scala' */
         try {
             val compProxy = new CompilerProxy
-            compProxy.setSessionUserId(userid)
-            val modelNm : String = modelName.orNull
-            val modDef : ModelDef =  compProxy.compileModelFromSource(input, modelNm, sourceLang)
+            compProxy.setSessionUserId (userid)
+            val modelNm: String = modelName.orNull
+            val modDef: ModelDef = compProxy.compileModelFromSource (input, modelNm, sourceLang)
 
             /**
              * FIXME: The current strategy is that only the most recent version can be updated.
@@ -4260,57 +4304,59 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
              * more generic interface implementation that calls here.
              */
 
-            val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
-            val isValid: Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
+            val latestVersion = if (modDef == null) None else GetLatestModel (modDef)
+            val isValid: Boolean = if (latestVersion != None) IsValidVersion (latestVersion.get, modDef) else true
 
             if (isValid && modDef != null) {
-                logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, input, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
-                val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
-                if( latestVersion != None ){
-                    RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
+                logAuditRec (userid, Some (AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, input, AuditConstants.SUCCESS, "", modDef.FullNameWithVer)
+                val key = MdMgr.MkFullNameWithVersion (modDef.nameSpace, modDef.name, modDef.ver)
+                if (latestVersion != None) {
+                    RemoveModel (latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
                 }
-                logger.info("Begin uploading dependent Jars, please wait...")
-                UploadJarsToDB(modDef)
-                logger.info("Finished uploading dependent Jars.")
-                val apiResult = AddModel(modDef, userid)
-                var objectsUpdated = new Array[BaseElemDef](0)
-                var operations = new Array[String](0)
-                if( latestVersion != None ){
+                logger.info ("Begin uploading dependent Jars, please wait...")
+                UploadJarsToDB (modDef)
+                logger.info ("Finished uploading dependent Jars.")
+                val apiResult = AddModel (modDef, userid)
+                var objectsUpdated = new Array[BaseElemDef] (0)
+                var operations = new Array[String] (0)
+                if (latestVersion != None) {
                     objectsUpdated = objectsUpdated :+ latestVersion.get
                     operations = operations :+ "Remove"
                 }
                 objectsUpdated = objectsUpdated :+ modDef
                 operations = operations :+ "Add"
-                NotifyEngine(objectsUpdated, operations)
+                NotifyEngine (objectsUpdated, operations)
                 apiResult
             } else {
-                val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
+                val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Update_Model_Failed_Invalid_Version else ErrorCodeConstants.Update_Model_Failed
                 val modDefName: String = if (modDef != null) modDef.FullName else "(source compile failed)"
                 val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
-                apiResult.toString()
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
+                apiResult.toString
             }
         } catch {
             case e: ModelCompilationFailedException => {
-                val stackTrace = StackTrace.ThrowableTraceString(e)
-                logger.debug("\nStackTrace:"+stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, s"${'"'}UpdateModel(type = $sourceLang)${'"'}", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
-                apiResult.toString()
+                val stackTrace = StackTrace.ThrowableTraceString (e)
+                logger.debug ("\nStackTrace:" + stackTrace)
+                val apiResult = new ApiResult (ErrorCodeConstants.Failure
+                        , s"${'"'}UpdateModel(type = $modelType)${'"'}", null, "Error :" + e.toString + ErrorCodeConstants.Update_Model_Failed)
+                apiResult.toString
             }
+
             case e: AlreadyExistsException => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
-                logger.debug("\nStackTrace:"+stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, s"${'"'}UpdateModel(type = $sourceLang)${'"'}", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
-                apiResult.toString()
+                logger.debug("\nStackTrace:" +stackTrace)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, s"${'"'}UpdateModel(type = $modelType)${'"'}", null, "Error :" + e.toString + ErrorCodeConstants.Update_Model_Failed)
+                apiResult.toString
             }
             case e: Exception => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
-                logger.debug("\nStackTrace:"+stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, s"${'"'}UpdateModel(type = $sourceLang)${'"'}", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
-                apiResult.toString()
+                logger.debug("\nStackTrace:" +stackTrace)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, s"${'"'}UpdateModel(type = $modelType)${'"'}", null, "Error :" + e.toString + ErrorCodeConstants.Update_Model_Failed)
+                apiResult.toString
             }
         }
-    }
+     }
 
     /**
      * UpdateModel - Update a Kamanja Pmml model
@@ -4381,20 +4427,20 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
                 val reasonForFailure: String = if (modDef != null) ErrorCodeConstants.Update_Model_Failed_Invalid_Version else ErrorCodeConstants.Update_Model_Failed
                 val modDefName: String = if (modDef != null) modDef.FullName else "(pmml compile failed)"
                 val modDefVer: String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, s"UpdateModel(type = PMML)", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, s"UpdateModel(type = PMML)", null, reasonForFailure + ":" + modDefName + "." + modDefVer)
                 apiResult.toString()
             }
         } catch {
             case e: ObjectNotFoundException => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
                 logger.debug("\nStackTrace:" + stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, s"UpdateModel(type = PMML)", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, s"UpdateModel(type = PMML)", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
                 apiResult.toString()
             }
             case e: Exception => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
                 logger.debug("\nStackTrace:" + stackTrace)
-                var apiResult = new ApiResult(ErrorCodeConstants.Failure, s"UpdateModel(type = PMML)", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
+                val apiResult = new ApiResult(ErrorCodeConstants.Failure, s"UpdateModel(type = PMML)", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Model_Failed)
                 apiResult.toString()
             }
         }
@@ -4403,7 +4449,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * getBaseType
      * @param typ a type to be determined
-     * @return
+     * @return <description please>
      */
   private def getBaseType(typ: BaseTypeDef): BaseTypeDef = {
     // Just return the "typ" if "typ" is not supported yet
@@ -4448,10 +4494,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetDependentModels
-     * @param msgNameSpace
-     * @param msgName
-     * @param msgVer
-     * @return
+     * @param msgNameSpace <description please>
+     * @param msgName <description please>
+     * @param msgVer <description please>
+     * @return <description please>
      */
   def GetDependentModels(msgNameSpace: String, msgName: String, msgVer: Long): Array[ModelDef] = {
     try {
@@ -4515,18 +4561,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("No Models found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllModelDefs", null, ErrorCodeConstants.Get_All_Models_Failed_Not_Available)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllModelDefs", null, ErrorCodeConstants.Get_All_Models_Failed_Not_Available)
           apiResult.toString()
         case Some(ms) =>
           val msa = ms.toArray
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllModelDefs", JsonSerializer.SerializeObjectListToJson("Models", msa), ErrorCodeConstants.Get_All_Models_Successful)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllModelDefs", JsonSerializer.SerializeObjectListToJson("Models", msa), ErrorCodeConstants.Get_All_Models_Successful)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllModelDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Models_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllModelDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Models_Failed)
         apiResult.toString()
       }
     }
@@ -4537,7 +4583,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param formatType format of the return value, either JSON or XML
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllMessageDefs(formatType: String, userid: Option[String] = None): String = {
     try {
@@ -4546,18 +4592,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("No Messages found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllMessageDefs", null, ErrorCodeConstants.Get_All_Messages_Failed_Not_Available)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllMessageDefs", null, ErrorCodeConstants.Get_All_Messages_Failed_Not_Available)
           apiResult.toString()
         case Some(ms) =>
           val msa = ms.toArray
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllMessageDefs", JsonSerializer.SerializeObjectListToJson("Messages", msa), ErrorCodeConstants.Get_All_Messages_Succesful)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllMessageDefs", JsonSerializer.SerializeObjectListToJson("Messages", msa), ErrorCodeConstants.Get_All_Messages_Succesful)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllMessageDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Messages_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllMessageDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Messages_Failed)
         apiResult.toString()
       }
     }
@@ -4578,18 +4624,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("No Containers found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllContainerDefs", null, ErrorCodeConstants.Get_All_Containers_Failed_Not_Available)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllContainerDefs", null, ErrorCodeConstants.Get_All_Containers_Failed_Not_Available)
           apiResult.toString()
         case Some(ms) =>
           val msa = ms.toArray
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllContainerDefs", JsonSerializer.SerializeObjectListToJson("Containers", msa), ErrorCodeConstants.Get_All_Containers_Successful)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllContainerDefs", JsonSerializer.SerializeObjectListToJson("Containers", msa), ErrorCodeConstants.Get_All_Containers_Successful)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllContainerDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Containers_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllContainerDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Containers_Failed)
         apiResult.toString()
       }
     }
@@ -4597,10 +4643,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetAllModelsFromCache
-     * @param active
+     * @param active <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllModelsFromCache(active: Boolean, userid: Option[String] = None): Array[String] = {
     var modelList: Array[String] = new Array[String](0)
@@ -4632,10 +4678,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetAllMessagesFromCache
-     * @param active
+     * @param active <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllMessagesFromCache(active: Boolean, userid: Option[String] = None): Array[String] = {
     var messageList: Array[String] = new Array[String](0)
@@ -4667,10 +4713,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetAllContainersFromCache
-     * @param active
+     * @param active <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllContainersFromCache(active: Boolean, userid: Option[String] = None): Array[String] = {
     var containerList: Array[String] = new Array[String](0)
@@ -4702,10 +4748,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetAllFunctionsFromCache
-     * @param active
+     * @param active <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllFunctionsFromCache(active: Boolean, userid: Option[String] = None): Array[String] = {
     var functionList: Array[String] = new Array[String](0)
@@ -4737,10 +4783,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetAllConceptsFromCache
-     * @param active
+     * @param active <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllConceptsFromCache(active: Boolean, userid: Option[String] = None): Array[String] = {
     ConceptUtils.GetAllConceptsFromCache(active,userid)
@@ -4748,10 +4794,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetAllTypesFromCache
-     * @param active
+     * @param active <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllTypesFromCache(active: Boolean, userid: Option[String] = None): Array[String] = {
     TypeUtils.GetAllTypesFromCache(active,userid)
@@ -4765,7 +4811,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param formatType format of the return value, either JSON or XML
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetModelDef(nameSpace: String, objectName: String, formatType: String, userid : Option[String]): String = {
     try {
@@ -4774,18 +4820,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("No Models found ")
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDef", null, ErrorCodeConstants.Get_Model_Failed_Not_Available + ":" + nameSpace + "." + objectName)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDef", null, ErrorCodeConstants.Get_Model_Failed_Not_Available + ":" + nameSpace + "." + objectName)
           apiResult.toString()
         case Some(ms) =>
           val msa = ms.toArray
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDef", JsonSerializer.SerializeObjectListToJson("Models", msa), ErrorCodeConstants.Get_Model_Successful)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDef", JsonSerializer.SerializeObjectListToJson("Models", msa), ErrorCodeConstants.Get_Model_Successful)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDef", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_Failed + ":" + nameSpace + "." + objectName)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDef", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_Failed + ":" + nameSpace + "." + objectName)
         apiResult.toString()
       }
     }
@@ -4795,7 +4841,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * Get a specific models (format JSON or XML) as an array of strings using modelName(without version) as the key
      * @param objectName name of the desired object, possibly namespace qualified
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   def GetModelDef(objectName: String, formatType: String, userid : Option[String] = None): String = {
     GetModelDef(sysNS, objectName, formatType, userid)
@@ -4804,12 +4850,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Get a specific model (format JSON or XML) as a String using modelName(with version) as the key
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param formatType format of the return value, either JSON or XML
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetModelDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String] = None): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
@@ -4821,18 +4867,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("model not found => " + dispkey)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, ErrorCodeConstants.Get_Model_From_Cache_Failed_Not_Active + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, ErrorCodeConstants.Get_Model_From_Cache_Failed_Not_Active + ":" + dispkey)
           apiResult.toString()
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", JsonSerializer.SerializeObjectToJson(m), ErrorCodeConstants.Get_Model_From_Cache_Successful + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", JsonSerializer.SerializeObjectToJson(m), ErrorCodeConstants.Get_Model_From_Cache_Successful + ":" + dispkey)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_From_Cache_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -4847,7 +4893,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetModelDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     logAuditRec(userid
@@ -4863,12 +4909,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Get the specific message (format JSON or XML) as a String using messageName(with version) as the key
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param formatType format of the return value, either JSON or XML
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetMessageDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String] = None): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
@@ -4880,18 +4926,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("message not found => " + dispkey)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetMessageDefFromCache", null, ErrorCodeConstants.Get_Message_From_Cache_Failed + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetMessageDefFromCache", null, ErrorCodeConstants.Get_Message_From_Cache_Failed + ":" + dispkey)
           apiResult.toString()
         case Some(m) =>
           logger.debug("message found => " + m.asInstanceOf[MessageDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[MessageDef].Version))
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetMessageDefFromCache", JsonSerializer.SerializeObjectToJson(m), ErrorCodeConstants.Get_Message_From_Cache_Successful)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetMessageDefFromCache", JsonSerializer.SerializeObjectToJson(m), ErrorCodeConstants.Get_Message_From_Cache_Successful)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetMessageDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Message_From_Cache_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetMessageDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Message_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -4900,12 +4946,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Get the specific container (format JSON or XML) as a String using containerName(with version) as the key
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param formatType format of the return value, either JSON or XML
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetContainerDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String]): String = {
     var key = nameSpace + "." + name + "." + version.toLong
@@ -4917,18 +4963,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         case None =>
           None
           logger.debug("container not found => " + dispkey)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetContainerDefFromCache", null, ErrorCodeConstants.Get_Container_From_Cache_Failed + ":" + dispkey)
+          val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetContainerDefFromCache", null, ErrorCodeConstants.Get_Container_From_Cache_Failed + ":" + dispkey)
           apiResult.toString()
         case Some(m) =>
           logger.debug("container found => " + m.asInstanceOf[ContainerDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ContainerDef].Version))
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetContainerDefFromCache", JsonSerializer.SerializeObjectToJson(m), ErrorCodeConstants.Get_Container_From_Cache_Successful)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetContainerDefFromCache", JsonSerializer.SerializeObjectToJson(m), ErrorCodeConstants.Get_Container_From_Cache_Successful)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetContainerDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Container_From_Cache_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetContainerDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Container_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -4937,11 +4983,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Return Specific messageDef object using messageName(with version) as the key
      * @param nameSpace namespace of the object
-     * @param name
+     * @param name the name
      * @param formatType format of the return value, either JSON or XML
      * @param version  Version of the object
-     * @throws com.ligadata.Exceptions.ObjectNotFoundException
-     * @return
+     * @return <description please>
      */
   @throws(classOf[ObjectNotFoundException])
   def GetMessageDefInstanceFromCache(nameSpace: String, name: String, formatType: String, version: String): MessageDef = {
@@ -4972,7 +5017,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * and there is no need to use this function in main code flow
      * This is just a utility function being used during these initial phases
      * @param modDef the model def to be tested
-     * @return
+     * @return <description please>
      */
   def DoesModelAlreadyExist(modDef: ModelDef): Boolean = {
     try {
@@ -5001,9 +5046,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
   }
 
     /**
-     * Get the latest model for a given FullName
-     * @param modDef
-     * @return
+     * Get the latest model for a given FullName of the supplied model def.
+     * @param modDef <description please>
+     * @return <description please>
      */
   def GetLatestModel(modDef: ModelDef): Option[ModelDef] = {
     try {
@@ -5035,8 +5080,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
   //
     /**
      * Get the latest cataloged models from the supplied set
-     * @param modelSet
-     * @return
+     * @param modelSet <description please>
+     * @return <description please>
      */
   def GetLatestModelFromModels(modelSet: Set[ModelDef]): ModelDef = {
     var model: ModelDef = null
@@ -5060,8 +5105,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetLatestFunction
-     * @param fDef
-     * @return
+     * @param fDef <description please>
+     * @return <description please>
      */
   def GetLatestFunction(fDef: FunctionDef): Option[FunctionDef] = {
     try {
@@ -5094,8 +5139,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
   // Get the latest message for a given FullName
     /**
      * 
-     * @param msgDef
-     * @return
+     * @param msgDef <description please>
+     * @return <description please>
      */
   def GetLatestMessage(msgDef: MessageDef): Option[MessageDef] = {
     try {
@@ -5127,8 +5172,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Get the latest container for a given FullName
-     * @param contDef
-     * @return
+     * @param contDef <description please>
+     * @return <description please>
      */
   def GetLatestContainer(contDef: ContainerDef): Option[ContainerDef] = {
     try {
@@ -5160,9 +5205,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * IsValidVersion
-     * @param oldObj
-     * @param newObj
-     * @return
+     * @param oldObj <description please>
+     * @param newObj <description please>
+     * @return <description please>
      */
     def IsValidVersion(oldObj: BaseElemDef, newObj: BaseElemDef): Boolean = {
       if (newObj.ver > oldObj.ver) {
@@ -5178,8 +5223,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * we should never add the message into metadata manager more than once
      * and there is no need to use this function in main code flow
      * This is just a utility function being during these initial phases
-     * @param msgDef
-     * @return
+     * @param msgDef <description please>
+     * @return <description please>
      */
     def DoesMessageAlreadyExist(msgDef: MessageDef): Boolean = {
         IsMessageAlreadyExists(msgDef)
@@ -5190,8 +5235,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * we should never add the message into metadata manager more than once
      * and there is no need to use this function in main code flow
      * This is just a utility function being during these initial phases
-     * @param msgDef
-     * @return
+     * @param msgDef <description please>
+     * @return <description please>
      */
     def IsMessageAlreadyExists(msgDef: MessageDef): Boolean = {
     try {
@@ -5221,8 +5266,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * DoesContainerAlreadyExist
-     * @param contDef
-     * @return
+     * @param contDef <description please>
+     * @return <description please>
      */
     def DoesContainerAlreadyExist(contDef: ContainerDef): Boolean = {
         IsContainerAlreadyExists(contDef)
@@ -5230,8 +5275,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * IsContainerAlreadyExists
-     * @param contDef
-     * @return
+     * @param contDef <description please>
+     * @return <description please>
      */
   def IsContainerAlreadyExists(contDef: ContainerDef): Boolean = {
     try {
@@ -5261,8 +5306,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * DoesConceptAlreadyExist
-     * @param attrDef
-     * @return
+     * @param attrDef <description please>
+     * @return <description please>
      */
     def DoesConceptAlreadyExist(attrDef: BaseAttributeDef): Boolean = {
         IsConceptAlreadyExists(attrDef)
@@ -5270,8 +5315,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * IsConceptAlreadyExists
-     * @param attrDef
-     * @return
+     * @param attrDef <description please>
+     * @return <description please>
      */
     def IsConceptAlreadyExists(attrDef: BaseAttributeDef): Boolean = {
         try {
@@ -5307,7 +5352,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetModelDefFromDB(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String] = None): String = {
     var key = "ModelDef" + "." + nameSpace + '.' + objectName + "." + version.toLong
@@ -5315,13 +5360,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     if (userid != None) logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.GETOBJECT, AuditConstants.MODEL, AuditConstants.SUCCESS, "", dispkey)
     try {
       var obj = GetObject(key.toLowerCase, modelStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", ValueAsStr(obj.Value), ErrorCodeConstants.Get_Model_From_DB_Successful + ":" + dispkey)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", ValueAsStr(obj.Value), ErrorCodeConstants.Get_Model_From_DB_Successful + ":" + dispkey)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_From_DB_Failed + ":" + dispkey)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetModelDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Model_From_DB_Failed + ":" + dispkey)
         apiResult.toString()
       }
     }
@@ -5329,8 +5374,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * IsTypeObject
-     * @param typeName
-     * @return
+     * @param typeName <description please>
+     * @return <description please>
      */
   private def IsTypeObject(typeName: String): Boolean = {
     typeName match {
@@ -5345,10 +5390,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * GetAllKeys
-     * @param objectType
+     * @param objectType <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetAllKeys(objectType: String, userid: Option[String] = None): Array[String] = {
     try {
@@ -5414,7 +5459,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * LoadAllConfigObjectsIntoCache
-     * @return
+     * @return <description please>
      */
   def LoadAllConfigObjectsIntoCache: Boolean = {
     try {
@@ -5651,7 +5696,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * LoadMessageIntoCache
-     * @param key
+     * @param key <description please>
      */
   def LoadMessageIntoCache(key: String) {
     try {
@@ -5674,7 +5719,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * LoadTypeIntoCache
-     * @param key
+     * @param key <description please>
      */
   def LoadTypeIntoCache(key: String) {
     try {
@@ -5696,7 +5741,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * LoadModelIntoCache
-     * @param key
+     * @param key <description please>
      */
   def LoadModelIntoCache(key: String) {
     try {
@@ -5719,7 +5764,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * LoadContainerIntoCache
-     * @param key
+     * @param key <description please>
      */
   def LoadContainerIntoCache(key: String) {
     try {
@@ -5739,7 +5784,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * LoadAttributeIntoCache
-     * @param key
+     * @param key <description please>
      */
   def LoadAttributeIntoCache(key: String) {
     try {
@@ -5756,8 +5801,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * updateThisKey
-     * @param zkMessage
-     * @param tranId
+     * @param zkMessage <description please>
+     * @param tranId <description please>
      */
   private def updateThisKey(zkMessage: ZooKeeperNotification, tranId: Long) {
 
@@ -5934,7 +5979,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * LoadOutputMsgIntoCache
-     * @param key
+     * @param key <description please>
      */
   def LoadOutputMsgIntoCache(key: String) {
     try {
@@ -5955,7 +6000,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateMdMgr from zookeeper
-     * @param zkTransaction
+     * @param zkTransaction <description please>
      */
   def UpdateMdMgr(zkTransaction: ZooKeeperTransaction): Unit = {
     var key: String = null
@@ -6054,7 +6099,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     * @param formatType format of the return value, either JSON or XML
     * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
     *               method. If Security and/or Audit are configured, this value must be a value other than None.
-    * @return
+    * @return <description please>
     */
   def GetMessageDef(objectName: String, formatType: String, userid: Option[String] = None): String = {
        val nameNodes: Array[String] = if (objectName != null && objectName.contains('.')) objectName.split('.') else Array(MdMgr.sysNS,objectName)
@@ -6107,7 +6152,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Get a specific container (format JSON or XML) as a String using containerName(without version) as the key
      * @param objectName Name of the ContainerDef, possibly namespace qualified. When no namespace, "system" substituted
-     * @param formatType
+     * @param formatType <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
@@ -6192,7 +6237,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     *  "DependantJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ]
     *  }
     *"""
-    *    var apiResult = MetadataAPIImpl.AddFunction(sampleFunctionStr,"JSON")
+    *    val apiResult = MetadataAPIImpl.AddFunction(sampleFunctionStr,"JSON")
     *    var result = MetadataAPIImpl.getApiResult(apiResult)
     *    println("Result as Json String => \n" + result._2)
     *}}}
@@ -6234,7 +6279,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     *  "DependantJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ]
     *  }
     *"""
-    *    var apiResult = MetadataAPIImpl.UpdateFunction(sampleFunctionStr,"JSON")
+    *    val apiResult = MetadataAPIImpl.UpdateFunction(sampleFunctionStr,"JSON")
     *    var result = MetadataAPIImpl.getApiResult(apiResult)
     *    println("Result as Json String => \n" + result._2)         * }}}
     *
@@ -6300,7 +6345,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     FunctionUtils.GetFunctionDef(nameSpace,objectName,formatType,version,userid)
@@ -6339,7 +6384,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param objectName name of the desired object, possibly namespace qualified
      * @param version  Version of the object
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   def GetConcept(nameSpace: String, objectName: String, version: String, formatType: String, userid: Option[String]): String = {
     ConceptUtils.GetConcept(nameSpace,objectName,version,formatType)
@@ -6350,7 +6395,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param objectName name of the desired object, possibly namespace qualified
      * @param version  Version of the object
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   def GetConcept(objectName: String, version: String, formatType: String, userid: Option[String]): String = {
     GetConcept(MdMgr.sysNS, objectName, version, formatType, userid)
@@ -6365,7 +6410,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetConceptDef(nameSpace: String, objectName: String, formatType: String,
 		    version: String, userid: Option[String]): String = {
@@ -6376,7 +6421,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * Get a list of concept(s) as a string using name
      * @param objectName name of the desired object, possibly namespace qualified
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   def GetConcept(objectName: String, formatType: String, userid: Option[String] = None): String = {
     ConceptUtils.GetConcept(objectName,formatType)
@@ -6385,7 +6430,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Get all available derived concepts(format JSON or XML) as a String
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   def GetAllDerivedConcepts(formatType: String, userid: Option[String] = None): String = {
     ConceptUtils.GetAllDerivedConcepts(formatType)
@@ -6396,7 +6441,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * Get a derived concept(format JSON or XML) as a string using name(without version) as the key
      * @param objectName name of the desired object, possibly namespace qualified
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   def GetDerivedConcept(objectName: String, formatType: String, userid: Option[String] = None): String = {
     ConceptUtils.GetDerivedConcept(objectName,formatType)
@@ -6407,7 +6452,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param objectName name of the desired object, possibly namespace qualified
      * @param version  Version of the object
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   def GetDerivedConcept(objectName: String, version: String, formatType: String, userid: Option[String]): String = {
     ConceptUtils.GetDerivedConcept(objectName,version,formatType)
@@ -6428,8 +6473,8 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * GetAllTypesByObjType - All available types(format JSON or XML) as a String
      * @param formatType format of the return value, either JSON or XML
-     * @param objType
-     * @return
+     * @param objType <description please>
+     * @return <description please>
      */
   def GetAllTypesByObjType(formatType: String, objType: String, userid: Option[String] = None): String = {
     TypeUtils.GetAllTypesByObjType(formatType,objType)
@@ -6439,7 +6484,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * GetType
      * @param objectName name of the desired object, possibly namespace qualified
      * @param formatType format of the return value, either JSON or XML
-     * @return
+     * @return <description please>
      */
   // Get types for a given name
   def GetType(objectName: String, formatType: String, userid: Option[String] = None): String = {
@@ -6454,7 +6499,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param version  Version of the object
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetTypeDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String] = None): String = {
     TypeUtils.GetTypeDef(nameSpace,objectName,formatType,version,userid)
@@ -6468,7 +6513,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param formatType format of the return value, either JSON or XML
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def GetType(nameSpace: String, objectName: String, version: String, formatType: String, userid: Option[String]): Option[BaseTypeDef] = {
     TypeUtils.GetType(nameSpace,objectName,version,formatType,userid)
@@ -6477,17 +6522,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * AddNode
      * @param nodeId a cluster node
-     * @param nodePort
-     * @param nodeIpAddr
+     * @param nodePort <description please>
+     * @param nodeIpAddr <description please>
      * @param jarPaths Set of paths where jars are located
-     * @param scala_home
-     * @param java_home
-     * @param classpath
-     * @param clusterId
-     * @param power
-     * @param roles
-     * @param description
-     * @return
+     * @param scala_home <description please>
+     * @param java_home <description please>
+     * @param classpath <description please>
+     * @param clusterId <description please>
+     * @param power <description please>
+     * @param roles <description please>
+     * @param description <description please>
+     * @return <description please>
      */
   def AddNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
               jarPaths: List[String], scala_home: String,
@@ -6503,13 +6548,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       val key = "NodeInfo." + nodeId
       val value = serializer.SerializeObjectToByteArray(ni)
       SaveObject(key.toLowerCase, value, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddNode", null, ErrorCodeConstants.Add_Node_Successful + ":" + nodeId)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddNode", null, ErrorCodeConstants.Add_Node_Successful + ":" + nodeId)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddNode", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Node_Failed + ":" + nodeId)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddNode", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Node_Failed + ":" + nodeId)
         apiResult.toString()
       }
     }
@@ -6518,17 +6563,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * UpdateNode
      * @param nodeId a cluster node
-     * @param nodePort
-     * @param nodeIpAddr
+     * @param nodePort <description please>
+     * @param nodeIpAddr <description please>
      * @param jarPaths Set of paths where jars are located
-     * @param scala_home
-     * @param java_home
-     * @param classpath
-     * @param clusterId
-     * @param power
-     * @param roles
-     * @param description
-     * @return
+     * @param scala_home <description please>
+     * @param java_home <description please>
+     * @param classpath <description please>
+     * @param clusterId <description please>
+     * @param power <description please>
+     * @param roles <description please>
+     * @param description <description please>
+     * @return <description please>
      */
   def UpdateNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
     jarPaths: List[String], scala_home: String,
@@ -6543,18 +6588,18 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * RemoveNode
      * @param nodeId a cluster node
-     * @return
+     * @return <description please>
      */
   def RemoveNode(nodeId: String): String = {
     try {
       MdMgr.GetMdMgr.RemoveNode(nodeId)
       val key = "NodeInfo." + nodeId
       DeleteObject(key.toLowerCase, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveNode", null, ErrorCodeConstants.Remove_Node_Successful + ":" + nodeId)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveNode", null, ErrorCodeConstants.Remove_Node_Successful + ":" + nodeId)
       apiResult.toString()
     } catch {
       case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveNode", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Node_Failed + ":" + nodeId)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveNode", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Node_Failed + ":" + nodeId)
         apiResult.toString()
       }
     }
@@ -6562,17 +6607,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddAdapter
-     * @param name
-     * @param typeString
-     * @param dataFormat
-     * @param className
-     * @param jarName
-     * @param dependencyJars
-     * @param adapterSpecificCfg
-     * @param inputAdapterToVerify
-     * @param delimiterString
-     * @param associatedMsg
-     * @return
+     * @param name the name
+     * @param typeString <description please>
+     * @param dataFormat <description please>
+     * @param className <description please>
+     * @param jarName <description please>
+     * @param dependencyJars <description please>
+     * @param adapterSpecificCfg <description please>
+     * @param inputAdapterToVerify <description please>
+     * @param delimiterString <description please>
+     * @param associatedMsg <description please>
+     * @return <description please>
      */
   def AddAdapter(name: String, typeString: String, dataFormat: String, className: String,
     jarName: String, dependencyJars: List[String],
@@ -6586,13 +6631,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       val key = "AdapterInfo." + name
       val value = serializer.SerializeObjectToByteArray(ai)
       SaveObject(key.toLowerCase, value, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddAdapter", null, ErrorCodeConstants.Add_Adapter_Successful + ":" + name)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddAdapter", null, ErrorCodeConstants.Add_Adapter_Successful + ":" + name)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddAdapter", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Adapter_Failed + ":" + name)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddAdapter", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Adapter_Failed + ":" + name)
         apiResult.toString()
       }
     }
@@ -6600,17 +6645,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * RemoveAdapter
-     * @param name
-     * @param typeString
-     * @param dataFormat
-     * @param className
-     * @param jarName
-     * @param dependencyJars
-     * @param adapterSpecificCfg
-     * @param inputAdapterToVerify
-     * @param delimiterString
-     * @param associatedMsg
-     * @return
+     * @param name the name
+     * @param typeString <description please>
+     * @param dataFormat <description please>
+     * @param className <description please>
+     * @param jarName <description please>
+     * @param dependencyJars <description please>
+     * @param adapterSpecificCfg <description please>
+     * @param inputAdapterToVerify <description please>
+     * @param delimiterString <description please>
+     * @param associatedMsg <description please>
+     * @return <description please>
      */
   def UpdateAdapter(name: String, typeString: String, dataFormat: String, className: String,
     jarName: String, dependencyJars: List[String],
@@ -6620,21 +6665,21 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * RemoveAdapter
-     * @param name
-     * @return
+     * @param name the name
+     * @return <description please>
      */
   def RemoveAdapter(name: String): String = {
     try {
       MdMgr.GetMdMgr.RemoveAdapter(name)
       val key = "AdapterInfo." + name
       DeleteObject(key.toLowerCase, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveAdapter", null, ErrorCodeConstants.Remove_Adapter_Successful + ":" + name)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveAdapter", null, ErrorCodeConstants.Remove_Adapter_Successful + ":" + name)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveAdapter", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Adapter_Failed + ":" + name)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveAdapter", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Adapter_Failed + ":" + name)
         apiResult.toString()
       }
     }
@@ -6642,10 +6687,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * AddCluster
-     * @param clusterId
-     * @param description
-     * @param privileges
-     * @return
+     * @param clusterId <description please>
+     * @param description <description please>
+     * @param privileges <description please>
+     * @return <description please>
      */
   def AddCluster(clusterId: String, description: String, privileges: String): String = {
     try {
@@ -6656,13 +6701,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       val key = "ClusterInfo." + clusterId
       val value = serializer.SerializeObjectToByteArray(ci)
       SaveObject(key.toLowerCase, value, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddCluster", null, ErrorCodeConstants.Add_Cluster_Successful + ":" + clusterId)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddCluster", null, ErrorCodeConstants.Add_Cluster_Successful + ":" + clusterId)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddCluster", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Cluster_Failed + ":" + clusterId)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddCluster", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Cluster_Failed + ":" + clusterId)
         apiResult.toString()
       }
     }
@@ -6670,10 +6715,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * UpdateCluster
-     * @param clusterId
-     * @param description
-     * @param privileges
-     * @return
+     * @param clusterId <description please>
+     * @param description <description please>
+     * @param privileges <description please>
+     * @return <description please>
      */
   def UpdateCluster(clusterId: String, description: String, privileges: String): String = {
     AddCluster(clusterId, description, privileges)
@@ -6681,21 +6726,21 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * RemoveCluster
-     * @param clusterId
-     * @return
+     * @param clusterId <description please>
+     * @return <description please>
      */
   def RemoveCluster(clusterId: String): String = {
     try {
       MdMgr.GetMdMgr.RemoveCluster(clusterId)
       val key = "ClusterInfo." + clusterId
       DeleteObject(key.toLowerCase, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCluster", null, ErrorCodeConstants.Remove_Cluster_Successful + ":" + clusterId)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCluster", null, ErrorCodeConstants.Remove_Cluster_Successful + ":" + clusterId)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveCluster", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Cluster_Failed + ":" + clusterId)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveCluster", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Cluster_Failed + ":" + clusterId)
         apiResult.toString()
       }
     }
@@ -6719,13 +6764,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       val key = "ClusterCfgInfo." + clusterCfgId
       val value = serializer.SerializeObjectToByteArray(ci)
       SaveObject(key.toLowerCase, value, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddClusterCfg", null, ErrorCodeConstants.Add_Cluster_Config_Successful + ":" + clusterCfgId)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "AddClusterCfg", null, ErrorCodeConstants.Add_Cluster_Config_Successful + ":" + clusterCfgId)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddClusterCfg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Cluster_Config_Failed + ":" + clusterCfgId)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddClusterCfg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Cluster_Config_Failed + ":" + clusterCfgId)
         apiResult.toString()
       }
     }
@@ -6733,13 +6778,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Update te configuration for the cluster with the supplied id
-     * @param clusterCfgId
-     * @param cfgMap
-     * @param modifiedTime
-     * @param createdTime
+     * @param clusterCfgId <description please>
+     * @param cfgMap <description please>
+     * @param modifiedTime <description please>
+     * @param createdTime <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def UpdateClusterCfg(clusterCfgId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
     modifiedTime: Date, createdTime: Date, userid: Option[String] = None): String = {
@@ -6749,7 +6794,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Remove a cluster configuration with the suppplied id
      *
-     * @param clusterCfgId
+     * @param clusterCfgId <description please>
      * @return results string
      */
   def RemoveClusterCfg(clusterCfgId: String, userid: Option[String] = None): String = {
@@ -6757,13 +6802,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       MdMgr.GetMdMgr.RemoveClusterCfg(clusterCfgId)
       val key = "ClusterCfgInfo." + clusterCfgId
       DeleteObject(key.toLowerCase, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCLusterCfg", null, ErrorCodeConstants.Remove_Cluster_Config_Successful + ":" + clusterCfgId)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveCLusterCfg", null, ErrorCodeConstants.Remove_Cluster_Config_Successful + ":" + clusterCfgId)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveCLusterCfg", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Cluster_Config_Failed + ":" + clusterCfgId)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveCLusterCfg", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Cluster_Config_Failed + ":" + clusterCfgId)
         apiResult.toString()
       }
     }
@@ -6771,10 +6816,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Remove a cluster configuration
-     * @param cfgStr
+     * @param cfgStr <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @param cobjects
+     * @param cobjects <description please>
      * @return results string
      */
   def RemoveConfig(cfgStr: String, userid: Option[String], cobjects: String): String = {
@@ -6839,13 +6884,13 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       }
       if (keyList.size > 0)
         RemoveObjectList(keyList, configStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConfig", null, ErrorCodeConstants.Remove_Config_Successful + ":" + cfgStr)
+      val apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConfig", null, ErrorCodeConstants.Remove_Config_Successful + ":" + cfgStr)
       apiResult.toString()
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConfig", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Config_Failed + ":" + cfgStr)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveConfig", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Config_Failed + ":" + cfgStr)
         apiResult.toString()
       }
     }
@@ -6854,10 +6899,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Answer the model compilation dependencies
      * FIXME: Which ones? input or output?
-     * @param modelConfigName
+     * @param modelConfigName <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def getModelDependencies(modelConfigName: String, userid: Option[String] = None): List[String] = {
     var config: scala.collection.immutable.Map[String, List[String]] = MdMgr.GetMdMgr.GetModelConfig(modelConfigName)
@@ -6866,10 +6911,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * getModelMessagesContainers
-     * @param modelConfigName
+     * @param modelConfigName <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @return
+     * @return <description please>
      */
   def getModelMessagesContainers(modelConfigName: String, userid: Option[String] = None): List[String] = {
     var config: scala.collection.immutable.Map[String, List[String]] = MdMgr.GetMdMgr.GetModelConfig(modelConfigName)
@@ -6878,7 +6923,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Get the model config keys
-     * @return
+     * @return <description please>
      */
   def getModelConfigNames(): Array[String] = {
     MdMgr.GetMdMgr.GetModelConfigKeys
@@ -6888,12 +6933,12 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Upload a model config.  These are for native models written in Scala or Java
-     * @param cfgStr
+     * @param cfgStr <description please>
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
-     * @param objectList
-     * @param isFromNotify
-     * @return
+     * @param objectList <description please>
+     * @param isFromNotify <description please>
+     * @return <description please>
      */
   def UploadModelsConfig(cfgStr: String, userid: Option[String], objectList: String, isFromNotify: Boolean = false): String = {
     var keyList = new Array[String](0)
@@ -6931,7 +6976,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     }
 
     // return reuslts
-    val apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", null, "Upload of model config successful")
+    val apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", "Perfect", "Upload of model config successful")
     apiResult.toString()
   }
 
@@ -6973,7 +7018,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. If Security and/or Audit are configured, this value must be a value other than None.
      * @param objectList note on the objects in the configuration to be logged to audit adapter
-     * @return
+     * @return <description please>
      */
   def UploadConfig(cfgStr: String, userid: Option[String], objectList: String): String = {
     var keyList = new Array[String](0)
@@ -6986,7 +7031,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       val map = JsonSerializer.parseEngineConfig(cfgStr)
       // process clusterInfo object if it exists
       if (map.contains("Clusters") == false) {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", null, ErrorCodeConstants.Upload_Config_Failed + ":" + cfgStr)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", null, ErrorCodeConstants.Upload_Config_Failed + ":" + cfgStr)
         apiResult.toString()
       } else {
         if (map.contains("Clusters")) {
@@ -7151,14 +7196,14 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
         }
 
         SaveObjectList(keyList, valueList, configStore)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadConfig", cfgStr, ErrorCodeConstants.Upload_Config_Successful)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadConfig", cfgStr, ErrorCodeConstants.Upload_Config_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", cfgStr, "Error :" + e.toString() + ErrorCodeConstants.Upload_Config_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", cfgStr, "Error :" + e.toString() + ErrorCodeConstants.Upload_Config_Failed)
         apiResult.toString()
       }
     }
@@ -7166,9 +7211,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Get a property value
-     * @param ci
-     * @param key
-     * @return
+     * @param ci <description please>
+     * @param key <description please>
+     * @return <description please>
      */
   def getUP(ci: String, key: String): String = {
     MdMgr.GetMdMgr.GetUserProperty(ci, key)
@@ -7176,7 +7221,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Answer nodes as an array.
-     * @return
+     * @return <description please>
      */
   def getNodeList1: Array[NodeInfo] = { MdMgr.GetMdMgr.Nodes.values.toArray }
   // All available nodes(format JSON) as a String
@@ -7186,7 +7231,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
      *               Supply one.
-     * @return
+     * @return <description please>
      */
   def GetAllNodes(formatType: String, userid: Option[String] = None): String = {
     try {
@@ -7194,17 +7239,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.SUCCESS, "", "nodes")
       if (nodes.length == 0) {
         logger.debug("No Nodes found ")
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllNodes", null, ErrorCodeConstants.Get_All_Nodes_Failed_Not_Available)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllNodes", null, ErrorCodeConstants.Get_All_Nodes_Failed_Not_Available)
         apiResult.toString()
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllNodes", JsonSerializer.SerializeCfgObjectListToJson("Nodes", nodes), ErrorCodeConstants.Get_All_Nodes_Successful)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllNodes", JsonSerializer.SerializeCfgObjectListToJson("Nodes", nodes), ErrorCodeConstants.Get_All_Nodes_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllNodes", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Nodes_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllNodes", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Nodes_Failed)
         apiResult.toString()
       }
     }
@@ -7216,7 +7261,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
      *               Supply one.
-     * @return
+     * @return <description please>
      */
   def GetAllAdapters(formatType: String, userid: Option[String] = None): String = {
     try {
@@ -7224,17 +7269,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.FAIL, "", "adapters")
       if (adapters.length == 0) {
         logger.debug("No Adapters found ")
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllAdapters", null, ErrorCodeConstants.Get_All_Adapters_Failed_Not_Available)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllAdapters", null, ErrorCodeConstants.Get_All_Adapters_Failed_Not_Available)
         apiResult.toString()
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllAdapters", JsonSerializer.SerializeCfgObjectListToJson("Adapters", adapters), ErrorCodeConstants.Get_All_Adapters_Successful)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllAdapters", JsonSerializer.SerializeCfgObjectListToJson("Adapters", adapters), ErrorCodeConstants.Get_All_Adapters_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllAdapters", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Adapters_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllAdapters", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Adapters_Failed)
 
         apiResult.toString()
       }
@@ -7247,7 +7292,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
      *               Supply one.
-     * @return
+     * @return <description please>
      */
   def GetAllClusters(formatType: String, userid: Option[String] = None): String = {
     try {
@@ -7255,17 +7300,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETCONFIG, AuditConstants.CONFIG, AuditConstants.SUCCESS, "", "Clusters")
       if (clusters.length == 0) {
         logger.debug("No Clusters found ")
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusters", null, ErrorCodeConstants.Get_All_Clusters_Failed_Not_Available)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusters", null, ErrorCodeConstants.Get_All_Clusters_Failed_Not_Available)
         apiResult.toString()
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllClusters", JsonSerializer.SerializeCfgObjectListToJson("Clusters", clusters), ErrorCodeConstants.Get_All_Clusters_Successful)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllClusters", JsonSerializer.SerializeCfgObjectListToJson("Clusters", clusters), ErrorCodeConstants.Get_All_Clusters_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusters", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Clusters_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusters", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Clusters_Failed)
         apiResult.toString()
       }
     }
@@ -7278,7 +7323,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
      *               Supply one.
-     * @return
+     * @return <description please>
      */
   def GetAllClusterCfgs(formatType: String, userid: Option[String] = None): String = {
     try {
@@ -7286,10 +7331,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       val clusterCfgs = MdMgr.GetMdMgr.ClusterCfgs.values.toArray
       if (clusterCfgs.length == 0) {
         logger.debug("No ClusterCfgs found ")
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusterCfgs", null, ErrorCodeConstants.Get_All_Cluster_Configs_Failed_Not_Available)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusterCfgs", null, ErrorCodeConstants.Get_All_Cluster_Configs_Failed_Not_Available)
         apiResult.toString()
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllClusterCfgs", JsonSerializer.SerializeCfgObjectListToJson("ClusterCfgs", clusterCfgs), ErrorCodeConstants.Get_All_Cluster_Configs_Successful)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllClusterCfgs", JsonSerializer.SerializeCfgObjectListToJson("ClusterCfgs", clusterCfgs), ErrorCodeConstants.Get_All_Cluster_Configs_Successful)
 
         apiResult.toString()
       }
@@ -7297,7 +7342,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusterCfgs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Cluster_Configs_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllClusterCfgs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Cluster_Configs_Failed)
 
         apiResult.toString()
       }
@@ -7310,7 +7355,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * @param userid the identity to be used by the security adapter to ascertain if this user has access permissions for this
      *               method. The default is None, but if Security and/or Audit are configured, this value is of little practical use.
      *               Supply one.
-     * @return
+     * @return <description please>
      */
   def GetAllCfgObjects(formatType: String, userid: Option[String] = None): String = {
     var cfgObjList = new Array[Object](0)
@@ -7355,17 +7400,17 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
       if (cfgObjList.length == 0) {
         logger.debug("No Config Objects found ")
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllCfgObjects", null, ErrorCodeConstants.Get_All_Configs_Failed_Not_Available)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllCfgObjects", null, ErrorCodeConstants.Get_All_Configs_Failed_Not_Available)
         apiResult.toString()
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllCfgObjects", jsonStr, ErrorCodeConstants.Get_All_Configs_Successful)
+        val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllCfgObjects", jsonStr, ErrorCodeConstants.Get_All_Configs_Successful)
         apiResult.toString()
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:" + stackTrace)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllCfgObjects", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Configs_Failed)
+        val apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllCfgObjects", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Configs_Failed)
         apiResult.toString()
       }
     }
@@ -7469,7 +7514,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
     /**
      * Refresh the ClusterConfiguration for the specified node
      * @param nodeId a cluster node
-     * @return
+     * @return <description please>
      */
   def RefreshApiConfigForGivenNode(nodeId: String): Boolean = {
 
@@ -7568,10 +7613,10 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
       setPropertyFromConfigFile("ZK_CONNECTION_TIMEOUT_MS", "3000")
 
       // Loop through and set the rest of the values.
-      val eProps1 = prop.propertyNames();
+      val eProps1 = prop.propertyNames()
       while (eProps1.hasMoreElements()) {
         val key = eProps1.nextElement().asInstanceOf[String]
-        val value = prop.getProperty(key);
+        val value = prop.getProperty(key)
         setPropertyFromConfigFile(key, value)
       }
       val mdDataStore = GetMetadataAPIConfig.getProperty("METADATA_DATASTORE")
@@ -7617,7 +7662,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * Read the default configuration property values from config file.
-     * @param cfgFile
+     * @param cfgFile <description please>
      */
   @throws(classOf[MissingPropertyException])
   @throws(classOf[LoadAPIConfigException])
@@ -7865,7 +7910,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * persistent storage, set up heartbeat and authorization implementations.
      * 
      * @param configFile the MetadataAPI configuration file 
-     * @param startHB
+     * @param startHB <description please>
      */
   def InitMdMgr(configFile: String, startHB: Boolean) {
 
@@ -7893,7 +7938,7 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
      * FIXME: Is there a difference between this function and InitMdMgr?
      * @see InitMdMgr(String,Boolean)
      * @param configFile the MetadataAPI configuration file 
-     * @param startHB
+     * @param startHB <description please>
      */
   def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean) {
 
@@ -8029,9 +8074,9 @@ object MetadataAPIImpl extends MetadataAPI with LogTrait {
 
     /**
      * InitMdMgr
-     * @param mgr
-     * @param jarPathsInfo
-     * @param databaseInfo
+     * @param mgr <description please>
+     * @param jarPathsInfo <description please>
+     * @param databaseInfo <description please>
      */
   def InitMdMgr(mgr: MdMgr, jarPathsInfo: String, databaseInfo: String) {
 
