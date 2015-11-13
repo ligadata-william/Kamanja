@@ -35,16 +35,12 @@
 package com.ligadata.models.samples.models
 
 import com.ligadata.KvBase.{ Key, Value, TimeRange }
-import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
-
-import System._
+import com.ligadata.KamanjaBase._
 import RddUtils._
 import RddDate._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import java.io.{ DataInputStream, DataOutputStream }
 import org.apache.log4j.Logger
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime

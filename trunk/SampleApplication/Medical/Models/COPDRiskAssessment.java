@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package com.ligadata.kamanja.copd;
+package com.ligadata.kamanja.samples.models;
 
 import com.ligadata.KamanjaBase.api.java.function.Function1;
 import com.ligadata.KamanjaBase.*;
 import org.joda.time.*;
-import System.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
-/**
- * Created by will on 7/1/15.
- */
 
 public class COPDRiskAssessment extends ModelBase {
     public COPDRiskAssessment(ModelContext mdlContext) {
@@ -60,7 +55,7 @@ public class COPDRiskAssessment extends ModelBase {
         }
 
         public String Version() {
-            return "0.0.3";
+            return "0.0.1";
         }
 
         public ModelResultBase CreateResultObject() {
