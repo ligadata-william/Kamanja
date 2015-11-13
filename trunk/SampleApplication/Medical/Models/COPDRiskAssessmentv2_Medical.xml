@@ -35,6 +35,11 @@ COPDv2.xml
 		<DataField name="COPDSeverity" displayName="COPDSeverity" optype="categorical" dataType="string"/>
 		<DataField name="Msg_Desynpuf_Id" displayName="Msg_Desynpuf_Id" optype="categorical" dataType="string"/>
 
+		<DataField name="NamespaceSearchPath" displayName="NamespaceSearchPath" dataType="container">
+			<Value value="Messages, com.ligadata.kamanja.samples.messages" property="valid"/>
+			<Value value="Containers, com.ligadata.kamanja.samples.containers" property="valid"/>
+		</DataField>
+
 		<!-- Not used -->
 		<DataField name="Inp_Clm_Thru_Dt" displayName="Inp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
 		<DataField name="Outp_Clm_Thru_Dt" displayName="Outp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
