@@ -38,7 +38,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.curator.utils.ZKPaths
 import scala.actors.threadpool.{ Executors, ExecutorService }
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions.{FatalAdapterException, StackTrace}
 import scala.collection.JavaConversions._
 
 case class AdapMaxPartitions(Adap: String, MaxParts: Int)
@@ -267,21 +267,30 @@ object KamanjaLeader {
     val allPartsToValidate = scala.collection.mutable.Map[String, Set[String]]()
 
     // Get all PartitionUniqueRecordKey for all Input Adapters
+
     inputAdapters.foreach(ia => {
-      val uk = ia.GetAllPartitionUniqueRecordKey
-      val name = ia.UniqueName
-      val ukCnt = if (uk != null) uk.size else 0
-      adapterMaxPartitions(name) = ukCnt
-      if (ukCnt > 0) {
-        val serUK = uk.map(k => {
-          val kstr = k.Serialize
-          LOG.debug("Unique Key in %s => %s".format(name, kstr))
-          (name, kstr)
-        })
-        allPartitionUniqueRecordKeys ++= serUK
-        allPartsToValidate(name) = serUK.map(k => k._2).toSet
-      } else {
-        allPartsToValidate(name) = Set[String]()
+      try {
+        val uk = ia.GetAllPartitionUniqueRecordKey
+        val name = ia.UniqueName
+        val ukCnt = if (uk != null) uk.size else 0
+        adapterMaxPartitions(name) = ukCnt
+        if (ukCnt > 0) {
+          val serUK = uk.map(k => {
+            val kstr = k.Serialize
+            LOG.debug("Unique Key in %s => %s".format(name, kstr))
+            (name, kstr)
+          })
+          allPartitionUniqueRecordKeys ++= serUK
+          allPartsToValidate(name) = serUK.map(k => k._2).toSet
+        } else {
+          allPartsToValidate(name) = Set[String]()
+        }
+      } catch {
+        case fae: FatalAdapterException => {
+          // Adapter could not partition inforamation and cant reconver.
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Failed to communicate with adapter " + ia.UniqueName + ", cause: \n"+ causeStackTrace)
+        }
       }
     })
     return (allPartitionUniqueRecordKeys.toArray, allPartsToValidate.toMap)
@@ -299,33 +308,41 @@ object KamanjaLeader {
 
     CollectKeyValsFromValidation.clear
     validateInputAdapters.foreach(via => {
-      // Get all Begin values for Unique Keys
-      val begVals = via.getAllPartitionBeginValues
-      val finalVals = new ArrayBuffer[StartProcPartInfo](begVals.size)
+      try {
+        // Get all Begin values for Unique Keys
+        val begVals = via.getAllPartitionBeginValues
+        val finalVals = new ArrayBuffer[StartProcPartInfo](begVals.size)
 
-      // Replace the newly found ones
-      val nParts = begVals.size
-      for (i <- 0 until nParts) {
-        val key = begVals(i)._1.Serialize.toLowerCase
-        val foundVal = map.getOrElse(key, null)
+        // Replace the newly found ones
+        val nParts = begVals.size
+        for (i <- 0 until nParts) {
+          val key = begVals(i)._1.Serialize.toLowerCase
+          val foundVal = map.getOrElse(key, null)
 
-        val info = new StartProcPartInfo
+          val info = new StartProcPartInfo
 
-        if (foundVal != null) {
-          val desVal = via.DeserializeValue(foundVal)
-          info._validateInfoVal = desVal
-          info._key = begVals(i)._1
-          info._val = desVal
-        } else {
-          info._validateInfoVal = begVals(i)._2
-          info._key = begVals(i)._1
-          info._val = begVals(i)._2
+          if (foundVal != null) {
+            val desVal = via.DeserializeValue(foundVal)
+            info._validateInfoVal = desVal
+            info._key = begVals(i)._1
+            info._val = desVal
+          } else {
+            info._validateInfoVal = begVals(i)._2
+            info._key = begVals(i)._1
+            info._val = begVals(i)._2
+          }
+
+          finalVals += info
         }
-
-        finalVals += info
+        LOG.debug("Trying to read data from ValidatedAdapter: " + via.UniqueName)
+        via.StartProcessing(finalVals.toArray, false)
+      } catch {
+        case fae: FatalAdapterException => {
+          // Adapter could not partition inforamation and cant reconver.
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Failed to start input adapter processing, cause: \n"+ causeStackTrace)
+        }
       }
-      LOG.debug("Trying to read data from ValidatedAdapter: " + via.UniqueName)
-      via.StartProcessing(finalVals.toArray, false)
     })
 
     var stillWait = true
@@ -822,23 +839,33 @@ object KamanjaLeader {
       try {
         breakable {
           inputAdapters.foreach(ia => {
-            val uk = ia.GetAllPartitionUniqueRecordKey
-            val name = ia.UniqueName
-            val ukCnt = if (uk != null) uk.size else 0
-            val prevParts = GetPartitionsToValidate(name)
-            val prevCnt = if (prevParts != null) prevParts.size else 0
-            if (prevCnt != ukCnt) {
-              // Number of partitions does not match
-              SetUpdatePartitionsFlag
-              break;
-            }
-            if (ukCnt > 0) {
-              // Check the real content
-              val serUKSet = uk.map(k => { k.Serialize }).toSet
-              if ((serUKSet -- prevParts).isEmpty == false) {
-                // Partition keys does not match
+            try {
+              val uk = ia.GetAllPartitionUniqueRecordKey
+              val name = ia.UniqueName
+              val ukCnt = if (uk != null) uk.size else 0
+              val prevParts = GetPartitionsToValidate(name)
+              val prevCnt = if (prevParts != null) prevParts.size else 0
+              if (prevCnt != ukCnt) {
+                // Number of partitions does not match
                 SetUpdatePartitionsFlag
                 break;
+              }
+              if (ukCnt > 0) {
+                // Check the real content
+                val serUKSet = uk.map(k => {
+                  k.Serialize
+                }).toSet
+                if ((serUKSet -- prevParts).isEmpty == false) {
+                  // Partition keys does not match
+                  SetUpdatePartitionsFlag
+                  break;
+                }
+              }
+            } catch {
+              case fae: FatalAdapterException => {
+                // Adapter could not partition inforamation and cant reconver.
+                val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+                LOG.error("Failed to communicate with input adapter " + ia.UniqueName + ", cause: \n"+ causeStackTrace)
               }
             }
           })
@@ -855,11 +882,22 @@ object KamanjaLeader {
     val uniqPartKeysValues = ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
 
     if (validateInputAdapters != null) {
+      var lastAdapterException: Exception = null
       try {
         validateInputAdapters.foreach(ia => {
-          val uKeysVals = ia.getAllPartitionEndValues
-          uniqPartKeysValues ++= uKeysVals
+          try {
+            val uKeysVals = ia.getAllPartitionEndValues
+            uniqPartKeysValues ++= uKeysVals
+          } catch {
+            case fae: FatalAdapterException => {
+              lastAdapterException = fae                // Adapter could not partition inforamation and cant reconver.
+              val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+              LOG.error("Failed to communicate with input adapter " + ia.UniqueName + ", cause: \n"+ causeStackTrace)
+            }
+          }
         })
+        // Weird, but we want to record an FatalAdapterException for each consumer and handle all other unexpected ones.
+        if (lastAdapterException != null) throw lastAdapterException
       } catch {
         case e: Exception => {
           LOG.error("Failed to get Validate Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage))

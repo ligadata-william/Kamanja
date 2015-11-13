@@ -197,7 +197,12 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
                                           KafkaSimpleConsumer.FETCHSIZE,
                                           KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
           } catch {
-            case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+            case e: Exception => {
+              Shutdown
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.error("KAFKA ADAPTER: Forcing down the Consumer Reader thread" + "\nStackTrace:" + stackTrace)
+              return
+            }
           }
 
 
@@ -213,12 +218,14 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " + fetchResp.errorCode(qc.topic, partitionId))
               numberOfErrors = numberOfErrors + 1
 
+              // Way too many errors...
               if (numberOfErrors > KafkaSimpleConsumer.MAX_FAILURES) {
-                LOG.error("KAFKA-ADAPTER: Too many failures reading from kafka adapters.")
                 if (consumer != null) {
                   consumer.close
                 }
-                throw new FatalAdapterException("Too many failures fetching from kafka adapters ", new Exception("Topic: "+qc.topic +", Partition: "+partitionId+", ErrorCode:"+fetchResp.errorCode(qc.topic,partitionId)))
+                Shutdown
+                LOG.error("KAFKA ADAPTER: Forcing down the Consumer Reader thread, too mamy errors trying to read from Kafka topic " +qc.topic+" partition id " + partitionId )
+                return
               }
             }
 
@@ -312,16 +319,16 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
         // Keep retrying to connect until MAX number of tries is reached.
         var retryCount = 0
-        val (metaDataResp,possibleException) = doSend(partConsumer,metaDataReq)
-        while(metaDataResp == null) {
+        var result = doSend(partConsumer,metaDataReq)
+        while(result._1 == null) {
           if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
-            throw new FatalAdapterException("Failed to retrieve Topic Metadata for defined partitions", possibleException)
+            throw new FatalAdapterException("Failed to retrieve Topic Metadata for defined partitions", result._2)
           retryCount += 1
           Thread.sleep(1000)
-          (metaDataResp,possibleException) = doSend(partConsumer,metaDataReq)
+          result = doSend(partConsumer,metaDataReq)
         }
 
-        val metaData = metaDataResp.topicsMetadata
+        val metaData = result._1.topicsMetadata
         metaData.foreach(topicMeta => {
           topicMeta.partitionsMetadata.foreach(partitionMeta => {
             val uniqueKey = new KafkaPartitionUniqueRecordKey
@@ -438,16 +445,16 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
             // Keep retrying to connect until MAX number of tries is reached.
             var retryCount = 0
-            val (llResp,possibleException) = doSend(llConsumer,llReq)
-            while(llResp == null) {
+            var result = doSend(llConsumer,llReq)
+            while(result._1 == null) {
               if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
-                throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", possibleException)
+                throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
               retryCount += 1
               Thread.sleep(1000)
-              (llResp,possibleException) = doSend(llConsumer,llReq)
+              result = doSend(llConsumer,llReq)
             }
 
-            val metaData = llResp.topicsMetadata
+            val metaData = result._1.topicsMetadata
 
             // look at each piece of metadata, and analyze its partitions
             metaData.foreach(metaDatum => {
@@ -508,7 +515,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
   /**
    * getKeyValueForPartition - get the valid offset range in a given partition.
    */
-  def getKeyValueForPartition(leadBroker: String, partitionId: Int, timeFrame: Long): Long = {
+  private def getKeyValueForPartition(leadBroker: String, partitionId: Int, timeFrame: Long): Long = {
     var offset: Long = -1
     var llConsumer: kafka.javaapi.consumer.SimpleConsumer = null
     val brokerName = leadBroker.split(":")
@@ -532,20 +539,20 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       // Issue the call
       // val response: kafka.javaapi.OffsetResponse = llConsumer.getOffsetsBefore(offsetRequest)
       var retryCount = 0
-      val (response,possibleException) = doSendJavaConsumer(llConsumer,offsetRequest)
-      while(response == null) {
+      var result = doSendJavaConsumer(llConsumer,offsetRequest)
+      while(result._1 == null) {
         if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
-          throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", possibleException)
+          throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
         retryCount += 1
         Thread.sleep(1000)
-        (response,possibleException) = doSendJavaConsumer(llConsumer,offsetRequest)
+        result = doSendJavaConsumer(llConsumer,offsetRequest)
       }
 
       // Return the value, or handle the error
-      if (response.hasError) {
+      if (result._1.hasError) {
         LOG.error("KAFKA ADAPTER: error occured trying to find out the valid range for partition {" + partitionId + "}")
       } else {
-        val offsets: Array[Long] = response.offsets(qc.topic.toString, partitionId)
+        val offsets: Array[Long] = result._1.offsets(qc.topic.toString, partitionId)
         offset = offsets(0)
       }
     } catch {
@@ -592,6 +599,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           return leaderMetaData
         }
       } catch {
+        case fae: FatalAdapterException => throw fae
         case e: InterruptedException => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.debug("Adapter terminated during findNewLeader" + "\nStackTrace:" + stackTrace)

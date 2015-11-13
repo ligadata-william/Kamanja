@@ -25,7 +25,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions.{FatalAdapterException, StackTrace}
 
 import com.ligadata.transactions._
 
@@ -118,7 +118,15 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
           val oadap = allOuAdapters.getOrElse(output._1, null)
           LOG.debug("Sending data => " + output._2.map(o => o._1 + "~~~" + o._2 + "~~~" + o._3).mkString("###"))
           if (oadap != null) {
-            oadap.send(output._2.map(out => out._3.getBytes("UTF8")).toArray, output._2.map(out => out._2.getBytes("UTF8")).toArray)
+            try {
+              oadap.send(output._2.map(out => out._3.getBytes("UTF8")).toArray, output._2.map(out => out._2.getBytes("UTF8")).toArray)
+            } catch {
+              case fae: FatalAdapterException => {
+                // Adapter could not send.
+                val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+                LOG.error("Failed to send data to the output adapter, cause: \n"+ causeStackTrace)
+              }
+            }
           }
         })
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(3)) {
