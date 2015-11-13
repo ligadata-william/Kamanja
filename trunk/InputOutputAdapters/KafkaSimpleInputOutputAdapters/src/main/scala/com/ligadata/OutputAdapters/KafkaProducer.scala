@@ -110,15 +110,16 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         keyMessages += new KeyedMessage(qc.topic, partKeys(i), messages(i))
       }
 
-      val sendStatus = KafkaConstants.KAFKA_NOT_SEND
+      var sendStatus = KafkaConstants.KAFKA_NOT_SEND
       var retryCount = 0
       while (sendStatus != KafkaConstants.KAFKA_SEND_SUCCESS) {
-        val (sendStatus, possibleCause) = doSend(keyMessages)
+        val result = doSend(keyMessages)
+        sendStatus = result._1
 
         // Queue is full, wait and retry
         if (sendStatus == KafkaConstants.KAFKA_SEND_Q_FULL) {
-          LOG.warn("KAFKA PRODUCER: Target Q is temporarily full, retrying.")
-          Thread.sleep(500)
+          LOG.warn("KAFKA PRODUCER: "+ qc.topic +" is temporarily full, retrying.")
+          Thread.sleep(1000)
         }
 
         // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
@@ -130,7 +131,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
 
           } else {
             LOG.error("KAFKA PRODUCER: Error sending to kafka,  MAX_RETRY reached... shutting down")
-            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", possibleCause.getOrElse(null))
+            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", result._2.getOrElse(null))
           }
         }
       }
@@ -150,7 +151,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       producer.send(keyMessages: _*) // Thinking this op is atomic for (can write multiple partitions into one queue, but don't know whether it is atomic per partition in the queue).
     } catch {
       case ftsme: FailedToSendMessageException => return (KafkaConstants.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme))
-      case qfe: QueueFullException => return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
+      case qfe: QueueFullException =>  return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
       case e: Exception => throw new FatalAdapterException("Unknown exception", e)
     }
     return (KafkaConstants.KAFKA_SEND_SUCCESS, None)

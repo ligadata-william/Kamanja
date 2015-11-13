@@ -602,7 +602,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         case fae: FatalAdapterException => throw fae
         case e: InterruptedException => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.debug("Adapter terminated during findNewLeader" + "\nStackTrace:" + stackTrace)
+          LOG.error("Adapter terminated during findNewLeader" + "\nStackTrace:" + stackTrace)
         }
       }
     }
