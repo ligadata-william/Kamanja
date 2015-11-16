@@ -128,23 +128,29 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
           inputData = CreateKafkaInput(msgStr, SmartFileAdapterConstants.MESSAGE_NAME, delimiters)
           currentOffset += 1
           numberOfMessagesProcessedInFile += 1
+
+          // Only add those messages that we have not previously processed....
+          if (msg.offsetInFile == FileProcessor.NOT_RECOVERY_SITUATION ||
+            (msg.offsetInFile >= 0 &&
+              msg.offsetInFile < currentOffset)) {
+            val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString
+            logger.info("PartitionKey:%s, Msg:%s".format(partitionKey, msgStr))
+            keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+                                                            partitionKey.getBytes("UTF8"),
+                                                            msgStr.getBytes("UTF8"))
+          } else {
+            // This is just for reporting purposes... do not report messages that were below the recovery offset
+            numberOfMessagesProcessedInFile = numberOfMessagesProcessedInFile - 1
+          }
+
         } catch {
           case mfe: KVMessageFormatingException =>
             writeErrorMsg(msg)
-        }
-
-        // Only add those messages that we have not previously processed....
-        if (msg.offsetInFile == FileProcessor.NOT_RECOVERY_SITUATION ||
-          (msg.offsetInFile >= 0 &&
-            msg.offsetInFile < currentOffset)) {
-          val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString
-          logger.info("PartitionKey:%s, Msg:%s".format(partitionKey, msgStr))
-          keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
-            partitionKey.getBytes("UTF8"),
-            msgStr.getBytes("UTF8"))
-        } else {
-          // This is just for reporting purposes... do not report messages that were below the recovery offset
-          numberOfMessagesProcessedInFile = numberOfMessagesProcessedInFile - 1
+          case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.warn("Unknown message format in partition " + partIdx + " \n" + stackTrace)
+            writeErrorMsg(msg)
+          }
         }
 
         if (msg.isLast) {
@@ -183,7 +189,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   private def doKafkaSend(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Unit = {
     var isSendSuccessful = false
     while (!isSendSuccessful) {
-      var sendResult = sendToKafka(messages)
+      val sendResult = sendToKafka(messages)
       if (sendResult == FileProcessor.KAFKA_SEND_SUCCESS) {
         isSendSuccessful = true
         retryCount = 0
@@ -197,10 +203,11 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
         //  3 times.
         if (sendResult == FileProcessor.KAFKA_SEND_DEAD_PRODUCER) {
-          if (retryCount < MAX_RETRY) {
-            logger.warn("SMART FILE CONSUMER: Error sending to kafka, Retrying " + retryCount + "/3")
+          // There is not shutdown case here yet.
+          if (retryCount > -1) {
+            logger.warn("SMART FILE CONSUMER: Error sending to kafka, Retrying " + retryCount)
             retryCount += 1
-
+            if (retryCount > MAX_RETRY) Thread.sleep(30000)
           } else {
             logger.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
             throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached")
@@ -227,12 +234,9 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       case qfe: QueueFullException             => return FileProcessor.KAFKA_SEND_Q_FULL
       case e: Exception =>
         logger.error(partIdx + " Could not add to the queue due to an Exception " + e.getMessage)
-        e.printStackTrace
-        shutdown
-        throw e
+        return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
     }
-
-    0
+    FileProcessor.KAFKA_SEND_SUCCESS
   }
 
   /**
@@ -328,7 +332,6 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    */
   private def CreateKafkaInput(inputData: String, associatedMsg: String, delimiters: DataDelimiters): InputData = {
     if (associatedMsg == null || associatedMsg.size == 0) {
-      shutdown
       throw new Exception("KV data expecting Associated messages as input.")
     }
 
