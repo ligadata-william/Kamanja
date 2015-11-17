@@ -75,7 +75,7 @@ object MonitorAPIImpl {
         if (healthInfo.contains(nodeName)) healthInfo.remove(nodeName)
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        logger.warn("Exception in hearbeat ",e)
       }
     }  
   }
