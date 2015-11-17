@@ -53,6 +53,11 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   val RC_RETRY: Int = 3
   var retryCount = 0
   val MAX_RETRY = 10
+  val INIT_BUFFER_FULL_WAIT_VALUE = 1000
+  val INIT_KAFKA_UNAVAILABLE_WAIT_VALUE = 10000
+  val MAX_RETRY_SCLALEUPS = 6
+  val MAX_WAIT = 60000
+
 
   var lastOffsetProcessed: Int = 0
   lazy val loggerName = this.getClass.getName
@@ -188,6 +193,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    */
   private def doKafkaSend(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Unit = {
     var isSendSuccessful = false
+    var sleepTime = 0
     while (!isSendSuccessful) {
       val sendResult = sendToKafka(messages)
       if (sendResult == FileProcessor.KAFKA_SEND_SUCCESS) {
@@ -195,9 +201,11 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         retryCount = 0
       } else {
         // Full Q, sleep for a bit, then retry.
+        retryCount += 1
         if (sendResult == FileProcessor.KAFKA_SEND_Q_FULL) {
-          logger.warn("SMART FILE CONSUMER: Target Q is temporarily full, retrying.")
-          Thread.sleep(500)
+          sleepTime = scala.math.min((scala.math.max(sleepTime,INIT_BUFFER_FULL_WAIT_VALUE) * 2),MAX_WAIT)
+          logger.warn("SMART FILE CONSUMER" + partIdx +": Target Q is temporarily full, retrying after " + sleepTime / 1000 + " sec")
+          Thread.sleep(sleepTime)
         }
 
         // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
@@ -205,9 +213,9 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         if (sendResult == FileProcessor.KAFKA_SEND_DEAD_PRODUCER) {
           // There is not shutdown case here yet.
           if (retryCount > -1) {
-            logger.warn("SMART FILE CONSUMER: Error sending to kafka, Retrying " + retryCount)
-            retryCount += 1
-            if (retryCount > MAX_RETRY) Thread.sleep(30000)
+            sleepTime = scala.math.min((scala.math.max(sleepTime,INIT_KAFKA_UNAVAILABLE_WAIT_VALUE) * 2),MAX_WAIT)
+            logger.warn("SMART FILE CONSUMER " + partIdx +": Error sending to kafka, retrying  after " + sleepTime / 1000 + " sec")
+            Thread.sleep(sleepTime)
           } else {
             logger.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
             throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached")
@@ -261,7 +269,10 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       // SetData in Zookeeper... set null...
       clearRecoveryArea
     } catch {
-      case ioe: IOException => ioe.printStackTrace()
+      case ioe: IOException => {
+        val stackTrace = StackTrace.ThrowableTraceString(ioe)
+        logger.warn(stackTrace)
+      }
     }
   }
 
@@ -285,20 +296,16 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
         keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC), statusPartitionId.getBytes("UTF8"), new String(statusMsg).getBytes("UTF8"))
         doKafkaSend(keyMessages)
-        //producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC),
-        //    statusPartitionId.getBytes("UTF8"),
-        //    new String(statusMsg).getBytes("UTF8")))
 
-        println("Status pushed ->" + statusMsg)
         logger.debug("Status pushed ->" + statusMsg)
       } else {
-        println("NO STATUS Q SPECIFIED")
         logger.debug("NO STATUS Q SPECIFIED")
       }
     } catch {
       case e: Exception => {
         logger.warn(partIdx + " SMART FILE CONSUMER: Unable to externalize status message")
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.warn(stackTrace)
       }
     }
   }
@@ -448,7 +455,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
           return objInst.asInstanceOf[com.ligadata.KamanjaBase.BaseMsgObj]
         } catch {
           case e: java.lang.NoClassDefFoundError => {
-            e.printStackTrace()
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.error(stackTrace)
             throw e
           }
           case e: Exception => {
