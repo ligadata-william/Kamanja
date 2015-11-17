@@ -57,8 +57,11 @@ object CleanZookeeper {
 
   def isKamanjaClusterRunning(zkInfo: ZooKeeperInfo): Boolean = {
     val monitorPaths: List[String] = getMonitorPaths(zkInfo)
+    if(monitorPaths.isEmpty) {
+      logger.info("CLEAN-UTIL: Monitor paths not found in zookeeper. Cluster is not running")
+      return false
+    }
     var zkc: CuratorFramework = null
-    var isRunning = false
     var nodesRunning: List[String] = List()
     var hbBeforeMap: Map[String, HeartBeat] = Map()
     var hbAfterMap: Map[String, HeartBeat] = Map()
@@ -71,6 +74,9 @@ object CleanZookeeper {
         .build()
       zkc.start()
       // Get all heartbeats from zookeeper
+
+
+
       monitorPaths.foreach(path => {
         val data = new String(zkc.getData.forPath(path))
         val hb = parseHeartbeat(data)
@@ -78,7 +84,7 @@ object CleanZookeeper {
         if(path.contains("metadata"))
           category = "metadata"
         else category = "engine"
-          hbBeforeMap = hbBeforeMap + ((category + ":" + hb.name)-> hb)
+          hbBeforeMap = hbBeforeMap + ((category + ":" + hb.name) -> hb)
       })
 
       // Sleep 5 seconds before getting heartbeats again for comparison
@@ -103,7 +109,16 @@ object CleanZookeeper {
       })
     }
     catch {
+      case e: org.apache.zookeeper.KeeperException.NoNodeException => throw new CleanUtilException(
+        "CLEAN-UTIL: Failed to find the zookeeper node path after retrieving it previously. " +
+          "An external process may have altered zookeeper. " +
+          "Please check that there are no instances of Kamanja or MetadataAPIService running."
+      )
       case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to determine if the kamanja cluster is running with the exception:\n" + e)
+    }
+    finally {
+      if(zkc != null)
+        zkc.close()
     }
     if(nodesRunning.length > 0) {
       logger.info("CLEAN-UTIL: Nodes running are " + nodesRunning.mkString(",") + " are running. Please shutdown any nodes that are currently running.")
