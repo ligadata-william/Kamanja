@@ -32,7 +32,7 @@ import java.text.SimpleDateFormat
 import java.io.File
 import java.net.{ URL, URLClassLoader }
 import scala.collection.mutable.TreeSet
-import java.sql.{ Driver, DriverPropertyInfo,SQLException }
+import java.sql.{ Driver, DriverPropertyInfo, SQLException }
 import java.sql.Timestamp
 import java.util.Properties
 import org.apache.commons.dbcp2.BasicDataSource
@@ -75,29 +75,29 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   private val clsLoader = new JdbcClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
 
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
-  private var msg:String = ""
+  private var msg: String = ""
 
-  private def CreateConnectionException(msg:String, ie:Exception) : StorageConnectionException = {
+  private def CreateConnectionException(msg: String, ie: Exception): StorageConnectionException = {
     logger.error(msg)
-    val ex = new StorageConnectionException("Failed to connect to Database",ie)
+    val ex = new StorageConnectionException("Failed to connect to Database", ie)
     ex
   }
 
-  private def CreateDMLException(msg:String,ie:Exception) : StorageDMLException = {
+  private def CreateDMLException(msg: String, ie: Exception): StorageDMLException = {
     logger.error(msg)
-    val ex = new StorageDMLException("Failed to execute select/insert/delete/update operation on Database",ie)
+    val ex = new StorageDMLException("Failed to execute select/insert/delete/update operation on Database", ie)
     ex
   }
 
-  private def CreateDDLException(msg:String,ie:Exception) : StorageDDLException = {
+  private def CreateDDLException(msg: String, ie: Exception): StorageDDLException = {
     logger.error(msg)
-    val ex = new StorageDDLException("Failed to execute create/drop operations on Database",ie)
+    val ex = new StorageDDLException("Failed to execute create/drop operations on Database", ie)
     ex
   }
 
   if (adapterConfig.size == 0) {
     msg = "Invalid SqlServer Json Configuration string:" + adapterConfig
-    throw CreateConnectionException(msg,new Exception("Invalid Configuration"))
+    throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
   }
 
   logger.debug("SqlServer configuration:" + adapterConfig)
@@ -106,13 +106,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     val json = parse(adapterConfig)
     if (json == null || json.values == null) {
       msg = "Failed to parse SqlServer JSON configuration string:" + adapterConfig
-      throw CreateConnectionException(msg,new Exception("Invalid Configuration"))
+      throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
     }
     parsed_json = json.values.asInstanceOf[Map[String, Any]]
   } catch {
     case e: Exception => {
       var msg = "Failed to parse SqlServer JSON configuration string:%s. Message:%s".format(adapterConfig, e.getMessage)
-      throw CreateConnectionException(msg,e)
+      throw CreateConnectionException(msg, e)
     }
   }
 
@@ -126,13 +126,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         val json = parse(adapterSpecificStr)
         if (json == null || json.values == null) {
           msg = "Failed to parse SqlServer Adapter Specific JSON configuration string:" + adapterSpecificStr
-	  throw CreateConnectionException(msg,new Exception("Invalid Configuration"))
+          throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
         }
         adapterSpecificConfig_json = json.values.asInstanceOf[Map[String, Any]]
       } catch {
         case e: Exception => {
           msg = "Failed to parse SqlServer Adapter Specific JSON configuration string:%s. Message:%s".format(adapterSpecificStr, e.getMessage)
-	  throw CreateConnectionException(msg,e)
+          throw CreateConnectionException(msg, e)
         }
       }
     }
@@ -143,13 +143,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   if (parsed_json.contains("hostname")) {
     hostname = parsed_json.get("hostname").get.toString.trim
   } else {
-    throw CreateConnectionException("Unable to find hostname in adapterConfig ",new Exception("Invalid adapterConfig"))
+    throw CreateConnectionException("Unable to find hostname in adapterConfig ", new Exception("Invalid adapterConfig"))
   }
 
   var instanceName: String = null;
   if (parsed_json.contains("instancename")) {
     instanceName = parsed_json.get("instancename").get.toString.trim
-  } 
+  }
 
   var portNumber: String = null;
   if (parsed_json.contains("portnumber")) {
@@ -160,14 +160,14 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   if (parsed_json.contains("database")) {
     database = parsed_json.get("database").get.toString.trim
   } else {
-    throw CreateConnectionException("Unable to find database in adapterConfig ",new Exception("Invalid adapterConfig"))
+    throw CreateConnectionException("Unable to find database in adapterConfig ", new Exception("Invalid adapterConfig"))
   }
 
   var user: String = null;
   if (parsed_json.contains("user")) {
     user = parsed_json.get("user").get.toString.trim
   } else {
-    throw CreateConnectionException("Unable to find user in adapterConfig ",new Exception("Invalid adapterConfig"))
+    throw CreateConnectionException("Unable to find user in adapterConfig ", new Exception("Invalid adapterConfig"))
   }
 
   var SchemaName: String = null;
@@ -182,21 +182,21 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   if (parsed_json.contains("password")) {
     password = parsed_json.get("password").get.toString.trim
   } else {
-    throw CreateConnectionException("Unable to find password in adapterConfig ",new Exception("Invalid adapterConfig"))
+    throw CreateConnectionException("Unable to find password in adapterConfig ", new Exception("Invalid adapterConfig"))
   }
 
   var jarpaths: String = null;
   if (parsed_json.contains("jarpaths")) {
     jarpaths = parsed_json.get("jarpaths").get.toString.trim
   } else {
-    throw CreateConnectionException("Unable to find jarpaths in adapterConfig ",new Exception("Invalid adapterConfig"))
+    throw CreateConnectionException("Unable to find jarpaths in adapterConfig ", new Exception("Invalid adapterConfig"))
   }
 
   var jdbcJar: String = null;
   if (parsed_json.contains("jdbcJar")) {
     jdbcJar = parsed_json.get("jdbcJar").get.toString.trim
   } else {
-    throw CreateConnectionException("Unable to find jdbcJar in adapterConfig ",new Exception("Invalid adapterConfig"))
+    throw CreateConnectionException("Unable to find jdbcJar in adapterConfig ", new Exception("Invalid adapterConfig"))
   }
 
   // The following three properties are used for connection pooling
@@ -224,11 +224,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   logger.info("jarpaths => " + jarpaths)
   logger.info("jdbcJar  => " + jdbcJar)
 
-  var sqlServerInstance:String = hostname
-  if( instanceName != null ){
+  var sqlServerInstance: String = hostname
+  if (instanceName != null) {
     sqlServerInstance = sqlServerInstance + "\\" + instanceName
   }
-  if( portNumber != null ){
+  if (portNumber != null) {
     sqlServerInstance = sqlServerInstance + ":" + portNumber
   }
 
@@ -239,7 +239,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   jars = jars :+ jar
 
   val driverType = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-  try{
+  try {
     logger.info("Loading the Driver..")
     LoadJars(jars)
     val d = Class.forName(driverType, true, clsLoader).newInstance.asInstanceOf[Driver]
@@ -248,14 +248,14 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   } catch {
     case e: Exception => {
       msg = "Failed to load/register jdbc driver name:%s. Message:%s".format(driverType, e.getMessage)
-      throw CreateConnectionException(msg,e)
+      throw CreateConnectionException(msg, e)
     }
   }
 
   // setup connection pooling using apache-commons-dbcp2
   logger.info("Setting up jdbc connection pool ..")
-  var dataSource:BasicDataSource = null
-  try{
+  var dataSource: BasicDataSource = null
+  try {
     dataSource = new BasicDataSource
     dataSource.setUrl(jdbcUrl)
     dataSource.setUsername(user)
@@ -267,7 +267,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   } catch {
     case e: Exception => {
       msg = "Failed to setup connection pooling using apache-commons-dbcp. Message:%s".format(e.getMessage)
-      throw CreateConnectionException(msg,e)
+      throw CreateConnectionException(msg, e)
     }
   }
 
@@ -275,28 +275,28 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
   // verify whether schema exists, It can throw an exception due to authorization issues
-  var schemaExists:Boolean = false
-  try{
+  var schemaExists: Boolean = false
+  try {
     schemaExists = IsSchemaExists(SchemaName)
   } catch {
     case e: Exception => {
       msg = "Message:%s".format(e.getMessage)
-      throw CreateConnectionException(msg,e)
+      throw CreateConnectionException(msg, e)
     }
   }
 
   // if the schema doesn't exist, we try to create one. It can still fail due to authorization issues
-  if( ! schemaExists ){
+  if (!schemaExists) {
     logger.info("Unable to find the schema " + SchemaName + " in the database, attempt to create one ")
-    try{
+    try {
       CreateSchema(SchemaName)
     } catch {
       case e: Exception => {
-	msg = "Message:%s".format(e.getMessage)
-	throw CreateConnectionException(msg,e)
+        msg = "Message:%s".format(e.getMessage)
+        throw CreateConnectionException(msg, e)
       }
     }
-  }    
+  }
 
   // return the date time in the format yyyy-MM-dd HH:mm:ss.SSS
   private def GetCurDtTmStr: String = {
@@ -313,20 +313,19 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con = dataSource.getConnection
       query = "SELECT count(*) FROM sys.schemas WHERE name = ?"
       pstmt = con.prepareStatement(query)
-      pstmt.setString(1,schemaName)
+      pstmt.setString(1, schemaName)
       rs = pstmt.executeQuery();
       while (rs.next()) {
         rowCount = rs.getInt(1)
       }
-      if( rowCount > 0 ){
-	return true
-      }
-      else{
-	return false
+      if (rowCount > 0) {
+        return true
+      } else {
+        return false
       }
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to verify schema existence for the schema " + schemaName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to verify schema existence for the schema " + schemaName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (rs != null) {
@@ -341,7 +340,6 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     }
   }
 
-
   private def CreateSchema(schemaName: String): Unit = {
     var con: Connection = null
     var stmt: Statement = null
@@ -352,7 +350,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       stmt.executeUpdate(query);
     } catch {
       case e: Exception => {
-        throw CreateDDLException("Failed to create schema  " + schemaName + ":" + e.getMessage(),e)
+        throw CreateDDLException("Failed to create schema  " + schemaName + ":" + e.getMessage(), e)
       }
     } finally {
       if (stmt != null) {
@@ -395,7 +393,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         } catch {
           case e: Exception => {
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
-            throw CreateConnectionException(errMsg,e)
+            throw CreateConnectionException(errMsg, e)
           }
         }
       } else {
@@ -447,12 +445,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       pstmt.setLong(3, key.transactionId)
       pstmt.setInt(4, key.rowId)
       pstmt.setString(5, value.serializerType)
-      pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo),value.serializedInfo.length)
+      pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
       pstmt.executeUpdate();
     } catch {
       case e: Exception => {
-	con.rollback()
-        throw CreateDMLException("Failed to save an object in the table " + tableName + ":" + "sql => " + sql + ":" +  e.getMessage(),e)
+        if (con != null)
+          con.rollback()
+        throw CreateDMLException("Failed to save an object in the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
       if (cstmt != null) {
@@ -495,7 +494,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           // Add it to the batch
           pstmt.addBatch()
         })
-	logger.debug("Executing bulk Delete...")
+        logger.debug("Executing bulk Delete...")
         var deleteCount = pstmt.executeBatch();
         deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
         if (pstmt != null) {
@@ -516,11 +515,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           pstmt.setLong(3, key.transactionId)
           pstmt.setInt(4, key.rowId)
           pstmt.setString(5, value.serializerType)
-          pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo),value.serializedInfo.length)
+          pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
           // Add it to the batch
           pstmt.addBatch()
         })
-	logger.debug("Executing bulk Insert...")
+        logger.debug("Executing bulk Insert...")
         var insertCount = pstmt.executeBatch();
         insertCount.foreach(cnt => { totalRowsInserted += cnt });
         logger.debug("Inserted " + totalRowsInserted + " rows into " + tableName)
@@ -532,8 +531,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-	con.rollback()
-        throw CreateDMLException("Failed to save a batch of objects into the table :" + "sql => " + sql + ":" + e.getMessage(),e)
+        if (con != null)
+          con.rollback()
+        throw CreateDMLException("Failed to save a batch of objects into the table :" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
       if (pstmt != null) {
@@ -576,8 +576,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-	con.rollback()
-        throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(),e)
+        if (con != null)
+          con.rollback()
+        throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
       if (cstmt != null) {
@@ -624,8 +625,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-	con.rollback()
-        throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":"  + e.getMessage(),e)
+        if (con != null)
+          con.rollback()
+        throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
       if (cstmt != null) {
@@ -665,7 +667,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       rowCount
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (rs != null) {
@@ -702,11 +704,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         // yet to understand how split serializerType and serializedInfo from ba
         // so hard coding serializerType to "kryo" for now
         var value = new Value(st, ba)
-        (callbackFunction)(key, value)
+        if (callbackFunction != null)
+          (callbackFunction)(key, value)
       }
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (rs != null) {
@@ -744,11 +747,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         var rId = rs.getInt(4)
         val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
         var key = new Key(timePartition, bucketKey, tId, rId)
-        (callbackFunction)(key)
+        if (callbackFunction != null)
+          (callbackFunction)(key)
       }
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (rs != null) {
@@ -794,12 +798,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           var rId = rs.getInt(4)
           val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
           var key = new Key(timePartition, bucketKey, tId, rId)
-          (callbackFunction)(key)
+          if (callbackFunction != null)
+            (callbackFunction)(key)
         }
       })
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (pstmt != null) {
@@ -832,12 +837,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           var st = rs.getString(1)
           var ba = rs.getBytes(2)
           var value = new Value(st, ba)
-          (callbackFunction)(key, value)
+          if (callbackFunction != null)
+            (callbackFunction)(key, value)
         }
       })
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (pstmt != null) {
@@ -880,7 +886,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con = dataSource.getConnection
 
       time_ranges.foreach(time_range => {
-	query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
+        query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
         pstmt = con.prepareStatement(query)
         bucketKeys.foreach(bucketKey => {
           pstmt.setString(1, bucketKey.mkString(","))
@@ -895,7 +901,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
             val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
             var key = new Key(timePartition, bucketKey, tId, rId)
             var value = new Value(st, ba)
-            (callbackFunction)(key, value)
+            if (callbackFunction != null)
+              (callbackFunction)(key, value)
           }
         })
         if (pstmt != null) {
@@ -905,7 +912,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       })
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (pstmt != null) {
@@ -927,8 +934,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con = dataSource.getConnection
 
       time_ranges.foreach(time_range => {
-	query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
-	logger.debug("query => " + query)
+        query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
+        logger.debug("query => " + query)
         pstmt = con.prepareStatement(query)
         bucketKeys.foreach(bucketKey => {
           pstmt.setString(1, bucketKey.mkString(","))
@@ -940,7 +947,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
             var rId = rs.getInt(4)
             val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
             var key = new Key(timePartition, bucketKey, tId, rId)
-            (callbackFunction)(key)
+            if (callbackFunction != null)
+              (callbackFunction)(key)
           }
         })
         if (pstmt != null) {
@@ -950,7 +958,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       })
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (pstmt != null) {
@@ -986,12 +994,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
           var key = new Key(timePartition, bucketKey, tId, rId)
           var value = new Value(st, ba)
-          (callbackFunction)(key, value)
+          if (callbackFunction != null)
+            (callbackFunction)(key, value)
         }
       })
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" +  e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (pstmt != null) {
@@ -1024,12 +1033,13 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
           var rId = rs.getInt(4)
           val bucketKey = if (keyStr != null) keyStr.split(",").toArray else new Array[String](0)
           var key = new Key(timePartition, bucketKey, tId, rId)
-          (callbackFunction)(key)
+          if (callbackFunction != null)
+            (callbackFunction)(key)
         }
       })
     } catch {
       case e: Exception => {
-        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (pstmt != null) {
@@ -1069,7 +1079,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       stmt.executeUpdate(query);
     } catch {
       case e: Exception => {
-        throw CreateDDLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDDLException("Failed to fetch data from the table " + tableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (stmt != null) {
@@ -1102,15 +1112,15 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       val dbm = con.getMetaData();
       rs = dbm.getTables(null, SchemaName, tableName, null);
       if (!rs.next()) {
-        logger.debug("The table " +  fullTableName + " may have beem dropped already ")
+        logger.debug("The table " + fullTableName + " may have beem dropped already ")
       } else {
-        query = "drop table " +  fullTableName
+        query = "drop table " + fullTableName
         stmt = con.createStatement()
         stmt.executeUpdate(query);
       }
     } catch {
       case e: Exception => {
-        throw CreateDDLException("Failed to drop the table " + fullTableName + ":" + "query => " + query + ":" + e.getMessage(),e)
+        throw CreateDDLException("Failed to drop the table " + fullTableName + ":" + "query => " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (rs != null) {
@@ -1165,7 +1175,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       }
     } catch {
       case e: Exception => {
-        throw CreateDDLException("Failed to create table or index " + tableName + ": ddl = " + query + ":" + e.getMessage(),e)
+        throw CreateDDLException("Failed to create table or index " + tableName + ": ddl = " + query + ":" + e.getMessage(), e)
       }
     } finally {
       if (rs != null) {

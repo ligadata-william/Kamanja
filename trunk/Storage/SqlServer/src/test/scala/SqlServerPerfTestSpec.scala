@@ -22,8 +22,8 @@ import Matchers._
 import com.ligadata.Utils._
 import util.control.Breaks._
 import scala.io._
-import java.util.{Date,Calendar,TimeZone}
-import java.text.{SimpleDateFormat}
+import java.util.{ Date, Calendar, TimeZone }
+import java.text.{ SimpleDateFormat }
 import java.io._
 
 import sys.process._
@@ -42,10 +42,10 @@ import com.ligadata.Exceptions._
 
 @Ignore
 class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
-  var res : String = null;
+  var res: String = null;
   var statusCode: Int = -1;
-  var adapter:DataStore = null
-  var serializer:Serializer = null
+  var adapter: DataStore = null
+  var serializer: Serializer = null
 
   private val loggerName = this.getClass.getName
   private val logger = Logger.getLogger(loggerName)
@@ -62,27 +62,25 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
 
   private def CreateAdapter: DataStore = {
     var connectionAttempts = 0
-    while( connectionAttempts < maxConnectionAttempts ){
-      try{
-	adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
-	return adapter
-      }
-      catch {
-	case e: StorageConnectionException => {
-	  logger.error("%s: Message:%s".format(e.getMessage,e.cause.getMessage))
-	  logger.error("will retry after one minute ...")
-	  connectionAttempts = connectionAttempts + 1
-	  Thread.sleep(60*1000L)	  
-	}
-	case e: Exception =>  {
-	  logger.error("Failed to connect: Message:%s".format(e.getMessage))
-	  logger.error("retrying ...")
-	}
+    while (connectionAttempts < maxConnectionAttempts) {
+      try {
+        adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
+        return adapter
+      } catch {
+        case e: StorageConnectionException => {
+          logger.error("%s: Message:%s".format(e.getMessage, e.cause.getMessage))
+          logger.error("will retry after one minute ...")
+          connectionAttempts = connectionAttempts + 1
+          Thread.sleep(60 * 1000L)
+        }
+        case e: Exception => {
+          logger.error("Failed to connect: Message:%s".format(e.getMessage))
+          logger.error("retrying ...")
+        }
       }
     }
     return null;
   }
-      
 
   override def beforeAll = {
     try {
@@ -91,31 +89,29 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
       serializer = SerializerManager.GetSerializer("kryo")
       logger.info("Initialize SqlServerAdapter")
       adapter = CreateAdapter
-   }
-    catch {
+    } catch {
       case e: StorageConnectionException => {
-	logger.error("%s: Message:%s".format(e.getMessage,e.cause.getMessage))
+        logger.error("%s: Message:%s".format(e.getMessage, e.cause.getMessage))
       }
-      case e: Exception =>  {
-	logger.error("Failed to connect: Message:%s".format(e.getMessage))
+      case e: Exception => {
+        logger.error("Failed to connect: Message:%s".format(e.getMessage))
       }
     }
   }
 
-  private def RoundDateToSecs(d:Date): Date = {
+  private def RoundDateToSecs(d: Date): Date = {
     var c = Calendar.getInstance()
-    if( d == null ){
+    if (d == null) {
       c.setTime(new Date(0))
       c.getTime
-    }
-    else{
+    } else {
       c.setTime(d)
-      c.set(Calendar.MILLISECOND,0)
+      c.set(Calendar.MILLISECOND, 0)
       c.getTime
     }
   }
 
-  def readCallBack(key:Key, value: Value) {
+  def readCallBack(key: Key, value: Value) {
     logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
@@ -125,7 +121,7 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
     logger.info("----------------------------------------------------")
   }
 
-  def readKeyCallBack(key:Key) {
+  def readKeyCallBack(key: Key) {
     logger.info("timePartition => " + key.timePartition)
     logger.info("bucketKey => " + key.bucketKey.mkString(","))
     logger.info("transactionId => " + key.transactionId)
@@ -133,12 +129,12 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
     logger.info("----------------------------------------------------")
   }
 
-  def deleteFile(path:File):Unit = {
-    if(path.exists()){
-      if (path.isDirectory){
-	for(f <- path.listFiles) {
+  def deleteFile(path: File): Unit = {
+    if (path.exists()) {
+      if (path.isDirectory) {
+        for (f <- path.listFiles) {
           deleteFile(f)
-	}
+        }
       }
       path.delete()
     }
@@ -151,72 +147,72 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
   describe("Unit Tests for all sqlserveradapter operations") {
 
     // validate property setup
-    it ("Validate api operations") {
+    it("Validate api operations") {
       val containerName = "sys.customer1"
 
       And("Test drop container")
       noException should be thrownBy {
-	var containers = new Array[String](0)
-	containers = containers :+ containerName
-	adapter.DropContainer(containers)
+        var containers = new Array[String](0)
+        containers = containers :+ containerName
+        adapter.DropContainer(containers)
       }
 
       And("Test create container")
       noException should be thrownBy {
-	var containers = new Array[String](0)
-	containers = containers :+ containerName
-	adapter.CreateContainer(containers)
+        var containers = new Array[String](0)
+        containers = containers :+ containerName
+        adapter.CreateContainer(containers)
       }
 
       And("Test Bulk Put api")
-      
+
       logger.info(GetCurDtTmStr + ": Start Loading  1 million records 1000 at a time")
 
-      for( batch <- 1 to 1000 ){
-	var keyValueList = new Array[(Key, Value)](0)
-	var keyStringList = new Array[Array[String]](0)
-	for( i <- 1 to 1000 ){
-	  var  cal = Calendar.getInstance();
-          cal.add(Calendar.DATE, -i);    
-	  var currentTime = cal.getTime()
-	  var keyArray = new Array[String](0)
-	  var custName = "batch-" + batch +  "-customer-"  + i
-	  keyArray = keyArray :+ custName
-	  keyStringList = keyStringList :+ keyArray
-	  var key = new Key(currentTime.getTime(),keyArray,i,i)
-	  var custAddress = "1000" + batch*i + ",Main St, Redmond WA 98052"
-	  var custNumber = "4256667777" + batch*i
-	  var obj = new Customer(custName,custAddress,custNumber)
-	  var v = serializer.SerializeObjectToByteArray(obj)
-	  var value = new Value("kryo",v)
-	  keyValueList = keyValueList :+ (key,value)
-	}
-	var dataList = new Array[(String, Array[(Key,Value)])](0)
-	dataList = dataList :+ (containerName,keyValueList)
-	noException should be thrownBy {
-	  adapter.put(dataList)
-	}
-	logger.info(GetCurDtTmStr + ": Loaded " + batch * 1000 + " objects ")
+      for (batch <- 1 to 1000) {
+        var keyValueList = new Array[(Key, Value)](0)
+        var keyStringList = new Array[Array[String]](0)
+        for (i <- 1 to 1000) {
+          var cal = Calendar.getInstance();
+          cal.add(Calendar.DATE, -i);
+          var currentTime = cal.getTime()
+          var keyArray = new Array[String](0)
+          var custName = "batch-" + batch + "-customer-" + i
+          keyArray = keyArray :+ custName
+          keyStringList = keyStringList :+ keyArray
+          var key = new Key(currentTime.getTime(), keyArray, i, i)
+          var custAddress = "1000" + batch * i + ",Main St, Redmond WA 98052"
+          var custNumber = "4256667777" + batch * i
+          var obj = new Customer(custName, custAddress, custNumber)
+          var v = serializer.SerializeObjectToByteArray(obj)
+          var value = new Value("kryo", v)
+          keyValueList = keyValueList :+ (key, value)
+        }
+        var dataList = new Array[(String, Array[(Key, Value)])](0)
+        dataList = dataList :+ (containerName, keyValueList)
+        noException should be thrownBy {
+          adapter.put(dataList)
+        }
+        logger.info(GetCurDtTmStr + ": Loaded " + batch * 1000 + " objects ")
       }
 
       val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
 
       And("Check the row count after adding a bunch")
-      cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = sqlServerAdapter.getRowCount(containerName, null)
       assert(cnt == 1000000)
-      
+
       And("Test drop container again, cleanup")
       noException should be thrownBy {
-	var containers = new Array[String](0)
-	containers = containers :+ containerName
-	adapter.DropContainer(containers)
+        var containers = new Array[String](0)
+        containers = containers :+ containerName
+        adapter.DropContainer(containers)
       }
 
     }
   }
   override def afterAll = {
     var logFile = new java.io.File("logs")
-    if( logFile != null ){
+    if (logFile != null) {
       deleteFile(logFile)
     }
   }
