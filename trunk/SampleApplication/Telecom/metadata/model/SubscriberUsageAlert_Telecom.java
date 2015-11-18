@@ -17,7 +17,6 @@
 package com.ligadata.kamanja.financial;
 
 import com.ligadata.KamanjaBase.*;
-import System.*;
 
 import java.io.*;
 

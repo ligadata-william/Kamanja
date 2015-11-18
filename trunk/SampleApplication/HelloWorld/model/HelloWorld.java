@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.ligadata.kamanja.financial;
+package com.ligadata.kamanja.samples.models;
 
 import com.google.common.base.Optional;
 import com.ligadata.KamanjaBase.*;
-import System.*;
 
 public class HelloWorldModel extends ModelBase {
 	static HelloWorldModelObj objSingleton = new HelloWorldModelObj();

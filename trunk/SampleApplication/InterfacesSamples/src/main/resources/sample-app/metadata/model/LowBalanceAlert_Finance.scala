@@ -16,9 +16,8 @@
 
 package com.ligadata.models.samples.models
 
-import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
-import System._
+import com.ligadata.KamanjaBase._
+import com.ligadata.KvBase.TimeRange
 import RddUtils._
 import RddDate._
 import org.json4s._
