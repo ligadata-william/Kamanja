@@ -10,7 +10,7 @@ libraryDependencies += "org.apache.hbase" % "hbase-client" % "1.0.2"
 
 libraryDependencies += "org.apache.hbase" % "hbase-common" % "1.0.2"
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-core" % "1.2.1"
+libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.7.1"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.0" % "test"
 
