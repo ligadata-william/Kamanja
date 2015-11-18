@@ -38,7 +38,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
   var cntr: Long = 0
   var mdlsChangedCntr: Long = -1
   var outputGen = new OutputMsgGenerator()
-  var models = Array[(String, MdlInfo, Boolean, ModelBase)]() // ModelName, ModelInfo, IsModelInstanceReusable, Global ModelBase if the model is IsModelInstanceReusable == true  
+  var models = Array[(String, MdlInfo, Boolean, ModelBase, Boolean)]() // ModelName, ModelInfo, IsModelInstanceReusable, Global ModelBase if the model is IsModelInstanceReusable == true. The last boolean is to check whether we tested message type or not (thi is to check Reusable flag)  
+  var validateMsgsForMdls = scala.collection.mutable.Set[String]() // Message Names for creating models instances   
 
   private def RunAllModels(transId: Long, inputData: Array[Byte], finalTopMsgOrContainer: MessageContainerBase, txnCtxt: TransactionContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
     var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
@@ -50,50 +51,59 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
       ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
       try {
         val mdlChngCntr = KamanjaMetadata.GetModelsChangedCounter
+        val msgFullName = finalTopMsgOrContainer.FullName.toLowerCase()
         if (mdlChngCntr != mdlsChangedCntr) {
           LOG.info("Refreshing models for Partition:%s (hashCode:%d) from %d to %d".format(uk, partHashCd, mdlsChangedCntr, mdlChngCntr))
           val (tmpMdls, tMdlsChangedCntr) = KamanjaMetadata.getAllModels
           val tModels = if (tmpMdls != null) tmpMdls else Array[(String, MdlInfo)]()
 
-          val map = scala.collection.mutable.Map[String, (MdlInfo, Boolean, ModelBase)]()
+          val map = scala.collection.mutable.Map[String, (MdlInfo, Boolean, ModelBase, Boolean)]()
           models.foreach(q => {
-            map(q._1) = ((q._2, q._3, q._4))
+            map(q._1) = ((q._2, q._3, q._4, q._5))
           })
 
-          var newModels = ArrayBuffer[(String, MdlInfo, Boolean, ModelBase)]()
+          var newModels = ArrayBuffer[(String, MdlInfo, Boolean, ModelBase, Boolean)]()
           var newMdlsSet = scala.collection.mutable.Set[String]()
 
           tModels.foreach(tup => {
             val md = tup._2
             val mInfo = map.getOrElse(tup._1, null)
-            var newInfo: (String, MdlInfo, Boolean, ModelBase) = null
+            var newInfo: (String, MdlInfo, Boolean, ModelBase, Boolean) = null
             if (mInfo != null) {
               // Make sure previous model version is same as the current model version
               if (md.mdl == mInfo._1.mdl && md.mdl.Version().equals(mInfo._1.mdl.Version())) {
-                newInfo = ((tup._1, mInfo._1, mInfo._2, mInfo._3)) // Taking  previous record only if the same instance of the object exists
+                newInfo = ((tup._1, mInfo._1, mInfo._2, mInfo._3, mInfo._4)) // Taking  previous record only if the same instance of the object exists
               } else {
                 // Shutdown previous entry, if exists
                 if (mInfo._2 && mInfo._3 != null) {
                   mInfo._3.shutdown()
                 }
+                if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+                  val tInst = md.mdl.CreateNewModel(mdlCtxt)
+                  val isReusable = tInst.isModelInstanceReusable()
+                  var newInst: ModelBase = null
+                  if (isReusable) {
+                    newInst = tInst
+                    newInst.init(partHashCd)
+                  }
+                  newInfo = ((tup._1, md, isReusable, newInst, true))
+                } else {
+                  newInfo = ((tup._1, md, false, null, false))
+                }
+              }
+            } else {
+              if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+                var newInst: ModelBase = null
                 val tInst = md.mdl.CreateNewModel(mdlCtxt)
                 val isReusable = tInst.isModelInstanceReusable()
-                var newInst: ModelBase = null
                 if (isReusable) {
                   newInst = tInst
                   newInst.init(partHashCd)
                 }
-                newInfo = ((tup._1, md, isReusable, newInst))
+                newInfo = ((tup._1, md, isReusable, newInst, true))
+              } else {
+                newInfo = ((tup._1, md, false, null, false))
               }
-            } else {
-              var newInst: ModelBase = null
-              val tInst = md.mdl.CreateNewModel(mdlCtxt)
-              val isReusable = tInst.isModelInstanceReusable()
-              if (isReusable) {
-                newInst = tInst
-                newInst.init(partHashCd)
-              }
-              newInfo = ((tup._1, md, isReusable, newInst))
             }
             if (newInfo != null) {
               newMdlsSet += tup._1
@@ -109,8 +119,25 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
             }
           })
 
+          validateMsgsForMdls.clear()
           models = newModels.toArray
           mdlsChangedCntr = tMdlsChangedCntr
+          validateMsgsForMdls += msgFullName
+        } else if (validateMsgsForMdls.contains(msgFullName) == false) { // found new Msg
+          for (i <- 0 until models.size) {
+            val mInfo = models(i)
+            if (mInfo._5 == false && mInfo._2.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+              var newInst: ModelBase = null
+              val tInst = mInfo._2.mdl.CreateNewModel(mdlCtxt)
+              val isReusable = tInst.isModelInstanceReusable()
+              if (isReusable) {
+                newInst = tInst
+                newInst.init(partHashCd)
+              }
+              models(i) = ((mInfo._1, mInfo._2, isReusable, newInst, true))
+            }
+          }
+          validateMsgsForMdls += msgFullName
         }
 
         val outputAlways: Boolean = false;
