@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.client.{ BufferedMutator, BufferedMutatorParams, Connection, ConnectionFactory }
 
 import org.apache.hadoop.hbase._
 import org.apache.log4j._
@@ -155,7 +156,15 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
   config.setInt("hbase.client.retries.number", getOptionalField("hbase_client_retries_number", parsed_json, adapterSpecificConfig_json, "3").toString.trim.toInt);
   config.setInt("hbase.client.pause", getOptionalField("hbase_client_pause", parsed_json, adapterSpecificConfig_json, "5000").toString.trim.toInt);
   config.set("hbase.zookeeper.quorum", hostnames);
-  config.setInt("hbase.client.keyvalue.maxsize", getOptionalField("hbase_client_keyvalue_maxsize", parsed_json, adapterSpecificConfig_json, "104857600").toString.trim.toInt);
+
+  val keyMaxSz = getOptionalField("hbase_client_keyvalue_maxsize", parsed_json, adapterSpecificConfig_json, "104857600").toString.trim.toInt
+  var clntWrtBufSz = getOptionalField("hbase_client_write_buffer", parsed_json, adapterSpecificConfig_json, "104857600").toString.trim.toInt
+
+  if (clntWrtBufSz < keyMaxSz)
+    clntWrtBufSz = keyMaxSz + 1024 // 1K Extra
+
+  config.setInt("hbase.client.keyvalue.maxsize", keyMaxSz);
+  config.setInt("hbase.client.write.buffer", clntWrtBufSz);
 
   var isKerberos: Boolean = false
   var ugi: UserGroupInformation = null
@@ -198,11 +207,29 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     logger.debug("HBase info => Hosts:" + hostnames + ", Keyspace:" + keyspace)
   }
 
-  var connection: HConnection = _
+  val listener = new BufferedMutator.ExceptionListener() {
+    override def onException(e: RetriesExhaustedWithDetailsException, mutator: BufferedMutator) {
+      for (i <- 0 until e.getNumExceptions) {
+        logger.error("Failed to sent put: " + e.getRow(i))
+      }
+    }
+  }
+
+  val valOfTbl = TableName.valueOf(tableName)
+  val params = new BufferedMutatorParams(valOfTbl).listener(listener);
+
+  val valBytes = Bytes.toBytes("value")
+  val baseBytes = Bytes.toBytes("base")
+
+  var conn: Connection = _
+  var mutator: BufferedMutator = _
   try {
-    connection = HConnectionManager.createConnection(config);
+    conn = ConnectionFactory.createConnection(config);
+    mutator = conn.getBufferedMutator(params)
   } catch {
     case e: Exception => {
+      if (conn != null)
+        conn.close()
       throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
     }
   }
@@ -225,25 +252,24 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
   def createNamespace(nameSpace: String): Unit = {
     relogin
     val admin = new HBaseAdmin(config);
-    try{
+    try {
       val nsd = admin.getNamespaceDescriptor(nameSpace)
       return
-    } catch{
+    } catch {
       case e: Exception => {
-	logger.info("Namespace " + nameSpace + " doesn't exist, create it")
+        logger.info("Namespace " + nameSpace + " doesn't exist, create it")
       }
     }
-    try{
+    try {
       admin.createNamespace(NamespaceDescriptor.create(nameSpace).build)
-    } catch{
+    } catch {
       case e: Exception => {
-      val stackTrace = StackTrace.ThrowableTraceString(e)
-      logger.debug("StackTrace:"+stackTrace)
-      throw new ConnectionFailedException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:" + stackTrace)
+        throw new ConnectionFailedException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage())
       }
     }
   }
-
 
   private def createTable(tableName: String): Unit = {
     relogin
@@ -264,38 +290,18 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     relogin
     var p = new Put(source.Key.toArray[Byte])
 
-    p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte])
+    p.addColumn(valBytes, baseBytes, source.Value.toArray[Byte])
 
-    val tableHBase = connection.getTable(table);
-    var succeeded = false
-    try {
-      succeeded = tableHBase.checkAndPut(p.getRow(), Bytes.toBytes("value"), Bytes.toBytes("base"), null, p)
-    } catch {
-      case e: Exception => throw e
-    } finally {
-      if (tableHBase != null)
-        tableHBase.close
-    }
-    if (!succeeded) {
-      throw new Exception("not applied")
-    }
+    mutator.mutate(p)
   }
 
   override def put(source: IStorage): Unit = {
     relogin
     var p = new Put(source.Key.toArray[Byte])
 
-    p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte])
+    p.addColumn(valBytes, baseBytes, source.Value.toArray[Byte])
 
-    val tableHBase = connection.getTable(table);
-    try {
-      tableHBase.put(p)
-    } catch {
-      case e: Exception => throw e
-    } finally {
-      if (tableHBase != null)
-        tableHBase.close
-    }
+    mutator.mutate(p)
   }
 
   override def putBatch(sourceArray: Array[IStorage]): Unit = {
@@ -303,19 +309,11 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
 
     val puts = sourceArray.map(source => {
       var p = new Put(source.Key.toArray[Byte])
-      p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte])
+      p.addColumn(valBytes, baseBytes, source.Value.toArray[Byte])
       p
     }).toList
 
-    val tableHBase = connection.getTable(table);
-    try {
-      tableHBase.put(puts)
-    } catch {
-      case e: Exception => throw e
-    } finally {
-      if (tableHBase != null)
-        tableHBase.close
-    }
+    mutator.mutate(puts)
   }
 
   override def delBatch(keyArray: Array[Key]): Unit = {
@@ -326,15 +324,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       p
     }).toList
 
-    val tableHBase = connection.getTable(table);
-    try {
-      tableHBase.delete(dels)
-    } catch {
-      case e: Exception => throw e
-    } finally {
-      if (tableHBase != null)
-        tableHBase.close
-    }
+    mutator.mutate(dels)
   }
 
   override def get(key: Key, handler: (Value) => Unit): Unit = {
@@ -342,12 +332,12 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     try {
       var p = new Get(key.toArray[Byte])
 
-      p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base"))
+      p.addColumn(valBytes, baseBytes)
 
-      val tableHBase = connection.getTable(table);
+      val tableHBase = conn.getTable(valOfTbl);
       try {
         val result = tableHBase.get(p)
-        val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base"))
+        val v = result.getValue(valBytes, baseBytes)
 
         val value = new Value
         value ++= v
@@ -371,13 +361,13 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     try {
       var p = new Get(key.toArray[Byte])
 
-      p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base"))
+      p.addColumn(valBytes, baseBytes)
 
-      val tableHBase = connection.getTable(table);
+      val tableHBase = conn.getTable(valOfTbl);
       try {
         val result = tableHBase.get(p)
 
-        val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base"))
+        val v = result.getValue(valBytes, baseBytes)
 
         val value = new Value
         value ++= v
@@ -399,16 +389,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
   override def del(key: Key): Unit = {
     relogin
     val p = new Delete(key.toArray[Byte])
-
-    val tableHBase = connection.getTable(table);
-    try {
-      val result = tableHBase.delete(p)
-    } catch {
-      case e: Exception => throw e
-    } finally {
-      if (tableHBase != null)
-        tableHBase.close
-    }
+    mutator.mutate(p)
   }
 
   override def del(source: IStorage): Unit = { del(source.Key) }
@@ -419,21 +400,19 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
 
   override def commitTx(tx: Transaction): Unit = {
     relogin
-    val tableHBase = connection.getTable(table);
-    try {
-      tableHBase.flushCommits
-    } catch {
-      case e: Exception => throw e
-    } finally {
-      if (tableHBase != null)
-        tableHBase.close
-    }
+    if (mutator != null)
+      mutator.flush()
   }
 
   override def Shutdown(): Unit = {
-    if (connection != null) {
-      connection.close()
-      connection = null
+    if (mutator != null) {
+      mutator.flush()
+      mutator.close()
+      mutator = null
+    }
+    if (conn != null) {
+      conn.close()
+      conn = null
     }
   }
 
@@ -459,7 +438,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     relogin
     var p = new Scan()
 
-    val tableHBase = connection.getTable(table);
+    val tableHBase = conn.getTable(valOfTbl);
     try {
       val iter = tableHBase.getScanner(p)
 
