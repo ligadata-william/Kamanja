@@ -38,6 +38,8 @@ import com.ligadata.Utils.{ KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.StorageBase.StorageAdapterObj
 import com.ligadata.keyvaluestore.SqlServerAdapter
 
+import com.ligadata.Exceptions._
+
 case class Customer(name:String, address: String, homePhone: String)
 
 @Ignore
@@ -64,11 +66,16 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       serializer = SerializerManager.GetSerializer("kryo")
       logger.info("Initialize SqlServerAdapter")
       val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""
+      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
       adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
    }
     catch {
-      case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
+      case e: StorageConnectionException => {
+	logger.error("%s: Message:%s".format(e.getMessage,e.cause.getMessage))
+      }
+      case e: Exception =>  {
+	logger.error("Failed to connect: Message:%s".format(e.getMessage))
+      }
     }
   }
 
