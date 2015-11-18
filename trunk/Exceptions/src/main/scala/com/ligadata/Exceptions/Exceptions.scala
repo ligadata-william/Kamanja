@@ -70,5 +70,3 @@ case class StorageConnectionException(msg: String, cause: Throwable ) extends Ex
 case class StorageFetchException(msg: String, cause: Throwable ) extends Exception(msg)
 case class StorageDMLException(msg: String, cause: Throwable ) extends Exception(msg)
 case class StorageDDLException(msg: String, cause: Throwable ) extends Exception(msg)
-
-

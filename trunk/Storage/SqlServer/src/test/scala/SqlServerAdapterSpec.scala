@@ -42,7 +42,6 @@ import com.ligadata.Exceptions._
 
 case class Customer(name:String, address: String, homePhone: String)
 
-@Ignore
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -56,7 +55,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
   // set the timezone to UTC for all time values
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
+  var containerName = ""
   private val kvManagerLoader = new KamanjaLoaderInfo
 
   override def beforeAll = {
@@ -125,7 +124,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
     // validate property setup
     it ("Validate api operations") {
-      val containerName = "sys.customer1"
+      containerName = "sys.customer1"
 
       And("Test drop container")
       noException should be thrownBy {
@@ -140,6 +139,19 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	containers = containers :+ containerName
 	adapter.CreateContainer(containers)
       }
+
+      And("Test create container with invalid name")
+      containerName = "&&"
+      var ex = the [com.ligadata.Exceptions.StorageDDLException] thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.CreateContainer(containers)
+      }
+      val stackTrace = StackTrace.ThrowableTraceString(ex.cause)
+      logger.info("StackTrace:"+stackTrace)
+
+      And("Resume API Testing")
+      containerName = "sys.customer1"
 
       And("Test Put api")
       var keys = new Array[Key](0) // to be used by a delete operation later on
