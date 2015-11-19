@@ -171,7 +171,6 @@ cp $srcPath/Utils/Controller/target/scala-2.10/controller_2.10-1.0.jar $systemli
 cp $ivyPath/cache/junit/junit/jars/junit-3.8.1.jar $systemlib
 cp $ivyPath/cache/com.typesafe/config/bundles/config-1.2.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/dhbcore.jar $systemlib
-cp $ivyPath/cache/com.google.guava/guava/bundles/guava-18.0.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-embedded/jars/jetty-embedded-6.1.26-sources.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-embedded/jars/jetty-embedded-6.1.26.jar $systemlib
 cp $ivyPath/cache/org.apache.httpcomponents/httpclient/jars/httpclient-4.2.5.jar $systemlib
