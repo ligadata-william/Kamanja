@@ -141,7 +141,6 @@ cp $ivyPath/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.6.jar $systemlib
 cp $ivyPath/cache/org.apache.camel/camel-core/bundles/camel-core-2.9.2.jar $systemlib
 cp $ivyPath/cache/com.pyruby/java-stub-server/jars/java-stub-server-0.12-sources.jar $systemlib
 cp $ivyPath/cache/com.esotericsoftware.reflectasm/reflectasm/jars/reflectasm-1.07-shaded.jar $systemlib
-cp $ivyPath/cache/tomcat/jasper-runtime/jars/jasper-runtime-5.5.23.jar $systemlib
 cp $ivyPath/cache/org.scalatest/scalatest_2.10/bundles/scalatest_2.10-2.2.0.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-can/bundles/spray-can-1.3.1.jar $systemlib
 cp $ivyPath/cache/commons-httpclient/commons-httpclient/jars/commons-httpclient-3.1.jar $systemlib
@@ -209,7 +208,6 @@ cp $ivyPath/cache/org.apache.commons/commons-compress/jars/commons-compress-1.4.
 cp $ivyPath/cache/commons-beanutils/commons-beanutils/jars/commons-beanutils-1.7.0.jar $systemlib
 cp $ivyPath/cache/org.apache.avro/avro/jars/avro-1.7.4.jar $systemlib
 cp $ivyPath/cache/ch.qos.logback/logback-core/jars/logback-core-1.0.13.jar $systemlib
-cp $ivyPath/cache/commons-el/commons-el/jars/commons-el-1.0.jar $systemlib
 cp $ivyPath/cache/commons-configuration/commons-configuration/jars/commons-configuration-1.7.jar $systemlib
 cp $ivyPath/cache/commons-beanutils/commons-beanutils-core/jars/commons-beanutils-core-1.8.0.jar $systemlib
 cp $ivyPath/cache/com.jcraft/jsch/jars/jsch-0.1.42.jar $systemlib
@@ -217,7 +215,6 @@ cp $ivyPath/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.6.4.jar $systemlib
 cp $ivyPath/cache/com.google.code.gson/gson/jars/gson-2.3.1.jar $systemlib
 cp $ivyPath/cache/org.scalamacros/quasiquotes_2.10.4/jars/quasiquotes_2.10.4-2.0.0-M6.jar $systemlib
 cp $ivyPath/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar $systemlib
-cp $ivyPath/cache/org.cloudera.htrace/htrace-core/jars/htrace-core-2.04.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-util/bundles/spray-util-1.3.1.jar $systemlib
 cp $srcPath/Utils/Security/SimpleApacheShiroAdapter/target/scala-2.10/simpleapacheshiroadapter_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.wmq.common.jar $systemlib
@@ -274,7 +271,6 @@ cp $ivyPath/cache/io.spray/spray-io/bundles/spray-io-1.3.1.jar $systemlib
 cp $ivyPath/cache/commons-io/commons-io/jars/commons-io-2.4.jar $systemlib
 cp $srcPath/Pmml/MethodExtractor/target/scala-2.10/methodextractor_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/net.sf.jopt-simple/jopt-simple/jars/jopt-simple-3.2.jar $systemlib
-cp $ivyPath/cache/commons-logging/commons-logging/jars/commons-logging-1.1.3.jar $systemlib
 cp $ivyPath/cache/com.github.stephenc.findbugs/findbugs-annotations/jars/findbugs-annotations-1.3.9-1.jar $systemlib
 cp $srcPath/Utils/SimpleKafkaProducer/target/scala-2.10/simplekafkaproducer_2.10-0.1.0.jar $systemlib
 cp $ivyPath/cache/commons-cli/commons-cli/jars/commons-cli-1.2.jar $systemlib
@@ -289,7 +285,6 @@ cp $ivyPath/cache/com.fasterxml.jackson.core/jackson-core/bundles/jackson-core-2
 cp $ivyPath/cache/commons-lang/commons-lang/jars/commons-lang-2.6.jar $systemlib
 cp $ivyPath/cache/commons-digester/commons-digester/jars/commons-digester-1.8.1.jar $systemlib
 cp $ivyPath/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.10.jar $systemlib
-cp $ivyPath/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.23.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.ref.jar $systemlib
 cp $srcPath/Pmml/PmmlCompiler/target/scala-2.10/pmmlcompiler_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.10.4.jar $systemlib
@@ -300,7 +295,6 @@ cp $ivyPath/cache/commons-pool/commons-pool/jars/commons-pool-1.6.jar $systemlib
 cp $ivyPath/cache/org.codehaus.jettison/jettison/bundles/jettison-1.1.jar $systemlib
 cp $srcPath/Metadata/target/scala-2.10/metadata_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/target/scala-2.10/ibmmqsimpleinputoutputadapters_2.10-1.0.jar $systemlib
-cp $ivyPath/cache/org.codehaus.jackson/jackson-mapper-asl/jars/jackson-mapper-asl-1.8.8.jar $systemlib
 cp $srcPath/Utils/NodeInfoExtract/target/scala-2.10/nodeinfoextract_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.hbase/hbase-common/jars/hbase-common-1.0.2.jar $systemlib
 cp $ivyPath/cache/com.datastax.cassandra/cassandra-driver-core/bundles/cassandra-driver-core-2.1.2.jar $systemlib
