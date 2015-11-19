@@ -257,7 +257,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       return
     } catch {
       case e: Exception => {
-        logger.info("Namespace " + nameSpace + " doesn't exist, create it")
+        logger.info("Namespace " + nameSpace + " may not be existing, create it. Message:" + e.getMessage + ", Cause:" + e.getCause)
       }
     }
     try {
@@ -265,7 +265,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:" + stackTrace)
+        logger.error("Failed to create namespace. StackTrace:" + stackTrace)
         throw new ConnectionFailedException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage())
       }
     }
@@ -274,7 +274,17 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
   private def createTable(tableName: String): Unit = {
     relogin
     val admin = new HBaseAdmin(config);
-    if (!admin.tableExists(tableName)) {
+    var tableExists = false
+    try {
+      tableExists = admin.tableExists(tableName)
+    } catch {
+      case e: Exception => {
+        logger.info("Table " + tableName + " may not be existing. Message:" + e.getMessage + ", Cause:" + e.getCause)
+        // If we get execption we are treating the table does not exists 
+      }
+    }
+
+    if (!tableExists) {
       val tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
       val colDesc1 = new HColumnDescriptor("key".getBytes())
       val colDesc2 = new HColumnDescriptor("value".getBytes())
@@ -282,7 +292,15 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       // colDesc2.setMobThreshold(102400L);
       tableDesc.addFamily(colDesc1)
       tableDesc.addFamily(colDesc2)
-      admin.createTable(tableDesc);
+      try {
+        admin.createTable(tableDesc);
+      } catch {
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to create table. StackTrace:" + stackTrace)
+          throw e
+        }
+      }
     }
   }
 
