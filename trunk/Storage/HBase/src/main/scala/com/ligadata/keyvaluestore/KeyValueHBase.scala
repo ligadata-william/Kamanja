@@ -215,7 +215,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
     }
   }
 
-  val valOfTbl = TableName.valueOf(tableName)
+  val valOfTbl = TableName.valueOf(table)
   val params = new BufferedMutatorParams(valOfTbl).listener(listener);
 
   val valBytes = Bytes.toBytes("value")
