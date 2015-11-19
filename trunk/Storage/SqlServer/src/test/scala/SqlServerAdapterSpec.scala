@@ -38,9 +38,10 @@ import com.ligadata.Utils.{ KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.StorageBase.StorageAdapterObj
 import com.ligadata.keyvaluestore.SqlServerAdapter
 
+import com.ligadata.Exceptions._
+
 case class Customer(name:String, address: String, homePhone: String)
 
-@Ignore
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -54,7 +55,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
   // set the timezone to UTC for all time values
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
+  var containerName = ""
   private val kvManagerLoader = new KamanjaLoaderInfo
 
   override def beforeAll = {
@@ -64,11 +65,16 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       serializer = SerializerManager.GetSerializer("kryo")
       logger.info("Initialize SqlServerAdapter")
       val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/java_examples/sqljdbc_4.0/enu","jdbcJar":"sqljdbc4.jar"}"""
+      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
       adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
    }
     catch {
-      case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
+      case e: StorageConnectionException => {
+	logger.error("%s: Message:%s".format(e.getMessage,e.cause.getMessage))
+      }
+      case e: Exception =>  {
+	logger.error("Failed to connect: Message:%s".format(e.getMessage))
+      }
     }
   }
 
@@ -118,7 +124,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
     // validate property setup
     it ("Validate api operations") {
-      val containerName = "sys.customer1"
+      containerName = "sys.customer1"
 
       And("Test drop container")
       noException should be thrownBy {
@@ -133,6 +139,19 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	containers = containers :+ containerName
 	adapter.CreateContainer(containers)
       }
+
+      And("Test create container with invalid name")
+      containerName = "&&"
+      var ex = the [com.ligadata.Exceptions.StorageDDLException] thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ containerName
+	adapter.CreateContainer(containers)
+      }
+      val stackTrace = StackTrace.ThrowableTraceString(ex.cause)
+      logger.info("StackTrace:"+stackTrace)
+
+      And("Resume API Testing")
+      containerName = "sys.customer1"
 
       And("Test Put api")
       var keys = new Array[Key](0) // to be used by a delete operation later on

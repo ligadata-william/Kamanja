@@ -68,3 +68,8 @@ case class KVMessageFormatingException(e: String) extends Exception(e)
 case class FatalAdapterException(e: String) extends Exception(e)
 
 case class CleanUtilException(message: String) extends Exception(message)
+
+case class StorageConnectionException(msg: String, cause: Throwable ) extends Exception(msg)
+case class StorageFetchException(msg: String, cause: Throwable ) extends Exception(msg)
+case class StorageDMLException(msg: String, cause: Throwable ) extends Exception(msg)
+case class StorageDDLException(msg: String, cause: Throwable ) extends Exception(msg)
