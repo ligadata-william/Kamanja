@@ -36,53 +36,166 @@ import com.ligadata.Exceptions.StackTrace
 class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey) {
   val LOG = Logger.getLogger(getClass);
   var cntr: Long = 0
+  var mdlsChangedCntr: Long = -1
+  var outputGen = new OutputMsgGenerator()
+  var models = Array[(String, MdlInfo, Boolean, ModelBase, Boolean)]() // ModelName, ModelInfo, IsModelInstanceReusable, Global ModelBase if the model is IsModelInstanceReusable == true. The last boolean is to check whether we tested message type or not (thi is to check Reusable flag)  
+  var validateMsgsForMdls = scala.collection.mutable.Set[String]() // Message Names for creating models instances   
 
-  private def RunAllModels(transId: Long, inputData: Array[Byte], finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
+  private def RunAllModels(transId: Long, inputData: Array[Byte], finalTopMsgOrContainer: MessageContainerBase, txnCtxt: TransactionContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
     var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
+    val partHashCd = uk.hashCode()
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
-      val tmpMdls = KamanjaMetadata.getAllModels
-      val models = if (tmpMdls != null) tmpMdls.map(mdl => mdl._2).toArray else Array[MdlInfo]()
+      val mdlCtxt = new ModelContext(txnCtxt, finalTopMsgOrContainer, inputData, uk)
+      ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
+      try {
+        val mdlChngCntr = KamanjaMetadata.GetModelsChangedCounter
+        val msgFullName = finalTopMsgOrContainer.FullName.toLowerCase()
+        if (mdlChngCntr != mdlsChangedCntr) {
+          LOG.info("Refreshing models for Partition:%s (hashCode:%d) from %d to %d".format(uk, partHashCd, mdlsChangedCntr, mdlChngCntr))
+          val (tmpMdls, tMdlsChangedCntr) = KamanjaMetadata.getAllModels
+          val tModels = if (tmpMdls != null) tmpMdls else Array[(String, MdlInfo)]()
 
-      val outputAlways: Boolean = false;
+          val map = scala.collection.mutable.Map[String, (MdlInfo, Boolean, ModelBase, Boolean)]()
+          models.foreach(q => {
+            map(q._1) = ((q._2, q._3, q._4, q._5))
+          })
 
-      // Execute all modes here
-      models.foreach(md => {
-        try {
-          if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
-            LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.mdl.ModelName))
-            // Checking whether this message has any fields/concepts to execute in this model
-            val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer, inputData, uk)
-            ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
-            val curMd = md.mdl.CreateNewModel(mdlCtxt)
-            if (curMd != null) {
-              val res = curMd.execute(outputAlways)
-              if (res != null) {
-                results += new SavedMdlResult().withMdlName(md.mdl.ModelName).withMdlVersion(md.mdl.Version).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
+          var newModels = ArrayBuffer[(String, MdlInfo, Boolean, ModelBase, Boolean)]()
+          var newMdlsSet = scala.collection.mutable.Set[String]()
+
+          tModels.foreach(tup => {
+            val md = tup._2
+            val mInfo = map.getOrElse(tup._1, null)
+            var newInfo: (String, MdlInfo, Boolean, ModelBase, Boolean) = null
+            if (mInfo != null) {
+              // Make sure previous model version is same as the current model version
+              if (md.mdl == mInfo._1.mdl && md.mdl.Version().equals(mInfo._1.mdl.Version())) {
+                newInfo = ((tup._1, mInfo._1, mInfo._2, mInfo._3, mInfo._4)) // Taking  previous record only if the same instance of the object exists
               } else {
-                // Nothing to output
+                // Shutdown previous entry, if exists
+                if (mInfo._2 && mInfo._3 != null) {
+                  mInfo._3.shutdown()
+                }
+                if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+                  val tInst = md.mdl.CreateNewModel(mdlCtxt)
+                  val isReusable = tInst.isModelInstanceReusable()
+                  var newInst: ModelBase = null
+                  if (isReusable) {
+                    newInst = tInst
+                    newInst.init(partHashCd)
+                  }
+                  newInfo = ((tup._1, md, isReusable, newInst, true))
+                } else {
+                  newInfo = ((tup._1, md, false, null, false))
+                }
               }
             } else {
-              LOG.error("Failed to create model " + md.mdl.ModelName())
+              if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+                var newInst: ModelBase = null
+                val tInst = md.mdl.CreateNewModel(mdlCtxt)
+                val isReusable = tInst.isModelInstanceReusable()
+                if (isReusable) {
+                  newInst = tInst
+                  newInst.init(partHashCd)
+                }
+                newInfo = ((tup._1, md, isReusable, newInst, true))
+              } else {
+                newInfo = ((tup._1, md, false, null, false))
+              }
             }
-          } else {
+            if (newInfo != null) {
+              newMdlsSet += tup._1
+              newModels += newInfo
+            }
+          })
+
+          // Make sure we did shutdown all the instances which are deleted
+          models.foreach(mInfo => {
+            if (newMdlsSet.contains(mInfo._1) == false) {
+              if (mInfo._3 && mInfo._4 != null)
+                mInfo._4.shutdown()
+            }
+          })
+
+          validateMsgsForMdls.clear()
+          models = newModels.toArray
+          mdlsChangedCntr = tMdlsChangedCntr
+          validateMsgsForMdls += msgFullName
+        } else if (validateMsgsForMdls.contains(msgFullName) == false) { // found new Msg
+          for (i <- 0 until models.size) {
+            val mInfo = models(i)
+            if (mInfo._5 == false && mInfo._2.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+              var newInst: ModelBase = null
+              val tInst = mInfo._2.mdl.CreateNewModel(mdlCtxt)
+              val isReusable = tInst.isModelInstanceReusable()
+              if (isReusable) {
+                newInst = tInst
+                newInst.init(partHashCd)
+              }
+              models(i) = ((mInfo._1, mInfo._2, isReusable, newInst, true))
+            }
           }
-        } catch {
-          case e: Exception => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:" + stackTrace)
-          }
-          case t: Throwable => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
-            val stackTrace = StackTrace.ThrowableTraceString(t)
-            LOG.error("StackTrace:" + stackTrace)
-          }
-        } finally {
-          ThreadLocalStorage.modelContextInfo.remove
+          validateMsgsForMdls += msgFullName
         }
-      })
+
+        val outputAlways: Boolean = false;
+
+        // Execute all modes here
+        models.foreach(q => {
+          val md = q._2
+          try {
+            if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+              LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.mdl.ModelName))
+              // Checking whether this message has any fields/concepts to execute in this model
+              val curMd = if (q._3) {
+                q._4.modelContext = mdlCtxt
+                q._4
+              } else {
+                val tInst = md.mdl.CreateNewModel(mdlCtxt)
+                tInst.init(partHashCd)
+                tInst
+              }
+              if (curMd != null) {
+                val res = curMd.execute(outputAlways)
+                if (res != null) {
+                  results += new SavedMdlResult().withMdlName(md.mdl.ModelName).withMdlVersion(md.mdl.Version).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
+                } else {
+                  // Nothing to output
+                }
+              } else {
+                LOG.error("Failed to create model " + md.mdl.ModelName())
+              }
+            } else {
+            }
+          } catch {
+            case e: Exception => {
+              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.error("StackTrace:" + stackTrace)
+            }
+            case t: Throwable => {
+              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
+              val stackTrace = StackTrace.ThrowableTraceString(t)
+              LOG.error("StackTrace:" + stackTrace)
+            }
+          }
+        })
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to execute models. Reason: " + e.getCause + ". Message: " + e.getMessage)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("StackTrace:" + stackTrace)
+        }
+        case t: Throwable => {
+          LOG.error("Failed to execute models. Reason: " + t.getCause + ". Message: " + t.getMessage)
+          val stackTrace = StackTrace.ThrowableTraceString(t)
+          LOG.error("StackTrace:" + stackTrace)
+        }
+      } finally {
+        ThreadLocalStorage.modelContextInfo.remove
+      }
     }
     return results.toArray
   }
@@ -94,7 +207,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
   }
 
   // Returns Adapter/Queue Name, Partition Key & Output String
-  def execute(transId: Long, inputData: Array[Byte], msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean, allOutputQueueNames: Array[String]): Array[(String, String, String)] = {
+  def execute(transId: Long, inputData: Array[Byte], msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, txnCtxt: TransactionContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean, allOutputQueueNames: Array[String]): Array[(String, String, String)] = {
     // LOG.debug("LE => " + msgData)
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
     val returnOutput = ArrayBuffer[(String, String, String)]() // Adapter/Queue name, PartitionKey & output message 
@@ -109,7 +222,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
         var msg: BaseMsg = null
         if (isValidPartitionKey && primaryKeyList != null) {
-          val fndmsg = envContext.getObject(transId, msgType, partKeyDataList, primaryKeyList)
+          val fndmsg = txnCtxt.gCtx.getObject(transId, msgType, partKeyDataList, primaryKeyList)
           if (fndmsg != null) {
             msg = fndmsg.asInstanceOf[BaseMsg]
           }
@@ -122,14 +235,14 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
         msg.populate(inputdata)
         var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
-          envContext.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
-          allMdlsResults = envContext.getModelsResult(transId, partKeyDataList)
+          txnCtxt.gCtx.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
+          allMdlsResults = txnCtxt.gCtx.getModelsResult(transId, partKeyDataList)
         }
         if (allMdlsResults == null)
           allMdlsResults = scala.collection.mutable.Map[String, SavedMdlResult]()
         // Run all models
         val mdlsStartTime = System.nanoTime
-        val results = RunAllModels(transId, inputData, msg, envContext, uk, uv, xformedMsgCntr, totalXformedMsgs)
+        val results = RunAllModels(transId, inputData, msg, txnCtxt, uk, uv, xformedMsgCntr, totalXformedMsgs)
         LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
         if (results.size > 0) {
@@ -159,7 +272,6 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           if (outputMsgs != None && outputMsgs != null && outputMsgs.get.size > 0) {
             LOG.info("msg " + msg.FullName)
             LOG.info(" outputMsgs.size" + outputMsgs.get.size)
-            var outputGen = new OutputMsgGenerator()
             val resultedoutput = outputGen.generateOutputMsg(msg, resMap, outputMsgs.get.toArray)
             returnOutput ++= resultedoutput.map(resout => (resout._1, resout._2.mkString(","), resout._3))
           } else {
@@ -169,7 +281,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           }
 
           if (isValidPartitionKey) {
-            envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
+            txnCtxt.gCtx.saveModelsResult(transId, partKeyDataList, allMdlsResults)
           }
         }
       } else {
