@@ -124,7 +124,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
         // Run all models
         val mdlsStartTime = System.nanoTime
         val results = RunAllModels(transId, msg, envContext, uk, uv, xformedMsgCntr, totalXformedMsgs)
-        LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
+        LOG.info(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
         if (results.size > 0) {
           var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
