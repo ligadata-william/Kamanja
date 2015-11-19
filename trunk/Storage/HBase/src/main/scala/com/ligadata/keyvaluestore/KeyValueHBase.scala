@@ -295,6 +295,9 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       try {
         admin.createTable(tableDesc);
       } catch {
+        case e: TableExistsException => {
+          // Table already exists.
+        }
         case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
           logger.error("Failed to create table. StackTrace:" + stackTrace)
