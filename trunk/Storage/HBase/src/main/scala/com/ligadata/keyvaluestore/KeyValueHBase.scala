@@ -256,6 +256,9 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       val nsd = admin.getNamespaceDescriptor(nameSpace)
       return
     } catch {
+      case e: NamespaceNotFoundException => {
+        logger.info("Namespace " + nameSpace + " does not exist, create it.")
+      }
       case e: Exception => {
         logger.info("Namespace " + nameSpace + " may not be existing, create it. Message:" + e.getMessage + ", Cause:" + e.getCause)
       }
