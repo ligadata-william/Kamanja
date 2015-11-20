@@ -36,7 +36,6 @@ import java.sql.{ Driver, DriverPropertyInfo, SQLException }
 import java.sql.Timestamp
 import java.util.Properties
 import org.apache.commons.dbcp2.BasicDataSource
-//import com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource
 
 class JdbcClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   override def addURL(url: URL) {
@@ -218,6 +217,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   var maxWaitMillis = 10000
   if (parsed_json.contains("maxWaitMillis")) {
     maxWaitMillis = parsed_json.get("maxWaitMillis").get.toString.trim.toInt
+  }
+
+  // some misc optional parameters
+  var clusteredIndex = "NO"
+  if (parsed_json.contains("clusteredIndex")) {
+    clusteredIndex = parsed_json.get("clusteredIndex").get.toString.trim
   }
 
   logger.info("hostname => " + hostname)
@@ -423,6 +428,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try {
       CheckTableExists(containerName)
       con = dataSource.getConnection
+      con.setAutoCommit(false)
       // put is sematically an upsert. An upsert is implemented using a merge
       // statement in sqlserver
       // Ideally a merge should be implemented as stored procedure
@@ -447,10 +453,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       pstmt.setString(5, value.serializerType)
       pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
       pstmt.executeUpdate();
+      con.setAutoCommit(true)
     } catch {
       case e: Exception => {
         if (con != null)
           con.rollback()
+        logger.info("Failed to save an object in the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage())
         throw CreateDMLException("Failed to save an object in the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -531,6 +539,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
+	logger.info("Throw connection exception")
         if (con != null)
           con.rollback()
         throw CreateDMLException("Failed to save a batch of objects into the table :" + "sql => " + sql + ":" + e.getMessage(), e)
@@ -1163,12 +1172,19 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         stmt = con.createStatement()
         stmt.executeUpdate(query);
         stmt.close
-        var clustered_index_name = "ix_" + tableName
-        query = "create clustered index " + clustered_index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
+        var index_name = "ix_" + tableName
+	if( clusteredIndex.equalsIgnoreCase("YES") ){
+	  logger.info("Creating clustered index...")
+          query = "create clustered index " + index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
+	}
+	else{
+	  logger.info("Creating non-clustered index...")
+          query = "create index " + index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
+	}
         stmt = con.createStatement()
         stmt.executeUpdate(query);
         stmt.close
-        var index_name = "ix1_" + tableName
+        index_name = "ix1_" + tableName
         query = "create index " + index_name + " on " + fullTableName + "(bucketKey,transactionId,rowId)"
         stmt = con.createStatement()
         stmt.executeUpdate(query);

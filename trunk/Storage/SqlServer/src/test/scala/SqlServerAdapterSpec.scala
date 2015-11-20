@@ -42,6 +42,7 @@ import com.ligadata.Exceptions._
 
 case class Customer(name:String, address: String, homePhone: String)
 
+@Ignore
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -64,8 +65,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 
       serializer = SerializerManager.GetSerializer("kryo")
       logger.info("Initialize SqlServerAdapter")
-      val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
+      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar","clusteredIndex":"YES"}"""
       adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
    }
     catch {
@@ -147,17 +147,41 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	containers = containers :+ containerName
 	adapter.CreateContainer(containers)
       }
-      val stackTrace = StackTrace.ThrowableTraceString(ex.cause)
+      var stackTrace = StackTrace.ThrowableTraceString(ex.cause)
       logger.info("StackTrace:"+stackTrace)
 
       And("Resume API Testing")
       containerName = "sys.customer1"
+      
+      And("Test Put api throwing DML Exception")
+      var ex1 = the [com.ligadata.Exceptions.StorageDMLException] thrownBy {
+	var keys = new Array[Key](0) // to be used by a delete operation later on
+	var currentTime = new Date()
+	var keyArray = new Array[String](0)
+	// pick a bucketKey values longer than 1024 characters
+	var custName = "customerxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	keyArray = keyArray :+ custName
+	var key = new Key(currentTime.getTime(),keyArray,1,1)
+	var custAddress = "1000"  + ",Main St, Redmond WA 98052"
+	var custNumber = "4256667777"
+	var obj = new Customer(custName,custAddress,custNumber)
+	var v = serializer.SerializeObjectToByteArray(obj)
+	var value = new Value("kryo",v)
+	adapter.put(containerName,key,value)
+      }
+      stackTrace = StackTrace.ThrowableTraceString(ex1.cause)
+      logger.info("StackTrace:"+stackTrace)
+
+      val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
+
+      And("Make sure rollback happened by doing a row count")
+      var cnt = sqlServerAdapter.getRowCount(containerName,null)
+      assert(cnt == 0)
 
       And("Test Put api")
       var keys = new Array[Key](0) // to be used by a delete operation later on
       for( i <- 1 to 10 ){
 	var currentTime = new Date()
-	//var currentTime = null
 	var keyArray = new Array[String](0)
 	var custName = "customer-" + i
 	keyArray = keyArray :+ custName
@@ -178,10 +202,9 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	adapter.get(containerName,readCallBack _)
       }
 
-      val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
 
       And("Check the row count after adding a bunch")
-      var cnt = sqlServerAdapter.getRowCount(containerName,null)
+      cnt = sqlServerAdapter.getRowCount(containerName,null)
       assert(cnt == 10)
 
       And("Get all the keys for the rows that were just added")

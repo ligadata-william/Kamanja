@@ -54,7 +54,7 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
   val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
   // set the timezone to UTC for all time values
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-  val jarPaths = "/media/home2/installKamanja2/lib/system,/media/home2/installKamanja2/lib/application"
+  
   val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
   private val kvManagerLoader = new KamanjaLoaderInfo
   private val maxConnectionAttempts = 10;
@@ -144,10 +144,10 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
   }
 
-  describe("Unit Tests for all sqlserveradapter operations") {
+  describe("Load Tests for sqlserver adapter") {
 
     // validate property setup
-    it("Validate api operations") {
+    it("Load test api operations") {
       val containerName = "sys.customer1"
 
       And("Test drop container")
@@ -189,10 +189,19 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
         }
         var dataList = new Array[(String, Array[(Key, Value)])](0)
         dataList = dataList :+ (containerName, keyValueList)
-        noException should be thrownBy {
-          adapter.put(dataList)
-        }
-        logger.info(GetCurDtTmStr + ": Loaded " + batch * 1000 + " objects ")
+        //noException should be thrownBy {
+        //
+        //}
+	try{
+	  adapter.put(dataList)
+          logger.info(GetCurDtTmStr + ": Loaded " + batch * 1000 + " objects ")
+	}
+	catch{
+	  case e: Exception => {
+	    val stackTrace = StackTrace.ThrowableTraceString(e)
+	    logger.info("StackTrace:"+stackTrace)
+	  }
+	}
       }
 
       val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]
