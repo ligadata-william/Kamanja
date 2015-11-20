@@ -413,13 +413,25 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private[this] val _buckets = 257 // Prime number
+  private[this] val _parallelBuciets = 11 // Prime number
 
   private[this] val _locks = new Array[Object](_buckets)
 
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
   private[this] val _txnContexts = new Array[scala.collection.mutable.Map[Long, TransactionContext]](_buckets)
-  private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
-  private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
+
+  private[this] val _modelsRsltBuckets = new Array[scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]](_parallelBuciets)
+  private[this] val _modelsRsltBktlocks = new Array[ReentrantReadWriteLock](_parallelBuciets)
+
+  private[this] val _adapterUniqKeyValBuckets = new Array[scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]](_parallelBuciets)
+  private[this] val _adapterUniqKeyValBktlocks = new Array[ReentrantReadWriteLock](_parallelBuciets)
+
+  for (i <- 0 until _parallelBuciets) {
+    _modelsRsltBuckets(i) = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
+    _modelsRsltBktlocks(i) = new ReentrantReadWriteLock(true);
+    _adapterUniqKeyValBuckets(i) = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
+    _adapterUniqKeyValBktlocks(i) = new ReentrantReadWriteLock(true);
+  }
 
   private[this] var _serInfoBufBytes = 32
 
@@ -867,6 +879,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return localGetAllKeyValues(transId, containerName)
   }
 
+  private def getParallelBucketIdx(key: String): Int = {
+    if (key == null) return 0
+    return (key.hashCode() % _parallelBuciets)
+  }
+
   private def localGetAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)]) = {
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
@@ -874,7 +891,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       if (v != null) return v
     }
 
-    val v = _adapterUniqKeyValData.getOrElse(key, null)
+    var v: (Long, String, List[(String, String)]) = null
+
+    val bktIdx = getParallelBucketIdx(key)
+
+    _adapterUniqKeyValBktlocks(bktIdx).readLock().lock()
+    try {
+      v = _adapterUniqKeyValBuckets(bktIdx).getOrElse(key, null)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    } finally {
+      _adapterUniqKeyValBktlocks(bktIdx).readLock().unlock()
+    }
+
     if (v != null) return v
     val partKeyStr = KamanjaData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)
     var objs = new Array[(Long, String, List[(String, String)])](1)
@@ -890,8 +921,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      _adapterUniqKeyValData.synchronized {
-        _adapterUniqKeyValData(key) = objs(0)
+      _adapterUniqKeyValBktlocks(bktIdx).writeLock().lock()
+      try {
+        _adapterUniqKeyValBuckets(bktIdx)(key) = objs(0)
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _adapterUniqKeyValBktlocks(bktIdx).writeLock().unlock()
       }
     }
     return objs(0)
@@ -905,7 +943,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     val keystr = InMemoryKeyDataInJson(key)
-    val v = _modelsResult.getOrElse(keystr, null)
+
+    val bktIdx = getParallelBucketIdx(keystr)
+    var v: scala.collection.mutable.Map[String, SavedMdlResult] = null
+
+    _modelsRsltBktlocks(bktIdx).readLock().lock()
+    try {
+      v = _modelsRsltBuckets(bktIdx).getOrElse(keystr, null)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    } finally {
+      _modelsRsltBktlocks(bktIdx).readLock().unlock()
+    }
+
     if (v != null) return v
     var objs = new Array[scala.collection.mutable.Map[String, SavedMdlResult]](1)
     val buildMdlOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
@@ -919,8 +971,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      _modelsResult.synchronized {
-        _modelsResult(keystr) = objs(0)
+      _modelsRsltBktlocks(bktIdx).writeLock().lock()
+      try {
+        _modelsRsltBuckets(bktIdx)(keystr) = objs(0)
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _modelsRsltBktlocks(bktIdx).writeLock().unlock()
       }
       return objs(0)
     }
@@ -1130,7 +1189,36 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   //BUGBUG:: May be we need to lock before we do anything here
   override def Shutdown: Unit = {
-    _adapterUniqKeyValData.clear
+    if (_modelsRsltBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _modelsRsltBktlocks(i).writeLock().lock()
+        try {
+          _modelsRsltBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _modelsRsltBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
+
+    if (_adapterUniqKeyValBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _adapterUniqKeyValBktlocks(i).writeLock().lock()
+        try {
+          _adapterUniqKeyValBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _adapterUniqKeyValBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
+
     if (_allDataDataStore != null)
       _allDataDataStore.Shutdown
     _allDataDataStore = null
@@ -1407,7 +1495,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     })
 
     adapterUniqKeyValData.foreach(v1 => {
-      _adapterUniqKeyValData(v1._1) = v1._2
+      val bktIdx = getParallelBucketIdx(v1._1)
+      _adapterUniqKeyValBktlocks(bktIdx).writeLock().lock()
+      try {
+        _adapterUniqKeyValBuckets(bktIdx)(v1._1) = v1._2
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _adapterUniqKeyValBktlocks(bktIdx).writeLock().unlock()
+      }
       try {
         object obj extends IStorage {
           val k = makeKey(KamanjaData.PrepareKey("AdapterUniqKvData", List(v1._1), 0, 0))
@@ -1433,7 +1531,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     })
 
     modelsResult.foreach(v1 => {
-      _modelsResult(v1._1) = v1._2
+      val bktIdx = getParallelBucketIdx(v1._1)
+      _modelsRsltBktlocks(bktIdx).writeLock().lock()
+      try {
+        _modelsRsltBuckets(bktIdx)(v1._1) = v1._2
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _modelsRsltBktlocks(bktIdx).writeLock().unlock()
+      }
       try {
         val serVal = _kryoSer.SerializeObjectToByteArray(v1._2)
         object obj extends IStorage {
@@ -1547,9 +1655,35 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     })
 
-    _adapterUniqKeyValData.clear
+    if (_modelsRsltBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _modelsRsltBktlocks(i).writeLock().lock()
+        try {
+          _modelsRsltBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _modelsRsltBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
 
-    _modelsResult.clear
+    if (_adapterUniqKeyValBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _adapterUniqKeyValBktlocks(i).writeLock().lock()
+        try {
+          _adapterUniqKeyValBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _adapterUniqKeyValBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
   }
 
   // Clear Intermediate results After updating them on different node or different component (like KVInit), etc
