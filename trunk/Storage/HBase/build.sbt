@@ -6,11 +6,11 @@ scalaVersion := "2.10.4"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-libraryDependencies += "org.apache.hbase" % "hbase-client" % "0.98.4-hadoop2"
+libraryDependencies += "org.apache.hbase" % "hbase-client" % "1.0.2"
 
-libraryDependencies += "org.apache.hbase" % "hbase-common" % "0.98.4-hadoop2"
+libraryDependencies += "org.apache.hbase" % "hbase-common" % "1.0.2"
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.4.1"
+libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.7.1"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.0" % "test"
 

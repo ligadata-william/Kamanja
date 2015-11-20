@@ -34,6 +34,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions.StackTrace
 import com.ligadata.KamanjaData.{ KamanjaData }
 import com.ligadata.keyvaluestore.KeyValueManager
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 case class InMemoryKeyData(K: List[String])
@@ -78,6 +79,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var reload: Boolean = false
     var isContainer: Boolean = false
     var objFullName: String = ""
+    val reent_lock = new ReentrantReadWriteLock(true);
   }
 
   object TxnContextCommonFunctions {
@@ -126,19 +128,28 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       //BUGBUG:: tmRange is not yet handled
       //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
       if (container != null) {
-        if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
-          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-          if (kamanjaData != null)
-            return getRecentFromKamanjaData(kamanjaData._2, tmRange, f)
-        } else {
-          val dataAsArr = container.data.toArray
-          var idx = dataAsArr.size - 1
-          while (idx >= 0) {
-            val (v, foundPartKey) = getRecentFromKamanjaData(dataAsArr(idx)._2._2, tmRange, f)
-            if (foundPartKey)
-              return (v, foundPartKey)
-            idx = idx - 1
+        container.reent_lock.readLock().lock()
+        try {
+          if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
+            val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+            if (kamanjaData != null)
+              return getRecentFromKamanjaData(kamanjaData._2, tmRange, f)
+          } else {
+            val dataAsArr = container.data.toArray
+            var idx = dataAsArr.size - 1
+            while (idx >= 0) {
+              val (v, foundPartKey) = getRecentFromKamanjaData(dataAsArr(idx)._2._2, tmRange, f)
+              if (foundPartKey)
+                return (v, foundPartKey)
+              idx = idx - 1
+            }
           }
+        } catch {
+          case e: Exception => {
+            throw e
+          }
+        } finally {
+          container.reent_lock.readLock().unlock()
         }
       }
       (null, false)
@@ -172,20 +183,30 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val retResult = ArrayBuffer[MessageContainerBase]()
       var foundPartKeys = ArrayBuffer[List[String]]()
       if (container != null) {
-        if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
-          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-          if (kamanjaData != null && IsKeyExists(alreadyFoundPartKeys, kamanjaData._2.GetKey.toList) == false) {
-            retResult ++= getRddDataFromKamanjaData(kamanjaData._2, tmRange, f)
-            foundPartKeys += partKey
-          }
-        } else {
-          container.data.foreach(kv => {
-            val k = kv._2._2.GetKey.toList
-            if (IsKeyExists(alreadyFoundPartKeys, k) == false) {
-              retResult ++= getRddDataFromKamanjaData(kv._2._2, tmRange, f)
-              foundPartKeys += k.toList
+        container.reent_lock.readLock().lock()
+        try {
+          if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
+            var kamanjaData: (Boolean, KamanjaData) = null
+            kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+            if (kamanjaData != null && IsKeyExists(alreadyFoundPartKeys, kamanjaData._2.GetKey.toList) == false) {
+              retResult ++= getRddDataFromKamanjaData(kamanjaData._2, tmRange, f)
+              foundPartKeys += partKey
             }
-          })
+          } else {
+            container.data.foreach(kv => {
+              val k = kv._2._2.GetKey.toList
+              if (IsKeyExists(alreadyFoundPartKeys, k) == false) {
+                retResult ++= getRddDataFromKamanjaData(kv._2._2, tmRange, f)
+                foundPartKeys += k.toList
+              }
+            })
+          }
+        } catch {
+          case e: Exception => {
+            throw e
+          }
+        } finally {
+          container.reent_lock.readLock().unlock()
         }
       }
       (retResult.toArray, foundPartKeys.toArray)
@@ -392,13 +413,25 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private[this] val _buckets = 257 // Prime number
+  private[this] val _parallelBuciets = 11 // Prime number
 
   private[this] val _locks = new Array[Object](_buckets)
 
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
   private[this] val _txnContexts = new Array[scala.collection.mutable.Map[Long, TransactionContext]](_buckets)
-  private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
-  private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
+
+  private[this] val _modelsRsltBuckets = new Array[scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]](_parallelBuciets)
+  private[this] val _modelsRsltBktlocks = new Array[ReentrantReadWriteLock](_parallelBuciets)
+
+  private[this] val _adapterUniqKeyValBuckets = new Array[scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]](_parallelBuciets)
+  private[this] val _adapterUniqKeyValBktlocks = new Array[ReentrantReadWriteLock](_parallelBuciets)
+
+  for (i <- 0 until _parallelBuciets) {
+    _modelsRsltBuckets(i) = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
+    _modelsRsltBktlocks(i) = new ReentrantReadWriteLock(true);
+    _adapterUniqKeyValBuckets(i) = scala.collection.mutable.Map[String, (Long, String, List[(String, String)])]()
+    _adapterUniqKeyValBktlocks(i) = new ReentrantReadWriteLock(true);
+  }
 
   private[this] var _serInfoBufBytes = 32
 
@@ -463,37 +496,44 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val buildOne = (tupleBytes: Value) => {
       buildObject(tupleBytes, objs, msgOrCont.containerType)
     }
-    keys.foreach(key => {
-      try {
-        val StartDateRange = if (key.D.size == 2) key.D(0) else 0
-        val EndDateRange = if (key.D.size == 2) key.D(1) else 0
-        _allDataDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
-        msgOrCont.synchronized {
+    msgOrCont.reent_lock.writeLock().lock()
+    try {
+      keys.foreach(key => {
+        try {
+          val StartDateRange = if (key.D.size == 2) key.D(0) else 0
+          val EndDateRange = if (key.D.size == 2) key.D(1) else 0
+          _allDataDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
           msgOrCont.data(InMemoryKeyDataInJson(key.K)) = (false, objs(0))
-        }
-      } catch {
-        case e: ClassNotFoundException => {
+        } catch {
+          case e: ClassNotFoundException => {
 
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          notFoundKeys += 1
-        }
-        case e: KeyNotFoundException => {
+            logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
+            notFoundKeys += 1
+          }
+          case e: KeyNotFoundException => {
 
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          notFoundKeys += 1
-        }
-        case e: Exception => {
+            logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
+            notFoundKeys += 1
+          }
+          case e: Exception => {
 
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          notFoundKeys += 1
-        }
-        case ooh: Throwable => {
+            logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
+            notFoundKeys += 1
+          }
+          case ooh: Throwable => {
 
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${ooh.getCause}, Message:${ooh.getMessage}")
-          throw ooh
+            logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${ooh.getCause}, Message:${ooh.getMessage}")
+            throw ooh
+          }
         }
+      })
+    } catch {
+      case e: Exception => {
+        throw e
       }
-    })
+    } finally {
+      msgOrCont.reent_lock.writeLock().unlock()
+    }
 
     if (notFoundKeys > 0) {
       logger.error("Not found some keys to load")
@@ -686,9 +726,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      val lockObj = if (msgOrCont.loadedAll) msgOrCont else _locks(lockIdx(transId))
-      lockObj.synchronized {
+      msgOrCont.reent_lock.writeLock().lock()
+      try {
         msgOrCont.data(InMemoryKeyDataInJson(key)) = (false, objs(0))
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        msgOrCont.reent_lock.writeLock().unlock()
       }
     }
     return objs(0)
@@ -709,7 +755,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val partKeyStr = InMemoryKeyDataInJson(partKey)
-      val kamanjaData = container.data.getOrElse(partKeyStr, null)
+      var kamanjaData: (Boolean, KamanjaData) = null
+      container.reent_lock.readLock().lock()
+      try {
+        kamanjaData = container.data.getOrElse(partKeyStr, null)
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        container.reent_lock.readLock().unlock()
+      }
       if (kamanjaData != null) {
         // Search for primary key match
         val v = kamanjaData._2.GetMessageContainerBase(primaryKey.toArray, false)
@@ -752,7 +808,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val partKeyStr = InMemoryKeyDataInJson(partKey)
-      val kamanjaData = container.data.getOrElse(partKeyStr, null)
+      var kamanjaData: (Boolean, KamanjaData) = null
+      container.reent_lock.readLock().lock()
+      try {
+        kamanjaData = container.data.getOrElse(partKeyStr, null)
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        container.reent_lock.readLock().unlock()
+      }
       if (kamanjaData != null) {
         // Search for primary key match
         if (txnCtxt != null)
@@ -785,9 +851,18 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (fnd != null) {
       if (fnd.loadedAll) {
         var allObjs = ArrayBuffer[MessageContainerBase]()
-        fnd.data.foreach(kv => {
-          allObjs ++= kv._2._2.GetAllData
-        })
+        fnd.reent_lock.readLock().lock()
+        try {
+          fnd.data.foreach(kv => {
+            allObjs ++= kv._2._2.GetAllData
+          })
+        } catch {
+          case e: Exception => {
+            throw e
+          }
+        } finally {
+          fnd.reent_lock.readLock().unlock()
+        }
         val txnCtxt = getTransactionContext(transId, false)
         if (txnCtxt != null)
           allObjs ++= txnCtxt.getAllObjects(containerName)
@@ -804,6 +879,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return localGetAllKeyValues(transId, containerName)
   }
 
+  private def getParallelBucketIdx(key: String): Int = {
+    if (key == null) return 0
+    return (math.abs(key.hashCode()) % _parallelBuciets)
+  }
+
   private def localGetAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)]) = {
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
@@ -811,7 +891,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       if (v != null) return v
     }
 
-    val v = _adapterUniqKeyValData.getOrElse(key, null)
+    var v: (Long, String, List[(String, String)]) = null
+
+    val bktIdx = getParallelBucketIdx(key)
+
+    _adapterUniqKeyValBktlocks(bktIdx).readLock().lock()
+    try {
+      v = _adapterUniqKeyValBuckets(bktIdx).getOrElse(key, null)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    } finally {
+      _adapterUniqKeyValBktlocks(bktIdx).readLock().unlock()
+    }
+
     if (v != null) return v
     val partKeyStr = KamanjaData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)
     var objs = new Array[(Long, String, List[(String, String)])](1)
@@ -827,8 +921,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      _adapterUniqKeyValData.synchronized {
-        _adapterUniqKeyValData(key) = objs(0)
+      _adapterUniqKeyValBktlocks(bktIdx).writeLock().lock()
+      try {
+        _adapterUniqKeyValBuckets(bktIdx)(key) = objs(0)
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _adapterUniqKeyValBktlocks(bktIdx).writeLock().unlock()
       }
     }
     return objs(0)
@@ -842,7 +943,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     val keystr = InMemoryKeyDataInJson(key)
-    val v = _modelsResult.getOrElse(keystr, null)
+
+    val bktIdx = getParallelBucketIdx(keystr)
+    var v: scala.collection.mutable.Map[String, SavedMdlResult] = null
+
+    _modelsRsltBktlocks(bktIdx).readLock().lock()
+    try {
+      v = _modelsRsltBuckets(bktIdx).getOrElse(keystr, null)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    } finally {
+      _modelsRsltBktlocks(bktIdx).readLock().unlock()
+    }
+
     if (v != null) return v
     var objs = new Array[scala.collection.mutable.Map[String, SavedMdlResult]](1)
     val buildMdlOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
@@ -856,8 +971,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      _modelsResult.synchronized {
-        _modelsResult(keystr) = objs(0)
+      _modelsRsltBktlocks(bktIdx).writeLock().lock()
+      try {
+        _modelsRsltBuckets(bktIdx)(keystr) = objs(0)
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _modelsRsltBktlocks(bktIdx).writeLock().unlock()
       }
       return objs(0)
     }
@@ -880,16 +1002,25 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     val reMainingForDb = ArrayBuffer[List[String]]()
     if (container != null) {
-      for (i <- 0 until remainingPartKeys.size) {
-        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
-        if (kamanjaData != null) {
-          // Search for primary key match
-          val fnd = kamanjaData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
-          if (fnd != null)
-            return true
-        } else {
-          reMainingForDb += remainingPartKeys(i)
+      container.reent_lock.readLock().lock()
+      try {
+        for (i <- 0 until remainingPartKeys.size) {
+          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
+          if (kamanjaData != null) {
+            // Search for primary key match
+            val fnd = kamanjaData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
+            if (fnd != null)
+              return true
+          } else {
+            reMainingForDb += remainingPartKeys(i)
+          }
         }
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        container.reent_lock.readLock().unlock()
       }
 
       for (i <- 0 until reMainingForDb.size) {
@@ -922,43 +1053,51 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (container != null) {
       var unmatchedPartKeys = ArrayBuffer[List[String]]()
       var unmatchedPrimaryKeys = ArrayBuffer[List[String]]()
+      var unmatchedFinalPatKeys = ArrayBuffer[List[String]]()
+      var unmatchedFinalPrimaryKeys = ArrayBuffer[List[String]]()
 
-      for (i <- 0 until remainingPartKeys.size) {
-        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
-        if (kamanjaData != null) {
-          // Search for primary key match
-          val fnd = kamanjaData._2.GetMessageContainerBase(remainingPrimaryKeys(i).toArray, false)
-          if (fnd != null) {
-            // Matched
+      container.reent_lock.readLock().lock()
+      try {
+        for (i <- 0 until remainingPartKeys.size) {
+          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
+          if (kamanjaData != null) {
+            // Search for primary key match
+            val fnd = kamanjaData._2.GetMessageContainerBase(remainingPrimaryKeys(i).toArray, false)
+            if (fnd != null) {
+              // Matched
+            } else {
+              unmatchedPartKeys += remainingPartKeys(i)
+              unmatchedPrimaryKeys += remainingPrimaryKeys(i)
+            }
           } else {
             unmatchedPartKeys += remainingPartKeys(i)
             unmatchedPrimaryKeys += remainingPrimaryKeys(i)
           }
-        } else {
-          unmatchedPartKeys += remainingPartKeys(i)
-          unmatchedPrimaryKeys += remainingPrimaryKeys(i)
         }
-      }
 
-      var unmatchedFinalPatKeys = ArrayBuffer[List[String]]()
-      var unmatchedFinalPrimaryKeys = ArrayBuffer[List[String]]()
-
-      // BUGBUG:: Need to check whether the 1st key loaded 2nd key also. Because same partition key can have multiple primary keys or partition key itself can be duplicated
-      for (i <- 0 until unmatchedPartKeys.size) {
-        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(unmatchedPartKeys(i)), null)
-        if (kamanjaData != null) {
-          // Search for primary key match
-          val fnd = kamanjaData._2.GetMessageContainerBase(unmatchedPrimaryKeys(i).toArray, false)
-          if (fnd != null) {
-            // Matched
+        // BUGBUG:: Need to check whether the 1st key loaded 2nd key also. Because same partition key can have multiple primary keys or partition key itself can be duplicated
+        for (i <- 0 until unmatchedPartKeys.size) {
+          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(unmatchedPartKeys(i)), null)
+          if (kamanjaData != null) {
+            // Search for primary key match
+            val fnd = kamanjaData._2.GetMessageContainerBase(unmatchedPrimaryKeys(i).toArray, false)
+            if (fnd != null) {
+              // Matched
+            } else {
+              unmatchedFinalPatKeys += unmatchedPartKeys(i)
+              unmatchedFinalPrimaryKeys += unmatchedPrimaryKeys(i)
+            }
           } else {
             unmatchedFinalPatKeys += unmatchedPartKeys(i)
             unmatchedFinalPrimaryKeys += unmatchedPrimaryKeys(i)
           }
-        } else {
-          unmatchedFinalPatKeys += unmatchedPartKeys(i)
-          unmatchedFinalPrimaryKeys += unmatchedPrimaryKeys(i)
         }
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        container.reent_lock.readLock().unlock()
       }
       remainingPartKeys = unmatchedFinalPatKeys.toArray
     }
@@ -973,7 +1112,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val partKeyStr = InMemoryKeyDataInJson(partKey)
-      val kamanjaData = container.data.getOrElse(partKeyStr, null)
+      var kamanjaData: (Boolean, KamanjaData) = null
+      container.reent_lock.readLock().lock()
+      try {
+        kamanjaData = container.data.getOrElse(partKeyStr, null)
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        container.reent_lock.readLock().unlock()
+      }
       if (kamanjaData != null) {
         if (txnCtxt != null)
           txnCtxt.setFetchedObj(containerName, partKeyStr, kamanjaData._2)
@@ -1040,7 +1189,36 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   //BUGBUG:: May be we need to lock before we do anything here
   override def Shutdown: Unit = {
-    _adapterUniqKeyValData.clear
+    if (_modelsRsltBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _modelsRsltBktlocks(i).writeLock().lock()
+        try {
+          _modelsRsltBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _modelsRsltBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
+
+    if (_adapterUniqKeyValBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _adapterUniqKeyValBktlocks(i).writeLock().lock()
+        try {
+          _adapterUniqKeyValBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _adapterUniqKeyValBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
+
     if (_allDataDataStore != null)
       _allDataDataStore.Shutdown
     _allDataDataStore = null
@@ -1258,7 +1436,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (key != null && value != null && outputResults != null)
       localValues(key) = (transId, value, outputResults)
 
-    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String)])]() 
+    val adapterUniqKeyValData = if (localValues.size > 0) localValues.toMap else if (txnCtxt != null) txnCtxt.getAllAdapterUniqKeyValData else Map[String, (Long, String, List[(String, String)])]()
     val modelsResult = if (txnCtxt != null) txnCtxt.getAllModelsResult else Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
     if (_kryoSer == null) {
@@ -1274,42 +1452,60 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     messagesOrContainers.foreach(v => {
       val mc = _messagesOrContainers.getOrElse(v._1, null)
       if (mc != null) {
-        if (v._2.reload)
-          mc.reload = true
-        v._2.data.foreach(kv => {
-          if (kv._2._1 && kv._2._2.DataSize > 0) {
-            mc.data(kv._1) = (false, kv._2._2) // Here it is already converted to proper key type. Because we are copying from somewhere else where we applied function InMemoryKeyDataInJson
-            try {
-              val serVal = kv._2._2.SerializeData
-              object obj extends IStorage {
-                val k = makeKey(kv._2._2.SerializeKey)
-                // KamanjaData.PrepareKey(mc.objFullName, ka, 0, 0)
-                val v = makeValue(serVal, "manual")
+        mc.reent_lock.writeLock().lock();
+        try {
+          if (v._2.reload)
+            mc.reload = true
+          v._2.data.foreach(kv => {
+            if (kv._2._1 && kv._2._2.DataSize > 0) {
+              mc.data(kv._1) = (false, kv._2._2) // Here it is already converted to proper key type. Because we are copying from somewhere else where we applied function InMemoryKeyDataInJson
+              try {
+                val serVal = kv._2._2.SerializeData
+                object obj extends IStorage {
+                  val k = makeKey(kv._2._2.SerializeKey)
+                  // KamanjaData.PrepareKey(mc.objFullName, ka, 0, 0)
+                  val v = makeValue(serVal, "manual")
 
-                def Key = k
+                  def Key = k
 
-                def Value = v
+                  def Value = v
 
-                def Construct(Key: Key, Value: Value) = {}
-              }
-              storeObjects += obj
-              cntr += 1
-            } catch {
-              case e: Exception => {
+                  def Construct(Key: Key, Value: Value) = {}
+                }
+                storeObjects += obj
+                cntr += 1
+              } catch {
+                case e: Exception => {
 
-                logger.error("Failed to serialize/write data.")
-                throw e
+                  logger.error("Failed to serialize/write data.")
+                  throw e
+                }
               }
             }
+          })
+        } catch {
+          case e: Exception => {
+            throw e
           }
-        })
-
+        } finally {
+          mc.reent_lock.writeLock().unlock();
+        }
         v._2.current_msg_cont_data.clear
       }
     })
 
     adapterUniqKeyValData.foreach(v1 => {
-      _adapterUniqKeyValData(v1._1) = v1._2
+      val bktIdx = getParallelBucketIdx(v1._1)
+      _adapterUniqKeyValBktlocks(bktIdx).writeLock().lock()
+      try {
+        _adapterUniqKeyValBuckets(bktIdx)(v1._1) = v1._2
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _adapterUniqKeyValBktlocks(bktIdx).writeLock().unlock()
+      }
       try {
         object obj extends IStorage {
           val k = makeKey(KamanjaData.PrepareKey("AdapterUniqKvData", List(v1._1), 0, 0))
@@ -1335,7 +1531,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     })
 
     modelsResult.foreach(v1 => {
-      _modelsResult(v1._1) = v1._2
+      val bktIdx = getParallelBucketIdx(v1._1)
+      _modelsRsltBktlocks(bktIdx).writeLock().lock()
+      try {
+        _modelsRsltBuckets(bktIdx)(v1._1) = v1._2
+      } catch {
+        case e: Exception => {
+          throw e
+        }
+      } finally {
+        _modelsRsltBktlocks(bktIdx).writeLock().unlock()
+      }
       try {
         val serVal = _kryoSer.SerializeObjectToByteArray(v1._2)
         object obj extends IStorage {
@@ -1436,13 +1642,48 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     // BUGBUG:: What happens to containers with reload flag
     _messagesOrContainers.foreach(v => {
       if (v._2.loadedAll == false) {
-        v._2.data.clear
+        v._2.reent_lock.writeLock().lock();
+        try {
+          v._2.data.clear
+        } catch {
+          case e: Exception => {
+            throw e
+          }
+        } finally {
+          v._2.reent_lock.writeLock().unlock();
+        }
       }
     })
 
-    _adapterUniqKeyValData.clear
+    if (_modelsRsltBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _modelsRsltBktlocks(i).writeLock().lock()
+        try {
+          _modelsRsltBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _modelsRsltBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
 
-    _modelsResult.clear
+    if (_adapterUniqKeyValBuckets != null) {
+      for (i <- 0 until _parallelBuciets) {
+        _adapterUniqKeyValBktlocks(i).writeLock().lock()
+        try {
+          _adapterUniqKeyValBuckets(i).clear()
+        } catch {
+          case e: Exception => {
+            // throw e
+          }
+        } finally {
+          _adapterUniqKeyValBktlocks(i).writeLock().unlock()
+        }
+      }
+    }
   }
 
   // Clear Intermediate results After updating them on different node or different component (like KVInit), etc
@@ -1453,7 +1694,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     unloadMsgsContainers.foreach(mc => {
       val msgCont = _messagesOrContainers.getOrElse(mc.trim.toLowerCase, null)
       if (msgCont != null && msgCont.data != null) {
-        msgCont.data.clear
+        msgCont.reent_lock.writeLock().lock();
+        try {
+          msgCont.data.clear
+        } catch {
+          case e: Exception => {
+            throw e
+          }
+        } finally {
+          msgCont.reent_lock.writeLock().unlock();
+        }
       }
     })
   }

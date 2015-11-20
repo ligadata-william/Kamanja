@@ -39,6 +39,10 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x if x endsWith "StaticLoggerBinder.class" =>  MergeStrategy.first
     case x if x endsWith "StaticMDCBinder.class" =>  MergeStrategy.first
     case x if x endsWith "StaticMarkerBinder.class" =>  MergeStrategy.first
+    case x if x contains "com.fasterxml.jackson.core" => MergeStrategy.first
+    case x if x contains "com/fasterxml/jackson/core" => MergeStrategy.first
+    case x if x contains "com\\fasterxml\\jackson\\core" => MergeStrategy.first
+    case x if x contains "commons-logging" => MergeStrategy.first
     case "log4j.properties" => MergeStrategy.first
     case "unwanted.txt"     => MergeStrategy.discard
     case x => old(x)
