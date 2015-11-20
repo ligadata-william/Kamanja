@@ -881,7 +881,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private def getParallelBucketIdx(key: String): Int = {
     if (key == null) return 0
-    return (key.hashCode() % _parallelBuciets)
+    return (math.abs(key.hashCode()) % _parallelBuciets)
   }
 
   private def localGetAdapterUniqueKeyValue(transId: Long, key: String): (Long, String, List[(String, String)]) = {
