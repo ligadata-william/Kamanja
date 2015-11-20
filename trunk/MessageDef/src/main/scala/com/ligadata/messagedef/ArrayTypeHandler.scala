@@ -74,7 +74,7 @@ class ArrayTypeHandler {
 
       if (arrayType == null) throw new Exception("Array type " + f.Ttype + " do not exist")
 
-      if ((arrayType.elemDef.physicalName.equals("String")) || (arrayType.elemDef.physicalName.equals("Int")) || (arrayType.elemDef.physicalName.equals("Float")) || (arrayType.elemDef.physicalName.equals("Double")) || (arrayType.elemDef.physicalName.equals("Char"))) {
+      if ((arrayType.elemDef.physicalName.equals("String")) || (arrayType.elemDef.physicalName.equals("Int")) || (arrayType.elemDef.physicalName.equals("Float")) || (arrayType.elemDef.physicalName.equals("Double")) || (arrayType.elemDef.physicalName.equals("Char")) || (arrayType.elemDef.physicalName.equals("Long")) || (arrayType.elemDef.physicalName.equals("Boolean"))) {
         if (arrayType.elemDef.implementationName.isEmpty())
           throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
         else
@@ -249,7 +249,7 @@ class ArrayTypeHandler {
       arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
       if (arrayBufType == null) throw new Exception("Array Byffer of " + f.Ttype + " do not exists throwing Null Pointer")
 
-      if ((arrayBufType.elemDef.physicalName.equals("String")) || (arrayBufType.elemDef.physicalName.equals("Int")) || (arrayBufType.elemDef.physicalName.equals("Float")) || (arrayBufType.elemDef.physicalName.equals("Double")) || (arrayBufType.elemDef.physicalName.equals("Char"))) {
+      if ((arrayBufType.elemDef.physicalName.equals("String")) || (arrayBufType.elemDef.physicalName.equals("Int")) || (arrayBufType.elemDef.physicalName.equals("Float")) || (arrayBufType.elemDef.physicalName.equals("Double")) || (arrayBufType.elemDef.physicalName.equals("Char")) || (arrayBufType.elemDef.physicalName.equals("Long")) || (arrayBufType.elemDef.physicalName.equals("Boolean"))) {
         if (arrayBufType.elemDef.implementationName.isEmpty())
           throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
         else

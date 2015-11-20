@@ -32,7 +32,6 @@ No schema setup
 
  */
 
-
 package com.ligadata.keyvaluestore
 
 import com.ligadata.KvBase.{ Key, Value, TimeRange }
@@ -46,7 +45,7 @@ import com.ligadata.Exceptions._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.Utils.{KamanjaLoaderInfo}
+import com.ligadata.Utils.{ KamanjaLoaderInfo }
 
 class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
@@ -58,8 +57,8 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
 
-  private var tablesMap: scala.collection.mutable.Map[String,HTreeMap[Array[Byte], Array[Byte]]] = new scala.collection.mutable.HashMap()
-  private var dbStoreMap: scala.collection.mutable.Map[String,DB] = new scala.collection.mutable.HashMap()
+  private var tablesMap: scala.collection.mutable.Map[String, HTreeMap[Array[Byte], Array[Byte]]] = new scala.collection.mutable.HashMap()
+  private var dbStoreMap: scala.collection.mutable.Map[String, DB] = new scala.collection.mutable.HashMap()
 
   if (adapterConfig.size == 0) {
     throw new Exception("Not found valid HashMap Configuration.")
@@ -130,31 +129,31 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     } else {
       val dir = new File(path);
       if (!dir.exists()) {
-	// attempt to create the directory here
-	dir.mkdir();
+        // attempt to create the directory here
+        dir.mkdir();
       }
       db = DBMaker.newFileDB(new File(path + "/" + tableName + ".hdb"))
-	.closeOnJvmShutdown()
-	.mmapFileEnable()
-	.transactionDisable()
-	.commitFileSyncDisable()
-	.make()
-      dbStoreMap.put(tableName,db)
+        .closeOnJvmShutdown()
+        .mmapFileEnable()
+        .transactionDisable()
+        .commitFileSyncDisable()
+        .make()
+      dbStoreMap.put(tableName, db)
       var map = db.createHashMap(tableName)
-	.hasher(Hasher.BYTE_ARRAY)
-	.makeOrGet[Array[Byte], Array[Byte]]()
-      tablesMap.put(tableName,map)
+        .hasher(Hasher.BYTE_ARRAY)
+        .makeOrGet[Array[Byte], Array[Byte]]()
+      tablesMap.put(tableName, map)
     }
   }
 
   @throws(classOf[FileNotFoundException])
-  def deleteFile(file:File):Unit = {
-    if(file.exists()){
+  def deleteFile(file: File): Unit = {
+    if (file.exists()) {
       var ret = true
-      if (file.isDirectory){
-	for(f <- file.listFiles) {
+      if (file.isDirectory) {
+        for (f <- file.listFiles) {
           deleteFile(f)
-	}
+        }
       }
       logger.debug("cleanup: Deleting file '" + file + "'")
       file.delete()
@@ -212,20 +211,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def MakeCompositeKey(key: Key): Array[Byte] = {
-    var compKey = key.timePartition.toString + "|" + key.bucketKey.mkString(".") + 
-		  "|" + key.transactionId.toString + "|" + key.rowId.toString
+    var compKey = key.timePartition.toString + "|" + key.bucketKey.mkString(".") +
+      "|" + key.transactionId.toString + "|" + key.rowId.toString
     compKey.getBytes()
   }
 
-
-  private def ValueToByteArray(value: Value): Array[Byte] = {
-    var byteOs = new ByteArrayOutputStream();
-    var out = new DataOutputStream(byteOs);
+  private def ValueToByteArray(value: Value, out: DataOutputStream): Unit = {
     out.writeInt(value.serializerType.length);
     out.write(value.serializerType.getBytes());
     out.writeInt(value.serializedInfo.length);
     out.write(value.serializedInfo);
-    byteOs.toByteArray()
   }
 
   private def ByteArrayToValue(byteArray: Array[Byte]): Value = {
@@ -244,16 +239,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def Commit: Unit = {
-    if (withTransactions){
+    if (withTransactions) {
       dbStoreMap.foreach(db => {
-	logger.debug("Committing transactions for db " + db._1)
-	db._2.commit();
+        logger.debug("Committing transactions for db " + db._1)
+        db._2.commit();
       })
     }
   }
 
-  private def Commit(tableName:String): Unit = {
-    if (withTransactions){
+  private def Commit(tableName: String): Unit = {
+    if (withTransactions) {
       var db = dbStoreMap(tableName)
       db.commit();
     }
@@ -261,56 +256,70 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
     var tableName = toFullTableName(containerName)
-    try{
+    var byteOs = new ByteArrayOutputStream(1024 * 1024);
+    var out = new DataOutputStream(byteOs);
+
+    try {
       CheckTableExists(containerName)
-      var kba = MakeCompositeKey(key)
-      var vba = ValueToByteArray(value)
-      var map = tablesMap(tableName)
-      map.put(kba,vba)
+      val kba = MakeCompositeKey(key)
+      ValueToByteArray(value, out)
+      val vba = byteOs.toByteArray()
+      val map = tablesMap(tableName)
+      map.put(kba, vba)
       Commit(tableName)
     } catch {
-      case e:Exception => {
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Stacktrace:"+stackTrace)
-	throw new Exception("Failed to save an object in HashMap table " + tableName + ":" + e.getMessage())
+        logger.debug("Stacktrace:" + stackTrace)
+        out.close()
+        byteOs.close()
+        throw new Exception("Failed to save an object in HashMap table " + tableName + ":" + e.getMessage())
       }
     }
+    out.close()
+    byteOs.close()
   }
 
   override def put(data_list: Array[(String, Array[(Key, Value)])]): Unit = {
-    try{
+    var byteOs = new ByteArrayOutputStream(1024 * 1024);
+    var out = new DataOutputStream(byteOs);
+    try {
       data_list.foreach(li => {
         var containerName = li._1
-	CheckTableExists(containerName)
-	var tableName = toFullTableName(containerName)
-	var map = tablesMap(tableName)
+        CheckTableExists(containerName)
+        var tableName = toFullTableName(containerName)
+        var map = tablesMap(tableName)
         var keyValuePairs = li._2
         keyValuePairs.foreach(keyValuePair => {
-          var key = keyValuePair._1
-          var value = keyValuePair._2
-	  var kba = MakeCompositeKey(key)
-	  var vba = ValueToByteArray(value)
-	  map.put(kba,vba)
-	})
+          val kba = MakeCompositeKey(keyValuePair._1)
+          byteOs.reset()
+          ValueToByteArray(keyValuePair._2, out)
+          var vba = byteOs.toByteArray()
+          map.put(kba, vba)
+        })
       })
       Commit
-   } catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
+        out.close()
+        byteOs.close()
       }
     }
+    out.close()
+    byteOs.close()
   }
 
   // delete operations
   override def del(containerName: String, keys: Array[Key]): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
       keys.foreach(key => {
-	var kba = MakeCompositeKey(key)
-	map.remove(kba)
+        var kba = MakeCompositeKey(key)
+        map.remove(kba)
       })
       Commit
     } catch {
@@ -321,32 +330,31 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     }
   }
 
-
   override def del(containerName: String, time: TimeRange, bucketKeys: Array[Array[String]]): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        var bkey = bucketKey.mkString(".")
+        bucketKeyMap.put(bkey, true)
       })
-	
-      var map = tablesMap(tableName)      
+
+      var map = tablesMap(tableName)
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val k = new String(kba)
-	var keyArray = k.split('|')
-	var tp = keyArray(0).toLong
-	var bkey = keyArray(1)
-	if ( tp >= time.beginTime && tp <= time.endTime ){
-	  logger.info("searching for " + keyArray(1))
-	  var keyExists = bucketKeyMap.getOrElse(bkey,null)
-	  if (keyExists != null ){
-	    map.remove(kba)
-	  }
-	}
+        val kba = iter.next()
+        val k = new String(kba)
+        var keyArray = k.split('|')
+        var tp = keyArray(0).toLong
+        var bkey = keyArray(1)
+        if (tp >= time.beginTime && tp <= time.endTime) {
+          logger.info("searching for " + keyArray(1))
+          var keyExists = bucketKeyMap.getOrElse(bkey, null)
+          if (keyExists != null) {
+            map.remove(kba)
+          }
+        }
       }
       Commit
     } catch {
@@ -360,7 +368,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   // get operations
   def getRowCount(containerName: String): Long = {
     var tableName = toFullTableName(containerName)
-    var map = tablesMap(tableName)      
+    var map = tablesMap(tableName)
     var iter = map.keySet().iterator()
     var cnt = 0
     while (iter.hasNext()) {
@@ -370,7 +378,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     return cnt
   }
 
-  private def processRow(k:String,value:Value,callbackFunction: (Key, Value) => Unit){
+  private def processRow(k: String, value: Value, callbackFunction: (Key, Value) => Unit) {
     var keyArray = k.split('|').toArray
     var timePartition = keyArray(0).toLong
     var keyStr = keyArray(1)
@@ -382,11 +390,11 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     (callbackFunction)(key, value)
   }
 
-  private def processRow(key: Key, value:Value,callbackFunction: (Key, Value) => Unit){
+  private def processRow(key: Key, value: Value, callbackFunction: (Key, Value) => Unit) {
     (callbackFunction)(key, value)
   }
 
-  private def processKey(k: String,callbackFunction: (Key) => Unit){
+  private def processKey(k: String, callbackFunction: (Key) => Unit) {
     var keyArray = k.split('|').toArray
     var timePartition = keyArray(0).toLong
     var keyStr = keyArray(1)
@@ -399,19 +407,19 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val k = new String(kba)
-	var vba = map.get(kba)
-	var v = ByteArrayToValue(vba)
-	processRow(k,v,callbackFunction)
+        val kba = iter.next()
+        val k = new String(kba)
+        var vba = map.get(kba)
+        var v = ByteArrayToValue(vba)
+        processRow(k, v, callbackFunction)
       }
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -420,17 +428,17 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def getKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val k = new String(kba)
-	processKey(k,callbackFunction)
+        val kba = iter.next()
+        val k = new String(kba)
+        processKey(k, callbackFunction)
       }
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -439,19 +447,19 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def getKeys(containerName: String, keys: Array[Key], callbackFunction: (Key) => Unit): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
       keys.foreach(key => {
-	var kba = MakeCompositeKey(key)
-	var k = new String(kba)
-	var vba = map.get(kba)
-	if( vba != null ){
-	  processKey(k,callbackFunction)
-	}
+        var kba = MakeCompositeKey(key)
+        var k = new String(kba)
+        var vba = map.get(kba)
+        if (vba != null) {
+          processKey(k, callbackFunction)
+        }
       })
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -460,19 +468,19 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
       keys.foreach(key => {
-	var kba = MakeCompositeKey(key)
-	var vba = map.get(kba)
-	if( vba != null ){
-	  var value = ByteArrayToValue(vba)
-	  processRow(key,value,callbackFunction)
-	}
+        var kba = MakeCompositeKey(key)
+        var vba = map.get(kba)
+        if (vba != null) {
+          var value = ByteArrayToValue(vba)
+          processRow(key, value, callbackFunction)
+        }
       })
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -481,28 +489,28 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val key = new String(kba)
-	time_ranges.foreach(timeRange => {
-	  var keyArray = key.split('|')
-	  var tp = keyArray(0).toLong
-	  if ( tp >= timeRange.beginTime && tp <= timeRange.endTime ){	
-	    var vba = map.get(kba)
-	    if( vba != null ){
-	      var value = ByteArrayToValue(vba)
-	      processRow(key,value,callbackFunction)
-	    }
-	  }
-	})
+        val kba = iter.next()
+        val key = new String(kba)
+        time_ranges.foreach(timeRange => {
+          var keyArray = key.split('|')
+          var tp = keyArray(0).toLong
+          if (tp >= timeRange.beginTime && tp <= timeRange.endTime) {
+            var vba = map.get(kba)
+            if (vba != null) {
+              var value = ByteArrayToValue(vba)
+              processRow(key, value, callbackFunction)
+            }
+          }
+        })
       }
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -511,24 +519,24 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key) => Unit): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val key = new String(kba)
-	time_ranges.foreach(timeRange => {
-	  var keyArray = key.split('|')
-	  var tp = keyArray(0).toLong
-	  if ( tp >= timeRange.beginTime && tp <= timeRange.endTime ){	
-	    processKey(key,callbackFunction)
-	  }
-	})
+        val kba = iter.next()
+        val key = new String(kba)
+        time_ranges.foreach(timeRange => {
+          var keyArray = key.split('|')
+          var tp = keyArray(0).toLong
+          if (tp >= timeRange.beginTime && tp <= timeRange.endTime) {
+            processKey(key, callbackFunction)
+          }
+        })
       }
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -536,40 +544,39 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     }
   }
 
-
   override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+    try {
+      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        var bkey = bucketKey.mkString(".")
+        bucketKeyMap.put(bkey, true)
       })
 
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val key = new String(kba)
-	time_ranges.foreach(timeRange => {
-	  var keyArray = key.split('|')
-	  var tp = keyArray(0).toLong
-	  if ( tp >= timeRange.beginTime && tp <= timeRange.endTime ){	
-	    var bkey = keyArray(1)
-	    var keyExists = bucketKeyMap.getOrElse(bkey,null)
-	    if( keyExists != null ){
-	      var vba = map.get(kba)
-	      if( vba != null ){
-		var value = ByteArrayToValue(vba)
-		processRow(key,value,callbackFunction)
-	      }
-	    }
-	  }
-	})
+        val kba = iter.next()
+        val key = new String(kba)
+        time_ranges.foreach(timeRange => {
+          var keyArray = key.split('|')
+          var tp = keyArray(0).toLong
+          if (tp >= timeRange.beginTime && tp <= timeRange.endTime) {
+            var bkey = keyArray(1)
+            var keyExists = bucketKeyMap.getOrElse(bkey, null)
+            if (keyExists != null) {
+              var vba = map.get(kba)
+              if (vba != null) {
+                var value = ByteArrayToValue(vba)
+                processRow(key, value, callbackFunction)
+              }
+            }
+          }
+        })
       }
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -578,34 +585,34 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key) => Unit): Unit = {
-    try{
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+    try {
+      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        var bkey = bucketKey.mkString(".")
+        bucketKeyMap.put(bkey, true)
       })
 
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val key = new String(kba)
-	time_ranges.foreach(timeRange => {
-	  var keyArray = key.split('|')
-	  var tp = keyArray(0).toLong
-	  if ( tp >= timeRange.beginTime && tp <= timeRange.endTime ){	
-	    var bkey = keyArray(1)
-	    var keyExists = bucketKeyMap.getOrElse(bkey,null)
-	    if( keyExists != null ){
-	      processKey(key,callbackFunction)
-	    }
-	  }
-	})
+        val kba = iter.next()
+        val key = new String(kba)
+        time_ranges.foreach(timeRange => {
+          var keyArray = key.split('|')
+          var tp = keyArray(0).toLong
+          if (tp >= timeRange.beginTime && tp <= timeRange.endTime) {
+            var bkey = keyArray(1)
+            var keyExists = bucketKeyMap.getOrElse(bkey, null)
+            if (keyExists != null) {
+              processKey(key, callbackFunction)
+            }
+          }
+        })
       }
-    }catch {
+    } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Stacktrace:" + stackTrace)
@@ -614,31 +621,31 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+    try {
+      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        var bkey = bucketKey.mkString(".")
+        bucketKeyMap.put(bkey, true)
       })
 
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val key = new String(kba)
-	var keyArray = key.split('|')
-	var bkey = keyArray(1)
-	var keyExists = bucketKeyMap.getOrElse(bkey,null)
-	if( keyExists != null ){
-	  var vba = map.get(kba)
-	  if( vba != null ){
-	    var value = ByteArrayToValue(vba)
-	    processRow(key,value,callbackFunction)
-	  }
-	}
+        val kba = iter.next()
+        val key = new String(kba)
+        var keyArray = key.split('|')
+        var bkey = keyArray(1)
+        var keyExists = bucketKeyMap.getOrElse(bkey, null)
+        if (keyExists != null) {
+          var vba = map.get(kba)
+          if (vba != null) {
+            var value = ByteArrayToValue(vba)
+            processRow(key, value, callbackFunction)
+          }
+        }
       }
     } catch {
       case e: Exception => {
@@ -649,27 +656,27 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def getKeys(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key) => Unit): Unit = {
-    try{
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+    try {
+      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        var bkey = bucketKey.mkString(".")
+        bucketKeyMap.put(bkey, true)
       })
 
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
-      var map = tablesMap(tableName)      
+      var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	val key = new String(kba)
-	var keyArray = key.split('|')
-	var bkey = keyArray(1)
-	var keyExists = bucketKeyMap.getOrElse(bkey,null)
-	if( keyExists != null ){
-	  processKey(key,callbackFunction)
-	}
+        val kba = iter.next()
+        val key = new String(kba)
+        var keyArray = key.split('|')
+        var bkey = keyArray(1)
+        var keyExists = bucketKeyMap.getOrElse(bkey, null)
+        if (keyExists != null) {
+          processKey(key, callbackFunction)
+        }
       }
     } catch {
       case e: Exception => {
@@ -694,12 +701,12 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     try {
       logger.info("Commit any outstanding transactions")
       dbStoreMap.foreach(db => {
-	logger.info("Committing transactions for db " + db._1)
-	db._2.commit();
+        logger.info("Committing transactions for db " + db._1)
+        db._2.commit();
       })
       logger.info("Close all map objects")
       tablesMap.foreach(map => {
-	logger.info("Closing the map " + map._1)
+        logger.info("Closing the map " + map._1)
         map._2.close();
       })
     } catch {
@@ -713,16 +720,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     }
   }
-  
+
   private def TruncateContainer(containerName: String): Unit = {
-    try{
+    try {
       CheckTableExists(containerName)
       var tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
-	val kba = iter.next()
-	map.remove(kba)
+        val kba = iter.next()
+        map.remove(kba)
       }
       Commit
     } catch {

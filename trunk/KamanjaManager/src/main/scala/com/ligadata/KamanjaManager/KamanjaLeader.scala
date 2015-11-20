@@ -40,6 +40,7 @@ import org.apache.curator.utils.ZKPaths
 import scala.actors.threadpool.{ Executors, ExecutorService }
 import com.ligadata.Exceptions.StackTrace
 import scala.collection.JavaConversions._
+import com.ligadata.KvBase.{ Key }
 
 case class AdapMaxPartitions(Adap: String, MaxParts: Int)
 case class NodeDistMap(Adap: String, Parts: List[String])
@@ -119,7 +120,7 @@ object KamanjaLeader {
   }
 
   private def SendUnSentInfoToOutputAdapters: Unit = lock.synchronized {
-  /*
+    /*
     // LOG.info("SendUnSentInfoToOutputAdapters -- envCtxt:" + envCtxt + ", outputAdapters:" + outputAdapters)
     if (envCtxt != null && outputAdapters != null) {
       // Information found in Committing list
@@ -239,8 +240,10 @@ object KamanjaLeader {
               val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
               // Got different action. May be re-distribute. For now any non-expected action we will redistribute
               LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
-              if (canRedistribute)
+              if (canRedistribute) {
+                LOG.warn("Got different action (%s) than expected. Going to redistribute the work".format(action, expectedNodesAction))
                 SetUpdatePartitionsFlag
+              }
             }
           } catch {
             case e: Exception => {
@@ -363,7 +366,7 @@ object KamanjaLeader {
     val cs = GetClusterStatus
     if (cs.isLeader == false || cs.leader != cs.nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
 
-    LOG.info("Distribution NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
+    LOG.warn("Distribution NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
 
     // Clear Previous Distribution Map
     distributionMap.clear
@@ -481,7 +484,7 @@ object KamanjaLeader {
     LOG.debug("EventChangeCallback => Enter")
     KamanjaConfiguration.participentsChangedCntr += 1
     SetClusterStatus(cs)
-    LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
+    LOG.warn("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
     LOG.debug("EventChangeCallback => Exit")
   }
 
@@ -614,6 +617,9 @@ object KamanjaLeader {
               if (distributionExecutor.isShutdown)
                 break
 
+              // Save the state and Clear the maps
+              ProcessedAdaptersInfo.CommitAdapterValues
+              ProcessedAdaptersInfo.clearInstances
               // envCtxt.PersistLocalNodeStateEntries
               envCtxt.clearIntermediateResults
 
@@ -631,6 +637,8 @@ object KamanjaLeader {
         }
         case "distribute" => {
           envCtxt.clearIntermediateResults // We may not need it here. But anyway safe side
+          // Clear the maps
+          ProcessedAdaptersInfo.clearInstances
           var distributed = true
           try {
             // get Unique Keys for this nodeId
@@ -703,7 +711,7 @@ object KamanjaLeader {
     // LOG.debug("ActionOnDataChngImpl => receivedJsonStr: " + receivedJsonStr)
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
-      LOG.debug("ActionOnDataChngImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+      // LOG.debug("ActionOnDataChngImpl => Exit. receivedJsonStr: " + receivedJsonStr)
       return
     }
 
@@ -711,7 +719,7 @@ object KamanjaLeader {
       // Perform the action here
       val json = parse(receivedJsonStr)
       if (json == null || json.values == null) { // Not doing any action if not found valid json
-        LOG.debug("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+        LOG.error("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
         return
       }
 
@@ -725,11 +733,15 @@ object KamanjaLeader {
         if (changedMsgsContainers.isInstanceOf[List[_]]) {
           try {
             changedVals = changedMsgsContainers.asInstanceOf[List[String]].toArray
+          } catch {
+            case e: Exception => {}
           }
         }
         if (changedMsgsContainers.isInstanceOf[Array[_]]) {
           try {
             changedVals = changedMsgsContainers.asInstanceOf[Array[String]]
+          } catch {
+            case e: Exception => {}
           }
         }
 
@@ -740,48 +752,98 @@ object KamanjaLeader {
 
       if (tmpChngdContainersAndKeys != null) {
         val changedContainersAndKeys = if (tmpChngdContainersAndKeys.isInstanceOf[List[_]]) tmpChngdContainersAndKeys.asInstanceOf[List[_]] else if (tmpChngdContainersAndKeys.isInstanceOf[Array[_]]) tmpChngdContainersAndKeys.asInstanceOf[Array[_]].toList else null
-        if (changedContainersAndKeys.size > 0) {
+        if (changedContainersAndKeys != null && changedContainersAndKeys.size > 0) {
           val txnid = values.getOrElse("txnid", "0").toString.trim.toLong // txnid is 0, if it is not passed
           changedContainersAndKeys.foreach(CK => {
             if (CK != null && CK.isInstanceOf[Map[_, _]]) {
               val contAndKeys = CK.asInstanceOf[Map[String, Any]]
               val contName = contAndKeys.getOrElse("C", "").toString.trim
               val tmpKeys = contAndKeys.getOrElse("K", null)
-/*
               if (contName.size > 0 && tmpKeys != null) {
                 // Expecting List/Array of Keys
-                var keys: List[(String, Any)] = null
+                var keys: List[Any] = null
                 if (tmpKeys.isInstanceOf[List[_]]) {
                   try {
-                    keys = tmpKeys.asInstanceOf[List[(String, Any)]]
+                    keys = tmpKeys.asInstanceOf[List[Any]]
+                  } catch {
+                    case e: Exception => {}
                   }
-                }
-                else if (tmpKeys.isInstanceOf[Array[_]]) {
+                } else if (tmpKeys.isInstanceOf[Array[_]]) {
                   try {
-                    keys = tmpKeys.asInstanceOf[Array[(String, Any)]].toList
+                    keys = tmpKeys.asInstanceOf[Array[Any]].toList
+                  } catch {
+                    case e: Exception => {}
                   }
-                }
-                else if (tmpKeys.isInstanceOf[Map[_, _]]) {
+                } else if (tmpKeys.isInstanceOf[Map[_, _]]) {
                   try {
-                    keys = tmpKeys.asInstanceOf[Map[String, Any]]
+                    keys = tmpKeys.asInstanceOf[Map[String, Any]].toList
+                  } catch {
+                    case e: Exception => {}
+                  }
+                } else if (tmpKeys.isInstanceOf[scala.collection.mutable.Map[_, _]]) {
+                  try {
+                    keys = tmpKeys.asInstanceOf[scala.collection.mutable.Map[String, Any]].toList
+                  } catch {
+                    case e: Exception => {}
                   }
                 }
 
                 if (keys != null && keys.size > 0) {
-                  logger.info("Txnid:%d, ContainerName:%s, Keys:%s".format(txnid, contName, keys.mkString(",")))
-                  try {
-                    envCtxt.ReloadKeys(txnid, contName, keys)
-                  } catch {
-                    case e: Exception => {
-                      logger.error("Failed to reload keys for container:" + contName)
+                  var loadableKeys = ArrayBuffer[Key]()
+                  val ks = keys.map(k => {
+                    var oneKey: Map[String, Any] = null
+                    if (k.isInstanceOf[List[_]]) {
+                      try {
+                        oneKey = k.asInstanceOf[List[(String, Any)]].toMap
+                      } catch {
+                        case e: Exception => {}
+                      }
+                    } else if (k.isInstanceOf[Array[_]]) {
+                      try {
+                        oneKey = k.asInstanceOf[Array[(String, Any)]].toMap
+                      } catch {
+                        case e: Exception => {}
+                      }
+                    } else if (k.isInstanceOf[Map[_, _]]) {
+                      try {
+                        oneKey = k.asInstanceOf[Map[String, Any]]
+                      } catch {
+                        case e: Exception => {}
+                      }
+                    } else if (k.isInstanceOf[scala.collection.mutable.Map[_, _]]) {
+                      try {
+                        oneKey = k.asInstanceOf[scala.collection.mutable.Map[String, Any]].toMap
+                      } catch {
+                        case e: Exception => {}
+                      }
                     }
-                    case t: Throwable => {
-                      logger.error("Failed to reload keys for container:" + contName)
+
+                    if (oneKey != null) {
+                      val bk = oneKey.getOrElse("bk", null)
+                      if (bk != null) {
+                        val tm = oneKey.getOrElse("tm", "0").toString().toLong
+                        val tx = oneKey.getOrElse("tx", "0").toString().toLong
+                        val rid = oneKey.getOrElse("rid", "0").toString().toInt
+                        loadableKeys += Key(tm, bk.asInstanceOf[List[String]].toArray, tx, rid)
+                      }
+                    }
+                  })
+
+                  if (loadableKeys.size > 0) {
+                    try {
+                      logger.debug("Loading Keys => Txnid:%d, ContainerName:%s, Keys:%s".format(txnid, contName, loadableKeys.map(k => (k.timePartition, k.bucketKey.mkString("="), k.transactionId, k.rowId)).mkString(",")))
+                      envCtxt.ReloadKeys(txnid, contName, loadableKeys.toList)
+                    } catch {
+                      case e: Exception => {
+                        logger.error("Failed to reload keys for container:" + contName)
+                      }
+                      case t: Throwable => {
+                        logger.error("Failed to reload keys for container:" + contName)
+                      }
                     }
                   }
                 }
               }
-*/
             } // else // not handling
           })
         }
@@ -829,6 +891,7 @@ object KamanjaLeader {
             val prevCnt = if (prevParts != null) prevParts.size else 0
             if (prevCnt != ukCnt) {
               // Number of partitions does not match
+              LOG.warn("Number of partitions changed from %d to %d for %s. Going to redistribute the work".format(prevCnt, ukCnt, ia.UniqueName))
               SetUpdatePartitionsFlag
               break;
             }
@@ -836,6 +899,7 @@ object KamanjaLeader {
               // Check the real content
               val serUKSet = uk.map(k => { k.Serialize }).toSet
               if ((serUKSet -- prevParts).isEmpty == false) {
+                LOG.warn("Partitions changed from for %s. Going to redistribute the work".format(ia.UniqueName))
                 // Partition keys does not match
                 SetUpdatePartitionsFlag
                 break;
@@ -915,9 +979,75 @@ object KamanjaLeader {
             var getValidateAdapCntr = 0
             var wait4ValidateCheck = 0
             var validateUniqVals: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = null
+
+            var lastParticipentChngCntr: Long = 0
+            var lastParticipentChngDistTime: Long = 0
+
             while (distributionExecutor.isShutdown == false) {
-              Thread.sleep(1000) // Waiting for 1sec
-              if (distributionExecutor.isShutdown == false) {
+              try {
+                Thread.sleep(1000) // Waiting for 1000 milli secs
+              } catch {
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  LOG.debug("\nStackTrace:" + stackTrace)
+                }
+              }
+
+              var execDefaultPath = true
+              if (IsLeaderNode && GetUpdatePartitionsFlag && distributionExecutor.isShutdown == false) {
+                val curParticipentChngCntr = KamanjaConfiguration.participentsChangedCntr
+                if (lastParticipentChngCntr != curParticipentChngCntr) {
+                  lastParticipentChngCntr = curParticipentChngCntr
+                  val cs = GetClusterStatus
+                  var mxTm = 0
+
+                  // Make sure we check the number of nodes participating in the node start (get number of nodes from metadata manager and if all of them are in participents, no need to wait more than 4-5 secs, other wait more time)
+                  val mdMgr = GetMdMgr
+                  var allNodesUp = false
+
+                  if (mdMgr == null) {
+                    LOG.warn("Got Redistribution request and not able to get metadata manager. Not going to check whether all nodes came up or not in participents {%s}.".format(cs.participants.mkString(",")))
+                  } else {
+                    val nodes = mdMgr.NodesForCluster(KamanjaConfiguration.clusterId)
+                    if (nodes == null) {
+                      LOG.warn("Got Redistribution request and not able to get nodes from metadata manager for cluster %s. Not going to check whether all nodes came up or not in participents {%s}.".format(KamanjaConfiguration.clusterId, cs.participants.mkString(",")))
+                    } else {
+                      val participents = cs.participants.toSet
+                      // Check for nodes in participents now
+                      allNodesUp = true
+                      var i = 0
+                      while (i < nodes.size && allNodesUp) {
+                        if (participents.contains(nodes(i).nodeId) == false)
+                          allNodesUp = false
+                        i += 1
+                      }
+
+                      if (allNodesUp) {
+                        // Check for duplicates if we have any in participents
+                        // Just do group by and do get duplicates if we have any. If we have duplicates just make allNodesUp as false, so it will wait long time and by that time the duplicate node may go down.
+                        allNodesUp = (cs.participants.groupBy(x => x).mapValues(lst => lst.size).filter(kv => kv._2 > 1).size == 0)
+                      }
+                    }
+                  }
+
+                  if (allNodesUp == false) { // If all nodes are not up then wait for long time
+                    mxTm = if (KamanjaConfiguration.zkSessionTimeoutMs > KamanjaConfiguration.zkConnectionTimeoutMs) KamanjaConfiguration.zkSessionTimeoutMs else KamanjaConfiguration.zkConnectionTimeoutMs
+                    if (mxTm < 5000) // if the value is < 5secs, we are taking 5 secs
+                      mxTm = 5000
+                    LOG.warn("Got Redistribution request. Participents are {%s}. Looks like all nodes are not yet up. Waiting for %d milli seconds to see whether there are any more changes in participents".format(cs.participants.mkString(","), mxTm))
+                    lastParticipentChngDistTime = System.currentTimeMillis + mxTm + 5000 // waiting another 5secs
+                    execDefaultPath = false
+                  } else { // if all nodes are up, no need to wait any more
+                    LOG.warn("All Participents are {%s} up. Going to distribute the work now".format(cs.participants.mkString(",")))
+                  }
+                } else if (lastParticipentChngDistTime > System.currentTimeMillis) {
+                  // Still waiting to distribute
+                  execDefaultPath = false
+                }
+              }
+
+              if (execDefaultPath && distributionExecutor.isShutdown == false) {
+                lastParticipentChngCntr = 0
                 if (GetUpdatePartitionsFlagAndReset) {
                   UpdatePartitionsIfNeededOnLeader
                   wait4ValidateCheck = 180 // When ever rebalancing it should be 180 secs
