@@ -42,7 +42,6 @@ import com.ligadata.Exceptions._
 
 case class Customer(name:String, address: String, homePhone: String)
 
-@Ignore
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -177,6 +176,25 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
       And("Make sure rollback happened by doing a row count")
       var cnt = sqlServerAdapter.getRowCount(containerName,null)
       assert(cnt == 0)
+
+      And("Test Put api throwing DDL Exception - use invalid container name")
+      var ex2 = the [com.ligadata.Exceptions.StorageDMLException] thrownBy {
+	var keys = new Array[Key](0) // to be used by a delete operation later on
+	var currentTime = new Date()
+	var keyArray = new Array[String](0)
+	// pick a bucketKey values longer than 1024 characters
+	var custName = "customer1"
+	keyArray = keyArray :+ custName
+	var key = new Key(currentTime.getTime(),keyArray,1,1)
+	var custAddress = "1000"  + ",Main St, Redmond WA 98052"
+	var custNumber = "4256667777"
+	var obj = new Customer(custName,custAddress,custNumber)
+	var v = serializer.SerializeObjectToByteArray(obj)
+	var value = new Value("kryo",v)
+	adapter.put("&&",key,value)
+      }
+      stackTrace = StackTrace.ThrowableTraceString(ex2.cause)
+      logger.info("StackTrace:"+stackTrace)
 
       And("Test Put api")
       var keys = new Array[Key](0) // to be used by a delete operation later on

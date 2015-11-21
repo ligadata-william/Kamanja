@@ -226,6 +226,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   logger.info("hostname => " + hostname)
+  logger.info("username => " + user)
+  logger.info("SchemaName => " + SchemaName)
   logger.info("jarpaths => " + jarpaths)
   logger.info("jdbcJar  => " + jdbcJar)
 
@@ -269,6 +271,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     dataSource.setMaxIdle(maxIdleConnections);
     dataSource.setInitialSize(initialSize);
     dataSource.setMaxWaitMillis(maxWaitMillis);
+    dataSource.setTestOnBorrow(true);
+    dataSource.setValidationQuery("SELECT 1");
   } catch {
     case e: Exception => {
       msg = "Failed to setup connection pooling using apache-commons-dbcp. Message:%s".format(e.getMessage)
@@ -456,9 +460,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-        if (con != null)
-          con.rollback()
-        logger.info("Failed to save an object in the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage())
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to save an object in the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -539,9 +551,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-	logger.info("Throw connection exception")
-        if (con != null)
-          con.rollback()
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to save a batch of objects into the table :" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -585,8 +605,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-        if (con != null)
-          con.rollback()
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -634,8 +663,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-        if (con != null)
-          con.rollback()
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -1186,6 +1224,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         stmt.close
         index_name = "ix1_" + tableName
         query = "create index " + index_name + " on " + fullTableName + "(bucketKey,transactionId,rowId)"
+        stmt = con.createStatement()
+        stmt.executeUpdate(query);
+        stmt.close
+        index_name = "ix2_" + tableName
+        query = "create index " + index_name + " on " + fullTableName + "(timePartition,bucketKey)"
         stmt = con.createStatement()
         stmt.executeUpdate(query);
       }

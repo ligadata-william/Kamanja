@@ -55,7 +55,7 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
   // set the timezone to UTC for all time values
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
   
-  val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
+  val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser1","SchemaName":"bofauser","password":"bofauser1","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
   private val kvManagerLoader = new KamanjaLoaderInfo
   private val maxConnectionAttempts = 10;
   var cnt = 0
@@ -169,37 +169,39 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
       logger.info(GetCurDtTmStr + ": Start Loading  1 million records 1000 at a time")
 
       for (batch <- 1 to 1000) {
-        var keyValueList = new Array[(Key, Value)](0)
-        var keyStringList = new Array[Array[String]](0)
-        for (i <- 1 to 1000) {
-          var cal = Calendar.getInstance();
-          cal.add(Calendar.DATE, -i);
-          var currentTime = cal.getTime()
-          var keyArray = new Array[String](0)
-          var custName = "batch-" + batch + "-customer-" + i
-          keyArray = keyArray :+ custName
-          keyStringList = keyStringList :+ keyArray
-          var key = new Key(currentTime.getTime(), keyArray, i, i)
-          var custAddress = "1000" + batch * i + ",Main St, Redmond WA 98052"
-          var custNumber = "4256667777" + batch * i
-          var obj = new Customer(custName, custAddress, custNumber)
-          var v = serializer.SerializeObjectToByteArray(obj)
-          var value = new Value("kryo", v)
-          keyValueList = keyValueList :+ (key, value)
-        }
-        var dataList = new Array[(String, Array[(Key, Value)])](0)
-        dataList = dataList :+ (containerName, keyValueList)
-        //noException should be thrownBy {
-        //
-        //}
-	try{
-	  adapter.put(dataList)
-          logger.info(GetCurDtTmStr + ": Loaded " + batch * 1000 + " objects ")
-	}
-	catch{
-	  case e: Exception => {
-	    val stackTrace = StackTrace.ThrowableTraceString(e)
-	    logger.info("StackTrace:"+stackTrace)
+	var successful = false
+	while ( ! successful ){
+          var keyValueList = new Array[(Key, Value)](0)
+          var keyStringList = new Array[Array[String]](0)
+          for (i <- 1 to 1000) {
+            var cal = Calendar.getInstance();
+            cal.add(Calendar.DATE, -i);
+            var currentTime = cal.getTime()
+            var keyArray = new Array[String](0)
+            var custName = "batch-" + batch + "-customer-" + i
+            keyArray = keyArray :+ custName
+            keyStringList = keyStringList :+ keyArray
+            var key = new Key(currentTime.getTime(), keyArray, i, i)
+            var custAddress = "1000" + batch * i + ",Main St, Redmond WA 98052"
+            var custNumber = "4256667777" + batch * i
+            var obj = new Customer(custName, custAddress, custNumber)
+            var v = serializer.SerializeObjectToByteArray(obj)
+            var value = new Value("kryo", v)
+            keyValueList = keyValueList :+ (key, value)
+          }
+          var dataList = new Array[(String, Array[(Key, Value)])](0)
+          dataList = dataList :+ (containerName, keyValueList)
+	  try{
+	    adapter.put(dataList)
+            logger.info(GetCurDtTmStr + ": Loaded " + batch * 1000 + " objects ")
+	    successful = true
+	  }
+	  catch{
+	    case e: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(e)
+	      logger.info("StackTrace:"+stackTrace)
+	      successful = false
+	    }
 	  }
 	}
       }
