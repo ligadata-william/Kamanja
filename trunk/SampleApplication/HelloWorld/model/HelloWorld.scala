@@ -17,10 +17,7 @@
 package com.ligadata.samples.models
 
 import com.ligadata.KamanjaBase._
-import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
-import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import System._
-
+import com.ligadata.KvBase.TimeRange
 
 object HelloWorldModel extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[msg1]
