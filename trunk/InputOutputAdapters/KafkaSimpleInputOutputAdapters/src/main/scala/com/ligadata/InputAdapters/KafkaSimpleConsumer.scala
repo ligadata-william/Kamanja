@@ -40,6 +40,8 @@ object KafkaSimpleConsumer extends InputAdapterObj {
   var CURRENT_BROKER: String = _
   val FETCHSIZE = 64 * 1024
   val ZOOKEEPER_CONNECTION_TIMEOUT_MS = 3000
+  val MAX_TIMEOUT = 60000
+  val INIT_TIMEOUT = 250
 
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new KafkaSimpleConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
 }
@@ -66,6 +68,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
   private var hbTopicPartitionNumber = -1
   private val hbExecutor = Executors.newFixedThreadPool(qc.hosts.size)
 
+  private var timeoutTimer = KafkaSimpleConsumer.INIT_TIMEOUT
+
   /**
    *  This will stop all the running reading threads and close all the underlying connections to Kafka.
    */
@@ -81,6 +85,19 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     terminateHBTasks
   }
 
+  private def getTimeoutTimer: Long = {
+    timeoutTimer = timeoutTimer * 2
+    if (timeoutTimer > KafkaSimpleConsumer.MAX_TIMEOUT) {
+      timeoutTimer = KafkaSimpleConsumer.MAX_TIMEOUT
+      return timeoutTimer
+    }
+    return timeoutTimer
+  }
+
+  private def resetTimeoutTimer: Unit = {
+    timeoutTimer = KafkaSimpleConsumer.INIT_TIMEOUT
+  }
+
   /**
    * Start processing - will start a number of threads to read the Kafka queues for a topic.  The list of Hosts servicing a
    * given topic, and the topic have been set when this KafkaConsumer_V2 Adapter was instantiated.  The partitionIds should be
@@ -91,7 +108,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
    */
   def StartProcessing(partitionIds: Array[StartProcPartInfo], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
 
-    LOG.warn("START_PROCESSING CALLED")
+    LOG.info("START_PROCESSING CALLED")
     // Check to see if this already started
     if (startTime > 0) {
       LOG.error("KAFKA-ADAPTER: already started, or in the process of shutting down")
@@ -191,41 +208,44 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           val brokerId = convertIp(leadBroker)
           val brokerName = brokerId.split(":")
           var consumer: SimpleConsumer = null
-          try {
-            consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-                                          KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                          KafkaSimpleConsumer.FETCHSIZE,
-                                          KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
-          } catch {
-            case e: Exception => {
-              Shutdown
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              LOG.error("KAFKA ADAPTER: Forcing down the Consumer Reader thread" + "\nStackTrace:" + stackTrace)
-              return
+          while (consumer == null) {
+            try {
+              consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
+                                            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                            KafkaSimpleConsumer.FETCHSIZE,
+                                            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+            } catch {
+              case e: Exception => {
+                LOG.error("KAFKA ADAPTER: Failure connecting to Kafka server, retrying", e)
+                Thread.sleep(getTimeoutTimer)
+              }
             }
           }
 
-
+          resetTimeoutTimer
           // Keep processing until you fail enough times.
           while (!isQuiesced) {
-            val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.topic, partitionId, readOffset, KafkaSimpleConsumer.FETCHSIZE).build();
+            val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.topic, partitionId, readOffset, KafkaSimpleConsumer.FETCHSIZE).build()
+            var fetchResp: FetchResponse = null
+            var isFetchError = false
 
             // Call the broker and get a response.
-            val fetchResp = consumer.fetch(fetchReq)
-
-            // Check for errors
-            if (fetchResp.hasError) {
-              LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " + fetchResp.errorCode(qc.topic, partitionId))
-              numberOfErrors = numberOfErrors + 1
-
-              // Way too many errors...
-              if (numberOfErrors > KafkaSimpleConsumer.MAX_FAILURES) {
-                if (consumer != null) {
-                  consumer.close
+            while (fetchResp == null || isFetchError) {
+              try {
+                fetchResp = consumer.fetch(fetchReq)
+                isFetchError = false
+                if (fetchResp.hasError) {
+                  isFetchError = true
+                  LOG.warn("KAFKA ADAPTER: Error fetching topic " + qc.topic + ", partition " + partitionId + ", retrying due to an error " + fetchResp.errorCode(qc.topic, partitionId))
+                  Thread.sleep(getTimeoutTimer)
+                } else {
+                  resetTimeoutTimer
                 }
-                Shutdown
-                LOG.error("KAFKA ADAPTER: Forcing down the Consumer Reader thread, too mamy errors trying to read from Kafka topic " +qc.topic+" partition id " + partitionId )
-                return
+              } catch {
+                case e: Exception => {
+                  LOG.error("KAFKA ADAPTER: Failure fetching topic "+qc.topic+", partition " + partitionId + ", retrying", e)
+                  Thread.sleep(getTimeoutTimer)
+                }
               }
             }
 
