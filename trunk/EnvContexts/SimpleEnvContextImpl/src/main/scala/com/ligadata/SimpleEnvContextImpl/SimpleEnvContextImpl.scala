@@ -22,7 +22,7 @@ import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
 import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper, LoadKeyWithBucketId }
-import com.ligadata.StorageBase.{ DataStore, Transaction }
+import com.ligadata.StorageBase.{ DataStore, Transaction, DataStoreOperations }
 import com.ligadata.KamanjaBase._
 // import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
 import com.ligadata.kamanja.metadata._
@@ -162,11 +162,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     def IsEmptyKey(key: List[String]): Boolean = {
-      (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */)
+      (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */ )
     }
 
     def IsEmptyKey(key: Array[String]): Boolean = {
-      (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */)
+      (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */ )
     }
 
     /*
@@ -1303,10 +1303,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           logger.debug("ObjKey:(%d, %s, %d, %d), Value Info:(Ser:%s, Size:%d)".format(kv._1.timePartition, kv._1.bucketKey.mkString(","), kv._1.transactionId, kv._1.rowId, kv._2.serializerType, kv._2.serializedInfo.size))
         })
       })
-      _defaultDataStore.put(commiting_data.toArray)
+
+      callSaveData(_defaultDataStore, commiting_data.toArray)
+
     } catch {
       case e: Exception => {
-        logger.error("Failed to write data")
+        val causeStackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Failed to save data, cause: \n" + causeStackTrace)
         throw e
       }
     }
@@ -1394,8 +1397,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val ukvs = validateUniqVals.map(kv => {
       (Key(KvBaseDefalts.defaultTime, Array(kv._1), 0L, 0), Value("", kv._2.getBytes("UTF8")))
     })
-
-    _defaultDataStore.put(Array(("ValidateAdapterPartitionInfo", ukvs)))
+    callSaveData(_defaultDataStore, Array(("ValidateAdapterPartitionInfo", ukvs)))
   }
 
   private def buildValidateAdapInfo(k: Key, v: Value, results: ArrayBuffer[(String, String)]): Unit = {
@@ -1618,4 +1620,54 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     localSetObject(transId, containerName, tmValues.toArray, partKeyValues.toArray, finalValues.toArray)
   }
+
+  private def callSaveData(dataStore: DataStoreOperations, data_list: Array[(String, Array[(Key, Value)])]): Unit = {
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneSave = false
+
+    while (!doneSave) {
+      try {
+        dataStore.put(data_list)
+        doneSave = true
+      } catch {
+        /*
+        case e: StorageDMLException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+        case e: StorageDDLException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+*/
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+      }
+
+      while (!doneSave) {
+        try {
+          logger.error("Failed to save data into datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {
+
+          }
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
+      }
+    }
+  }
+
 }

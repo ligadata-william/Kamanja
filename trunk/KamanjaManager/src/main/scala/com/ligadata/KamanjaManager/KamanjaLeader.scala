@@ -287,9 +287,19 @@ object KamanjaLeader {
         }
       } catch {
         case fae: FatalAdapterException => {
-          // Adapter could not partition inforamation and cant reconver.
+          // Adapter could not get partition information and can't reconver.
           val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
-          LOG.error("Failed to communicate with adapter " + ia.UniqueName + ", cause: \n" + causeStackTrace)
+          LOG.error("Failed to get partitions from validate adapter " + ia.UniqueName + ", cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          // Adapter could not get partition information and can't reconver.
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Failed to get partitions from validate adapter " + ia.UniqueName + ", cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          // Adapter could not get partition information and can't reconver.
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Failed to get partitions from validate adapter " + ia.UniqueName + ", cause: \n" + causeStackTrace)
         }
       }
     })
@@ -337,15 +347,20 @@ object KamanjaLeader {
         LOG.debug("Trying to read data from ValidatedAdapter: " + via.UniqueName)
         via.StartProcessing(finalVals.toArray, false)
       } catch {
+        case e: FatalAdapterException => {
+          // If validate adapter is not able to connect, just ignoring it for now
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          LOG.error("Validate Adapter " + via.UniqueName + " failed to start processing. Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
+        }
         case e: Exception => {
           // If validate adapter is not able to connect, just ignoring it for now
           val causeStackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Invalidate Adapter failed to start processing. Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
+          LOG.error("Validate Adapter " + via.UniqueName + " failed to start processing. Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
         }
         case e: Throwable => {
           // If validate adapter is not able to connect, just ignoring it for now
           val causeStackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Invalidate Adapter failed to start processing. Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
+          LOG.error("Validate Adapter " + via.UniqueName + " failed to start processing. Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
         }
       }
     })
@@ -368,7 +383,22 @@ object KamanjaLeader {
 
     // Stopping the Adapters
     validateInputAdapters.foreach(via => {
-      via.StopProcessing
+      try {
+        via.StopProcessing
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Validate adapter " + via.UniqueName + "failed to stop processing, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Validate adapter " + via.UniqueName + "failed to stop processing, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Validate adapter " + via.UniqueName + "failed to stop processing, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     if (distributionExecutor.isShutdown) {
@@ -656,10 +686,58 @@ object KamanjaLeader {
         case "stop" => {
           try {
             breakable {
-              // STOP all Input Adapters on local node
-              inputAdapters.foreach(ia => {
-                ia.StopProcessing
-              })
+
+              var remInputAdaps = inputAdapters.toArray
+              var failedWaitTime = 15000 // Wait time starts at 15 secs
+              val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+              val maxTries = 5
+              var tryNo = 0
+
+              while (remInputAdaps.size > 0 && tryNo < maxTries) { // maximum trying only 5 times
+                tryNo += 1
+                var failedInputAdaps = ArrayBuffer[InputAdapter]()
+
+                // STOP all Input Adapters on local node
+                remInputAdaps.foreach(ia => {
+                  try {
+                    ia.StopProcessing
+                  } catch {
+                    case fae: FatalAdapterException => {
+                      val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+                      LOG.error("Input adapter " + ia.UniqueName + "failed to stop processing, cause: \n" + causeStackTrace)
+                      failedInputAdaps += ia
+                    }
+                    case e: Exception => {
+                      val causeStackTrace = StackTrace.ThrowableTraceString(e)
+                      LOG.error("Input adapter " + ia.UniqueName + "failed to stop processing, cause: \n" + causeStackTrace)
+                      failedInputAdaps += ia
+                    }
+                    case e: Throwable => {
+                      val causeStackTrace = StackTrace.ThrowableTraceString(e)
+                      LOG.error("Input adapter " + ia.UniqueName + "failed to stop processing, cause: \n" + causeStackTrace)
+                      failedInputAdaps += ia
+                    }
+                  }
+                })
+
+                remInputAdaps = failedInputAdaps.toArray
+                if (remInputAdaps.size > 0) {
+                  try {
+                    LOG.error("Failed to stop %d input adapters. Waiting for another %d milli seconds and going to start them again.".format(remInputAdaps.size, failedWaitTime))
+                    Thread.sleep(failedWaitTime)
+                  } catch {
+                    case e: Exception => {
+
+                    }
+                  }
+                  // Adjust time for next time
+                  if (failedWaitTime < maxFailedWaitTime) {
+                    failedWaitTime = failedWaitTime * 2
+                    if (failedWaitTime > maxFailedWaitTime)
+                      failedWaitTime = maxFailedWaitTime
+                  }
+                }
+              }
 
               // Sleep for a sec
               try {
@@ -910,9 +988,19 @@ object KamanjaLeader {
               }
             } catch {
               case fae: FatalAdapterException => {
-                // Adapter could not partition inforamation and cant reconver.
+                // Adapter could not get partition information and can't reconver.
                 val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
-                LOG.error("Failed to communicate with input adapter " + ia.UniqueName + ", cause: \n" + causeStackTrace)
+                LOG.error("Failed to get partitions from input adapter " + ia.UniqueName + ". We are not going to change work load for now. Cause: \n" + causeStackTrace)
+              }
+              case e: Exception => {
+                // Adapter could not get partition information and can't reconver.
+                val causeStackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("Failed to get partitions from input adapter " + ia.UniqueName + ". We are not going to change work load for now. Cause: \n" + causeStackTrace)
+              }
+              case e: Throwable => {
+                // Adapter could not get partition information and can't reconver.
+                val causeStackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("Failed to get partitions from input adapter " + ia.UniqueName + ". We are not going to change work load for now. Cause: \n" + causeStackTrace)
               }
             }
           })
@@ -929,17 +1017,31 @@ object KamanjaLeader {
     val uniqPartKeysValues = ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
 
     if (validateInputAdapters != null) {
-      var lastAdapterException: Exception = null
+      var lastAdapterException: Throwable = null
       try {
         validateInputAdapters.foreach(ia => {
           try {
             val uKeysVals = ia.getAllPartitionEndValues
             uniqPartKeysValues ++= uKeysVals
           } catch {
-            case fae: FatalAdapterException => {
-              lastAdapterException = fae // Adapter could not partition inforamation and cant reconver.
-              val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
-              LOG.error("Failed to communicate with input adapter " + ia.UniqueName + ", cause: \n" + causeStackTrace)
+
+            case e: FatalAdapterException => {
+              lastAdapterException = e // Adapter could not partition information and can't recover.
+              // If validate adapter is not able to connect, just ignoring it for now
+              val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+              LOG.error("Failed to get partition values for Validate Adapter " + ia.UniqueName + ". Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
+            }
+            case e: Exception => {
+              lastAdapterException = e // Adapter could not partition information and can't recover.
+              // If validate adapter is not able to connect, just ignoring it for now
+              val causeStackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.error("Failed to get partition values for Validate Adapter " + ia.UniqueName + ". Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
+            }
+            case e: Throwable => {
+              lastAdapterException = e // Adapter could not partition information and can't recover.
+              // If validate adapter is not able to connect, just ignoring it for now
+              val causeStackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.error("Failed to get partition values for Validate Adapter " + ia.UniqueName + ". Message:" + e.getMessage + ", Reason:" + e.getCause + ". Internal Cause: \n" + causeStackTrace)
             }
           }
         })

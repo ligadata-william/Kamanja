@@ -19,7 +19,7 @@ import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import org.apache.log4j.Logger
 import com.ligadata.HeartBeat.HeartBeatUtil
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 
 class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
@@ -150,7 +150,7 @@ class KamanjaManager extends Observer {
   }
 
   private def Shutdown(exitCode: Int): Int = {
-  /*
+    /*
     if (KamanjaMetadata.envCtxt != null)
       KamanjaMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
 */
@@ -205,25 +205,85 @@ class KamanjaManager extends Observer {
     val s0 = System.nanoTime
 
     validateInputAdapters.foreach(ia => {
-      ia.Shutdown
+      try {
+        ia.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Validate adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Validate adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Validate adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     validateInputAdapters.clear
 
     inputAdapters.foreach(ia => {
-      ia.Shutdown
+      try {
+        ia.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Input adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Input adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Input adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     inputAdapters.clear
 
     outputAdapters.foreach(oa => {
-      oa.Shutdown
+      try {
+        oa.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Output adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Output adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Output adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     outputAdapters.clear
 
     statusAdapters.foreach(oa => {
-      oa.Shutdown
+      try {
+        oa.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Status adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Status adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Status adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     statusAdapters.clear
