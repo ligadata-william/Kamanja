@@ -208,7 +208,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           val brokerId = convertIp(leadBroker)
           val brokerName = brokerId.split(":")
           var consumer: SimpleConsumer = null
-          while (consumer == null) {
+          while (consumer == null && !isQuiesced) {
             try {
               consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
                                             KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
@@ -230,7 +230,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             var isFetchError = false
 
             // Call the broker and get a response.
-            while (fetchResp == null || isFetchError) {
+            while ((fetchResp == null || isFetchError) && !isQuiesced) {
               try {
                 fetchResp = consumer.fetch(fetchReq)
                 isFetchError = false
@@ -247,6 +247,12 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
                   Thread.sleep(getTimeoutTimer)
                 }
               }
+            }
+
+            // If we are here under shutdown conditions.. cleanup and bail
+            if (isQuiesced) {
+              if (consumer != null) { consumer.close }
+              return
             }
 
             val ignoreTillOffset = if (ignoreFirstMsg) partition._2.Offset else partition._2.Offset - 1
@@ -340,7 +346,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         // Keep retrying to connect until MAX number of tries is reached.
         var retryCount = 0
         var result = doSend(partConsumer,metaDataReq)
-        while(result._1 == null) {
+        while(result._1 == null && !isQuiesced) {
           if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
             throw new FatalAdapterException("Failed to retrieve Topic Metadata for defined partitions", result._2)
           retryCount += 1
@@ -363,6 +369,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         })
       } catch {
         case fae: FatalAdapterException => throw fae
+        case npe: NullPointerException => {
+          if (isQuiesced) LOG.warn("Kafka Simple Consumer is shutting down during kafka call for partition information - ignoring the call")
+        }
         case e: Exception => throw new FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
       } finally {
         if (partConsumer != null) { partConsumer.close }
@@ -466,7 +475,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             // Keep retrying to connect until MAX number of tries is reached.
             var retryCount = 0
             var result = doSend(llConsumer,llReq)
-            while(result._1 == null) {
+            while(result._1 == null && !isQuiesced) {
               if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
                 throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
               retryCount += 1
@@ -493,6 +502,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             })
           } catch {
             case fae: FatalAdapterException => throw fae
+            case npe: NullPointerException => {
+              if (isQuiesced) LOG.warn("Kafka Simple Consumer is shutting down during kafka call looking for leader - ignoring the call")
+            }
             case e: Exception => throw new FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
           } finally {
             if (llConsumer != null) llConsumer.close()
@@ -560,7 +572,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       // val response: kafka.javaapi.OffsetResponse = llConsumer.getOffsetsBefore(offsetRequest)
       var retryCount = 0
       var result = doSendJavaConsumer(llConsumer,offsetRequest)
-      while(result._1 == null) {
+      while(result._1 == null && !isQuiesced) {
         if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
           throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
         retryCount += 1
@@ -577,8 +589,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       }
     } catch {
       case fae: FatalAdapterException => throw fae
+      case npe: NullPointerException => {
+        if (isQuiesced) LOG.warn("Kafka Simple Consumer is shutting down during kafka call looking for offsets - ignoring the call")
+      }
       case e: java.lang.Exception => {
-
         LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}")
       }
     } finally {
