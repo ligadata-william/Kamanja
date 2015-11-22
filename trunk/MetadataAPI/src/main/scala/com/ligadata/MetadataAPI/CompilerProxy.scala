@@ -500,8 +500,10 @@ class CompilerProxy {
         throw new ModelCompilationFailedException("Failed to produce the jar file")
       }
 
+      val depJars = getJarsFromClassPath(classPath)
+      
       // figure out the Physical Model Name
-      var (dummy1, dummy2, dummy3, pName) = getModelMetadataFromJar(jarFileName, elements)
+      var (dummy1, dummy2, dummy3, pName) = getModelMetadataFromJar(jarFileName, elements, depJars)
 
       // Create the ModelDef object
       val modDef: ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespace, modelName, "", "RuleSet",
@@ -643,12 +645,14 @@ class CompilerProxy {
       logger.error("COMPILER_PROXY: Error compiling model source. Unable to create Jar RC = " + status)
       throw new MsgCompilationFailedException(modelConfigName)
     }
+    
+    val depJars = getJarsFromClassPath(classPath)
 
-    (getModelMetadataFromJar(jarFileName, elements), finalSourceCode, packageName)
+    (getModelMetadataFromJar(jarFileName, elements, depJars), finalSourceCode, packageName)
 
   }
 
-  private def getModelMetadataFromJar(jarFileName: String, elements: Set[BaseElemDef]): (String, String, String, String) = {
+  private def getModelMetadataFromJar(jarFileName: String, elements: Set[BaseElemDef], depJars: List[String]): (String, String, String, String) = {
 
     // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
     val loaderInfo = new KamanjaLoaderInfo()
@@ -667,6 +671,9 @@ class CompilerProxy {
         allJars = allJars ++ elem.DependencyJarNames
       }
     })
+
+    if (depJars != null)
+      allJars = allJars ++ depJars
 
     Utils.LoadJars(allJars.map(j => Utils.GetValidJarFile(jarPaths0, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader)
 
@@ -785,6 +792,26 @@ class CompilerProxy {
     None
   }
 
+  private def getJarsFromClassPath(clsPath: String): List[String] = {
+    // Pull all the jar files in the classpath into a set...  THIS WILL CHANGE IN A FUTURE since we
+    // dont want to allow developers using the classpath to pass in dependencies.
+    var returnList = ArrayBuffer[String]()
+    var depArray: Array[String] = clsPath.trim.split(":")
+    depArray.foreach(dep => {
+      // Check it is the file & the file exists
+      val fl = new File(dep.trim)
+      if (fl.exists && fl.isFile /* && fl.canRead() */) {
+          returnList += fl.getName
+      } else {
+        var parsedJarpath = dep.split("/")
+        var tempSanity = parsedJarpath(parsedJarpath.length - 1).split('.')
+        if (tempSanity(tempSanity.length - 1).trim.equalsIgnoreCase("jar"))
+          returnList += (tempSanity.mkString(".").trim)
+      }
+    })
+    returnList.toList
+  }
+  
   /**
    * addDepsFromClassPath - this is probably a temporary metho here for now.  THIS WILL CHANGE IN A FUTURE since we
    * dont want to allow developers using the classpath to pass in dependencies.
@@ -792,15 +819,7 @@ class CompilerProxy {
   private def addDepsFromClassPath(): List[String] = {
     // Pull all the jar files in the classpath into a set...  THIS WILL CHANGE IN A FUTURE since we
     // dont want to allow developers using the classpath to pass in dependencies.
-    var returnList: List[String] = List[String]()
-    var depArray: Array[String] = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim.split(":")
-    depArray.foreach(dep => {
-      var parsedJarpath = dep.split("/")
-      var tempSanity = parsedJarpath(parsedJarpath.length - 1).split('.')
-      if (tempSanity(tempSanity.length - 1).trim.equalsIgnoreCase("jar"))
-        returnList = returnList ::: List[String](tempSanity.mkString(".").trim)
-    })
-    returnList
+    getJarsFromClassPath(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"))
   }
 
   /**

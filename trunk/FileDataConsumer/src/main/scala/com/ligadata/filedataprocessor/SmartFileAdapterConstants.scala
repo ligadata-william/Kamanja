@@ -26,6 +26,8 @@ object SmartFileAdapterConstants {
   val KAFKA_ACK = "kafka_ack"
   val KAFKA_BATCH = "kafka_batch"
   val ZOOKEEPER_IGNORE = "ignore_zookeeper"
+  val MAX_MEM = "maxAllowedMemory"
+  val THROTTLE_TIME = "throttle_ms"
 
   val KAFKA_LOAD_STATUS = "Kafka_Load_Result,"
   val TOTAL_FILE_STATUS = "File_Total_Result,"
