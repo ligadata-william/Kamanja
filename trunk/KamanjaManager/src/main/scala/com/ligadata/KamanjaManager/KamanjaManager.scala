@@ -553,7 +553,7 @@ class KamanjaManager extends Observer {
     }
 
     val exceptionStatusAdaps = scala.collection.mutable.Set[String]()
-    var curFailureCntr = 0
+    var curCntr = 0
     val maxFailureCnt = 30
 
     val statusPrint_PD = new Runnable {
@@ -563,49 +563,39 @@ class KamanjaManager extends Observer {
         val dispStr = "PD,%d,%s,%s".format(KamanjaConfiguration.nodeId, Utils.GetCurDtTmStr, statsStr)
 
         if (statusAdapters != null) {
+          curCntr += 1
           statusAdapters.foreach(sa => {
+            val adapNm = sa.inputConfig.Name
+            val alreadyFailed = (exceptionStatusAdaps.size > 0 && exceptionStatusAdaps.contains(adapNm))
             try {
-              sa.send(dispStr, "1")
-              if (exceptionStatusAdaps.size > 0)
-                exceptionStatusAdaps -= sa.inputConfig.Name
-              if (exceptionStatusAdaps.size == 0)
-                curFailureCntr = 0
+              if (alreadyFailed == false || curCntr >= maxFailureCnt) {
+                sa.send(dispStr, "1")
+                if (alreadyFailed)
+                  exceptionStatusAdaps -= adapNm
+              }
             } catch {
               case fae: FatalAdapterException => {
-                val alreadyFailed = exceptionStatusAdaps.contains(sa.inputConfig.Name)
-                curFailureCntr += 1
-                if (alreadyFailed == false || curFailureCntr >= maxFailureCnt) {
-                  curFailureCntr = 0
-                  val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
-                  LOG.error("Failed to send data to status adapter:" + sa.inputConfig.Name + "\n.Internal Cause:" + causeStackTrace)
-                }
+                val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+                LOG.error("Failed to send data to status adapter:" + adapNm + "\n.Internal Cause:" + causeStackTrace)
                 if (alreadyFailed == false)
-                  exceptionStatusAdaps += sa.inputConfig.Name
+                  exceptionStatusAdaps += adapNm
               }
               case e: Exception => {
-                val alreadyFailed = exceptionStatusAdaps.contains(sa.inputConfig.Name)
-                curFailureCntr += 1
-                if (alreadyFailed == false || curFailureCntr >= maxFailureCnt) {
-                  curFailureCntr = 0
-                  val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.error("Failed to send data to status adapter:" + sa.inputConfig.Name + "\n.Stack Trace:" + stackTrace)
-                }
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("Failed to send data to status adapter:" + adapNm + "\n.Stack Trace:" + stackTrace)
                 if (alreadyFailed == false)
-                  exceptionStatusAdaps += sa.inputConfig.Name
+                  exceptionStatusAdaps += adapNm
               }
               case t: Throwable => {
-                val alreadyFailed = exceptionStatusAdaps.contains(sa.inputConfig.Name)
-                curFailureCntr += 1
-                if (alreadyFailed == false || curFailureCntr >= maxFailureCnt) {
-                  curFailureCntr = 0
-                  val stackTrace = StackTrace.ThrowableTraceString(t)
-                  LOG.error("Failed to send data to status adapter:" + sa.inputConfig.Name + "\n.Stack Trace:" + stackTrace)
-                }
+                val stackTrace = StackTrace.ThrowableTraceString(t)
+                LOG.error("Failed to send data to status adapter:" + adapNm + "\n.Stack Trace:" + stackTrace)
                 if (alreadyFailed == false)
-                  exceptionStatusAdaps += sa.inputConfig.Name
+                  exceptionStatusAdaps += adapNm
               }
             }
           })
+          if (curCntr >= maxFailureCnt)
+            curCntr = 0
         } else {
           LOG.info(dispStr)
         }
