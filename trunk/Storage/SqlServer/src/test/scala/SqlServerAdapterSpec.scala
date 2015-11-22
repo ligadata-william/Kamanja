@@ -42,6 +42,7 @@ import com.ligadata.Exceptions._
 
 case class Customer(name:String, address: String, homePhone: String)
 
+@Ignore
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -57,22 +58,44 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
   var containerName = ""
   private val kvManagerLoader = new KamanjaLoaderInfo
+  var maxConnectionAttempts = 5
+
+  val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
+
+  private def CreateAdapter: DataStore = {
+    var connectionAttempts = 0
+    while (connectionAttempts < maxConnectionAttempts) {
+      try {
+        adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
+        return adapter
+      } catch {
+        case e: StorageConnectionException => {
+          logger.error("%s: Message:%s".format(e.getMessage, e.cause.getMessage))
+          logger.error("will retry after one minute ...")
+          connectionAttempts = connectionAttempts + 1
+          Thread.sleep(60 * 1000L)
+        }
+        case e: Exception => {
+          logger.error("Failed to connect: Message:%s".format(e.getMessage))
+          logger.error("retrying ...")
+        }
+      }
+    }
+    return null;
+  }
 
   override def beforeAll = {
     try {
       logger.info("starting...");
-
       serializer = SerializerManager.GetSerializer("kryo")
       logger.info("Initialize SqlServerAdapter")
-      val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar","clusteredIndex":"YES"}"""
-      adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
-   }
-    catch {
+      adapter = CreateAdapter
+    } catch {
       case e: StorageConnectionException => {
-	logger.error("%s: Message:%s".format(e.getMessage,e.cause.getMessage))
+        logger.error("%s: Message:%s".format(e.getMessage, e.cause.getMessage))
       }
-      case e: Exception =>  {
-	logger.error("Failed to connect: Message:%s".format(e.getMessage))
+      case e: Exception => {
+        logger.error("Failed to connect: Message:%s".format(e.getMessage))
       }
     }
   }
