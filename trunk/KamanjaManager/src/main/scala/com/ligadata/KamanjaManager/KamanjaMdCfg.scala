@@ -31,7 +31,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import java.io.{ File }
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions._
 
 class KamanjaInputAdapterCallerContext extends InputAdapterCallerContext {
   var outputAdapters: Array[OutputAdapter] = _
@@ -316,7 +316,10 @@ object KamanjaMdCfg {
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
         }
       } catch {
-/*
+        case e: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
+        }
         case e: StorageConnectionException => {
           val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
@@ -333,7 +336,6 @@ object KamanjaMdCfg {
           val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
         }
-*/
         case e: Exception => {
           val causeStackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)

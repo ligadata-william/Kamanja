@@ -32,7 +32,7 @@ import com.ligadata.Serialize._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions._
 import com.ligadata.keyvaluestore.KeyValueManager
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
 import java.util.{ TreeMap, Date };
@@ -1721,7 +1721,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         dataStore.put(data_list)
         doneSave = true
       } catch {
-        /*
+        case e: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
         case e: StorageDMLException => {
           val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
           logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
@@ -1730,7 +1733,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
           logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
         }
-*/
         case e: Exception => {
           val causeStackTrace = StackTrace.ThrowableTraceString(e)
           logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
@@ -1759,5 +1761,4 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
   }
-
 }
