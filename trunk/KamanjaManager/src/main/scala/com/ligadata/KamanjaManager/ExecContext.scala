@@ -151,17 +151,17 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
               } catch {
                 case fae: FatalAdapterException => {
                   val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
-                  LOG.error("Failed to send data to the output adapter:" + output._1 + "\n.Internal Cause:" + causeStackTrace)
+                  LOG.error("Failed to send data to output adapter:" + oadap.inputConfig.Name + "\n.Internal Cause:" + causeStackTrace)
                   failedOutputs += output
                 }
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
-                  LOG.error("Failed to send data to the output adapter:" + output._1 + "\n.Stack Trace:" + stackTrace)
+                  LOG.error("Failed to send data to output adapter:" + oadap.inputConfig.Name + "\n.Stack Trace:" + stackTrace)
                   failedOutputs += output
                 }
                 case t: Throwable => {
                   val stackTrace = StackTrace.ThrowableTraceString(t)
-                  LOG.error("Failed to send data to the output adapter:" + output._1 + "\n.Stack Trace:" + stackTrace)
+                  LOG.error("Failed to send data to output adapter:" + oadap.inputConfig.Name + "\n.Stack Trace:" + stackTrace)
                   failedOutputs += output
                 }
               }
