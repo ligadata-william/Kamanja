@@ -20,6 +20,7 @@ import scala.collection.mutable.TreeSet
 import scala.reflect.runtime.{ universe => ru }
 import java.net.{ URL, URLClassLoader }
 import org.apache.log4j.Logger
+import scala.collection.mutable.ArrayBuffer
 
 /*
  * Kamanja custom ClassLoader. We can use this as Parent first (default, which is default for java also) and Parent Last.
@@ -52,6 +53,57 @@ class KamanjaClassLoader(val systemClassLoader: URLClassLoader, val parent: Kama
       }
     } else {
       return super.loadClass(className, resolve)
+    }
+  }
+
+  override def getResource(name: String): URL = {
+    var url: URL = null;
+    LOG.debug("Trying to getResource:" + name)
+
+    // This call to getResource may eventually call findResource again, in case the parent doesn't find anything.
+
+    if (parentLast) {
+      url = super.getResource(name) // First try in local
+      if (url == null && parent != null)
+        url = parent.getResource(name) // If not found, go to Parent
+    } else {
+      url = super.getResource(name)
+    }
+
+    LOG.debug("URL is:" + url)
+    url
+  }
+
+  override def getResources(name: String): java.util.Enumeration[URL] = {
+    var systemUrls: java.util.Enumeration[URL] = null
+    LOG.debug("Trying to getResources:" + name)
+
+    var urls = ArrayBuffer[URL]()
+
+    val superUrls = super.getResources(name)
+    var parentUrls: java.util.Enumeration[URL] = null
+
+    if (parentLast && parent != null) {
+      parentUrls = parent.getResources(name)
+    }
+
+    if (superUrls != null) {
+      while (superUrls.hasMoreElements()) {
+        urls += superUrls.nextElement()
+      }
+    }
+
+    if (parentUrls != null) {
+      while (parentUrls.hasMoreElements()) {
+        urls += parentUrls.nextElement()
+      }
+    }
+
+    LOG.debug("Found %d URLs".format(urls.size))
+    new java.util.Enumeration[URL]() {
+      var iter = urls.iterator
+      def hasMoreElements(): Boolean = iter.hasNext
+      def nextElement(): URL = iter.next()
     }
   }
 }

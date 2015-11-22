@@ -17,8 +17,9 @@
 
 package com.ligadata.KamanjaManager
 
-import com.ligadata.KamanjaBase.{ EnvContext, DataDelimiters }
+import com.ligadata.KamanjaBase.{ EnvContext, DataDelimiters, TransactionContext }
 import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, InputAdapterCallerContext }
+import com.ligadata.KvBase.{ Key }
 
 import org.apache.log4j.Logger
 import org.json4s._
@@ -46,13 +47,28 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey)
+  var previousLoader: com.ligadata.Utils.KamanjaClassLoader = null
   val allOutputAdaptersNames = if (kamanjaCallerCtxt.outputAdapters != null) kamanjaCallerCtxt.outputAdapters.map(o => o.inputConfig.Name.toLowerCase) else Array[String]()
   val allOuAdapters = if (kamanjaCallerCtxt.outputAdapters != null) kamanjaCallerCtxt.outputAdapters.map(o => (o.inputConfig.Name.toLowerCase, o)).toMap else Map[String, OutputAdapter]()
+  val adapterInfoMap = ProcessedAdaptersInfo.getOneInstance(this.hashCode(), true)
   def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiters: DataDelimiters): Unit = {
+    try {
+      val curLoader = KamanjaConfiguration.metadataLoader.loader // Protecting from changing it between below statements
+      if (curLoader != null && previousLoader != curLoader) { // Checking for every messages and setting when changed. We can set for every message, but the problem is it tries to do SecurityManager check every time.
+        Thread.currentThread().setContextClassLoader(curLoader);
+        previousLoader = curLoader
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to setContextClassLoader. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+      }
+    }
+
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
       val transId = transService.getNextTransId
+      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.envCtxt, "")
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       var outputResults = ArrayBuffer[(String, String, String)]() // Adapter/Queue name, Partition Key & output message 
@@ -65,7 +81,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
           xformedMsgCntr += 1
-          var output = engine.execute(transId, data, xformed._1, xformed._2, xformed._3, kamanjaCallerCtxt.envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, ignoreOutput, allOutputAdaptersNames)
+          var output = engine.execute(transId, data, xformed._1, xformed._2, xformed._3, txnCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, ignoreOutput, allOutputAdaptersNames)
           if (output != null) {
             outputResults ++= output
           }
@@ -92,10 +108,16 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         }
 
         val commitStartTime = System.nanoTime
-        val containerData = kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
         // 
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
-        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList)
+        val forceCommitVal = txnCtxt.getContextValue("forcecommit")
+        val forceCommitFalg = forceCommitVal != null
+        val containerData = if (forceCommitFalg) kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
+        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
+
+        // Set the uk & uv
+        if (adapterInfoMap != null)
+          adapterInfoMap(uk) = uv
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
 
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
@@ -182,20 +204,19 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         // kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNanoSecs, sendOutStartTime))
 
-        /*
         if (containerData != null && containerData.size > 0) {
           val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
               ("C" -> kv._1) ~
                 ("K" -> kv._2.map(k =>
-                  ("tm" -> k._1) ~
-                    ("bk" -> k._2) ~
-                    ("tx" -> k._3)))))
+                  ("tm" -> k.timePartition) ~
+                    ("bk" -> k.bucketKey.toList) ~
+                    ("tx" -> k.transactionId) ~
+                    ("rid" -> k.rowId)))))
           val sendJson = compact(render(datachangedata))
           // Do we need to log this?
           KamanjaLeader.SetNewDataToZkc(KamanjaConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
         }
-*/
       }
     } catch {
       case e: Exception => {
@@ -340,7 +361,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        kamanjaCallerCtxt.envCtxt.commitData(transId, null, null, null)
+        kamanjaCallerCtxt.envCtxt.commitData(transId, null, null, null, false)
       }
     } catch {
       case e: Exception => {

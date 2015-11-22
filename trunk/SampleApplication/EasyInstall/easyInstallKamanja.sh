@@ -87,7 +87,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package KamanjaManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly FileDataConsumer/assembly
+sbt clean package KamanjaManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly FileDataConsumer/assembly SaveContainerDataComponent/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -166,7 +166,6 @@ cp $ivyPath/cache/org.scala-lang/scalap/jars/scalap-2.10.0.jar $systemlib
 cp $ivyPath/cache/ch.qos.logback/logback-classic/jars/logback-classic-1.0.13.jar $systemlib
 cp $ivyPath/cache/asm/asm/jars/asm-3.1.jar $systemlib
 cp $ivyPath/cache/com.sun.xml.bind/jaxb-impl/jars/jaxb-impl-2.2.3-1.jar $systemlib
-cp $srcPath/InputOutputAdapters/FileSimpleInputOutputAdapters/target/scala-2.10/filesimpleinputoutputadapters_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/com.fasterxml.jackson.core/jackson-databind/bundles/jackson-databind-2.3.1.jar $systemlib
 cp $ivyPath/cache/com.fasterxml.jackson.core/jackson-annotations/bundles/jackson-annotations-2.3.0.jar $systemlib
 cp $ivyPath/cache/com.sdicons.jsontools/jsontools-core/jars/jsontools-core-1.7.jar $systemlib
@@ -353,6 +352,10 @@ cp $srcPath/SecurityAdapters/SecurityAdapterBase/target/scala-2.10/*.jar $system
 
 # an extra copy to make sure ?
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/*.jar $systemlib
+
+cp $srcPath/Utils/SaveContainerDataComponent/target/scala-2.10/savecontainerdatacomponent*.jar $systemlib
+cp $srcPath/Utils/SaveContainerDataComponent/target/scala-2.10/SaveContainerDataComponent* $systemlib
+cp $srcPath/Utils/UtilsForModels/target/scala-2.10/utilsformodels*.jar $systemlib
 
 # sample configs
 #echo "copy sample configs..."
