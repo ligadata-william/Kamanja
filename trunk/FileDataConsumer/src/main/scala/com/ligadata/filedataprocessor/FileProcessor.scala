@@ -559,7 +559,7 @@ object FileProcessor {
   private def getFailedFiles (fileType: Int): Map[String,FileStatus] = {
     var returnMap: Map[String,FileStatus] = Map[String,FileStatus]()
     activeFilesLock.synchronized {
-      var iter = activeFiles.iterator
+      val iter = activeFiles.iterator
       while(iter.hasNext) {
         var file = iter.next
         val cStatus = file._2
@@ -575,22 +575,21 @@ object FileProcessor {
     return returnMap
   }
 
+  // This gets called inthe error case by the recovery logic
+  // in normal cases, the KafkaMessafeLoader will handle the completing the file.
   private def completeFile (fileName: String): Unit = {
-    val znodePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/smartFileConsumer/"
     try {
       logger.info("SMART FILE CONSUMER {global): - cleaning up after " + fileName)
       // Either move or rename the file.
-      var fileStruct = fileName.split("/")
+      val fileStruct = fileName.split("/")
       if (targetMoveDir != null) {
         logger.debug("SMART FILE CONSUMER Moving File" + fileName + " to " + targetMoveDir)
-        Files.copy(Paths.get(fileName), Paths.get(targetMoveDir + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
+        Files.copy(Paths.get(dirToWatch+"/"+fileStruct(fileStruct.size - 1)), Paths.get(targetMoveDir + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
         Files.deleteIfExists(Paths.get(fileName))
       } else {
         logger.debug("SMART FILE CONSUMER Renaming file " + fileName + " to " + fileName + "_COMPLETE")
-        (new File(fileName)).renameTo(new File(fileName + "_COMPLETE"))
+        (new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1))).renameTo(new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1) + "_COMPLETE"))
       }
-    //  fileCacheRemove(fileName)
-    //  markFileProcessingEnd(fileName)
       val tokenName = fileName.split("/")
       markFileProcessingEnd(tokenName(tokenName.size - 1))
       fileCacheRemove(tokenName(tokenName.size - 1))

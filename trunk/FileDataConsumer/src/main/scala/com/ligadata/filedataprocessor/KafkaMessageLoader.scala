@@ -263,18 +263,18 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       logger.info("SMART FILE CONSUMER ("+partIdx+") - cleaning up after " + fileName)
       // Either move or rename the file.
       var fileStruct = fileName.split("/")
-     // throw new IOException("FUCK THIS SHIT HAHAHAHA")
+
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null) != null) {
-        logger.debug("SMART FILE CONSUMER ("+partIdx+") Moving File" + fileName + " to " + inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
+        logger.info("SMART FILE CONSUMER ("+partIdx+") Moving File" + fileName + " to " + inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
         Files.copy(Paths.get(fileName), Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO) + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
         Files.deleteIfExists(Paths.get(fileName))
       } else {
-        logger.debug(" SMART FILE CONSUMER (\"+partIdx+\")  Renaming file " + fileName + " to " + fileName + "_COMPLETE")
+        logger.info(" SMART FILE CONSUMER (\"+partIdx+\")  Renaming file " + fileName + " to " + fileName + "_COMPLETE")
         (new File(fileName)).renameTo(new File(fileName + "_COMPLETE"))
       }
 
       //markFileProcessingEnd(fileName)
-      var tokenName = fileName.split("/")
+      val tokenName = fileName.split("/")
       FileProcessor.fileCacheRemove(tokenName(tokenName.size - 1))
       FileProcessor.removeFromZK(tokenName(tokenName.size - 1))
       FileProcessor.markFileProcessingEnd(tokenName(tokenName.size - 1))
