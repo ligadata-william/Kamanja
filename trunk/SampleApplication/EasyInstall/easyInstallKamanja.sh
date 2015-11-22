@@ -116,6 +116,7 @@ cp FileDataConsumer/target/scala-2.10/FileDataConsumer* $bin
 # Base Types and Functions, InputOutput adapters, and original versions of things
 echo "copy all Kamanja jars and the jars upon which they depend to the $systemlib"
 
+cp $srcPath/Storage/SqlServer/src/test/resources/sqljdbc4-2.0.jar $systemlib
 cp $ivyPath/cache/org.codehaus.jackson/jackson-xc/jars/jackson-xc-1.8.3.jar $systemlib
 cp $ivyPath/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.0.4.1.jar $systemlib
 cp $ivyPath/cache/org.codehaus.jackson/jackson-core-asl/jars/jackson-core-asl-1.8.8.jar $systemlib

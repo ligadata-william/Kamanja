@@ -52,8 +52,30 @@ case class AdapterUniqueValueDes(T: Long, V: String, Out: Option[List[List[Strin
  *  The SimpleEnvContextImpl supports kv stores that are based upon MapDb hash tables.
  */
 object SimpleEnvContextImpl extends EnvContext with LogTrait {
+  private def ResolveEnableEachTransactionCommit: Unit = {
+    if (_enableEachTransactionCommit == false && _mgr != null) {
+      val clusters = _mgr.Clusters
+      clusters.foreach(c => {
+        if (_enableEachTransactionCommit == false) {
+          val tmp1 = _mgr.GetUserProperty(c._1, "EnableEachTransactionCommit")
+          if (tmp1.size > 0) {
+            try {
+              _enableEachTransactionCommit = tmp1.toBoolean
+            } catch {
+              case e: Exception => {
 
-  override def setMdMgr(inMgr: MdMgr): Unit = { _mgr = inMgr }
+              }
+            }
+          }
+        }
+      })
+    }
+  }
+
+  override def setMdMgr(inMgr: MdMgr): Unit = {
+    _mgr = inMgr
+    ResolveEnableEachTransactionCommit
+  }
 
   override def NewMessageOrContainer(fqclassname: String): MessageContainerBase = {
     try {
@@ -449,6 +471,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _defaultDataStore: DataStore = null
   private[this] var _statusinfoDataStore: DataStore = null
   private[this] var _mdres: MdBaseResolveInfo = null
+  private[this] var _enableEachTransactionCommit = false
   private[this] var _jarPaths: collection.immutable.Set[String] = null // Jar paths where we can resolve all jars (including dependency jars).
 
   for (i <- 0 until _buckets) {
@@ -905,10 +928,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                     container.dataByTmPart.put(kv._1, v1)
                   })
                 } else {
-                if (tr != null)
-                  _defaultDataStore.get(containerName, Array(tr), Array(bk), buildOne)
-                else
-                  _defaultDataStore.get(containerName, Array(bk), buildOne)
+                  if (tr != null)
+                    _defaultDataStore.get(containerName, Array(tr), Array(bk), buildOne)
+                  else
+                    _defaultDataStore.get(containerName, Array(bk), buildOne)
                 }
                 container.loadedKeys.add(loadKey)
               } catch {
@@ -938,7 +961,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                     container.dataByTmPart.put(kv._1, v1)
                   })
                 } else {
-                _defaultDataStore.get(containerName, Array(tr), buildOne)
+                  _defaultDataStore.get(containerName, Array(tr), buildOne)
                 }
                 container.loadedKeys.add(loadKey)
               } catch {
@@ -968,7 +991,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                     container.dataByTmPart.put(kv._1, v1)
                   })
                 } else {
-                _defaultDataStore.get(containerName, buildOne)
+                  _defaultDataStore.get(containerName, buildOne)
                 }
                 container.loadedKeys.add(loadKey)
               } catch {
@@ -1123,7 +1146,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         else
           _containersNames.remove(c) // remove it incase if it exists in set
       })
-  }
+    }
+
+    ResolveEnableEachTransactionCommit
   }
 
   override def CacheContainers(clusterId: String): Unit = {
@@ -1242,7 +1267,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val entry = it1.next();
           val v = entry.getValue()
           if (v.modified)
-          foundPartKeys += entry.getKey().key
+            foundPartKeys += entry.getKey().key
         }
         if (foundPartKeys.size > 0)
           changedContainersData(v._1) = foundPartKeys.toList
@@ -1276,7 +1301,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     })
 
-    if (forceCommit == false) {
+    if (forceCommit == false && _enableEachTransactionCommit == false) {
       removeTransactionContext(transId)
       return
     }
@@ -1709,7 +1734,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _defaultDataStore.put(Array(("AdapterUniqKvData", dataForContainer.toArray)))
     }
   }
-
 
   private def callSaveData(dataStore: DataStoreOperations, data_list: Array[(String, Array[(Key, Value)])]): Unit = {
     var failedWaitTime = 15000 // Wait time starts at 15 secs
