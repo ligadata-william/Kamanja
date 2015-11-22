@@ -127,7 +127,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     messages.foreach(msg => {
       if (msg.offsetInFile == FileProcessor.BROKEN_FILE) {
         logger.error("SMART FILE ADAPTER "+ partIdx +": aborting kafka data push for " + msg.relatedFileName + " last successful offset for this file is "+ numberOfValidEvents)
-        FileProcessor.setFileOffset(msg.relatedFileName, numberOfValidEvents)
+        val tokenName = msg.relatedFileName.split("/")
+        FileProcessor.setFileOffset(tokenName(tokenName.size - 1), numberOfValidEvents)
         fileBeingProcessed = ""
         return
       }
@@ -280,7 +281,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     } catch {
       case ioe: IOException => {
         logger.error("Exception moving the file ",ioe)
-        FileProcessor.setFileState(fileName,FileProcessor.FINISHED_FAILED_TO_COPY)
+        var tokenName = fileName.split("/")
+        FileProcessor.setFileState(tokenName(tokenName.size - 1),FileProcessor.FINISHED_FAILED_TO_COPY)
       }
     }
   }

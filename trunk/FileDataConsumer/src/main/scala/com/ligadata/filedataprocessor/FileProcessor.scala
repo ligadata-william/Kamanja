@@ -590,14 +590,16 @@ object FileProcessor {
         (new File(fileName)).renameTo(new File(fileName + "_COMPLETE"))
       }
     //  fileCacheRemove(fileName)
-      markFileProcessingEnd(fileName)
+    //  markFileProcessingEnd(fileName)
       val tokenName = fileName.split("/")
+      markFileProcessingEnd(tokenName(tokenName.size - 1))
       fileCacheRemove(tokenName(tokenName.size - 1))
       removeFromZK(tokenName(tokenName.size - 1))
     } catch {
       case ioe: IOException => {
         logger.error("Exception moving the file ",ioe)
-        FileProcessor.setFileState(fileName,FileProcessor.FINISHED_FAILED_TO_COPY)
+        val tokenName = fileName.split("/")
+        FileProcessor.setFileState(tokenName(tokenName.size - 1),FileProcessor.FINISHED_FAILED_TO_COPY)
       }
     }
   }
@@ -898,7 +900,8 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
     } catch {
       case fio: IOException => {
         logger.error("SMART_FILE_CONSUMER (" + partitionId + ") Exception moving the file ",fio)
-        FileProcessor.setFileState(fileName,FileProcessor.MISSING)
+        val tokenName = fileName.split("/")
+        FileProcessor.setFileState(tokenName(tokenName.size - 1),FileProcessor.MISSING)
         return
       }
     }
@@ -1001,7 +1004,8 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       } else {
         logger.info("SMART_FILE_CONSUMER partition " + partitionId + " Processing file " + fileToProcess)
         println("SMART_FILE_CONSUMER partition " + partitionId + " Processing file " + fileToProcess)
-        FileProcessor.markFileProcessing(fileToProcess.name, fileToProcess.offset, fileToProcess.createDate)
+        val tokenName = fileToProcess.name.split("/")
+        FileProcessor.markFileProcessing(tokenName(tokenName.size - 1), fileToProcess.offset, fileToProcess.createDate)
         curTimeStart = System.currentTimeMillis
         try {
           readBytesChunksFromFile(fileToProcess)
