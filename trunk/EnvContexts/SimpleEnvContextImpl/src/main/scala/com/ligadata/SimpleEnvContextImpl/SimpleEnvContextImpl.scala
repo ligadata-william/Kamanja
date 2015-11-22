@@ -529,10 +529,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       logger.debug("Getting DB Connection for dataStoreInfo:%s".format(dataStoreInfo))
       return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
-      case e: Exception => {
-        logger.error("Failed to GetDataStoreHandle")
-        throw e
-      }
+      case e: Exception => throw e
+      case e: Throwable => throw e
     }
   }
 
@@ -726,7 +724,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       buildAdapterUniqueValue(k, v, results)
     }
     try {
-      _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), Array(Array(key)), buildAdapOne)
+      callGetData(_defaultDataStore, "AdapterUniqKvData", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), Array(Array(key)), buildAdapOne)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -756,7 +754,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var objs = new Array[(Key, scala.collection.mutable.Map[String, SavedMdlResult])](1)
     val buildMdlOne = (k: Key, v: Value) => { buildModelsResult(k, v, objs) }
     try {
-      _defaultDataStore.get("ModelResults", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), Array(key.toArray), buildMdlOne)
+      callGetData(_defaultDataStore, "ModelResults", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), Array(key.toArray), buildMdlOne)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -929,9 +927,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                   })
                 } else {
                   if (tr != null)
-                    _defaultDataStore.get(containerName, Array(tr), Array(bk), buildOne)
+                    callGetData(_defaultDataStore, containerName, Array(tr), Array(bk), buildOne)
                   else
-                    _defaultDataStore.get(containerName, Array(bk), buildOne)
+                    callGetData(_defaultDataStore, containerName, Array(bk), buildOne)
                 }
                 container.loadedKeys.add(loadKey)
               } catch {
@@ -961,7 +959,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                     container.dataByTmPart.put(kv._1, v1)
                   })
                 } else {
-                  _defaultDataStore.get(containerName, Array(tr), buildOne)
+                  callGetData(_defaultDataStore, containerName, Array(tr), buildOne)
                 }
                 container.loadedKeys.add(loadKey)
               } catch {
@@ -991,7 +989,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                     container.dataByTmPart.put(kv._1, v1)
                   })
                 } else {
-                  _defaultDataStore.get(containerName, buildOne)
+                  callGetData(_defaultDataStore, containerName, buildOne)
                 }
                 container.loadedKeys.add(loadKey)
               } catch {
@@ -1163,7 +1161,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val buildOne = (k: Key, v: Value) => {
             collectKeyAndValues(k, v, cacheContainer)
           }
-          _defaultDataStore.get(c, buildOne)
+          callGetData(_defaultDataStore, c, buildOne)
           _cachedContainers(c) = cacheContainer
         }
       })
@@ -1487,7 +1485,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       buildAdapterUniqueValue(k, v, results)
     }
 
-    _defaultDataStore.get("AdapterUniqKvData", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), keys.map(k => Array(k)), buildAdapOne)
+    callGetData(_defaultDataStore, "AdapterUniqKvData", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), keys.map(k => Array(k)), buildAdapOne)
 
     logger.debug("Loaded %d committing informations".format(results.size))
     results.toArray
@@ -1522,7 +1520,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val collectorValidateAdapInfo = (k: Key, v: Value) => {
       buildValidateAdapInfo(k, v, results)
     }
-    _defaultDataStore.get("CheckPointInformation", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), collectorValidateAdapInfo)
+    callGetData(_defaultDataStore, "CheckPointInformation", Array(TimeRange(KvBaseDefalts.defaultTime, KvBaseDefalts.defaultTime)), collectorValidateAdapInfo)
     logger.debug("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
     results.toArray
   }
@@ -1535,7 +1533,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val buildOne = (k: Key, v: Value) => {
         collectKeyAndValues(k, v, cacheContainer)
       }
-      _defaultDataStore.get(contName, keys.toArray, buildOne)
+      callGetData(_defaultDataStore, contName, keys.toArray, buildOne)
     }
   }
 
@@ -1582,7 +1580,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val tmRng = if (tmRange != null) Array(tmRange) else Array[TimeRange]()
       val prtKeys = if (partKey != null) Array(partKey.toArray) else Array[Array[String]]()
 
-      _defaultDataStore.get(containerName, tmRng, prtKeys, buildOne)
+      get(_defaultDataStore, containerName, tmRng, prtKeys, buildOne)
 
       readValues.foreach(kv => {
         val primkey = kv._2.PrimaryKeyData
@@ -1670,7 +1668,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val prtKeys = if (partKey != null) Array(partKey.toArray) else Array[Array[String]]()
 
       try {
-        _defaultDataStore.get(containerName, tmRng, prtKeys, buildOne)
+        get(_defaultDataStore, containerName, tmRng, prtKeys, buildOne)
       } catch {
         case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1731,7 +1729,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       dataForContainer += ((Key(KvBaseDefalts.defaultTime, Array(v1._1), 0, 0), Value("json", compjson.getBytes("UTF8"))))
     })
     if (dataForContainer.size > 0) {
-      _defaultDataStore.put(Array(("AdapterUniqKvData", dataForContainer.toArray)))
+      callSaveData(_defaultDataStore, Array(("AdapterUniqKvData", dataForContainer.toArray)))
     }
   }
 
@@ -1775,6 +1773,272 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           case e: Exception => {
 
           }
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
+      }
+    }
+  }
+
+  // BUGBUG:: We can make all gets as simple template for exceptions handling and call that.
+  private def callGetData(dataStore: DataStoreOperations, containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneGet = false
+
+    while (!doneGet) {
+      try {
+        dataStore.get(containerName, callbackFunction)
+        doneGet = true
+      } catch {
+        case e @ (_: ObjectNotFoundException | _: KeyNotFoundException) => {
+          logger.debug("Failed to get data from container:%s".format(containerName))
+          doneGet = true
+        }
+        case e: FatalAdapterException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDMLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDDLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Throwable => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+      }
+
+      while (!doneGet) {
+        try {
+          logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {}
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
+      }
+    }
+  }
+
+  private def callGetData(dataStore: DataStoreOperations, containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneGet = false
+
+    while (!doneGet) {
+      try {
+        dataStore.get(containerName, keys, callbackFunction)
+        doneGet = true
+      } catch {
+        case e @ (_: ObjectNotFoundException | _: KeyNotFoundException) => {
+          logger.debug("Failed to get data from container:%s".format(containerName))
+          doneGet = true
+        }
+        case e: FatalAdapterException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDMLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDDLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Throwable => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+      }
+
+      while (!doneGet) {
+        try {
+          logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {}
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
+      }
+    }
+  }
+
+  private def callGetData(dataStore: DataStoreOperations, containerName: String, timeRanges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneGet = false
+
+    while (!doneGet) {
+      try {
+        dataStore.get(containerName, timeRanges, callbackFunction)
+        doneGet = true
+      } catch {
+        case e @ (_: ObjectNotFoundException | _: KeyNotFoundException) => {
+          logger.debug("Failed to get data from container:%s".format(containerName))
+          doneGet = true
+        }
+        case e: FatalAdapterException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDMLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDDLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Throwable => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+      }
+
+      while (!doneGet) {
+        try {
+          logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {}
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
+      }
+    }
+  }
+
+  private def callGetData(dataStore: DataStoreOperations, containerName: String, timeRanges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneGet = false
+
+    while (!doneGet) {
+      try {
+        dataStore.get(containerName, timeRanges, bucketKeys, callbackFunction)
+        doneGet = true
+      } catch {
+        case e @ (_: ObjectNotFoundException | _: KeyNotFoundException) => {
+          logger.debug("Failed to get data from container:%s".format(containerName))
+          doneGet = true
+        }
+        case e: FatalAdapterException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDMLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDDLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Throwable => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+      }
+
+      while (!doneGet) {
+        try {
+          logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {}
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
+      }
+    }
+  }
+
+  private def callGetData(dataStore: DataStoreOperations, containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneGet = false
+
+    while (!doneGet) {
+      try {
+        dataStore.get(containerName, bucketKeys, callbackFunction)
+        doneGet = true
+      } catch {
+        case e @ (_: ObjectNotFoundException | _: KeyNotFoundException) => {
+          logger.debug("Failed to get data from container:%s".format(containerName))
+          doneGet = true
+        }
+        case e: FatalAdapterException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDMLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: StorageDDLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+        case e: Throwable => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to get data from container:%s.\nStackTrace:%s".format(containerName, stackTrace))
+        }
+      }
+
+      while (!doneGet) {
+        try {
+          logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {}
         }
         // Adjust time for next time
         if (failedWaitTime < maxFailedWaitTime) {

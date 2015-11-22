@@ -195,21 +195,52 @@ Sample uses:
 
       val kvmaker: KVInit = new KVInit(loadConfigs, typename.toLowerCase, dataFiles, keyfieldnames, keyAndValueDelimiter, fieldDelimiter, valueDelimiter, ignoreerrors, ignoreRecords, format, commitBatchSize)
       if (kvmaker.isOk) {
-        val dstore = kvmaker.GetDataStoreHandle(KvInitConfiguration.jarPaths, kvmaker.dataDataStoreInfo)
-        if (dstore != null) {
-          try {
-            kvmaker.buildContainerOrMessage(dstore)
-          } catch {
-            case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              logger.error("Failed to build Container or Message." + "\nStackTrace:" + stackTrace)
+        try {
+          val dstore = kvmaker.GetDataStoreHandle(KvInitConfiguration.jarPaths, kvmaker.dataDataStoreInfo)
+          if (dstore != null) {
+            try {
+              kvmaker.buildContainerOrMessage(dstore)
+            } catch {
+              case e: Exception => {
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                logger.error("Failed to build Container or Message." + "\nStackTrace:" + stackTrace)
+              }
+            } finally {
+              if (dstore != null)
+                dstore.Shutdown()
+              com.ligadata.transactions.NodeLevelTransService.Shutdown
+              if (kvmaker.zkcForSetData != null)
+                kvmaker.zkcForSetData.close()
             }
-          } finally {
-            if (dstore != null)
-              dstore.Shutdown()
-            com.ligadata.transactions.NodeLevelTransService.Shutdown
-            if (kvmaker.zkcForSetData != null)
-              kvmaker.zkcForSetData.close()
+          }
+        } catch {
+          case e: FatalAdapterException => {
+            val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+            logger.error("Failed to connect to Datastore. Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
+          }
+          case e: StorageConnectionException => {
+            val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+            logger.error("Failed to connect to Datastore. Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
+          }
+          case e: StorageFetchException => {
+            val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+            logger.error("Failed to connect to Datastore. Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
+          }
+          case e: StorageDMLException => {
+            val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+            logger.error("Failed to connect to Datastore. Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
+          }
+          case e: StorageDDLException => {
+            val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+            logger.error("Failed to connect to Datastore. Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
+          }
+          case e: Exception => {
+            val causeStackTrace = StackTrace.ThrowableTraceString(e)
+            logger.error("Failed to connect to Datastore. Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
+          }
+          case e: Throwable => {
+            val causeStackTrace = StackTrace.ThrowableTraceString(e)
+            logger.error("Failed to connect to Datastore. Reason:" + e.getCause + ". Message:" + e.getMessage + "\nCause:\n" + causeStackTrace)
           }
         }
       }
@@ -489,11 +520,8 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       logger.debug("Getting DB Connection for dataStoreInfo:%s".format(dataStoreInfo))
       return KeyValueManager.Get(jarPaths, dataStoreInfo)
     } catch {
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw new Exception(e.getMessage())
-      }
+      case e: Exception => throw e
+      case e: Throwable => throw e
     }
   }
 
@@ -592,16 +620,56 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
     val buildOne = (k: Key, v: Value) => {
       collectKeyAndValues(k, v, dataByBucketKeyPart, loadedKeys)
     }
-    try {
-      kvstore.get(objFullName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
-      loadedKeys.add(loadKey)
-    } catch {
-      case e: ObjectNotFoundException => {
-        logger.debug("Key %s Not found for timerange: %d-%d".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
+
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneGet = false
+
+    while (!doneGet) {
+      try {
+        kvstore.get(objFullName, Array(loadKey.tmRange), Array(loadKey.bucketKey), buildOne)
+        loadedKeys.add(loadKey)
+        doneGet = true
+      } catch {
+        case e @ (_: ObjectNotFoundException | _: KeyNotFoundException) => {
+          logger.debug("In Container %s Key %s Not found for timerange: %d-%d".format(objFullName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime))
+          doneGet = true
+        }
+        case e: FatalAdapterException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("In Container %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(objFullName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
+        }
+        case e: StorageDMLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("In Container %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(objFullName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
+        }
+        case e: StorageDDLException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("In Container %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(objFullName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
+        }
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("In Container %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(objFullName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
+        }
+        case e: Throwable => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("In Container %s Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(objFullName, loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
+        }
       }
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Key %s Not found for timerange: %d-%d.\nStackTrace:%s".format(loadKey.bucketKey.mkString(","), loadKey.tmRange.beginTime, loadKey.tmRange.endTime, stackTrace))
+
+      while (!doneGet) {
+        try {
+          logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {}
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
       }
     }
   }
@@ -628,18 +696,50 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
       }
     }
 
-    try {
-      logger.debug("Going to save " + storeObjects.size + " objects")
-      /*
-      storeObjects.foreach(kv => {
-        logger.debug("ObjKey:(" + kv._1.timePartition + ":" + kv._1.bucketKey.mkString(",") + ":" + kv._1.transactionId + ") Value Size: " + kv._2.serializedInfo.size)
-      })
-*/
-      kvstore.put(Array((objFullName, storeObjects.toArray)))
-    } catch {
-      case e: Exception => {
-        logger.error("Failed to write data")
-        throw e
+    var failedWaitTime = 15000 // Wait time starts at 15 secs
+    val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+    var doneSave = false
+
+    while (!doneSave) {
+      try {
+        kvstore.put(Array((objFullName, storeObjects.toArray)))
+        doneSave = true
+      } catch {
+        case e: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+        case e: StorageDMLException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+        case e: StorageDDLException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e.cause)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Failed to save data into datastore, cause: \n" + causeStackTrace)
+        }
+      }
+
+      while (!doneSave) {
+        try {
+          logger.error("Failed to save data into datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
+          Thread.sleep(failedWaitTime)
+        } catch {
+          case e: Exception => {}
+        }
+        // Adjust time for next time
+        if (failedWaitTime < maxFailedWaitTime) {
+          failedWaitTime = failedWaitTime * 2
+          if (failedWaitTime > maxFailedWaitTime)
+            failedWaitTime = maxFailedWaitTime
+        }
       }
     }
 
