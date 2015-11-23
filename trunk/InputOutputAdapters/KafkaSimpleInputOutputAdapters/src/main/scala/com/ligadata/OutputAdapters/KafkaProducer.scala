@@ -68,7 +68,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val clientId = qc.Name + "_" + hashCode.toString
 
   val compress: Boolean = false
-  val synchronously: Boolean = false
+  val synchronously: Boolean = true
   val batchSize: Integer = 1024
   val queueTime: Integer = 100
   val bufferMemory: Integer = 16 * 1024 * 1024
@@ -131,13 +131,12 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         reqCntr = 0
       reqCntr += 1
       val cntr = reqCntr
-      
+
       var sendStatus = KafkaConstants.KAFKA_NOT_SEND
       var retryCount = 0
       while (sendStatus != KafkaConstants.KAFKA_SEND_SUCCESS) {
         val result = doSend(cntr, keyMessages)
         sendStatus = result._1
-
         // Queue is full, wait and retry
         if (sendStatus == KafkaConstants.KAFKA_SEND_Q_FULL) {
           LOG.warn("KAFKA PRODUCER: " + qc.topic + " is temporarily full, retrying.")
@@ -147,9 +146,9 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
         //  3 times.
         if (sendStatus == KafkaConstants.KAFKA_SEND_DEAD_PRODUCER) {
+          retryCount += 1
           if (retryCount < MAX_RETRY) {
             LOG.warn("KAFKA PRODUCER: Error sending to kafka, Retrying " + retryCount + "/" + MAX_RETRY)
-            retryCount += 1
           } else {
             LOG.error("KAFKA PRODUCER: Error sending to kafka,  MAX_RETRY reached... shutting down")
             throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", result._2.getOrElse(null))

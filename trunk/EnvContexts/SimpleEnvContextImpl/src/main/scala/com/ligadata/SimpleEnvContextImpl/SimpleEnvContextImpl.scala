@@ -1765,7 +1765,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
 
-      while (!doneSave) {
+      if (!doneSave) {
         try {
           logger.error("Failed to save data into datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
@@ -1821,7 +1821,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
 
-      while (!doneGet) {
+      if (!doneGet) {
         try {
           logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
@@ -1874,7 +1874,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
 
-      while (!doneGet) {
+      if (!doneGet) {
         try {
           logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
@@ -1927,7 +1927,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
 
-      while (!doneGet) {
+      if (!doneGet) {
         try {
           logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
@@ -1980,7 +1980,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
 
-      while (!doneGet) {
+      if (!doneGet) {
         try {
           logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
@@ -2033,7 +2033,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
 
-      while (!doneGet) {
+      if (!doneGet) {
         try {
           logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
