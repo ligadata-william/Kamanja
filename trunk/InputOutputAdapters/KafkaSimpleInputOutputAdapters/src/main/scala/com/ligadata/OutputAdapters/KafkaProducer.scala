@@ -17,14 +17,14 @@
 
 package com.ligadata.OutputAdapters
 
-import java.util.{Properties, Arrays}
-import kafka.common.{QueueFullException, FailedToSendMessageException}
+import java.util.{ Properties, Arrays }
+import kafka.common.{ QueueFullException, FailedToSendMessageException }
 import kafka.message._
 import kafka.producer.{ ProducerConfig, Producer, KeyedMessage, Partitioner }
 import org.apache.log4j.Logger
 import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
-import com.ligadata.AdaptersConfiguration.{KafkaConstants, KafkaQueueAdapterConfiguration}
-import com.ligadata.Exceptions.{FatalAdapterException, StackTrace}
+import com.ligadata.AdaptersConfiguration.{ KafkaConstants, KafkaQueueAdapterConfiguration }
+import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 import scala.collection.mutable.ArrayBuffer
 import kafka.utils.VerifiableProperties
 
@@ -45,7 +45,7 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
           return (scala.math.abs(Arrays.hashCode(key.asInstanceOf[Array[Byte]])) % numPartitions)
         } else if (key.isInstanceOf[String]) {
           return (key.asInstanceOf[String].hashCode() % numPartitions)
-        } else if (key.isInstanceOf[Int]){
+        } else if (key.isInstanceOf[Int]) {
           return (key.asInstanceOf[Int] % numPartitions)
         } else if (key.isInstanceOf[Long]) {
           return ((key.asInstanceOf[Long] % numPartitions).asInstanceOf[Int])
@@ -72,11 +72,10 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val batchSize: Integer = 1024
   val queueTime: Integer = 100
   val bufferMemory: Integer = 16 * 1024 * 1024
-  val messageSendMaxRetries: Integer = 3
+  val messageSendMaxRetries: Integer = 1
   val requestRequiredAcks: Integer = 1
   val MAX_RETRY = 3
   val ackTimeout = 10000
-
 
   val codec = if (compress) DefaultCompressionCodec.codec else NoCompressionCodec.codec
 
@@ -128,15 +127,20 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         keyMessages += new KeyedMessage(qc.topic, partKeys(i), messages(i))
       }
 
+      if (reqCntr > 500000000)
+        reqCntr = 0
+      reqCntr += 1
+      val cntr = reqCntr
+      
       var sendStatus = KafkaConstants.KAFKA_NOT_SEND
       var retryCount = 0
       while (sendStatus != KafkaConstants.KAFKA_SEND_SUCCESS) {
-        val result = doSend(keyMessages)
+        val result = doSend(cntr, keyMessages)
         sendStatus = result._1
 
         // Queue is full, wait and retry
         if (sendStatus == KafkaConstants.KAFKA_SEND_Q_FULL) {
-          LOG.warn("KAFKA PRODUCER: "+ qc.topic +" is temporarily full, retrying.")
+          LOG.warn("KAFKA PRODUCER: " + qc.topic + " is temporarily full, retrying.")
           Thread.sleep(1000)
         }
 
@@ -144,9 +148,8 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         //  3 times.
         if (sendStatus == KafkaConstants.KAFKA_SEND_DEAD_PRODUCER) {
           if (retryCount < MAX_RETRY) {
-            LOG.warn("KAFKA PRODUCER: Error sending to kafka, Retrying " + retryCount +"/"+MAX_RETRY)
+            LOG.warn("KAFKA PRODUCER: Error sending to kafka, Retrying " + retryCount + "/" + MAX_RETRY)
             retryCount += 1
-
           } else {
             LOG.error("KAFKA PRODUCER: Error sending to kafka,  MAX_RETRY reached... shutting down")
             throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", result._2.getOrElse(null))
@@ -158,21 +161,18 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       cntrAdapter.addCntr(key, messages.size) // for now adding rows
     } catch {
       case fae: FatalAdapterException => throw fae
-      case e: Exception =>  throw new FatalAdapterException("Unknown exception", e)
+      case e: Exception               => throw new FatalAdapterException("Unknown exception", e)
     }
   }
 
-  private def doSend (keyMessages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]) : (Int, Option[Exception] )= {
+  private def doSend(cntr: Int, keyMessages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): (Int, Option[Exception]) = {
 
     try {
-      if (reqCntr > 500000000)
-        reqCntr = 0
-      reqCntr += 1
-      producers(reqCntr % producersCnt).send(keyMessages: _*) // Thinking this op is atomic for (can write multiple partitions into one queue, but don't know whether it is atomic per partition in the queue).
+      producers(cntr % producersCnt).send(keyMessages: _*) // Thinking this op is atomic for (can write multiple partitions into one queue, but don't know whether it is atomic per partition in the queue).
     } catch {
       case ftsme: FailedToSendMessageException => return (KafkaConstants.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme))
-      case qfe: QueueFullException =>  return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
-      case e: Exception => throw new FatalAdapterException("Unknown exception", e)
+      case qfe: QueueFullException             => return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
+      case e: Exception                        => throw new FatalAdapterException("Unknown exception", e)
     }
     return (KafkaConstants.KAFKA_SEND_SUCCESS, None)
   }
