@@ -657,7 +657,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
         }
       }
 
-      while (!doneGet) {
+      if (!doneGet) {
         try {
           logger.error("Failed to get data from datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
@@ -727,7 +727,7 @@ class KVInit(val loadConfigs: Properties, val typename: String, val dataFiles: A
         }
       }
 
-      while (!doneSave) {
+      if (!doneSave) {
         try {
           logger.error("Failed to save data into datastore. Waiting for another %d milli seconds and going to start them again.".format(failedWaitTime))
           Thread.sleep(failedWaitTime)
