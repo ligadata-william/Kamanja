@@ -67,7 +67,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   dateFormat.setTimeZone(TimeZone.getTimeZone("UTC")); // Setting the UTC timezone.
   //var frmt: SimpleDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss")
 
-  private var fileCache: scala.collection.mutable.Map[String, Long] = scala.collection.mutable.Map[String, Long]()
+  //private var fileCache: scala.collection.mutable.Map[String, Long] = scala.collection.mutable.Map[String, Long]()
 
   // Set up some properties for the Kafka Producer
   val props = new Properties()
@@ -90,8 +90,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
   val zkcConnectString = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
   logger.debug(partIdx + " SMART FILE CONSUMER Using zookeeper " + zkcConnectString)
-  val znodePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/smartFileConsumer/" + partIdx
-  var zkc: CuratorFramework = initZookeeper
+  //val znodePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/smartFileConsumer/" + partIdx
+ // var zkc: CuratorFramework = initZookeeper
   var objInst: Any = configureMessageDef
   if (objInst == null) {
     shutdown
@@ -114,8 +114,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       numberOfValidEvents = 0
       startFileProcessingTimeStamp = 0 //scala.compat.Platform.currentTime
       fileBeingProcessed = messages(0).relatedFileName
-      val zkFname = "{" + "\"" + fileBeingProcessed + "\":" + 0 + "}"
-      zkc.setData.forPath(znodePath, zkFname.getBytes)
+      val fileTokens = fileBeingProcessed.split("/")
+      FileProcessor.addToZK(fileTokens(fileTokens.size - 1), 0)
     }
 
     if (startFileProcessingTimeStamp == 0)
@@ -125,6 +125,14 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
     var isLast = false
     messages.foreach(msg => {
+      if (msg.offsetInFile == FileProcessor.BROKEN_FILE) {
+        logger.error("SMART FILE ADAPTER "+ partIdx +": aborting kafka data push for " + msg.relatedFileName + " last successful offset for this file is "+ numberOfValidEvents)
+        val tokenName = msg.relatedFileName.split("/")
+        FileProcessor.setFileOffset(tokenName(tokenName.size - 1), numberOfValidEvents)
+        fileBeingProcessed = ""
+        return
+      }
+
       if (!msg.isLastDummy) {
         numberOfValidEvents += 1
         var inputData: InputData = null
@@ -139,7 +147,6 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
             (msg.offsetInFile >= 0 &&
               msg.offsetInFile < currentOffset)) {
             val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString
-            logger.info("PartitionKey:%s, Msg:%s".format(partitionKey, msgStr))
             keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
                                                             partitionKey.getBytes("UTF8"),
                                                             msgStr.getBytes("UTF8"))
@@ -171,9 +178,9 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     // Make sure you dont write extra for DummyLast
     if (!isLast) {
       writeStatusMsg(fileBeingProcessed)
-      val zkFname = "{" + "\"" + fileBeingProcessed + "\":" + numberOfValidEvents + "}"
-      zkc.setData.forPath(znodePath, zkFname.getBytes)
-
+      val fileTokens = fileBeingProcessed.split("/")
+      FileProcessor.addToZK(fileTokens(fileTokens.size - 1), numberOfValidEvents)
+      //FileProcessor.setFileOffset(fileTokens(fileTokens.size - 1),numberOfValidEvents)
     }
 
     if (isLast) {
@@ -245,7 +252,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       case ftsme: FailedToSendMessageException => return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
       case qfe: QueueFullException             => return FileProcessor.KAFKA_SEND_Q_FULL
       case e: Exception =>
-        logger.error(partIdx + " Could not add to the queue due to an Exception " + e.getMessage)
+        logger.error("SMART FILE CONSUMER ("+partIdx+") Could not add to the queue due to an Exception " + e.getMessage, e)
         return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
     }
     FileProcessor.KAFKA_SEND_SUCCESS
@@ -257,25 +264,29 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    */
   private def closeOutFile(fileName: String): Unit = {
     try {
-      println(partIdx + " SMART FILE CONSUMER - cleaning up after " + fileName)
+      logger.info("SMART FILE CONSUMER ("+partIdx+") - cleaning up after " + fileName)
       // Either move or rename the file.
       var fileStruct = fileName.split("/")
+
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null) != null) {
-        logger.debug(partIdx + " SMART FILE CONSUMER Moving File" + fileName + " to " + inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
+        logger.info("SMART FILE CONSUMER ("+partIdx+") Moving File" + fileName + " to " + inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
         Files.copy(Paths.get(fileName), Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO) + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
         Files.deleteIfExists(Paths.get(fileName))
       } else {
-        logger.debug(partIdx + " SMART FILE CONSUMER Renaming file " + fileName + " to " + fileName + "_COMPLETE")
+        logger.info(" SMART FILE CONSUMER (\"+partIdx+\")  Renaming file " + fileName + " to " + fileName + "_COMPLETE")
         (new File(fileName)).renameTo(new File(fileName + "_COMPLETE"))
       }
 
-      fileCache.remove(fileName)
-      // SetData in Zookeeper... set null...
-      clearRecoveryArea
+      //markFileProcessingEnd(fileName)
+      val tokenName = fileName.split("/")
+      FileProcessor.fileCacheRemove(tokenName(tokenName.size - 1))
+      FileProcessor.removeFromZK(tokenName(tokenName.size - 1))
+      FileProcessor.markFileProcessingEnd(tokenName(tokenName.size - 1))
     } catch {
       case ioe: IOException => {
-        val stackTrace = StackTrace.ThrowableTraceString(ioe)
-        logger.warn(stackTrace)
+        logger.error("Exception moving the file ",ioe)
+        var tokenName = fileName.split("/")
+        FileProcessor.setFileState(tokenName(tokenName.size - 1),FileProcessor.FINISHED_FAILED_TO_COPY)
       }
     }
   }
@@ -290,10 +301,11 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC, "").length > 0) {
         endFileProcessingTimeStamp = scala.compat.Platform.currentTime
         var statusMsg: String = null
+        val nameToken = fileName.split("/")
         if (!isTotal)
           statusMsg = SmartFileAdapterConstants.KAFKA_LOAD_STATUS + dateFormat.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - startFileProcessingTimeStamp)
         else
-          statusMsg = SmartFileAdapterConstants.TOTAL_FILE_STATUS + dateFormat.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - fileCache(fileName))
+          statusMsg = SmartFileAdapterConstants.TOTAL_FILE_STATUS + dateFormat.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - FileProcessor.getTimingFromFileCache(nameToken(nameToken.size - 1)))
         val statusPartitionId = "it does not matter"
 
         // Write a Status Message
@@ -301,6 +313,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC), statusPartitionId.getBytes("UTF8"), new String(statusMsg).getBytes("UTF8"))
         doKafkaSend(keyMessages)
 
+      //  println("Status pushed ->" + statusMsg)
         logger.debug("Status pushed ->" + statusMsg)
       } else {
         logger.debug("NO STATUS Q SPECIFIED")
@@ -321,16 +334,13 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   private def writeErrorMsg(msg: KafkaMessage): Unit = {
     val cdate: Date = new Date
     val errorMsg = dateFormat.format(cdate) + "," + msg.relatedFileName + "," + (new String(msg.msg))
-    logger.warn(partIdx + " SMART FILE CONSUMER: invalid message in file " + msg.relatedFileName)
-    println(partIdx + " SMART FILE CONSUMER: invalid message in file " + msg.relatedFileName)
+    logger.warn(" SMART FILE CONSUMER ("+partIdx+"): invalid message in file " + msg.relatedFileName)
+    logger.warn(errorMsg)
 
     // Write a Error Message
     val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
     keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
     doKafkaSend(keyMessages)
-    //  producer.send(new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC),
-    //   "rare event".getBytes("UTF8"),
-    //   errorMsg.getBytes("UTF8")))
 
   }
 
@@ -380,22 +390,6 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
   /**
    *
-   */
-  def initZookeeper: CuratorFramework = {
-    try {
-      CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
-      return CreateClient.createSimple(zkcConnectString)
-    } catch {
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw new InternalErrorException("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
-      }
-    }
-  }
-
-  /**
-   *
    * @return
    */
   private def configureMessageDef(): com.ligadata.KamanjaBase.BaseMsgObj = {
@@ -403,6 +397,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     var msgDef: MessageDef = null
     try {
       val (typNameSpace, typName) = com.ligadata.kamanja.metadata.Utils.parseNameTokenNoVersion(inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+    //  msgDef =  FileProcessor.getMsgDef(typNameSpace,typName) //
       msgDef = mdMgr.ActiveMessage(typNameSpace, typName)
     } catch {
       case e: Exception => {
@@ -474,36 +469,14 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   }
 
   /**
-   * checkIfFileBeingProcessed - if for some reason a file name is queued twice... this will prevent it
-   * @param file
-   * @return
-   */
-  def checkIfFileBeingProcessed(file: String): Boolean = {
-    if (fileCache.contains(file))
-      return true
-    else {
-      fileCache(file) = scala.compat.Platform.currentTime
-
-      return false
-    }
-  }
-
-  def clearRecoveryArea: Unit = {
-    if (zkc != null)
-      zkc.setData.forPath(znodePath, null)
-    else
-      logger.warn("SMART_FILE_CONSUMER " + partIdx + " Unable to connect to Zookeeper")
-  }
-
-  /**
    *
    */
   private def shutdown: Unit = {
     MetadataAPIImpl.shutdown
     if (producer != null)
       producer.close
-    if (zkc != null)
-      zkc.close
+   // if (zkc != null)
+   //   zkc.close
 
     Thread.sleep(2000)
   }
