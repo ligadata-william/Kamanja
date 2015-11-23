@@ -68,7 +68,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val clientId = qc.Name + "_" + hashCode.toString
 
   val compress: Boolean = false
-  val synchronously: Boolean = true
+  val synchronously: Boolean = false
   val batchSize: Integer = 1024
   val queueTime: Integer = 100
   val bufferMemory: Integer = 16 * 1024 * 1024
