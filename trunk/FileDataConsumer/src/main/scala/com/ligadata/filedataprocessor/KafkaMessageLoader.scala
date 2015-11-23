@@ -244,6 +244,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
     try {
       if (messages.size > 0) {
+        // New Client Code!
         producer.send(messages: _*)
         return (FileProcessor.KAFKA_SEND_SUCCESS)
       }
