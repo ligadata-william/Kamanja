@@ -65,7 +65,8 @@ case class ProtoBufSerializationException(e: String) extends Throwable(e)
 
 case class KVMessageFormatingException(e: String) extends Exception(e)
 
-case class FatalAdapterException(e: String) extends Exception(e)
+case class FatalAdapterException(msg: String, cause: Throwable ) extends Exception(msg)
+
 case class StorageConnectionException(msg: String, cause: Throwable ) extends Exception(msg)
 case class StorageFetchException(msg: String, cause: Throwable ) extends Exception(msg)
 case class StorageDMLException(msg: String, cause: Throwable ) extends Exception(msg)

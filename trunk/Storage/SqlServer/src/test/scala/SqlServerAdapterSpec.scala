@@ -42,7 +42,6 @@ import com.ligadata.Exceptions._
 
 case class Customer(name:String, address: String, homePhone: String)
 
-@Ignore
 class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -58,9 +57,30 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
   var containerName = ""
   private val kvManagerLoader = new KamanjaLoaderInfo
-  var maxConnectionAttempts = 5
+  private val maxConnectionAttempts = 10
 
-  val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar"}"""
+  serializer = SerializerManager.GetSerializer("kryo")
+  logger.info("Initialize SqlServerAdapter")
+  val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar","clusteredIndex":"YES"}"""
+  
+  private def ProcessException(e: Exception) = {
+      e match {
+	case e1: StorageDMLException => {
+	  logger.error("Inner Message:%s: Message:%s".format(e1.cause.getMessage,e1.getMessage))
+	}
+	case e2: StorageDDLException => {
+	  logger.error("Innser Message:%s: Message:%s".format(e2.cause.getMessage,e2.getMessage))
+	}
+	case e3: StorageConnectionException => {
+	  logger.error("Inner Message:%s: Message:%s".format(e3.cause.getMessage,e3.getMessage))
+	}
+	case _ => {
+	  logger.error("Message:%s".format(e.getMessage))
+	}
+      }
+      var stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.info("StackTrace:"+stackTrace)
+  }	  
 
   private def CreateAdapter: DataStore = {
     var connectionAttempts = 0
@@ -69,15 +89,11 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
         adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
         return adapter
       } catch {
-        case e: StorageConnectionException => {
-          logger.error("%s: Message:%s".format(e.getMessage, e.cause.getMessage))
-          logger.error("will retry after one minute ...")
-          connectionAttempts = connectionAttempts + 1
-          Thread.sleep(60 * 1000L)
-        }
         case e: Exception => {
-          logger.error("Failed to connect: Message:%s".format(e.getMessage))
-          logger.error("retrying ...")
+	  ProcessException(e)
+          logger.error("will retry after one minute ...")
+          Thread.sleep(60 * 1000L)
+          connectionAttempts = connectionAttempts + 1
         }
       }
     }
@@ -85,19 +101,8 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
   }
 
   override def beforeAll = {
-    try {
-      logger.info("starting...");
-      serializer = SerializerManager.GetSerializer("kryo")
-      logger.info("Initialize SqlServerAdapter")
-      adapter = CreateAdapter
-    } catch {
-      case e: StorageConnectionException => {
-        logger.error("%s: Message:%s".format(e.getMessage, e.cause.getMessage))
-      }
-      case e: Exception => {
-        logger.error("Failed to connect: Message:%s".format(e.getMessage))
-      }
-    }
+    logger.info("starting...");
+    CreateAdapter
   }
 
   private def RoundDateToSecs(d:Date): Date = {
@@ -169,7 +174,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	containers = containers :+ containerName
 	adapter.CreateContainer(containers)
       }
-      var stackTrace = StackTrace.ThrowableTraceString(ex.cause)
+      var stackTrace = StackTrace.ThrowableTraceString(ex)
       logger.info("StackTrace:"+stackTrace)
 
       And("Resume API Testing")
@@ -191,7 +196,7 @@ class SqlServerAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAft
 	var value = new Value("kryo",v)
 	adapter.put(containerName,key,value)
       }
-      stackTrace = StackTrace.ThrowableTraceString(ex1.cause)
+      stackTrace = StackTrace.ThrowableTraceString(ex1)
       logger.info("StackTrace:"+stackTrace)
 
       val sqlServerAdapter = adapter.asInstanceOf[SqlServerAdapter]

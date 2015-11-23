@@ -211,6 +211,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
         //  3 times.
         if (sendResult == FileProcessor.KAFKA_SEND_DEAD_PRODUCER) {
+
           // There is not shutdown case here yet.
           if (retryCount > -1) {
             sleepTime = scala.math.min((scala.math.max(sleepTime,INIT_KAFKA_UNAVAILABLE_WAIT_VALUE) * 2),MAX_WAIT)
@@ -218,7 +219,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
             Thread.sleep(sleepTime)
           } else {
             logger.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
-            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached")
+            shutdown
+
           }
         }
       }
@@ -232,12 +234,14 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    */
   private def sendToKafka(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
 
+
     try {
       if (messages.size > 0) {
         producer.send(messages: _*)
-        return FileProcessor.KAFKA_SEND_SUCCESS
+        return (FileProcessor.KAFKA_SEND_SUCCESS)
       }
     } catch {
+
       case ftsme: FailedToSendMessageException => return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
       case qfe: QueueFullException             => return FileProcessor.KAFKA_SEND_Q_FULL
       case e: Exception =>

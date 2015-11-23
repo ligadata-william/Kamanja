@@ -26,7 +26,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 
 import com.ligadata.transactions._
 
@@ -136,13 +136,58 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val sendOutStartTime = System.nanoTime
         val outputs = outputResults.groupBy(_._1)
 
-        outputs.foreach(output => {
-          val oadap = allOuAdapters.getOrElse(output._1, null)
-          LOG.debug("Sending data => " + output._2.map(o => o._1 + "~~~" + o._2 + "~~~" + o._3).mkString("###"))
-          if (oadap != null) {
-            oadap.send(output._2.map(out => out._3.getBytes("UTF8")).toArray, output._2.map(out => out._2.getBytes("UTF8")).toArray)
+        var remOutputs = outputs.toArray
+        var failedWaitTime = 15000 // Wait time starts at 15 secs
+        val maxFailedWaitTime = 60000 // Max Wait time 60 secs
+
+        while (remOutputs.size > 0) {
+          var failedOutputs = ArrayBuffer[(String, ArrayBuffer[(String, String, String)])]()
+          remOutputs.foreach(output => {
+            val oadap = allOuAdapters.getOrElse(output._1, null)
+            LOG.debug("Sending data => " + output._2.map(o => o._1 + "~~~" + o._2 + "~~~" + o._3).mkString("###"))
+            if (oadap != null) {
+              try {
+                oadap.send(output._2.map(out => out._3.getBytes("UTF8")).toArray, output._2.map(out => out._2.getBytes("UTF8")).toArray)
+              } catch {
+                case fae: FatalAdapterException => {
+                  val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+                  LOG.error("Failed to send data to output adapter:" + oadap.inputConfig.Name + "\n.Internal Cause:" + causeStackTrace)
+                  failedOutputs += output
+                }
+                case e: Exception => {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  LOG.error("Failed to send data to output adapter:" + oadap.inputConfig.Name + "\n.Stack Trace:" + stackTrace)
+                  failedOutputs += output
+                }
+                case t: Throwable => {
+                  val stackTrace = StackTrace.ThrowableTraceString(t)
+                  LOG.error("Failed to send data to output adapter:" + oadap.inputConfig.Name + "\n.Stack Trace:" + stackTrace)
+                  failedOutputs += output
+                }
+              }
+            }
+          })
+
+          remOutputs = failedOutputs.toArray
+
+          if (remOutputs.size > 0) {
+            try {
+              LOG.error("Failed to send %d outputs. Waiting for another %d milli seconds and going to start them again.".format(remOutputs.size, failedWaitTime))
+              Thread.sleep(failedWaitTime)
+            } catch {
+              case e: Exception => {
+
+              }
+            }
+            // Adjust time for next time
+            if (failedWaitTime < maxFailedWaitTime) {
+              failedWaitTime = failedWaitTime * 2
+              if (failedWaitTime > maxFailedWaitTime)
+                failedWaitTime = maxFailedWaitTime
+            }
           }
-        })
+        }
+
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(3)) {
           try {
             LOG.debug("Started Waiting in Step 3 (before removing sent data) for Message:" + dispMsg)

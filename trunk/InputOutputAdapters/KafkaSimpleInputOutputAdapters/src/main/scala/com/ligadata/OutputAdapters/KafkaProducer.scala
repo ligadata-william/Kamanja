@@ -17,17 +17,46 @@
 
 package com.ligadata.OutputAdapters
 
-import java.util.Properties
+import java.util.{ Properties, Arrays }
+import kafka.common.{ QueueFullException, FailedToSendMessageException }
 import kafka.message._
-import kafka.producer.{ ProducerConfig, Producer, KeyedMessage }
+import kafka.producer.{ ProducerConfig, Producer, KeyedMessage, Partitioner }
 import org.apache.log4j.Logger
 import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
-import com.ligadata.AdaptersConfiguration.KafkaQueueAdapterConfiguration
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.AdaptersConfiguration.{ KafkaConstants, KafkaQueueAdapterConfiguration }
+import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 import scala.collection.mutable.ArrayBuffer
+import kafka.utils.VerifiableProperties
 
 object KafkaProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new KafkaProducer(inputConfig, cntrAdapter)
+}
+
+/**
+ * Handles Strings, Array[Byte], Int, and Long
+ * @param props
+ */
+class CustPartitioner(props: VerifiableProperties) extends Partitioner {
+  private val random = new java.util.Random
+  def partition(key: Any, numPartitions: Int): Int = {
+    if (key != null) {
+      try {
+        if (key.isInstanceOf[Array[Byte]]) {
+          return (scala.math.abs(Arrays.hashCode(key.asInstanceOf[Array[Byte]])) % numPartitions)
+        } else if (key.isInstanceOf[String]) {
+          return (key.asInstanceOf[String].hashCode() % numPartitions)
+        } else if (key.isInstanceOf[Int]) {
+          return (key.asInstanceOf[Int] % numPartitions)
+        } else if (key.isInstanceOf[Long]) {
+          return ((key.asInstanceOf[Long] % numPartitions).asInstanceOf[Int])
+        }
+      } catch {
+        case e: Exception => {
+        }
+      }
+    }
+    return random.nextInt(numPartitions)
+  }
 }
 
 class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter) extends OutputAdapter {
@@ -39,12 +68,13 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val clientId = qc.Name + "_" + hashCode.toString
 
   val compress: Boolean = false
-  val synchronously: Boolean = false
+  val synchronously: Boolean = true
   val batchSize: Integer = 1024
   val queueTime: Integer = 100
   val bufferMemory: Integer = 16 * 1024 * 1024
-  val messageSendMaxRetries: Integer = 3
+  val messageSendMaxRetries: Integer = 1
   val requestRequiredAcks: Integer = 1
+  val MAX_RETRY = 3
   val ackTimeout = 10000
 
   val codec = if (compress) DefaultCompressionCodec.codec else NoCompressionCodec.codec
@@ -87,8 +117,9 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   // To send an array of messages. messages.size should be same as partKeys.size
   override def send(messages: Array[Array[Byte]], partKeys: Array[Array[Byte]]): Unit = {
     if (messages.size != partKeys.size) {
-      LOG.error("Message and Partition Keys hould has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size))
-      return
+      val szMsg = "KAFKA PRODUCER: Message and Partition Keys should has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size)
+      LOG.error(szMsg)
+      throw new Exception(szMsg)
     }
     if (messages.size == 0) return
     try {
@@ -96,17 +127,54 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       for (i <- 0 until messages.size) {
         keyMessages += new KeyedMessage(qc.topic, partKeys(i), messages(i))
       }
+
       if (reqCntr > 500000000)
         reqCntr = 0
       reqCntr += 1
-      producers(reqCntr % producersCnt).send(keyMessages: _*) // Thinking this op is atomic for (can write multiple partitions into one queue, but don't know whether it is atomic per partition in the queue).
+      val cntr = reqCntr
+
+      var sendStatus = KafkaConstants.KAFKA_NOT_SEND
+      var retryCount = 0
+      while (sendStatus != KafkaConstants.KAFKA_SEND_SUCCESS) {
+        val result = doSend(cntr, keyMessages)
+        sendStatus = result._1
+        // Queue is full, wait and retry
+        if (sendStatus == KafkaConstants.KAFKA_SEND_Q_FULL) {
+          LOG.warn("KAFKA PRODUCER: " + qc.topic + " is temporarily full, retrying.")
+          Thread.sleep(1000)
+        }
+
+        // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
+        //  3 times.
+        if (sendStatus == KafkaConstants.KAFKA_SEND_DEAD_PRODUCER) {
+          retryCount += 1
+          if (retryCount < MAX_RETRY) {
+            LOG.warn("KAFKA PRODUCER: Error sending to kafka, Retrying " + retryCount + "/" + MAX_RETRY)
+          } else {
+            LOG.error("KAFKA PRODUCER: Error sending to kafka,  MAX_RETRY reached... shutting down")
+            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", result._2.getOrElse(null))
+          }
+        }
+      }
+
       val key = Category + "/" + qc.Name + "/evtCnt"
       cntrAdapter.addCntr(key, messages.size) // for now adding rows
     } catch {
-      case e: Exception => {
-        LOG.error("Failed to send :" + e.getMessage)
-      }
+      case fae: FatalAdapterException => throw fae
+      case e: Exception               => throw new FatalAdapterException("Unknown exception", e)
     }
+  }
+
+  private def doSend(cntr: Int, keyMessages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): (Int, Option[Exception]) = {
+
+    try {
+      producers(cntr % producersCnt).send(keyMessages: _*) // Thinking this op is atomic for (can write multiple partitions into one queue, but don't know whether it is atomic per partition in the queue).
+    } catch {
+      case ftsme: FailedToSendMessageException => return (KafkaConstants.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme))
+      case qfe: QueueFullException             => return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
+      case e: Exception                        => throw new FatalAdapterException("Unknown exception", e)
+    }
+    return (KafkaConstants.KAFKA_SEND_SUCCESS, None)
   }
 
   override def Shutdown(): Unit = {
