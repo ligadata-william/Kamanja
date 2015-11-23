@@ -117,8 +117,9 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   // To send an array of messages. messages.size should be same as partKeys.size
   override def send(messages: Array[Array[Byte]], partKeys: Array[Array[Byte]]): Unit = {
     if (messages.size != partKeys.size) {
-      LOG.error("KAFKA PRODUCER: Message and Partition Keys should has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size))
-      return
+      val szMsg = "KAFKA PRODUCER: Message and Partition Keys should has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size)
+      LOG.error(szMsg)
+      throw new Exception(szMsg)
     }
     if (messages.size == 0) return
     try {
