@@ -262,15 +262,15 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     try {
       logger.info("SMART FILE CONSUMER ("+partIdx+") - cleaning up after " + fileName)
       // Either move or rename the file.
-      var fileStruct = fileName.split("/")
+      val fileStruct = fileName.split("/")
 
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null) != null) {
         logger.info("SMART FILE CONSUMER ("+partIdx+") Moving File" + fileName + " to " + inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO))
-        Files.copy(Paths.get(fileName), Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO) + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
-        Files.deleteIfExists(Paths.get(fileName))
+        Files.copy(Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_WATCH) + "/" + fileStruct(fileStruct.size - 1)), Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO) + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
+        Files.deleteIfExists(Paths.get(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_WATCH) + "/" + fileStruct(fileStruct.size - 1)))
       } else {
-        logger.info(" SMART FILE CONSUMER (\"+partIdx+\")  Renaming file " + fileName + " to " + fileName + "_COMPLETE")
-        (new File(fileName)).renameTo(new File(fileName + "_COMPLETE"))
+        logger.info(" SMART FILE CONSUMER ("+partIdx+")  Renaming file " + fileName + " to " + fileName + "_COMPLETE")
+        (new File(inConfiguration(SmartFileAdapterConstants.DIRECTORY_TO_WATCH) + "/" + fileStruct(fileStruct.size - 1))).renameTo(new File(fileName + "_COMPLETE"))
       }
 
       //markFileProcessingEnd(fileName)

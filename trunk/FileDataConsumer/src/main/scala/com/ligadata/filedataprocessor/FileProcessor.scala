@@ -157,6 +157,9 @@ object FileProcessor {
   def setProperties(inprops: scala.collection.mutable.Map[String, String], inPath: Path): Unit = {
     props = inprops
     path = inPath
+    dirToWatch = props.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
+    targetMoveDir = props.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null)
+    readyToProcessKey = props.getOrElse(SmartFileAdapterConstants.READY_MESSAGE_MASK, ".gzip")
   }
 
   def markFileProcessing (fileName: String, offset: Int, createDate: Long): Unit = {
@@ -232,8 +235,8 @@ object FileProcessor {
       if (fileQ.isEmpty) {
         return null
       }
-      var ef = fileQ.dequeue()
-        logger.info("SMART FILE CONSUMER (global):  deq file " + ef.name + " with priority " + ef.createDate+" --- curretnly " + fileQ.size + " files left on a QUEUE")
+      val ef = fileQ.dequeue()
+      logger.info("SMART FILE CONSUMER (global):  deq file " + ef.name + " with priority " + ef.createDate+" --- curretnly " + fileQ.size + " files left on a QUEUE")
       return ef
 
     }
@@ -304,7 +307,7 @@ object FileProcessor {
 
             if (fileTuple._2 == d.length) {
               if (d.length > 0) {
-                logger.info("SSMART FILE CONSUMER (global):  File READY TO PROCESS " + d.toString)
+                logger.info("SMART FILE CONSUMER (global):  File READY TO PROCESS " + d.toString)
                 enQFile(fileTuple._1, FileProcessor.NOT_RECOVERY_SITUATION, d.lastModified)
                 bufferingQ_map.remove(fileTuple._1)
               } else {
@@ -480,10 +483,6 @@ object FileProcessor {
 
     var afterErrorConditions = false
 
-    dirToWatch = props.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
-    targetMoveDir = props.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_MOVE_TO, null)
-    readyToProcessKey = props.getOrElse(SmartFileAdapterConstants.READY_MESSAGE_MASK, ".gzip")
-
     while(true) {
       var isWatchedFileSystemAccesible = true
       var isTargetFileSystemAccesible = true
@@ -571,6 +570,9 @@ object FileProcessor {
     if (returnMap.size > 0) {
       logger.warn("SMART FILE CONSUMER (gloabal): Tracking issue for file type " + fileType)
       logger.warn("SMART FILE CONSUMER (gloabal): " + returnMap.toString)
+      returnMap.foreach(item => {
+        setFileState(item._1, FileProcessor.ACTIVE)
+      })
     }
     return returnMap
   }
@@ -583,11 +585,11 @@ object FileProcessor {
       // Either move or rename the file.
       val fileStruct = fileName.split("/")
       if (targetMoveDir != null) {
-        logger.debug("SMART FILE CONSUMER Moving File" + fileName + " to " + targetMoveDir)
+        logger.info("SMART FILE CONSUMER Moving File" + dirToWatch+"/"+fileStruct(fileStruct.size - 1) + " to " + targetMoveDir)
         Files.copy(Paths.get(dirToWatch+"/"+fileStruct(fileStruct.size - 1)), Paths.get(targetMoveDir + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
-        Files.deleteIfExists(Paths.get(fileName))
+        Files.deleteIfExists(Paths.get(dirToWatch+"/"+fileStruct(fileStruct.size - 1)))
       } else {
-        logger.debug("SMART FILE CONSUMER Renaming file " + fileName + " to " + fileName + "_COMPLETE")
+        logger.info("SMART FILE CONSUMER Renaming file " + fileName + " to " + fileName + "_COMPLETE")
         (new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1))).renameTo(new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1) + "_COMPLETE"))
       }
       val tokenName = fileName.split("/")
@@ -889,16 +891,18 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
     // worker bees to pick them up.
     //var bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(fileName)))
     var bis: BufferedReader = null
-
     try {
-      if (isCompressed(fileName)) {
-        bis = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fileName))))
+      val tokenName = fileName.split("/")
+      val fullFileName = dirToWatch + "/" + tokenName(tokenName.size - 1)
+      println("*** looking for "+ fullFileName)
+      if (isCompressed(fullFileName)) {
+        bis = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fullFileName))))
       } else {
-        bis = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)))
+        bis = new BufferedReader(new InputStreamReader(new FileInputStream(fullFileName)))
       }
     } catch {
       case fio: IOException => {
-        logger.error("SMART_FILE_CONSUMER (" + partitionId + ") Exception moving the file ",fio)
+        logger.error("SMART_FILE_CONSUMER (" + partitionId + ") Exception accessing the file for processing the file ",fio)
         val tokenName = fileName.split("/")
         FileProcessor.setFileState(tokenName(tokenName.size - 1),FileProcessor.MISSING)
         return
