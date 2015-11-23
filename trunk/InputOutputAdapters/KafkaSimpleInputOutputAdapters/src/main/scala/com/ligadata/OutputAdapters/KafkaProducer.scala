@@ -80,17 +80,17 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val codec = if (compress) DefaultCompressionCodec.codec else NoCompressionCodec.codec
 
   val props = new Properties()
-  props.put("compression.codec", if (qc.otherconfigs.contains("compression.codec")) qc.otherconfigs.get("compression.codec").toString else codec.toString)
-  props.put("producer.type", if (qc.otherconfigs.contains("producer.type")) qc.otherconfigs.get("producer.type").toString else if (synchronously) "sync" else "async")
+  props.put("compression.codec", if (qc.otherconfigs.contains("compression.codec")) qc.otherconfigs.getOrElse("compression.codec", "").toString else codec.toString)
+  props.put("producer.type", if (qc.otherconfigs.contains("producer.type")) qc.otherconfigs.getOrElse("producer.type", "sync").toString else if (synchronously) "sync" else "async")
   props.put("metadata.broker.list", qc.hosts.mkString(","))
-  props.put("batch.num.messages", if (qc.otherconfigs.contains("batch.num.messages")) qc.otherconfigs.get("batch.num.messages").toString else batchSize.toString)
-  props.put("queue.buffering.max.messages", if (qc.otherconfigs.contains("queue.buffering.max.messages")) qc.otherconfigs.get("queue.buffering.max.messages").toString else batchSize.toString)
-  props.put("queue.buffering.max.ms", if (qc.otherconfigs.contains("queue.buffering.max.ms")) qc.otherconfigs.get("queue.buffering.max.ms").toString else queueTime.toString)
-  props.put("message.send.max.retries", if (qc.otherconfigs.contains("message.send.max.retries")) qc.otherconfigs.get("message.send.max.retries").toString else messageSendMaxRetries.toString)
-  props.put("request.required.acks", if (qc.otherconfigs.contains("request.required.acks")) qc.otherconfigs.get("request.required.acks").toString else requestRequiredAcks.toString)
-  props.put("send.buffer.bytes", if (qc.otherconfigs.contains("send.buffer.bytes")) qc.otherconfigs.get("send.buffer.bytes").toString else bufferMemory.toString)
-  props.put("request.timeout.ms", if (qc.otherconfigs.contains("request.timeout.ms")) qc.otherconfigs.get("request.timeout.ms").toString else ackTimeout.toString)
-  props.put("client.id", if (qc.otherconfigs.contains("client.id")) qc.otherconfigs.get("client.id").toString else clientId)
+  props.put("batch.num.messages", if (qc.otherconfigs.contains("batch.num.messages")) qc.otherconfigs.getOrElse("batch.num.messages", "1024").toString else batchSize.toString)
+  props.put("queue.buffering.max.messages", if (qc.otherconfigs.contains("queue.buffering.max.messages")) qc.otherconfigs.getOrElse("queue.buffering.max.messages", "1024").toString else batchSize.toString)
+  props.put("queue.buffering.max.ms", if (qc.otherconfigs.contains("queue.buffering.max.ms")) qc.otherconfigs.getOrElse("queue.buffering.max.ms", "100").toString else queueTime.toString)
+  props.put("message.send.max.retries", if (qc.otherconfigs.contains("message.send.max.retries")) qc.otherconfigs.getOrElse("message.send.max.retries", "1").toString else messageSendMaxRetries.toString)
+  props.put("request.required.acks", if (qc.otherconfigs.contains("request.required.acks")) qc.otherconfigs.getOrElse("request.required.acks", "1").toString else requestRequiredAcks.toString)
+  props.put("send.buffer.bytes", if (qc.otherconfigs.contains("send.buffer.bytes")) qc.otherconfigs.getOrElse("send.buffer.bytes", "1024000").toString else bufferMemory.toString)
+  props.put("request.timeout.ms", if (qc.otherconfigs.contains("request.timeout.ms")) qc.otherconfigs.getOrElse("request.timeout.ms", "10000").toString else ackTimeout.toString)
+  props.put("client.id", if (qc.otherconfigs.contains("client.id")) qc.otherconfigs.getOrElse("client.id", "kamanja").toString else clientId)
 
   val tmpProducersStr = qc.otherconfigs.getOrElse("numberofconcurrentproducers", "1").toString.trim()
   var producersCnt = 1
