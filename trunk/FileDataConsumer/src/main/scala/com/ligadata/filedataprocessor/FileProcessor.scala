@@ -1,6 +1,6 @@
 package com.ligadata.filedataprocessor
 
-import java.util.zip.GZIPInputStream
+import java.util.zip.{ZipException, GZIPInputStream}
 
 import com.ligadata.Exceptions.{ MissingPropertyException, StackTrace }
 import com.ligadata.MetadataAPI.MetadataAPIImpl
@@ -56,6 +56,7 @@ object FileProcessor {
   val DEBUG_MAIN_CONSUMER_THREAD_ACTION = 1000
   val NOT_RECOVERY_SITUATION = -1
   val BROKEN_FILE = -100
+  val CORRUPT_FILE = -200
   var reset_watcher = false
 
   val KAFKA_SEND_SUCCESS = 0
@@ -795,9 +796,15 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
         var indx = 0
         var prevIndx = indx
 
-        if (buffer.firstValidOffset == FileProcessor.BROKEN_FILE) {
-          logger.error("SMART FILE CONSUMER (" + partitionId + "): Detected a broken file")
-          messages.add(new KafkaMessage(Array[Char](), FileProcessor.BROKEN_FILE, false, false, buffer.relatedFileName))
+        if (buffer.firstValidOffset <= FileProcessor.BROKEN_FILE) {
+          // Broken File is recoverable, CORRUPTED FILE ISNT!!!!!
+          if (buffer.firstValidOffset == FileProcessor.BROKEN_FILE) {
+            logger.error("SMART FILE CONSUMER (" + partitionId + "): Detected a broken file")
+            messages.add(new KafkaMessage(Array[Char](), FileProcessor.BROKEN_FILE, true, true, buffer.relatedFileName))
+          } else {
+            logger.error("SMART FILE CONSUMER (" + partitionId + "): Detected a broken file")
+            messages.add(new KafkaMessage(Array[Char](), FileProcessor.CORRUPT_FILE, true, true, buffer.relatedFileName))
+          }
         } else {
           // Look for messages.
           buffer.payload.foreach(x => {
@@ -894,7 +901,6 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
     try {
       val tokenName = fileName.split("/")
       val fullFileName = dirToWatch + "/" + tokenName(tokenName.size - 1)
-      println("*** looking for "+ fullFileName)
       if (isCompressed(fullFileName)) {
         bis = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(fullFileName))))
       } else {
@@ -936,15 +942,22 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
 
       try {
         readlen = bis.read(buffer, 0, maxlen - 1)
-      //  if (tempFailure > 3 && tempKMS == false) {
-      //    tempKMS = true
-      //    throw new IOException("KILLING IT SOFTLY...")
-       // }
-       // tempFailure +=1
       } catch {
+        case ze: ZipException => {
+          logger.error("Failed to read file, file currupted " + fileName, ze)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE)
+          enQBuffer(BufferToChunk)
+          return
+        }
+        case ioe: IOException => {
+          logger.error("Failed to read file " + fileName, ioe)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.BROKEN_FILE)
+          enQBuffer(BufferToChunk)
+          return
+        }
         case e: Exception => {
-          logger.error("Failed to read file " + fileName, e)
-          var BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.BROKEN_FILE)
+          logger.error("Failed to read file, file currupted " + fileName, e)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE)
           enQBuffer(BufferToChunk)
           return
         }
