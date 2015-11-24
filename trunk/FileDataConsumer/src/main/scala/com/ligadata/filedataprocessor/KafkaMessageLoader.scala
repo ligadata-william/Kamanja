@@ -19,6 +19,14 @@ import org.apache.curator.framework.CuratorFramework
 import org.apache.log4j.Logger
 import kafka.utils.VerifiableProperties
 
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.ByteArraySerializer
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.common.serialization.ByteArraySerializer
+
+
 import scala.collection.mutable.ArrayBuffer
 
 class CustPartitioner(props: VerifiableProperties) extends Partitioner {
@@ -71,13 +79,17 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
   // Set up some properties for the Kafka Producer
   val props = new Properties()
-  props.put("metadata.broker.list", inConfiguration(SmartFileAdapterConstants.KAFKA_BROKER));
-  props.put("request.required.acks", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "1"))
-  props.put("batch.num.messages", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "200"))
+  props.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,"localhost:9092");
+  props.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
+  props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
+  //props.put("metadata.broker.list", inConfiguration(SmartFileAdapterConstants.KAFKA_BROKER));
+  //props.put("request.required.acks", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "1"))
+  //props.put("batch.num.messages", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "200"))
   props.put("partitioner.class", "com.ligadata.filedataprocessor.CustPartitioner");
 
   // create the producer object
-  val producer = new Producer[Array[Byte], Array[Byte]](new ProducerConfig(props))
+ // val producer = new KafkaProducer[Array[Byte], Array[Byte]](new ProducerConfig(props))
+  val producer = new KafkaProducer[Array[Byte], Array[Byte]](props)
 
   var delimiters = new DataDelimiters
   delimiters.keyAndValueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.KV_SEPARATOR, "\\x01")
@@ -121,7 +133,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     if (startFileProcessingTimeStamp == 0)
       startFileProcessingTimeStamp = scala.compat.Platform.currentTime
 
-    val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
+    //val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
+    val keyMessages = new ArrayBuffer[ProducerRecord[Array[Byte], Array[Byte]]](messages.size)
 
     var isLast = false
     messages.foreach(msg => {
@@ -132,6 +145,17 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         fileBeingProcessed = ""
         return
       }
+
+      if (msg.offsetInFile == FileProcessor.CORRUPT_FILE) {
+        logger.error("SMART FILE ADAPTER "+ partIdx +": aborting kafka data push for " + msg.relatedFileName + " Unrecoverable file corruption detected")
+        val tokenName = msg.relatedFileName.split("/")
+        FileProcessor.markFileProcessingEnd(tokenName(tokenName.size - 1))
+        writeGenericMsg("Corrupt file detected", msg.relatedFileName, inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC))
+        closeOutFile(msg.relatedFileName)
+        fileBeingProcessed = ""
+        return
+      }
+
 
       if (!msg.isLastDummy) {
         numberOfValidEvents += 1
@@ -147,9 +171,13 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
             (msg.offsetInFile >= 0 &&
               msg.offsetInFile < currentOffset)) {
             val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString
-            keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+            /*keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
                                                             partitionKey.getBytes("UTF8"),
-                                                            msgStr.getBytes("UTF8"))
+                                                            msgStr.getBytes("UTF8"))*/
+
+            keyMessages += new ProducerRecord()(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+                                             partitionKey.getBytes("UTF8"),
+                                             msgStr.getBytes("UTF8"))
           } else {
             // This is just for reporting purposes... do not report messages that were below the recovery offset
             numberOfMessagesProcessedInFile = numberOfMessagesProcessedInFile - 1
@@ -239,9 +267,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    * @param messages
    * @return
    */
+  //private def sendToKafka(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
   private def sendToKafka(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
-
-
     try {
       if (messages.size > 0) {
         // New Client Code!
@@ -341,6 +368,19 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     // Write a Error Message
     val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
     keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
+    doKafkaSend(keyMessages)
+
+  }
+
+  private def writeGenericMsg(msg: String, fileName: String, topicName: String): Unit = {
+    val cdate: Date = new Date
+    val errorMsg = dateFormat.format(cdate) + "," + fileName + "," + msg
+    logger.warn(" SMART FILE CONSUMER ("+partIdx+"): problem in file " + fileName)
+    logger.warn(errorMsg)
+
+    // Write a Error Message
+    val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
+    keyMessages += new KeyedMessage(topicName, "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
     doKafkaSend(keyMessages)
 
   }
