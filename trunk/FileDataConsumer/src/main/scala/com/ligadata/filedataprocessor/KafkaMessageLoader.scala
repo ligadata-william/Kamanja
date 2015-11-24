@@ -19,6 +19,8 @@ import org.apache.curator.framework.CuratorFramework
 import org.apache.log4j.Logger
 import kafka.utils.VerifiableProperties
 
+
+
 import scala.collection.mutable.ArrayBuffer
 
 class CustPartitioner(props: VerifiableProperties) extends Partitioner {
@@ -121,6 +123,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     if (startFileProcessingTimeStamp == 0)
       startFileProcessingTimeStamp = scala.compat.Platform.currentTime
 
+    //val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
     val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
 
     var isLast = false
@@ -132,6 +135,17 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         fileBeingProcessed = ""
         return
       }
+
+      if (msg.offsetInFile == FileProcessor.CORRUPT_FILE) {
+        logger.error("SMART FILE ADAPTER "+ partIdx +": aborting kafka data push for " + msg.relatedFileName + " Unrecoverable file corruption detected")
+        val tokenName = msg.relatedFileName.split("/")
+        FileProcessor.markFileProcessingEnd(tokenName(tokenName.size - 1))
+        writeGenericMsg("Corrupt file detected", msg.relatedFileName, inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC))
+        closeOutFile(msg.relatedFileName)
+        fileBeingProcessed = ""
+        return
+      }
+
 
       if (!msg.isLastDummy) {
         numberOfValidEvents += 1
@@ -148,8 +162,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
               msg.offsetInFile < currentOffset)) {
             val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString
             keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
-                                                            partitionKey.getBytes("UTF8"),
-                                                            msgStr.getBytes("UTF8"))
+                                            partitionKey.getBytes("UTF8"),
+                                            msgStr.getBytes("UTF8"))
           } else {
             // This is just for reporting purposes... do not report messages that were below the recovery offset
             numberOfMessagesProcessedInFile = numberOfMessagesProcessedInFile - 1
@@ -239,9 +253,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    * @param messages
    * @return
    */
+  //private def sendToKafka(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
   private def sendToKafka(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
-
-
     try {
       if (messages.size > 0) {
         producer.send(messages: _*)
@@ -340,6 +353,20 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     // Write a Error Message
     val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
     keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
+    doKafkaSend(keyMessages)
+
+  }
+
+  private def writeGenericMsg(msg: String, fileName: String, topicName: String): Unit = {
+    val cdate: Date = new Date
+    // Corrupted_File_Detected,Date-XXXXXX,FileName,-1
+    val genMsg = SmartFileAdapterConstants.CORRUPTED_FILE + dateFormat.format(cdate) + "," + fileName + ",-1"
+    logger.warn(" SMART FILE CONSUMER ("+partIdx+"): problem in file " + fileName)
+    logger.warn(genMsg)
+
+    // Write a Error Message
+    val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
+    keyMessages += new KeyedMessage(topicName, "rare event".getBytes("UTF8"), genMsg.getBytes("UTF8"))
     doKafkaSend(keyMessages)
 
   }
