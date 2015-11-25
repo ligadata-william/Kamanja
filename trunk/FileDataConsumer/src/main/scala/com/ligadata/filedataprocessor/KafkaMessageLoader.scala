@@ -4,7 +4,7 @@ import java.io.{ IOException, File, PrintWriter }
 import java.nio.file.StandardCopyOption._
 import java.nio.file.{ Paths, Files }
 import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{TimeUnit, Future}
 import java.util.{TimeZone, Properties, Date, Arrays}
 
 import com.ligadata.Exceptions._
@@ -15,37 +15,19 @@ import com.ligadata.ZooKeeper.CreateClient
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadata.MessageDef
 import kafka.common.{ QueueFullException, FailedToSendMessageException }
-import kafka.producer.{ KeyedMessage, ProducerConfig, Producer, Partitioner }
+import kafka.producer.{ KeyedMessage, Producer, Partitioner }
 import org.apache.curator.framework.CuratorFramework
 import org.apache.log4j.Logger
 import kafka.utils.VerifiableProperties
 
-import org.apache.kafka.clients.producer.{Callback, RecordMetadata, KafkaProducer, ProducerConfig, ProducerRecord}
+import org.apache.kafka.clients.producer.{Callback, RecordMetadata, KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.serialization.ByteArraySerializer
-
+import org.apache.kafka.clients.producer.ProducerConfig
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Promise
 
-class CustPartitioner(props: VerifiableProperties) extends Partitioner {
-  private val random = new java.util.Random
-  def partition(key: Any, numPartitions: Int): Int = {
-    if (key != null) {
-      try {
-        if (key.isInstanceOf[Array[Byte]]) {
-          return (scala.math.abs(Arrays.hashCode(key.asInstanceOf[Array[Byte]])) % numPartitions)
-        } else if (key.isInstanceOf[String]) {
-          return (key.asInstanceOf[String].hashCode() % numPartitions)
-        }
-      } catch {
-        case e: Exception => {
-        }
-      }
-    }
-    return random.nextInt(numPartitions)
-  }
-}
 
 /**
  * Created by danielkozin on 9/24/15.
@@ -59,12 +41,12 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   var endFileProcessingTimeStamp: Long = 0
   val RC_RETRY: Int = 3
   var retryCount = 0
-  val MAX_RETRY = 10
-  val INIT_BUFFER_FULL_WAIT_VALUE = 1000
-  val INIT_KAFKA_UNAVAILABLE_WAIT_VALUE = 10000
-  val MAX_RETRY_SCLALEUPS = 6
+
+  val MAX_RETRY = 1
+  val INIT_KAFKA_UNAVAILABLE_WAIT_VALUE = 1000
   val MAX_WAIT = 60000
 
+  var currentSleepValue = INIT_KAFKA_UNAVAILABLE_WAIT_VALUE
 
   var lastOffsetProcessed: Int = 0
   lazy val loggerName = this.getClass.getName
@@ -81,14 +63,11 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   props.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,"localhost:9092");
   props.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
   props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
-  //props.put("metadata.broker.list", inConfiguration(SmartFileAdapterConstants.KAFKA_BROKER));
-  //props.put("request.required.acks", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "1"))
-  //props.put("batch.num.messages", inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "200"))
-  props.put("partitioner.class", "com.ligadata.filedataprocessor.CustPartitioner");
 
   // create the producer object
  // val producer = new KafkaProducer[Array[Byte], Array[Byte]](new ProducerConfig(props))
   val producer = new KafkaProducer[Array[Byte], Array[Byte]](props)
+  var numPartitionsForMainTopic = producer.partitionsFor(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC))
 
   var delimiters = new DataDelimiters
   delimiters.keyAndValueDelimiter = inConfiguration.getOrElse(SmartFileAdapterConstants.KV_SEPARATOR, "\\x01")
@@ -171,12 +150,13 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
           if (msg.offsetInFile == FileProcessor.NOT_RECOVERY_SITUATION ||
             (msg.offsetInFile >= 0 &&
               msg.offsetInFile < currentOffset)) {
-            val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString
+            val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString(",")
             /*keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
                                                             partitionKey.getBytes("UTF8"),
                                                             msgStr.getBytes("UTF8"))*/
 
             keyMessages += new ProducerRecord[Array[Byte],Array[Byte]](inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+                                             getPartition(partitionKey.getBytes("UTF8"), numPartitionsForMainTopic.size),
                                              partitionKey.getBytes("UTF8"),
                                              msgStr.getBytes("UTF8"))
 
@@ -204,7 +184,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     })
 
     // Write to kafka
-    doKafkaSend(keyMessages)
+    sendToKafka(keyMessages, "msgPush")
     // Make sure you dont write extra for DummyLast
     if (!isLast) {
       writeStatusMsg(fileBeingProcessed)
@@ -227,85 +207,86 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   /**
    *
    * @param messages
-   */
-  //ProducerRecord[Array[Byte],Array[Byte]]
-  private def doKafkaSend(messages: ArrayBuffer[ProducerRecord[Array[Byte],Array[Byte]]]): Unit = {
- // private def doKafkaSend(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Unit = {
-    var isSendSuccessful = false
-    var sleepTime = 0
-    while (!isSendSuccessful) {
-      val sendResult = sendToKafka(messages)
-      if (sendResult == FileProcessor.KAFKA_SEND_SUCCESS) {
-        isSendSuccessful = true
-        retryCount = 0
-      } else {
-        // Full Q, sleep for a bit, then retry.
-        retryCount += 1
-        if (sendResult == FileProcessor.KAFKA_SEND_Q_FULL) {
-          sleepTime = scala.math.min((scala.math.max(sleepTime,INIT_BUFFER_FULL_WAIT_VALUE) * 2),MAX_WAIT)
-          logger.warn("SMART FILE CONSUMER" + partIdx +": Target Q is temporarily full, retrying after " + sleepTime / 1000 + " sec")
-          Thread.sleep(sleepTime)
-        }
-
-        // Something wrong in sending messages,  Producer will handle internal failover, so we want to retry but only
-        //  3 times.
-        if (sendResult == FileProcessor.KAFKA_SEND_DEAD_PRODUCER) {
-
-          // There is not shutdown case here yet.
-          if (retryCount > -1) {
-            sleepTime = scala.math.min((scala.math.max(sleepTime,INIT_KAFKA_UNAVAILABLE_WAIT_VALUE) * 2),MAX_WAIT)
-            logger.warn("SMART FILE CONSUMER " + partIdx +": Error sending to kafka, retrying  after " + sleepTime / 1000 + " sec")
-            Thread.sleep(sleepTime)
-          } else {
-            logger.error("SMART FILE CONSUMER: Error sending to kafka,  MAX_RETRY reached... shutting down")
-            shutdown
-
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   *
-   * @param messages
    * @return
    */
   //private def sendToKafka(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
-  private def sendToKafka(messages: ArrayBuffer[ProducerRecord[Array[Byte],Array[Byte]]]): Int = {
+  private def sendToKafka(messages: ArrayBuffer[ProducerRecord[Array[Byte],Array[Byte]]], sentFrom: String): Int = {
     try {
-      //if (messages.size > 0) {
-        // New Client Code!
-      //  producer.send(messages: _*)
-      //  return (FileProcessor.KAFKA_SEND_SUCCESS)
-      messages.foreach(msg => {
-        val p = Promise[(RecordMetadata, Exception)]()
+      logger.info("SMART FILE CONSUMER ("+partIdx+") Sending " + messages.size + " to kafka from " + sentFrom)
+      if (messages.size == 0) return FileProcessor.KAFKA_SEND_SUCCESS
 
-        // Send the request to Kafka
-        val response = producer.send(msg, new Callback {
-          override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
-            if (exception != null) {
-              exception.printStackTrace()
-            }
-            println("Sent to offset " + metadata.offset + " Message->" + new String(msg.value()))
+      var currentMessage = 0
+      // Set up a map of messages to be used to verify if a message has been sent succssfully on not.
+      val respFutures: scala.collection.mutable.Map[Int,Future[RecordMetadata]] = scala.collection.mutable.Map[Int,Future[RecordMetadata]]()
+      messages.foreach(msg => {
+        respFutures(currentMessage) = null
+        currentMessage += 1
+      })
+
+
+      var isFullySent = false
+      var isRetry = false
+      var failedPush = 0
+      currentMessage = 0
+
+      while (!isFullySent) {
+        if (isRetry) {
+          Thread.sleep(getCurrentSleepTimer)
+        }
+        messages.foreach(msg => {
+          if (respFutures.contains(currentMessage)) {
+            // Send the request to Kafka
+            val response = producer.send(msg, new Callback {
+              override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+                if (exception != null) {
+                  failedPush += 1
+                  logger.warn("SMART FILE CONSUMER ("+partIdx+") has detected a problem with pushing a message into the " +msg.topic + " will retry " +exception.getMessage)
+                }
+              }
+            })
+            respFutures(currentMessage) = response
+            currentMessage += 1
           }
         })
 
-        val reqMetadata = response. get(2, TimeUnit.SECONDS)
-
-        FileProcessor.KAFKA_SEND_SUCCESS
-      })
+        // Make sure all messages have been successfuly sent, and resend them if we detected bad messages
+        isFullySent = true
+        for (i <- (messages.size - 1) to 0) {
+          if (checkMessage(respFutures,i) > 0) {
+            isFullySent = false
+            isRetry = true
+          }
+        }
+      }
+      resetSleepTimer
     } catch {
-
-      case ftsme: FailedToSendMessageException => return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
-      case qfe: QueueFullException             => return FileProcessor.KAFKA_SEND_Q_FULL
       case e: Exception =>
         logger.error("SMART FILE CONSUMER ("+partIdx+") Could not add to the queue due to an Exception " + e.getMessage, e)
-        return FileProcessor.KAFKA_SEND_DEAD_PRODUCER
     }
     FileProcessor.KAFKA_SEND_SUCCESS
   }
 
+  private def checkMessage(mapF: scala.collection.mutable.Map[Int,Future[RecordMetadata]], i: Int): Int = {
+    try {
+      var md = mapF(i).get
+      mapF.remove(i)
+      FileProcessor.KAFKA_SEND_SUCCESS
+    } catch {
+      case ftsme: FailedToSendMessageException => {FileProcessor.KAFKA_SEND_DEAD_PRODUCER}
+      case qfe: QueueFullException => {FileProcessor.KAFKA_SEND_Q_FULL}
+      case e: Exception => {logger.error("CHECK_MESSAGE ",e);throw e}
+    }
+  }
+
+  private def getCurrentSleepTimer: Int = {
+    currentSleepValue = currentSleepValue * 2
+    logger.error("SMART FILE CONSUMER ("+partIdx+") detected a problem with Kafka... Retry in " + scala.math.min(currentSleepValue, MAX_WAIT) / 1000 + " seconds")
+    return scala.math.min(currentSleepValue, MAX_WAIT)
+  }
+
+  private def resetSleepTimer: Unit = {
+    currentSleepValue = INIT_KAFKA_UNAVAILABLE_WAIT_VALUE
+  }
   /**
    *
    * @param fileName
@@ -363,7 +344,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         val keyMessages = new ArrayBuffer[ProducerRecord[Array[Byte], Array[Byte]]](1)
         keyMessages += new ProducerRecord(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC), statusPartitionId.getBytes("UTF8"), new String(statusMsg).getBytes("UTF8"))
 
-        doKafkaSend(keyMessages)
+        sendToKafka(keyMessages, "Status")
 
       //  println("Status pushed ->" + statusMsg)
         logger.debug("Status pushed ->" + statusMsg)
@@ -394,7 +375,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    // keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
     val keyMessages = new ArrayBuffer[ProducerRecord[Array[Byte], Array[Byte]]](1)
     keyMessages += new ProducerRecord(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
-    doKafkaSend(keyMessages)
+    sendToKafka(keyMessages, "Error")
 
   }
 
@@ -411,7 +392,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     val keyMessages = new ArrayBuffer[ProducerRecord[Array[Byte], Array[Byte]]](1)
     keyMessages += new ProducerRecord(topicName, "rare event".getBytes("UTF8"), genMsg.getBytes("UTF8"))
 
-    doKafkaSend(keyMessages)
+    sendToKafka(keyMessages, "Generic - Corrupt")
 
   }
 
@@ -537,6 +518,23 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       }
     })
     return null
+  }
+
+  private def getPartition(key: Any, numPartitions: Int): Int = {
+    val random = new java.util.Random
+    if (key != null) {
+      try {
+        if (key.isInstanceOf[Array[Byte]]) {
+          return (scala.math.abs(Arrays.hashCode(key.asInstanceOf[Array[Byte]])) % numPartitions)
+        } else if (key.isInstanceOf[String]) {
+          return (key.asInstanceOf[String].hashCode() % numPartitions)
+        }
+      } catch {
+        case e: Exception => {
+        }
+      }
+    }
+    return random.nextInt(numPartitions)
   }
 
   /**
