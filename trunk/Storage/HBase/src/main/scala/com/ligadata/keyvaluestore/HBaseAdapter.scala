@@ -44,7 +44,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp
 // hadoop security model
 import org.apache.hadoop.security.UserGroupInformation
 
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import java.nio.ByteBuffer
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -61,7 +61,7 @@ import scala.collection.JavaConversions._
 class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
 
@@ -952,7 +952,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 class HBaseAdapterTx(val parent: DataStore) extends Transaction {
 
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
     parent.put(containerName, key, value)

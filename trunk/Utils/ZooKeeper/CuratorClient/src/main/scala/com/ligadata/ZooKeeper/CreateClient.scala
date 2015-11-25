@@ -23,11 +23,11 @@ import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.zookeeper.CreateMode
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Exceptions.StackTrace
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 object CreateClient {
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
   def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
     var zkc: CuratorFramework = null
     try {

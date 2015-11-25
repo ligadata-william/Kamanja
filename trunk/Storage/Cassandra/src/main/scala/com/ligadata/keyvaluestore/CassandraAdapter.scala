@@ -28,7 +28,7 @@ import com.datastax.driver.core.BatchStatement
 import com.datastax.driver.core.HostDistance
 import com.datastax.driver.core.PoolingOptions
 import java.nio.ByteBuffer
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import com.ligadata.Exceptions._
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -82,7 +82,7 @@ datastoreConfig should have the following:
 class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   //logger.setLevel(Level.DEBUG)
 
@@ -833,7 +833,7 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 class CassandraAdapterTx(val parent: DataStore) extends Transaction {
 
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
     parent.put(containerName, key, value)

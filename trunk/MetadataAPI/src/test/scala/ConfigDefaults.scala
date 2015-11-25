@@ -21,7 +21,7 @@ import java.util.Date
 import java.io._
 import java.nio.channels._
 import sys.process._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 /**
  * Created by wtarver on 1/28/15.
@@ -32,7 +32,7 @@ import org.apache.log4j._
 object ConfigDefaults {
 
   private val loggerName = this.getClass.getName
-  private val logger = Logger.getLogger(loggerName)
+  private val logger = LogManager.getLogger(loggerName)
   logger.setLevel(Level.INFO)
 
   private val RootDir = "./MetadataAPI/target/scala-2.10/test-classes"

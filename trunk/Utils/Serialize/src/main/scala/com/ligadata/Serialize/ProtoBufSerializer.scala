@@ -20,7 +20,7 @@ import java.util.Properties
 import java.io._
 import scala.Enumeration
 import scala.io.Source._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import scala.collection.JavaConversions._
 
@@ -38,7 +38,7 @@ import com.ligadata.Exceptions.StackTrace
 class ProtoBufSerializer extends Serializer{
 
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   private[this] var classLoader: java.lang.ClassLoader = null
 
   def SetLoggerLevel(level: Level){

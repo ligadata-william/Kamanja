@@ -21,7 +21,7 @@ import com.ligadata.kamanja.metadata._
 
 import java.io.ByteArrayOutputStream
 
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 trait Serializer{
   def SetLoggerLevel(level: Level)

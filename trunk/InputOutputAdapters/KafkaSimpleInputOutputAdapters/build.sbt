@@ -5,10 +5,10 @@ version := "1.0"
 scalaVersion := "2.10.4"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
-
-libraryDependencies += "log4j" % "log4j" % "1.2.17"
-
 resolvers += "Apache repo" at "https://repository.apache.org/content/repositories/releases"
+
+libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.4.1"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 
 libraryDependencies += "org.apache.kafka" % "kafka_2.10" % "0.8.1.1"
 

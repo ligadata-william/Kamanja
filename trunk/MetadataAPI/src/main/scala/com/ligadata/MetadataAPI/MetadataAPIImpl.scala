@@ -52,7 +52,7 @@ import com.ligadata.messagedef._
 import com.ligadata.Exceptions._
 
 import scala.xml.XML
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -101,7 +101,7 @@ object MetadataAPIImpl extends MetadataAPI {
   lazy val sysNS = "System"
   // system name space
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   lazy val serializerType = "kryo"
   lazy val serializer = SerializerManager.GetSerializer(serializerType)
   lazy val metadataAPIConfig = new Properties()

@@ -31,7 +31,7 @@ import java.util.Date
 import java.io._
 
 import sys.process._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -53,7 +53,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
   var newVersion:String = null
 
   private val loggerName = this.getClass.getName
-  private val logger = Logger.getLogger(loggerName)
+  private val logger = LogManager.getLogger(loggerName)
   logger.setLevel(Level.INFO)
 
   private def TruncateDbStore = {

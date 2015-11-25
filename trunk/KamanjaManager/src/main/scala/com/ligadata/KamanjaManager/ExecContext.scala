@@ -21,7 +21,7 @@ import com.ligadata.KamanjaBase.{ EnvContext, DataDelimiters, TransactionContext
 import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, InputAdapterCallerContext }
 import com.ligadata.KvBase.{ Key }
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.Logger
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -34,7 +34,7 @@ import com.ligadata.transactions._
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
-  val LOG = Logger.getLogger(getClass);
+  val LOG = LogManager.getLogger(getClass);
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
@@ -266,7 +266,7 @@ object CollectKeyValsFromValidation {
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
-  val LOG = Logger.getLogger(getClass);
+  val LOG = LogManager.getLogger(getClass);
 
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")

@@ -27,7 +27,7 @@ import java.io.BufferedWriter
 import java.io.FileWriter
 import sys.process._
 import java.io.PrintWriter
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import com.ligadata.kamanja.metadata._
 import com.ligadata._
 import com.ligadata.messagedef._
@@ -51,7 +51,7 @@ import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 class CompilerProxy {
 
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   private var userId: Option[String] = _
   lazy val compiler_work_dir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
 

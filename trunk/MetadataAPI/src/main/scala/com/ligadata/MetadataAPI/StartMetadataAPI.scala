@@ -35,7 +35,7 @@ object StartMetadataAPI {
   //get default config
   val defaultConfig = sys.env("KAMANJA_HOME") + "/config/MetadataAPIConfig.properties"
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   var action = ""
   var location = ""
   var config = ""

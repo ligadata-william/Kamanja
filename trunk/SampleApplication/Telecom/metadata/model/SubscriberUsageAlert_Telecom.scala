@@ -41,7 +41,7 @@ import RddDate._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.Logger
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 import java.util.Locale
@@ -62,7 +62,7 @@ class SubscriberUsageAlertResult extends ModelResultBase {
   var triggerTime: Long = 0
 
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   def withMsisdn(cId: Long): SubscriberUsageAlertResult = {
     msisdn = cId
@@ -131,7 +131,7 @@ class AccountUsageAlertResult extends ModelResultBase {
   var triggerTime: Long = 0
 
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   def withAct(aId: String): AccountUsageAlertResult = {
     actNo = aId
@@ -194,7 +194,7 @@ class AccountUsageAlertResult extends ModelResultBase {
 
 class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, SubscriberUsageAlert) {
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   val df = DateTimeFormat.forPattern("yyyyMMdd").withLocale(Locale.US)
   
   private def getMonth(dt: String): Int = {
