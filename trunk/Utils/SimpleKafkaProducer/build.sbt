@@ -48,7 +48,11 @@ libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 
 resolvers += "Apache repo" at "https://repository.apache.org/content/repositories/releases"
 
-libraryDependencies += "org.apache.kafka" % "kafka_2.10" % "0.8.1.1"
+libraryDependencies ++= Seq("org.apache.kafka" % "kafka_2.10" % "0.8.1.1"
+                              exclude("javax.jms", "jms")
+                              exclude("com.sun.jdmk", "jmxtools")
+                              exclude("com.sun.jmx", "jmxri")
+)
 
 libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-actors" % _)
 
