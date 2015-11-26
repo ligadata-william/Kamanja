@@ -59,10 +59,6 @@ object GetDependentMessages {
   lazy val loggerName = this.getClass.getName
   lazy val logger = LogManager.getLogger(loggerName)
 
-  def SetLoggerLevel(level: Level) {
-    logger.setLevel(level);
-  }
-
   private def GetChildrenFromEntity(entity: EntityType, children: ArrayBuffer[(String, String)]): Unit = {
 
     if (entity.isInstanceOf[MappedMsgTypeDef]) {

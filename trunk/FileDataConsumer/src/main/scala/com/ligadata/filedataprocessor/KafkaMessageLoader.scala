@@ -16,7 +16,7 @@ import com.ligadata.kamanja.metadata.MessageDef
 import kafka.common.{ QueueFullException, FailedToSendMessageException }
 import kafka.producer.{ KeyedMessage, ProducerConfig, Producer, Partitioner }
 import org.apache.curator.framework.CuratorFramework
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import kafka.utils.VerifiableProperties
 
 

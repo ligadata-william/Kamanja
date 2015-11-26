@@ -1438,7 +1438,6 @@ object TestApiService {
           }
 
           val outputmsgDefFile = outputmsgFiles(choice - 1).toString
-          logger.setLevel(Level.TRACE);
           val outputmsgStr = Source.fromFile(outputmsgDefFile).mkString
           val res: String = MakeHttpRequest("post", host_url, "OutputMsg", "JSON", outputmsgStr)
           results += Tuple3(choice.toString, outputmsgDefFile, res)

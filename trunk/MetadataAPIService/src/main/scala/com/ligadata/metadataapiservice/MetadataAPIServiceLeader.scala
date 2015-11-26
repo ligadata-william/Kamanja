@@ -23,7 +23,7 @@ import com.ligadata.MetadataAPI._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
 
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._

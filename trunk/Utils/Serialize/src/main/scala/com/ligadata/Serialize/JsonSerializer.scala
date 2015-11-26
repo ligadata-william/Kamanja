@@ -77,10 +77,6 @@ object JsonSerializer {
   val loggerName = this.getClass.getName
   lazy val logger = LogManager.getLogger(loggerName)
 
-  def SetLoggerLevel(level: Level) {
-    logger.setLevel(level);
-  }
-
   @throws(classOf[Json4sParsingException])
   @throws(classOf[FunctionListParsingException])
   def parseFunctionList(funcListJson: String, formatType: String): Array[FunctionDef] = {

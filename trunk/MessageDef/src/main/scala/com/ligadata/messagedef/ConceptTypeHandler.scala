@@ -18,9 +18,9 @@ package com.ligadata.messagedef
 
 import com.ligadata.kamanja.metadata._
 import scala.collection.mutable.ArrayBuffer
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Exceptions.StackTrace
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 class ConceptTypeHandler {
 

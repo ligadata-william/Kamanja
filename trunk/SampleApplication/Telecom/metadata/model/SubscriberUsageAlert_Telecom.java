@@ -20,7 +20,7 @@ import com.ligadata.KamanjaBase.*;
 
 import java.io.*;
 
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.{ Logger, LogManager };
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.DateTime;
 

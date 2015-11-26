@@ -26,7 +26,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.kamanja.metadata.StructTypeDef
 import com.ligadata.kamanja.metadata.AttributeDef
 import com.ligadata.kamanja.metadata.MappedMsgTypeDef
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Exceptions.StackTrace
 
 class MessageFldsExtractor {

@@ -54,7 +54,6 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
   private val loggerName = this.getClass.getName
   private val logger = LogManager.getLogger(loggerName)
-  logger.setLevel(Level.INFO)
 
   private def TruncateDbStore = {
       val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
@@ -141,11 +140,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
       MetadataAPIImpl.TruncateAuditStore
       MetadataAPIImpl.isInitilized = true
-
-
       logger.info(MetadataAPIImpl.GetMetadataAPIConfig)
-      MetadataAPIImpl.SetLoggerLevel(Level.INFO)
-
    }
     catch {
       case e: EmbeddedZookeeperException => {

@@ -19,7 +19,7 @@ package com.ligadata.modelLibs.cache
 import scala.collection.JavaConversions._
 import scala.collection.mutable._
 import scala.util.control.Breaks._
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import java.util.{ Calendar, Date }
 import scala.math.abs
 import com.ligadata.modelLibs.cache.javafunctions.{ Function1 => JFunction1 }

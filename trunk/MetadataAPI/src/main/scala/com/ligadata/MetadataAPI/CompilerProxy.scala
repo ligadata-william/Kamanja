@@ -56,9 +56,6 @@ class CompilerProxy {
   lazy val compiler_work_dir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
 
   def setSessionUserId(id: Option[String]): Unit = { userId = id }
-  def setLoggerLevel(level: Level) {
-    logger.setLevel(level);
-  }
 
   /**
    * compileModelFromSource - This gets called from the mainline AddModel... we just know the modelConfigName, and need

@@ -34,9 +34,6 @@ import com.ligadata.Exceptions.StackTrace
 object APIInit {
   val loggerName = this.getClass.getName
   lazy val logger = LogManager.getLogger(loggerName)
- // logger.setLevel(Level.TRACE);
-  //MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-  //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
   var configFile:String = _
   private[this] val lock = new Object()

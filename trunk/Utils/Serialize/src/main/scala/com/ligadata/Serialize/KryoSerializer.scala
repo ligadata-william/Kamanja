@@ -37,10 +37,6 @@ class KryoSerializer extends Serializer{
   val loggerName = this.getClass.getName
   lazy val logger = LogManager.getLogger(loggerName)
 
-  def SetLoggerLevel(level: Level){
-    logger.setLevel(level);
-  }
-
   override def SetClassLoader(cl : java.lang.ClassLoader): Unit = {
     classLoader = cl
   }

@@ -20,7 +20,7 @@ import com.ligadata.kamanja.metadata.OutputMsgDef
 import com.ligadata.KamanjaBase.{ BaseMsg, MessageContainerBase }
 import com.ligadata.kamanja.metadata.MdMgr
 import com.ligadata.kamanja.metadata._
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Exceptions.StackTrace
 
 import scala.collection.mutable.{ ArrayBuffer }

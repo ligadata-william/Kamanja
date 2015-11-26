@@ -28,7 +28,7 @@ import java.io.BufferedWriter
 import java.io.FileWriter
 import java.io.File
 import java.io.PrintWriter
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.pmml.udfs._
 import com.ligadata.kamanja.metadata._
 import scala.util.parsing.json.JSON

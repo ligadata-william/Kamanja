@@ -44,9 +44,6 @@ class APIService extends LigadataSSLConfiguration with Runnable{
 
   val loggerName = this.getClass.getName
   lazy val logger = LogManager.getLogger(loggerName)
-  //logger.setLevel(Level.TRACE);
- // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-  //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
   
   /**

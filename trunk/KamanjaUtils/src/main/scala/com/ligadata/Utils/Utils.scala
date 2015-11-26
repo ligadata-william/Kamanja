@@ -27,7 +27,7 @@ import com.ligadata.Exceptions.StackTrace
 
 import scala.util.control.Breaks._
 import scala.collection.mutable.TreeSet
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import scala.collection.mutable.ArrayBuffer
 
 object Utils {

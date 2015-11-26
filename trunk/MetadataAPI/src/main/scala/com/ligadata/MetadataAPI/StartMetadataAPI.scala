@@ -17,13 +17,11 @@
 package scala.com.ligadata.MetadataAPI
 
 import java.io.File
-import java.util.logging.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 import com.ligadata.MetadataAPI.{TestMetadataAPI, MetadataAPIImpl}
 import com.ligadata.MetadataAPI.Utility._
 import scala.io.Source
-
-
 
 /**
  * Created by dhaval Kolapkar on 7/24/15.

@@ -41,10 +41,6 @@ class ProtoBufSerializer extends Serializer{
   lazy val logger = LogManager.getLogger(loggerName)
   private[this] var classLoader: java.lang.ClassLoader = null
 
-  def SetLoggerLevel(level: Level){
-    logger.setLevel(level);
-  }
-
   def buildProtoBaseElem(o: BaseElemDef) : ProtoBaseElem = {
     logger.debug("Build ProtoBaseElem from " + o.getClass().getName())
     val pbe = ProtoBaseElem.newBuilder()

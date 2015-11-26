@@ -21,7 +21,7 @@ import java.util.{ Properties, Arrays }
 import kafka.common.{ QueueFullException, FailedToSendMessageException }
 import kafka.message._
 import kafka.producer.{ ProducerConfig, Producer, KeyedMessage, Partitioner }
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.{ KafkaConstants, KafkaQueueAdapterConfiguration }
 import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }

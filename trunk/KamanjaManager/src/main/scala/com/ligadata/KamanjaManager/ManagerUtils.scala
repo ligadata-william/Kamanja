@@ -17,7 +17,7 @@
 
 package com.ligadata.KamanjaManager
 
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 object ManagerUtils {
   private[this] val LOG = LogManager.getLogger(getClass);

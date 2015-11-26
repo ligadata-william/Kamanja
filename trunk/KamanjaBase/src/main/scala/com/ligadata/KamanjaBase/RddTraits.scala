@@ -20,7 +20,7 @@ import scala.language.implicitConversions
 import java.util.{ Date, Calendar, TimeZone }
 
 // import scala.reflect.{ classTag, ClassTag }
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.reflect.{ classTag, ClassTag }

@@ -21,7 +21,7 @@ import com.ligadata.KamanjaBase._
 import com.ligadata.Utils.Utils
 import java.util.Map
 import com.ligadata.outputmsg.OutputMsgGenerator
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
 import scala.xml.Elem

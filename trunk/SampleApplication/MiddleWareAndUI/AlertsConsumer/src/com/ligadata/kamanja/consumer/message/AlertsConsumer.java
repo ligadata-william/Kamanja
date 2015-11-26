@@ -18,7 +18,7 @@ package com.ligadata.kamanja.consumer.message;
 
 import kafka.consumer.KafkaStream;
 
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.{ Logger, LogManager };
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

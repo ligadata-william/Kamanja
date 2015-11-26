@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata.MdMgr
 import com.ligadata.kamanja.metadata.EntityType
 import com.ligadata.kamanja.metadata.MessageDef

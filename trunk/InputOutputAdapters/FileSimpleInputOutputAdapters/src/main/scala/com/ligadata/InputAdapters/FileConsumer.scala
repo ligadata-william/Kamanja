@@ -17,7 +17,7 @@
 package com.ligadata.InputAdapters
 
 import scala.actors.threadpool.{ Executors, ExecutorService }
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import java.io.{ InputStream, FileInputStream }
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }

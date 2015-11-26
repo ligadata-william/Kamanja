@@ -17,7 +17,7 @@
 package com.ligadata.kamanja.metadataload
 
 import scala.collection.mutable.{ Set }
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadata.ObjType._
 import com.ligadata.kamanja.metadata._

@@ -41,7 +41,7 @@ import RddDate._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 import java.util.Locale

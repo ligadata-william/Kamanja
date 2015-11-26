@@ -23,7 +23,7 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.shared.SharedValue;
 import org.apache.curator.framework.recipes.shared.SharedValueListener;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.{ Logger, LogManager };
 
 import com.ligadata.kamanja.consumer.listener.StartListener;
 import com.ligadata.kamanja.consumer.message.AbstractConsumerController;

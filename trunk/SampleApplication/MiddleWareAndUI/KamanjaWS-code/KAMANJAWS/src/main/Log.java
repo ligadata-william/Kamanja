@@ -32,7 +32,7 @@ import org.apache.logging.log4j.ConsoleAppender;
 import org.apache.logging.log4j.DailyRollingFileAppender;
 import org.apache.logging.log4j.FileAppender;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.{ Logger, LogManager };
 import org.apache.logging.log4j.PatternLayout;
 import org.apache.logging.log4j.SimpleLayout;
 import org.joda.time.DateTime;

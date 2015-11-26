@@ -47,8 +47,6 @@ class MetadataManager(var config: MetadataAPIProperties) {
 
   private val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
 
-  logger.setLevel(Level.INFO)
-
   private val metadataDirResource = getClass.getResource("/Metadata")
   if( metadataDirResource == null ){
       throw new MetadataManagerException("Failed to retrieve resource value for '/Metadata'.");

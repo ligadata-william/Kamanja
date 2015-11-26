@@ -84,10 +84,6 @@ class MdMgr {
   private var modelConfigs = new HashMap[String,scala.collection.immutable.Map[String,List[String]]]
   private var configurations = new HashMap[String,UserPropertiesInfo]
 
-  def SetLoggerLevel(level: Level) {
-    logger.setLevel(level);
-  }
-
   def truncate {
     typeDefs.clear
     funcDefs.clear

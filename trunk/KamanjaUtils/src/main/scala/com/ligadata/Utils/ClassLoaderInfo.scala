@@ -19,7 +19,7 @@ package com.ligadata.Utils
 import scala.collection.mutable.TreeSet
 import scala.reflect.runtime.{ universe => ru }
 import java.net.{ URL, URLClassLoader }
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import scala.collection.mutable.ArrayBuffer
 
 /*

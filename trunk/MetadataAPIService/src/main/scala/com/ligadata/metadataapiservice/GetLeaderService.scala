@@ -48,7 +48,6 @@ class GetLeaderService(requestContext: RequestContext, userid:Option[String], pa
   
   val loggerName = this.getClass.getName
   val logger = LogManager.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
 
   val APIName = "GetLeader"
 

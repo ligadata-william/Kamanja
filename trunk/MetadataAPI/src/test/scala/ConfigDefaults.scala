@@ -33,7 +33,6 @@ object ConfigDefaults {
 
   private val loggerName = this.getClass.getName
   private val logger = LogManager.getLogger(loggerName)
-  logger.setLevel(Level.INFO)
 
   private val RootDir = "./MetadataAPI/target/scala-2.10/test-classes"
   private val targetLibDir = RootDir + "/jars/lib/system"

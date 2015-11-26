@@ -20,7 +20,7 @@ import com.ligadata.kamanja.metadata._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Exceptions.StackTrace
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 class BaseTypesHandler {
 

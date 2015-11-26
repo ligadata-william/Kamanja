@@ -49,7 +49,6 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
 
   private val loggerName = this.getClass.getName
   private val logger = LogManager.getLogger(loggerName)
-  logger.setLevel(Level.INFO)
   val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
   val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
   // set the timezone to UTC for all time values

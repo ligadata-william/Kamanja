@@ -18,7 +18,7 @@ package com.ligadata.Controller
 
 import com.ligadata.ZooKeeper.CreateClient
 import org.apache.curator.framework.CuratorFramework
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._

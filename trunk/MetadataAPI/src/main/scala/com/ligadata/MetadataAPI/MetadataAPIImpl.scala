@@ -65,7 +65,7 @@ import org.apache.zookeeper.CreateMode
 import com.ligadata.keyvaluestore._
 import com.ligadata.Serialize._
 import com.ligadata.Utils._
-import util.control.Breaks._
+import scala.util.control.Breaks._
 import com.ligadata.AuditAdapterInfo._
 import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import com.ligadata.keyvaluestore.KeyValueManager
@@ -558,10 +558,6 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
-  }
-
-  def SetLoggerLevel(level: Level) {
-    logger.setLevel(level);
   }
 
   private var mainDS: DataStore = _
@@ -5907,7 +5903,6 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def InitMdMgr(mgr: MdMgr, jarPathsInfo: String, databaseInfo: String) {
 
-    SetLoggerLevel(Level.INFO)
     val mdLoader = new MetadataLoad(mgr, "", "", "", "")
     mdLoader.initialize
 

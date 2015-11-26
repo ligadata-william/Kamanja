@@ -17,7 +17,7 @@ import scala.collection.mutable.TreeSet
 import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.HeartBeat.HeartBeatUtil
 import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 

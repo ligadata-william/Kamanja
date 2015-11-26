@@ -16,7 +16,7 @@
 
 package com.ligadata.HeartBeat
 
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import org.json4s._

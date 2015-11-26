@@ -25,7 +25,7 @@ import scala.actors.threadpool.{ TimeUnit, ExecutorService, Executors }
 import scala.util.control.Breaks._
 import kafka.consumer.{ SimpleConsumer }
 import java.net.{ InetAddress }
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import scala.collection.mutable.Map
 import com.ligadata.Exceptions.{FatalAdapterException, StackTrace}
 import com.ligadata.KamanjaBase.DataDelimiters

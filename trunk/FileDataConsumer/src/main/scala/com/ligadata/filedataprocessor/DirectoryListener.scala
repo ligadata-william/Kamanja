@@ -4,7 +4,7 @@ import java.io.{IOException, File, PrintWriter}
 import java.nio.file.{Path, FileSystems}
 
 import com.ligadata.Exceptions.{InternalErrorException, MissingArgumentException}
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 /**
  * Created by danielkozin on 9/24/15.

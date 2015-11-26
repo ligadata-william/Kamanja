@@ -18,7 +18,7 @@ package com.ligadata.messagedef
 
 import com.ligadata.kamanja.metadata.MdMgr
 import scala.collection.mutable.ArrayBuffer
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Exceptions.StackTrace
 
 class ConstantMsgObjVarGenerator {
@@ -509,7 +509,7 @@ import com.ligadata.BaseTypes._
 import com.ligadata.KamanjaBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
 import com.ligadata.Exceptions.StackTrace
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import java.util.Date
 """
     val versionPkgImport = verPkg + otherImprts + imprt

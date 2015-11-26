@@ -17,7 +17,7 @@
 package com.ligadata.messagedef
 
 import com.ligadata.Exceptions.StackTrace
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 class ConstantMethodGenerator {
   //populate method in msg-TransactionMsg class
   private val LOG = LogManager.getLogger(getClass)

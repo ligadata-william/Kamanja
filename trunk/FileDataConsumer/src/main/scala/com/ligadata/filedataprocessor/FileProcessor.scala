@@ -7,7 +7,7 @@ import com.ligadata.MetadataAPI.MetadataAPIImpl
 import com.ligadata.ZooKeeper.CreateClient
 import com.ligadata.kamanja.metadata.MessageDef
 import org.apache.curator.framework.CuratorFramework
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.kamanja.metadata.MdMgr._
 import scala.collection.mutable.HashMap

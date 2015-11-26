@@ -17,7 +17,7 @@
 
 package com.ligadata.KamanjaManager
 
-import org.apache.logging.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.KamanjaBase.{ EnvContext, ContainerNameAndDatastoreInfo }

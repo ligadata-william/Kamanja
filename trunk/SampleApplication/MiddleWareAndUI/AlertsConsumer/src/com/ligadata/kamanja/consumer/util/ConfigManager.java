@@ -18,7 +18,7 @@ package com.ligadata.kamanja.consumer.util;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.{ Logger, LogManager };
 
 public class ConfigManager {
 
