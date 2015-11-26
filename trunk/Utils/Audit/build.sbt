@@ -33,7 +33,7 @@ libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 
 libraryDependencies += "commons-codec" % "commons-codec" % "1.9"
 
-libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.7"
+// libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.7"
 
 libraryDependencies += "org.apache.hbase" % "hbase-client" % "0.98.4-hadoop2"
 

@@ -7,7 +7,7 @@ scalaVersion := "2.10.4"
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 libraryDependencies ++= Seq(
-    "org.slf4j" % "slf4j-api" % "1.7.10",
+//    "org.slf4j" % "slf4j-api" % "1.7.10",
     "ch.qos.logback" % "logback-core"    % "1.0.13",
     "ch.qos.logback" % "logback-classic" % "1.0.13",
     "uk.co.bigbeeconsultants" %% "bee-client" % "0.28.0",
