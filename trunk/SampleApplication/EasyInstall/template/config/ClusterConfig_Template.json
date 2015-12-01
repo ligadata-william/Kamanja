@@ -138,7 +138,6 @@
           "jasper-runtime-5.5.23.jar",
           "commons-el-1.0.jar",
           "jsp-api-2.1.jar",
-          "slf4j-log4j12-1.7.5.jar",
           "mapdb-1.0.6.jar",
           "redisclient_2.10-2.13.jar",
           "commons-pool-1.6.jar",

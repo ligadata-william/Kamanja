@@ -4,12 +4,12 @@
     <Property name="log-path">{InstallPath}/logs</Property>
   </Properties>
   <Appenders>
-    <RollingFile name="HourlyRoll" fileName="${log-path}/Engine.log" filePattern="${log-path}/Engine-%d{yyyy-MM-dd-HH}-%i.log.gz">
+    <RollingFile name="HourlyRoll" fileName="${log-path}/KamanjaLog.log" filePattern="${log-path}/KamanjaLog-%d{yyyy-MM-dd-HH}-%i.log.gz">
       <!-- PatternLayout pattern="%d - %c [%t] (%F:%L) - %p - %m %n"  -->
       <!-- PatternLayout pattern="%d - %c [%t] (%M) - %p - %m %n"  -->
       <PatternLayout pattern="%d - %c [%t] - %p - %m %n" />
       <Policies>
-        <SizeBasedTriggeringPolicy size="2 GB" />
+        <SizeBasedTriggeringPolicy size="200 MB" />
         <TimeBasedTriggeringPolicy />
         <OnStartupTriggeringPolicy />
       </Policies>      
@@ -20,6 +20,7 @@
   </Appenders>
   <Loggers>
     <Root level="WARN">
+      <AppenderRef ref="CONSOLE" />
       <AppenderRef ref="HourlyRoll" />
     </Root>
   </Loggers>
