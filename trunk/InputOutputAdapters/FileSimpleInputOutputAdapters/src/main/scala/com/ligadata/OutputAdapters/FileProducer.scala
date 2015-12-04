@@ -64,18 +64,18 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
     } catch {
       case zio: ZipException => {throw new FatalAdapterException("File Corruption (bad compression)", zio)}
       case fio: IOException => {
-        LOG.warn("Unable to create a file destination " + sFileName + " due to an IOException", fio)
+        LOG.warn("File input adapter "+fc.Name + ": Unable to create a file destination " + sFileName + " due to an IOException", fio)
         if (numOfRetries > MAX_RETRIES) {
-          LOG.error("Unable to create a file destination after " + MAX_RETRIES +" tries.  Aborting.")
+          LOG.error("File input adapter " + fc.Name + ":Unable to create a file destination after " + MAX_RETRIES +" tries.  Aborting.")
           throw new FatalAdapterException("Unable to open connection to specified file after " + MAX_RETRIES +" retries", fio)
         }
         numOfRetries += 1
-        LOG.warn("Retyring "+ numOfRetries + "/" + MAX_RETRIES)
+        LOG.warn("File input adapter " + fc.Name + ": Retyring "+ numOfRetries + "/" + MAX_RETRIES)
         Thread.sleep(FAIL_WAIT)
       }
       case e: Exception => {throw new FatalAdapterException("Unable to open connection to specified file ", e)}
     }
-    LOG.info("Output adapter file destination is " + sFileName)
+    LOG.info("File input adapter " + fc.Name + ": Output adapter file destination is " + sFileName)
     numOfRetries = 0
   }
 
@@ -84,7 +84,7 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
   // To send an array of messages. messages.size should be same as partKeys.size
   override def send(messages: Array[Array[Byte]], partKeys: Array[Array[Byte]]): Unit = _lock.synchronized {
     if (messages.size != partKeys.size) {
-      LOG.error("Message and Partition Keys hould has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size))
+      LOG.error("File input adapter " + fc.Name + ": Message and Partition Keys hould has same number of elements. Message has %d and Partition Keys has %d".format(messages.size, partKeys.size))
       //TODO Need to record an error here... is this a job for the ERROR Q?
       return
     }
@@ -102,21 +102,21 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
           }
           catch {
             case zio: ZipException => {
-              LOG.error("File Corruption (bad compression)")
+              LOG.error("File input adapter " + fc.Name + ": File Corruption (bad compression)")
               throw zio
             }
             case fio: IOException => {
-              LOG.warn("Unable to write to file " + sFileName)
+              LOG.warn("File input adapter " + fc.Name + ": Unable to write to file " + sFileName)
               if (numOfRetries >= MAX_RETRIES) {
-                LOG.error("Unable to create a file destination after " + MAX_RETRIES +" tries.  Aborting.")
+                LOG.error("File input adapter " + fc.Name + ": Unable to create a file destination after " + MAX_RETRIES +" tries.  Aborting.")
                 throw new FatalAdapterException("Unable to open connection to specified file after " + MAX_RETRIES +" retries", fio)
               }
               numOfRetries += 1
-              LOG.warn("Retyring "+ numOfRetries + "/" + MAX_RETRIES)
+              LOG.warn("File input adapter " + fc.Name + ": Retyring "+ numOfRetries + "/" + MAX_RETRIES)
               Thread.sleep(FAIL_WAIT)
             }
             case e: Exception => {
-              LOG.error("Unable to write output message: " + new String(message))
+              LOG.error("File input adapter " + fc.Name + ": Unable to write output message: " + new String(message))
               throw e
             }
           }
@@ -126,7 +126,7 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
       cntrAdapter.addCntr(key, messages.size) // for now adding rows
     } catch {
       case e: Exception => {
-        LOG.error("Failed to send :" + e.getMessage)
+        LOG.error("File input adapter " + fc.Name + ": Failed to send :" + e.getMessage)
         throw new FatalAdapterException("Unable to send message",e)
       }
     }
