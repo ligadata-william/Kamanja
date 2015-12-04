@@ -28,16 +28,16 @@ import java.util._
 import org.joda.time._
 
 
-object COPDRiskAssessment extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[Beneficiary]
-  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new COPDRiskAssessment(mdlCtxt)
-  override def ModelName: String = "COPDRisk" 
-  override def Version: String = "0.0.1"
-  override def CreateResultObject(): ModelResultBase = new MappedModelResults()
+class COPDRiskAssessmentFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
+  override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[Beneficiary]
+  override def createNewModelInstance(): ModelInstance = return new COPDRiskAssessment(this)
+  override def getModelName: String = "COPDRisk" 
+  override def getVersion: String = "0.0.1"
+  override def createResultObject(): ModelResultBase = new MappedModelResults()
 }
 
 
-class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPDRiskAssessment){
+class COPDRiskAssessment(factory: ModelInstanceFactory) extends ModelInstance(factory) {
  
     var msgBeneficiary : Beneficiary =  mdlCtxt.msg.asInstanceOf[Beneficiary]
     val smokingCodeSet : Array[String] = SmokeCodes.getRDD.map{ x => (x.icd9code) }.toArray
@@ -348,7 +348,7 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
     }
 
   
-  override def execute(emitAllResults:Boolean):ModelResultBase = {
+  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean):ModelResultBase = {
    
         println("Executing COPD Risk Assessment against message:");
         println("Message Type: "+msgBeneficiary.FullName)
@@ -364,7 +364,7 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                                                         new Result("Has Family History?:",getFamilyHistory.toString),
                                                         new Result("Has OverSmoking Codes?:",getOverSmokingCodesInLastYear.toString),
                                                         new Result("Has Environmental Exposures?:",getEnvironmentalExposuresInLastYear.toString))
-      return COPDRiskAssessment.CreateResultObject().asInstanceOf[MappedModelResults].withResults(actualResults)
+      return factory.createResultObject().asInstanceOf[MappedModelResults].withResults(actualResults)
     }
     else if(getCATI_Rule1a)
     {
@@ -375,7 +375,7 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                                                         new Result("Has Family History?:",getFamilyHistory.toString),
                                                         new Result("Has OverSmoking Codes?:",getOverSmokingCodesInLastYear.toString),
                                                         new Result("Has Environmental Exposures?:",getEnvironmentalExposuresInLastYear.toString))
-       return COPDRiskAssessment.CreateResultObject().asInstanceOf[MappedModelResults].withResults(actualResults)
+       return factory.createResultObject().asInstanceOf[MappedModelResults].withResults(actualResults)
     }
     else if(getCATII_Rule2)
     {
@@ -386,7 +386,7 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                                                         new Result("Has Family History?:",getFamilyHistory.toString),
                                                         new Result("Has OverSmoking Codes?:",getOverSmokingCodesInLastYear.toString),
                                                         new Result("Has Environmental Exposures?:",getEnvironmentalExposuresInLastYear.toString))
-       return COPDRiskAssessment.CreateResultObject().asInstanceOf[MappedModelResults].withResults(actualResults)
+       return factory.createResultObject().asInstanceOf[MappedModelResults].withResults(actualResults)
     }
     
     else 

@@ -24,7 +24,7 @@ import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.KamanjaBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
+import com.ligadata.KamanjaBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelInstanceFactory, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
 import org.apache.logging.log4j._
 import scala.collection.mutable.ArrayBuffer
@@ -309,7 +309,7 @@ class KamanjaMetadata {
       isModel = false
 
       while (curClz != null && isModel == false) {
-        isModel = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
+        isModel = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelInstanceFactory")
         if (isModel == false)
           curClz = curClz.getSuperclass()
       }
@@ -341,8 +341,8 @@ class KamanjaMetadata {
         }
 
         // val objinst = obj.instance
-        if (objinst.isInstanceOf[ModelBaseObj]) {
-          val modelobj = objinst.asInstanceOf[ModelBaseObj]
+        if (objinst.isInstanceOf[ModelInstanceFactory]) {
+          val modelobj = objinst.asInstanceOf[ModelInstanceFactory]
           val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
           modelObjsMap(mdlName) = new MdlInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
           LOG.info("Created Model:" + mdlName)

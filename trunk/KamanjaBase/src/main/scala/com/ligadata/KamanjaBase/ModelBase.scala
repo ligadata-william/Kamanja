@@ -19,7 +19,7 @@ package com.ligadata.KamanjaBase
 
 import scala.collection.immutable.Map
 import com.ligadata.Utils.Utils
-import com.ligadata.kamanja.metadata.MdMgr
+import com.ligadata.kamanja.metadata.{ MdMgr, ModelDef }
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -322,6 +322,42 @@ trait EnvContext {
   def CacheContainers(clusterId: String): Unit
 }
 
+// Node level context
+class NodeContext {
+
+}
+
+abstract class ModelInstance(val factory: ModelInstanceFactory) {
+  final def getEnvContext() = factory.getEnvContext() // gCtx
+  final def getModelName() = factory.getModelName() // Model Name
+  final def getVersion() = factory.getVersion() // Model Version
+  final def getModelInstanceFactory() = factory // factory
+
+  def init(instanceMetadata: String): Unit = {} // Local Instance level initialization
+  def shutdown(): Unit = {} // Shutting down this factory. 
+  def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
+}
+
+abstract class ModelInstanceFactory(val modelDef: ModelDef, val gCtx: EnvContext) {
+  final def getEnvContext() = gCtx // gCtx
+  final def getModelDef() = modelDef // modelDef
+
+  def init(nc: NodeContext): Unit = {} // Common initialization for all Model Instances. This gets called once per node during the metadata load or corresponding model def change. 
+  def shutdown(): Unit = {} // Shutting down this factory. 
+  def getModelName(): String // Model Name
+  def getVersion(): String // Model Version
+  def isValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
+  def createNewModelInstance(): ModelInstance // Creating same type of object with given values 
+  def createResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
+  def isModelInstanceReusable(): Boolean = false // Can we reuse the instances created for this model?
+}
+
+trait ModelFactoryObject {
+  def getModelInstanceFactory(modelDef: ModelDef, gCtx: EnvContext): ModelInstanceFactory
+  def prepareModel(gCtx: EnvContext, modelString: String, inputMessage: String, outputMessage: String): ModelDef // Input: Model String, input & output Message Names. Output: ModelDef
+}
+
+/*
 abstract class ModelBase(var modelContext: ModelContext, val factory: ModelBaseObj) {
   final def EnvContext() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null // gCtx
   final def ModelName() = factory.ModelName() // Model Name
@@ -342,8 +378,9 @@ trait ModelBaseObj {
   def Version(): String // Model Version
   def CreateResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
 }
+*/
 
-class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
+class MdlInfo(val mdl: ModelInstanceFactory, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
 // partitionKey is the one used for this message

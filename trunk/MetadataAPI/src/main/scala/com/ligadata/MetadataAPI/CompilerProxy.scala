@@ -693,7 +693,7 @@ class CompilerProxy {
 
       var isModel = false
       while (curClz != null && isModel == false) {
-        isModel = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
+        isModel = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelInstanceFactory")
         if (isModel == false)
           curClz = curClz.getSuperclass()
       }
@@ -721,11 +721,11 @@ class CompilerProxy {
           }
           // Pull the Model metadata out of the actual object here... NameSpace,Name, and Version all come from
           // this temporary class
-          var baseModelTrait: com.ligadata.KamanjaBase.ModelBaseObj = null
-          if (objInst.isInstanceOf[com.ligadata.KamanjaBase.ModelBaseObj]) {
-            baseModelTrait = objInst.asInstanceOf[com.ligadata.KamanjaBase.ModelBaseObj]
-            var fullName = baseModelTrait.ModelName.split('.')
-            return (fullName.dropRight(1).mkString("."), fullName(fullName.length - 1), baseModelTrait.Version, clsName)
+          var baseModelTrait: com.ligadata.KamanjaBase.ModelInstance = null
+          if (objInst.isInstanceOf[com.ligadata.KamanjaBase.ModelInstance]) {
+            baseModelTrait = objInst.asInstanceOf[com.ligadata.KamanjaBase.ModelInstance]
+            var fullName = baseModelTrait.getModelName.split('.')
+            return (fullName.dropRight(1).mkString("."), fullName(fullName.length - 1), baseModelTrait.getVersion, clsName)
           }
           logger.error("COMPILER_PROXY: Unable to resolve a class Object from " + jarName0)
           throw new MsgCompilationFailedException(clsName)
@@ -738,7 +738,7 @@ class CompilerProxy {
         }
       }
     })
-    logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelBaseObj was found in the jarred source " + jarFileName)
+    logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelInstanceFactory was found in the jarred source " + jarFileName)
     throw new MsgCompilationFailedException(jarFileName)
   }
 

@@ -26,12 +26,12 @@ import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
 import org.apache.logging.log4j.{ Logger, LogManager }
 
-object LowBalanceAlert extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
-  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
-  override def ModelName(): String = "System.LowBalanceAlert" // Model Name
-  override def Version(): String = "0.0.1" // Model Version
-  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult()
+class LowBalanceAlertFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
+  override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
+  override def createNewModelInstance(): ModelInstance = return new LowBalanceAlert(this)
+  override def getModelName(): String = "System.LowBalanceAlert" // Model Name
+  override def getVersion(): String = "0.0.1" // Model Version
+  override def createResultObject(): ModelResultBase = new LowBalanceAlertResult()
 }
 
 class LowBalanceAlertResult extends ModelResultBase {
@@ -117,9 +117,9 @@ class LowBalanceAlertResult extends ModelResultBase {
   }
 }
 
-class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
+class LowBalanceAlert(factory: ModelInstanceFactory) extends ModelInstance(factory) {
   // private[this] val LOG = LogManager.getLogger(getClass);
-  override def execute(emitAllResults: Boolean): ModelResultBase = {
+  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew

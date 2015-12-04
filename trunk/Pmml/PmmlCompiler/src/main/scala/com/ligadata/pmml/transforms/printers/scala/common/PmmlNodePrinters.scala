@@ -1092,9 +1092,9 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
     }
 
 		if (ctx.injectLogging) {
-			objBuffer.append(s"object $classname extends ModelBaseObj with LogTrait {\n") 
+			objBuffer.append(s"class $classname(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) with LogTrait {\n") 
 		} else {
-			objBuffer.append(s"object $classname extends ModelBaseObj {\n") 
+			objBuffer.append(s"class $classname(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {\n") 
 		}
 		
 		/** generate static variables */
@@ -1105,8 +1105,8 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		}
 
 
-		objBuffer.append(s"    override def ModelName(): String = $modelName\n")
-		objBuffer.append(s"    override def Version(): String = ${'"'}$versionNo${'"'}\n")
+		objBuffer.append(s"    override def getModelName(): String = $modelName\n")
+		objBuffer.append(s"    override def getVersion(): String = ${'"'}$versionNo${'"'}\n")
 
 		val msgs : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = if (ctx.containersInScope == null || ctx.containersInScope.size == 0) {
 			PmmlError.logError(ctx, "No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
@@ -1131,15 +1131,15 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		validMsgBuffer.append(s")")
 		val valEvntArrayInstance = validMsgBuffer.toString
 		
-		/** Add the IsValidMessage function  */
+		/** Add the isValidMessage function  */
 		objBuffer.append(s"    $valEvntArrayInstance\n")   
-		objBuffer.append(s"    override def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
+		objBuffer.append(s"    override def isValidMessage(msg: MessageContainerBase): Boolean = { \n")
 		objBuffer.append(s"        validMessages.filter( m => m == msg.getClass.getName).size > 0\n")
-		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
+		objBuffer.append(s"    }\n")  /** end of isValidMessage fcn  */		
 		objBuffer.append(s"\n")
 
-		/** Add the CreateResultObject function  */
-		objBuffer.append(s"    override def CreateResultObject(): ModelResultBase = new MappedModelResults(); \n\n")
+		/** Add the createResultObject function  */
+		objBuffer.append(s"    override def createResultObject(): ModelResultBase = new MappedModelResults(); \n\n")
 
 		/** plan for the day when there are multiple messages present in the constructor */
 		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
@@ -1158,7 +1158,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			val msgTypeStr : String = msgTypedef.typeString
 			val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
 			
-			objBuffer.append(s"    override def CreateNewModel(mdlCtxt: ModelContext): ModelBase =\n")
+			objBuffer.append(s"    override def createNewModelInstance(): ModelInstance =\n")
 			objBuffer.append(s"    {\n") 
 			objBuffer.append(s"           new $classname(mdlCtxt, this)\n")
 			objBuffer.append(s"    }\n") 	
@@ -1216,16 +1216,16 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		 * 
 		 * If no alias is given, the default is System_
 		 */
-		clsBuffer.append(s"class $classname(modelContext: ModelContext, factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
+		clsBuffer.append(s"class $classname(factory: ModelInstanceFactory, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
 		if (ctx.injectLogging) {
-			clsBuffer.append(s"   extends ModelBase(modelContext,factory) with LogTrait {\n") 
+			clsBuffer.append(s"   extends ModelInstance(factory) with LogTrait {\n") 
 		} else {
-			clsBuffer.append(s"   extends ModelBase(modelContext,factory) {\n") 
+			clsBuffer.append(s"   extends ModelInstance(factory) {\n") 
 		}
 
-		/** Create the alternate ctor used by the CreateNewModel implementation.  Unpack its content and feed the
+		/** Create the alternate ctor used by the createNewModelInstance implementation.  Unpack its content and feed the
 		 *  primary constructor as it is now, passing both the ModelContext and Model object along to satisfy the 
-		 *  ModelBase abstract class required parameters  
+		 *  ModelInstance abstract class required parameters  
 		 */
 		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
 		clsBuffer.append(s"$alternateCtor\n") 
@@ -1458,7 +1458,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
  	}
 
 	/** 
-	 *  Answer the alternate constructor string that the model object's CreateNewModel method uses.
+	 *  Answer the alternate constructor string that the model object's createNewModelInstance method uses.
 	 *  The alternate constructor is used to integrate the new traits developed with the
 	 *  current model generator.  Using this approach, very little of the compiler has changed to 
 	 *  support it.
@@ -1466,7 +1466,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 	 *  @param msgdefTypes : an Array[String] containing the message typedef strings that have been supplied
 	 *  	to the model. While we are currently only supporting one as far as the engine goes, the compiler
 	 *   	supports more than one in the event the multiple input messages become a feature.
-	 *  @return the "def this(val modelContext: ModelContext, val factory: ModelBaseObj){...}" constructor
+	 *  @return the "def this(val modelContext: ModelContext, val factory: ModelInstanceFactory){...}" constructor
 	 *  	string that will be included into the model being generated  
 	 *   
 	 *  Note: Currently there is only one message supported.
@@ -1495,7 +1495,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		/** the second type in the list is for the first message... the first one being the EnvContext */
 		val msgType : String = if (msgdefTypes != null && msgdefTypes.size > 1) msgdefTypes(1) else "Any"
 		
-		ctorBuffer.append(s"    def this(modelContext: ModelContext, factory: ModelBaseObj) {\n")
+		ctorBuffer.append(s"    def this(modelContext: ModelContext, factory: ModelInstanceFactory) {\n")
 		ctorBuffer.append(s"        this(modelContext, factory\n")
 		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null)\n")
 		ctorBuffer.append(s"            , (if (modelContext != null) modelContext.msg.asInstanceOf[$msgType] else null)\n")
