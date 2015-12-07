@@ -19,6 +19,7 @@ package com.ligadata.kamanja.samples.models;
 import scala.Option;
 
 import com.ligadata.KamanjaBase.*;
+import com.ligadata.kamanja.metadata.ModelDef;
 
 public class LowBalanceAlertModel extends ModelInstance {
 	public LowBalanceAlertModel(ModelInstanceFactory factory) {

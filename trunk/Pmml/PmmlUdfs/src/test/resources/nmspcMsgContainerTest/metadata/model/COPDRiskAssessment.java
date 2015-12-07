@@ -21,6 +21,7 @@ import com.ligadata.KamanjaBase.*;
 import com.ligadata.KamanjaBase.api.java.function.Function1;
 import com.ligadata.messagescontainers.System.*;
 import org.joda.time.*;
+import com.ligadata.kamanja.metadata.ModelDef;
 
 import java.lang.reflect.Array;
 import java.text.ParseException;
@@ -160,8 +161,6 @@ public class COPDRiskAssessment extends ModelInstance {
         Date oneYearAgo = calendar.getTime();
         return ((tDate.before(today) || tDate.equals(today)) && (tDate.after(oneYearAgo) || tDate.equals(oneYearAgo)));
     }
-
-    static COPDRiskAssessmentObj objSingleton = new COPDRiskAssessmentObj();
 
     private Boolean age40OrOlder() {
         org.joda.time.LocalDate birthdate = new org.joda.time.LocalDate(msg.bene_birth_dt() / 10000, (msg.bene_birth_dt() % 1000) / 100, msg.bene_birth_dt() % 100);
@@ -391,7 +390,7 @@ public class COPDRiskAssessment extends ModelInstance {
         }
         System.out.println("******************************************************************************");
 
-        return ((MappedModelResults) new COPDRiskAssessmentObj().CreateResultObject()).withResults(results);
+        return ((MappedModelResults) factory.createResultObject()).withResults(results);
     }
 
     @Override

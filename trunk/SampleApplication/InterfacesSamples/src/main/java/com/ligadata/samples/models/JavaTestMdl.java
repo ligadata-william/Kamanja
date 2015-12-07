@@ -20,6 +20,7 @@ import com.ligadata.KamanjaBase.*;
 import com.ligadata.kamanja.metadata.ModelDef;
 import com.ligadata.samples.messages.*;
 import com.google.common.base.Optional;
+import com.ligadata.kamanja.metadata.ModelDef;
 
 public class JavaTestMdl extends ModelInstance {
 	public ModelResultBase execute(ModelContext mdlCtxt, boolean outputDefault) {

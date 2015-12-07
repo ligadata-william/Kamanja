@@ -18,6 +18,7 @@ package com.ligadata.kamanja.samples.models;
 
 import com.google.common.base.Optional;
 import com.ligadata.KamanjaBase.*;
+import com.ligadata.kamanja.metadata.ModelDef;
 
 public class HelloWorldModel extends ModelInstance {
 	public HelloWorldModel(ModelInstanceFactory factory) {

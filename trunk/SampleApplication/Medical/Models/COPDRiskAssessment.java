@@ -19,6 +19,7 @@ package com.ligadata.kamanja.samples.models;
 import com.ligadata.KamanjaBase.api.java.function.Function1;
 import com.ligadata.KamanjaBase.*;
 import org.joda.time.*;
+import com.ligadata.kamanja.metadata.ModelDef;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,7 +31,7 @@ public class COPDRiskAssessment extends ModelInstance {
         init();
     }
 
-    public static class COPDRiskAssessmentFactory implements ModelInstanceFactory {
+    public static class COPDRiskAssessmentFactory extends ModelInstanceFactory {
 		public COPDRiskAssessmentFactory(ModelDef modelDef, EnvContext gCtx) {
 			super(modelDef, gCtx);
 		}
@@ -157,8 +158,6 @@ public class COPDRiskAssessment extends ModelInstance {
         Date oneYearAgo = calendar.getTime();
         return ((tDate.before(today) || tDate.equals(today)) && (tDate.after(oneYearAgo) || tDate.equals(oneYearAgo)));
     }
-
-    static COPDRiskAssessmentObj objSingleton = new COPDRiskAssessmentObj();
 
     private Boolean age40OrOlder() {
         org.joda.time.LocalDate birthdate = new org.joda.time.LocalDate(msg.bene_birth_dt() / 10000, (msg.bene_birth_dt() % 1000) / 100, msg.bene_birth_dt() % 100);
@@ -388,13 +387,13 @@ public class COPDRiskAssessment extends ModelInstance {
         }
         System.out.println("******************************************************************************");
 
-        return ((MappedModelResults) new COPDRiskAssessmentObj().CreateResultObject()).withResults(results);
+        return ((MappedModelResults) factory.createResultObject()).withResults(results);
     }
 
     @Override
     public MappedModelResults execute(ModelContext mdlCtxt, boolean outputDefault) {
         MappedModelResults result = copdRiskLevel();
-        if(!emitAllResults) {
+        if(!outputDefault) {
             if (result.get("COPD Risk Level") == "") {
                 return null;
             }
