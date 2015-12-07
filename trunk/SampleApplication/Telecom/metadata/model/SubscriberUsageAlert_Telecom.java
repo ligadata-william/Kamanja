@@ -149,7 +149,7 @@ public class SubscriberUsageAlert extends ModelInstance {
 
 	 public static class SubscriberUsageAlertFactory extends ModelInstanceFactory {
 			public SubscriberUsageAlertFactory(ModelDef modelDef, EnvContext gCtx) {
-				super(modelDef, gCtx)
+				super(modelDef, gCtx);
 			}
 			public boolean isValidMessage(MessageContainerBase msg) {
 				return (msg instanceof SubscriberUsage);

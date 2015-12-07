@@ -82,7 +82,7 @@ public class LowBalanceAlertModel extends ModelInstance {
 
     public static class LowBalanceAlertModelObj extends ModelInstanceFactory {
 		public LowBalanceAlertFactory(ModelDef modelDef, EnvContext gCtx) {
-			super(modelDef, gCtx)
+			super(modelDef, gCtx);
 		}
 		public boolean isValidMessage(MessageContainerBase msg) {
 			return (msg instanceof TransactionMsg);
