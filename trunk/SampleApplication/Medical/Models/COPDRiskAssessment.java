@@ -24,41 +24,34 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class COPDRiskAssessment extends ModelBase {
-    public COPDRiskAssessment(ModelContext mdlContext) {
-        super(mdlContext, objSingleton);
-        this.mdlContext = mdlContext;
+public class COPDRiskAssessment extends ModelInstance {
+    public COPDRiskAssessment(ModelInstanceFactory factory) {
+        super(factory);
         init();
     }
 
-    @Override
-    public ModelContext modelContext() {
-        return mdlContext;
-    }
+    public static class COPDRiskAssessmentFactory implements ModelInstanceFactory {
+		public COPDRiskAssessmentFactory(ModelDef modelDef, EnvContext gCtx) {
+			super(modelDef, gCtx)
+		}
 
-    @Override
-    public ModelBaseObj factory() {
-        return objSingleton;
-    }
-
-    public static class COPDRiskAssessmentObj implements ModelBaseObj {
-        public boolean IsValidMessage(MessageContainerBase msg) {
+        public boolean isValidMessage(MessageContainerBase msg) {
             return (msg instanceof Beneficiary);
         }
 
-        public ModelBase CreateNewModel(ModelContext mdlContext) {
-            return new COPDRiskAssessment(mdlContext);
+        public ModelInstance createNewModelInstance() {
+            return new COPDRiskAssessment(this);
         }
 
-        public String ModelName() {
+        public String getModelName() {
             return "COPDRiskAssessment";
         }
 
-        public String Version() {
+        public String getVersion() {
             return "0.0.1";
         }
 
-        public ModelResultBase CreateResultObject() {
+        public ModelResultBase createResultObject() {
             return new MappedModelResults();
         }
 
@@ -399,7 +392,7 @@ public class COPDRiskAssessment extends ModelBase {
     }
 
     @Override
-    public MappedModelResults execute(boolean emitAllResults) {
+    public MappedModelResults execute(ModelContext mdlCtxt, boolean outputDefault) {
         MappedModelResults result = copdRiskLevel();
         if(!emitAllResults) {
             if (result.get("COPD Risk Level") == "") {
