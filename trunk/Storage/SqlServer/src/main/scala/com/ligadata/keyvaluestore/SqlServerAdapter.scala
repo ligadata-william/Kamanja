@@ -36,7 +36,6 @@ import java.sql.{ Driver, DriverPropertyInfo, SQLException }
 import java.sql.Timestamp
 import java.util.Properties
 import org.apache.commons.dbcp2.BasicDataSource
-//import com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource
 
 class JdbcClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   override def addURL(url: URL) {
@@ -220,7 +219,15 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     maxWaitMillis = parsed_json.get("maxWaitMillis").get.toString.trim.toInt
   }
 
+  // some misc optional parameters
+  var clusteredIndex = "NO"
+  if (parsed_json.contains("clusteredIndex")) {
+    clusteredIndex = parsed_json.get("clusteredIndex").get.toString.trim
+  }
+
   logger.info("hostname => " + hostname)
+  logger.info("username => " + user)
+  logger.info("SchemaName => " + SchemaName)
   logger.info("jarpaths => " + jarpaths)
   logger.info("jdbcJar  => " + jdbcJar)
 
@@ -264,6 +271,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     dataSource.setMaxIdle(maxIdleConnections);
     dataSource.setInitialSize(initialSize);
     dataSource.setMaxWaitMillis(maxWaitMillis);
+    dataSource.setTestOnBorrow(true);
+    dataSource.setValidationQuery("SELECT 1");
   } catch {
     case e: Exception => {
       msg = "Failed to setup connection pooling using apache-commons-dbcp. Message:%s".format(e.getMessage)
@@ -281,7 +290,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   } catch {
     case e: Exception => {
       msg = "Message:%s".format(e.getMessage)
-      throw CreateConnectionException(msg, e)
+      throw CreateDMLException(msg, e)
     }
   }
 
@@ -293,7 +302,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     } catch {
       case e: Exception => {
         msg = "Message:%s".format(e.getMessage)
-        throw CreateConnectionException(msg, e)
+        throw CreateDDLException(msg, e)
       }
     }
   }
@@ -303,6 +312,18 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
   }
 
+  private def getConnection: Connection = {
+    try{
+      var con = dataSource.getConnection
+      con
+    } catch {
+      case e: Exception => {
+        var msg = "Message:%s".format(e.getMessage)
+        throw CreateConnectionException(msg, e)
+      }
+    }
+  }
+    
   private def IsSchemaExists(schemaName: String): Boolean = {
     var con: Connection = null
     var pstmt: PreparedStatement = null
@@ -310,7 +331,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var rowCount = 0
     var query = ""
     try {
-      con = dataSource.getConnection
+      con = getConnection
       query = "SELECT count(*) FROM sys.schemas WHERE name = ?"
       pstmt = con.prepareStatement(query)
       pstmt.setString(1, schemaName)
@@ -324,8 +345,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         return false
       }
     } catch {
+      case e: StorageConnectionException => {
+        throw e
+      } 
       case e: Exception => {
-        throw CreateDMLException("Failed to verify schema existence for the schema " + schemaName + ":" + "query => " + query + ":" + e.getMessage(), e)
+        throw new Exception("Failed to verify schema existence for the schema " + schemaName + ":" + "query => " + query + ":" + e.getMessage())
       }
     } finally {
       if (rs != null) {
@@ -363,14 +387,19 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   private def CheckTableExists(containerName: String): Unit = {
-    if (containerList.contains(containerName)) {
-      return
-    } else {
-      CreateContainer(containerName)
-      containerList.add(containerName)
+    try{
+      if (containerList.contains(containerName)) {
+	return
+      } else {
+	CreateContainer(containerName)
+	containerList.add(containerName)
+      }
+    } catch {
+      case e: Exception => {
+        throw new Exception("Failed to create table  " + toTableName(containerName) + ":" + e.getMessage())
+      }
     }
   }
-
   /**
    * loadJar - load the specified jar into the classLoader
    */
@@ -422,7 +451,8 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var sql = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
+      con.setAutoCommit(false)
       // put is sematically an upsert. An upsert is implemented using a merge
       // statement in sqlserver
       // Ideally a merge should be implemented as stored procedure
@@ -447,10 +477,20 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       pstmt.setString(5, value.serializerType)
       pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
       pstmt.executeUpdate();
+      con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-        if (con != null)
-          con.rollback()
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to save an object in the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -474,7 +514,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var totalRowsInserted = 0;
     try {
       logger.debug("Get a new connection...")
-      con = dataSource.getConnection
+      con = getConnection
       // we need to commit entire batch
       con.setAutoCommit(false)
       data_list.foreach(li => {
@@ -531,8 +571,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-        if (con != null)
-          con.rollback()
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to save a batch of objects into the table :" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -554,7 +603,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var sql = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
 
       sql = "delete from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(sql)
@@ -576,8 +625,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-        if (con != null)
-          con.rollback()
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -604,7 +662,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       logger.info("end time => " + dateFormat.format(time.endTime))
       CheckTableExists(containerName)
 
-      con = dataSource.getConnection
+      con = getConnection
       // we need to commit entire batch
       con.setAutoCommit(false)
       sql = "delete from " + tableName + " where timePartition >= ?  and timePartition <= ? and bucketKey = ?"
@@ -625,8 +683,17 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       con.setAutoCommit(true)
     } catch {
       case e: Exception => {
-        if (con != null)
-          con.rollback()
+        if (con != null){
+	  try{
+	    // rollback has thrown exception in some special scenarios, capture it
+            con.rollback()
+	  }catch {
+	    case ie: Exception => {
+	      val stackTrace = StackTrace.ThrowableTraceString(ie)
+	      logger.error("StackTrace:"+stackTrace)
+	    }
+	  }
+	}
         throw CreateDMLException("Failed to delete object(s) from the table " + tableName + ":" + "sql => " + sql + ":" + e.getMessage(), e)
       }
     } finally {
@@ -651,7 +718,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var tableName = ""
     var query = ""
     try {
-      con = dataSource.getConnection
+      con = getConnection
       CheckTableExists(containerName)
 
       tableName = toFullTableName(containerName)
@@ -688,7 +755,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var rs: ResultSet = null
     logger.info("Fetch the results of " + query)
     try {
-      con = dataSource.getConnection
+      con = getConnection
 
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
@@ -736,7 +803,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var stmt: Statement = null
     var rs: ResultSet = null
     try {
-      con = dataSource.getConnection
+      con = getConnection
 
       stmt = con.createStatement()
       rs = stmt.executeQuery(query);
@@ -781,7 +848,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var query = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
 
       query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(query)
@@ -823,7 +890,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var query = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
 
       query = "select serializerType,serializedInfo from " + tableName + " where timePartition = ? and bucketKey = ? and transactionid = ? and rowId = ?"
       pstmt = con.prepareStatement(query)
@@ -883,7 +950,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     try {
       CheckTableExists(containerName)
       //con = DriverManager.getConnection(jdbcUrl);
-      con = dataSource.getConnection
+      con = getConnection
 
       time_ranges.foreach(time_range => {
         query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
@@ -931,7 +998,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var query = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
 
       time_ranges.foreach(time_range => {
         query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where timePartition >= " + time_range.beginTime + " and timePartition <= " + time_range.endTime + " and bucketKey = ? "
@@ -977,7 +1044,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var query = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
 
       query = "select timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo from " + tableName + " where  bucketKey = ? "
       pstmt = con.prepareStatement(query)
@@ -1019,7 +1086,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var query = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
 
       query = "select timePartition,bucketKey,transactionId,rowId from " + tableName + " where  bucketKey = ? "
       pstmt = con.prepareStatement(query)
@@ -1072,7 +1139,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var query = ""
     try {
       CheckTableExists(containerName)
-      con = dataSource.getConnection
+      con = getConnection
 
       query = "truncate table " + tableName
       stmt = con.createStatement()
@@ -1107,7 +1174,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var fullTableName = toFullTableName(containerName)
     var query = ""
     try {
-      con = dataSource.getConnection()
+      con = getConnection
       // check if the container already dropped
       val dbm = con.getMetaData();
       rs = dbm.getTables(null, SchemaName, tableName, null);
@@ -1151,8 +1218,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     var fullTableName = toFullTableName(containerName)
     var query = ""
     try {
-      con = dataSource.getConnection
-
+      con = getConnection
       // check if the container already exists
       val dbm = con.getMetaData();
       rs = dbm.getTables(null, SchemaName, tableName, null);
@@ -1163,13 +1229,25 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         stmt = con.createStatement()
         stmt.executeUpdate(query);
         stmt.close
-        var clustered_index_name = "ix_" + tableName
-        query = "create clustered index " + clustered_index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
+        var index_name = "ix_" + tableName
+	if( clusteredIndex.equalsIgnoreCase("YES") ){
+	  logger.info("Creating clustered index...")
+          query = "create clustered index " + index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
+	}
+	else{
+	  logger.info("Creating non-clustered index...")
+          query = "create index " + index_name + " on " + fullTableName + "(timePartition,bucketKey,transactionId,rowId)"
+	}
         stmt = con.createStatement()
         stmt.executeUpdate(query);
         stmt.close
-        var index_name = "ix1_" + tableName
+        index_name = "ix1_" + tableName
         query = "create index " + index_name + " on " + fullTableName + "(bucketKey,transactionId,rowId)"
+        stmt = con.createStatement()
+        stmt.executeUpdate(query);
+        stmt.close
+        index_name = "ix2_" + tableName
+        query = "create index " + index_name + " on " + fullTableName + "(timePartition,bucketKey)"
         stmt = con.createStatement()
         stmt.executeUpdate(query);
       }

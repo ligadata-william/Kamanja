@@ -29,6 +29,13 @@ class KafkaQueueAdapterConfiguration extends AdapterConfiguration {
   var otherconfigs = scala.collection.mutable.Map[String, String]() // Making the key is lowercase always
 }
 
+object KafkaConstants {
+  val KAFKA_SEND_SUCCESS = 0
+  val KAFKA_SEND_Q_FULL = 1
+  val KAFKA_SEND_DEAD_PRODUCER = 2
+  val KAFKA_NOT_SEND = 3
+}
+
 object KafkaQueueAdapterConfiguration {
   def GetAdapterConfig(inputConfig: AdapterConfiguration): KafkaQueueAdapterConfiguration = {
     if (inputConfig.adapterSpecificCfg == null || inputConfig.adapterSpecificCfg.size == 0) {

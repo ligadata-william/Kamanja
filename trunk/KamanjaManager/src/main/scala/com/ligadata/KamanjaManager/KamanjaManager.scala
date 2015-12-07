@@ -19,7 +19,7 @@ import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import org.apache.log4j.Logger
 import com.ligadata.HeartBeat.HeartBeatUtil
-import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 
 class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
@@ -168,7 +168,7 @@ object ProcessedAdaptersInfo {
       prevAdapterCommittedValues
     }
   }
-  
+
   def CommitAdapterValues: Boolean = {
     LOG.debug("CommitAdapterValues. AdapterCommitTime: " + KamanjaConfiguration.adapterInfoCommitTime)
     var committed = false
@@ -289,25 +289,85 @@ class KamanjaManager extends Observer {
     val s0 = System.nanoTime
 
     validateInputAdapters.foreach(ia => {
-      ia.Shutdown
+      try {
+        ia.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Validate adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Validate adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Validate adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     validateInputAdapters.clear
 
     inputAdapters.foreach(ia => {
-      ia.Shutdown
+      try {
+        ia.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Input adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Input adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Input adapter " + ia.UniqueName + "failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     inputAdapters.clear
 
     outputAdapters.foreach(oa => {
-      oa.Shutdown
+      try {
+        oa.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Output adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Output adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Output adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     outputAdapters.clear
 
     statusAdapters.foreach(oa => {
-      oa.Shutdown
+      try {
+        oa.Shutdown
+      } catch {
+        case fae: FatalAdapterException => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+          LOG.error("Status adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Exception => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Status adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+        case e: Throwable => {
+          val causeStackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.error("Status adapter failed to shutdown, cause: \n" + causeStackTrace)
+        }
+      }
     })
 
     statusAdapters.clear
@@ -492,6 +552,10 @@ class KamanjaManager extends Observer {
       return Shutdown(1)
     }
 
+    val exceptionStatusAdaps = scala.collection.mutable.Set[String]()
+    var curCntr = 0
+    val maxFailureCnt = 30
+
     val statusPrint_PD = new Runnable {
       def run() {
         val stats: scala.collection.immutable.Map[String, Long] = SimpleStats.copyMap
@@ -499,9 +563,39 @@ class KamanjaManager extends Observer {
         val dispStr = "PD,%d,%s,%s".format(KamanjaConfiguration.nodeId, Utils.GetCurDtTmStr, statsStr)
 
         if (statusAdapters != null) {
+          curCntr += 1
           statusAdapters.foreach(sa => {
-            sa.send(dispStr, "1")
+            val adapNm = sa.inputConfig.Name
+            val alreadyFailed = (exceptionStatusAdaps.size > 0 && exceptionStatusAdaps.contains(adapNm))
+            try {
+              if (alreadyFailed == false || curCntr >= maxFailureCnt) {
+                sa.send(dispStr, "1")
+                if (alreadyFailed)
+                  exceptionStatusAdaps -= adapNm
+              }
+            } catch {
+              case fae: FatalAdapterException => {
+                val causeStackTrace = StackTrace.ThrowableTraceString(fae.cause)
+                LOG.error("Failed to send data to status adapter:" + adapNm + "\n.Internal Cause:" + causeStackTrace)
+                if (alreadyFailed == false)
+                  exceptionStatusAdaps += adapNm
+              }
+              case e: Exception => {
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("Failed to send data to status adapter:" + adapNm + "\n.Stack Trace:" + stackTrace)
+                if (alreadyFailed == false)
+                  exceptionStatusAdaps += adapNm
+              }
+              case t: Throwable => {
+                val stackTrace = StackTrace.ThrowableTraceString(t)
+                LOG.error("Failed to send data to status adapter:" + adapNm + "\n.Stack Trace:" + stackTrace)
+                if (alreadyFailed == false)
+                  exceptionStatusAdaps += adapNm
+              }
+            }
           })
+          if (curCntr >= maxFailureCnt)
+            curCntr = 0
         } else {
           LOG.info(dispStr)
         }
