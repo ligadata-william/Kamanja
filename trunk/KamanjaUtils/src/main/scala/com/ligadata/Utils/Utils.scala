@@ -27,11 +27,11 @@ import com.ligadata.Exceptions.StackTrace
 
 import scala.util.control.Breaks._
 import scala.collection.mutable.TreeSet
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import scala.collection.mutable.ArrayBuffer
 
 object Utils {
-  private val logger = Logger.getLogger(getClass)
+  private val logger = LogManager.getLogger(getClass)
 
   def SimpDateFmtTimeFromMs(tmMs: Long): String = {
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(tmMs))

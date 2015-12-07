@@ -21,7 +21,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.StorageBase.{ DataStore }
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import com.ligadata.keyvaluestore._
 import com.ligadata.Utils.Utils._
 import com.ligadata.Utils.{ KamanjaClassLoader, KamanjaLoaderInfo }
@@ -29,7 +29,7 @@ import com.ligadata.StorageBase.StorageAdapterObj
 
 object KeyValueManager {
   private val loggerName = this.getClass.getName
-  private val logger = Logger.getLogger(loggerName)
+  private val logger = LogManager.getLogger(loggerName)
   private val kvManagerLoader = new KamanjaLoaderInfo
   // We will add more implementations here 
   // so we can test  the system characteristics

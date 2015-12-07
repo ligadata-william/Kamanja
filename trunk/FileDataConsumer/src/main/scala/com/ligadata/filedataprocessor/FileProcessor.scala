@@ -7,7 +7,7 @@ import com.ligadata.MetadataAPI.MetadataAPIImpl
 import com.ligadata.ZooKeeper.CreateClient
 import com.ligadata.kamanja.metadata.MessageDef
 import org.apache.curator.framework.CuratorFramework
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.kamanja.metadata.MdMgr._
 import scala.collection.mutable.HashMap
@@ -34,7 +34,7 @@ case class FileStatus(status: Int, offset: Long, createDate: Long)
  */
 object FileProcessor {
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   private var initRecoveryLock = new Object
   private var numberOfReadyConsumers = 0
   private var isBufferMonitorRunning = false
@@ -628,7 +628,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
   private var kml: KafkaMessageLoader = null
   private var zkc: CuratorFramework = null
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   var fileConsumers: ExecutorService = Executors.newFixedThreadPool(3)
 
   var isConsuming = true

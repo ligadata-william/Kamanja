@@ -22,7 +22,7 @@ import com.ligadata.metadataapiservice._
 import spray.routing._
 import spray.http._
 import MediaTypes._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
 
@@ -50,7 +50,7 @@ trait MetadataAPIService extends HttpService {
   val GET_HEALTH = "heartbeat"
 
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
   // logger.setLevel(Level.TRACE);
 
   val metadataAPIRoute = {

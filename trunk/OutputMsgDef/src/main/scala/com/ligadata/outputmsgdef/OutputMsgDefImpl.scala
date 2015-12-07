@@ -24,7 +24,7 @@ import com.ligadata.kamanja.metadata.ObjType._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.Exceptions._
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import scala.collection.mutable.ListBuffer
 import com.ligadata.Exceptions.StackTrace
 
@@ -36,7 +36,7 @@ class OutputMessage(var NameSpace: String, var Name: String, var Version: String
 object OutputMsgDefImpl {
 
   val logger = this.getClass.getName
-  lazy val log = Logger.getLogger(logger)
+  lazy val log = LogManager.getLogger(logger)
 
   /**
    * ${System.PatientDetails.Name.FirstName}

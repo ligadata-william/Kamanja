@@ -24,7 +24,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 object LowBalanceAlert extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
@@ -118,7 +118,7 @@ class LowBalanceAlertResult extends ModelResultBase {
 }
 
 class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
-  // private[this] val LOG = Logger.getLogger(getClass);
+  // private[this] val LOG = LogManager.getLogger(getClass);
   override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))

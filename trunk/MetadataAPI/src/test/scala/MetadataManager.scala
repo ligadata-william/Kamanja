@@ -27,7 +27,7 @@ import com.ligadata.Utils.Utils.loadConfiguration
 
 import scala.collection.mutable
 import scala.io.Source
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 case class MetadataAPIProperties(var database: String = "hashmap", 
 				 var databaseHost: String = "localhost", 
@@ -45,9 +45,7 @@ case class MetadataManagerException(message: String) extends Exception(message)
 
 class MetadataManager(var config: MetadataAPIProperties) {
 
-  private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
-
-  logger.setLevel(Level.INFO)
+  private val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
 
   private val metadataDirResource = getClass.getResource("/Metadata")
   if( metadataDirResource == null ){

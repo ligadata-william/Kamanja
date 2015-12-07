@@ -21,7 +21,7 @@ import java.util.{ Properties, Arrays }
 import kafka.common.{ QueueFullException, FailedToSendMessageException }
 import kafka.message._
 import kafka.producer.{ ProducerConfig, Producer, KeyedMessage, Partitioner }
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.{ KafkaConstants, KafkaQueueAdapterConfiguration }
 import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
@@ -60,7 +60,7 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
 }
 
 class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter) extends OutputAdapter {
-  private[this] val LOG = Logger.getLogger(getClass);
+  private[this] val LOG = LogManager.getLogger(getClass);
 
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)

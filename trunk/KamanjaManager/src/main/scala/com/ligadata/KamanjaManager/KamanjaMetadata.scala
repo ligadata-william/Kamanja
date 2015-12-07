@@ -26,7 +26,7 @@ import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
 import com.ligadata.KamanjaBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
@@ -47,7 +47,7 @@ class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, 
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 class KamanjaMetadata {
-  val LOG = Logger.getLogger(getClass);
+  val LOG = LogManager.getLogger(getClass);
 
   // LOG.setLevel(Level.TRACE)
 
@@ -492,7 +492,7 @@ class KamanjaMetadata {
 
 object KamanjaMetadata extends MdBaseResolveInfo {
   var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
-  private[this] val LOG = Logger.getLogger(getClass);
+  private[this] val LOG = LogManager.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   private[this] var modelObjs = new HashMap[String, MdlInfo]

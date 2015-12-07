@@ -20,7 +20,7 @@ import scala.collection.immutable.Map
 import scala.collection.mutable._
 import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.KvBase.{ Key, Value, TimeRange, KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper, LoadKeyWithBucketId }
 import com.ligadata.StorageBase.{ DataStore, Transaction, DataStoreOperations }
 import com.ligadata.KamanjaBase._
@@ -41,7 +41,7 @@ import java.util.{ TreeMap, Date };
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 }
 
 // case class AdapterUniqueValueDes(T: Long, V: String, Qs: Option[List[String]], Ks: Option[List[String]], Res: Option[List[String]]) // TransactionId, Value, Queues & Result Strings. Queues and Result Strings should be same size.  

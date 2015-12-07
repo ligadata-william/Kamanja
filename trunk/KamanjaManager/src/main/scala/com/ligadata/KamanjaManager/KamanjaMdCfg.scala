@@ -17,7 +17,7 @@
 
 package com.ligadata.KamanjaManager
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.KamanjaBase.{ EnvContext, ContainerNameAndDatastoreInfo }
@@ -40,7 +40,7 @@ class KamanjaInputAdapterCallerContext extends InputAdapterCallerContext {
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 object KamanjaMdCfg {
-  private[this] val LOG = Logger.getLogger(getClass);
+  private[this] val LOG = LogManager.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
 
   def InitConfigInfo: Boolean = {
