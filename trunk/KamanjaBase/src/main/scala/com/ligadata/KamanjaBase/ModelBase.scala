@@ -26,6 +26,7 @@ import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
 import com.ligadata.KvBase.{ TimeRange }
 import com.ligadata.KvBase.{ Key, Value, TimeRange /* , KvBaseDefalts, KeyWithBucketIdAndPrimaryKey, KeyWithBucketIdAndPrimaryKeyCompHelper */ }
+import com.ligadata.Utils.{ KamanjaLoaderInfo }
 
 object MinVarType extends Enumeration {
   type MinVarType = Value
@@ -352,35 +353,9 @@ abstract class ModelInstanceFactory(val modelDef: ModelDef, val gCtx: EnvContext
   def isModelInstanceReusable(): Boolean = false // Can we reuse the instances created for this model?
 }
 
-trait ModelFactoryObject {
-  def getModelInstanceFactory(modelDef: ModelDef, gCtx: EnvContext): ModelInstanceFactory
-  def prepareModel(gCtx: EnvContext, modelString: String, inputMessage: String, outputMessage: String): ModelDef // Input: Model String, input & output Message Names. Output: ModelDef
-}
-
-/*
-abstract class ModelBase(var modelContext: ModelContext, val factory: ModelBaseObj) {
-  final def EnvContext() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null // gCtx
-  final def ModelName() = factory.ModelName() // Model Name
-  final def Version() = factory.Version() // Model Version
-  final def TenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
-  final def TransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else null // transId
-
-  def init(partitionHash: Int): Unit = {}  // Instance initialization. Once per instance 
-  def shutdown(): Unit = {}  // Shutting down the instance 
-  def execute(outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
-  def isModelInstanceReusable(): Boolean = false // Can we reuse the instances created for this model?
-}
-
-trait ModelBaseObj {
-  def IsValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def CreateNewModel(mdlCtxt: ModelContext): ModelBase // Creating same type of object with given values 
-  def ModelName(): String // Model Name
-  def Version(): String // Model Version
-  def CreateResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
-}
-*/
-
-class MdlInfo(val mdl: ModelInstanceFactory, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
+trait FactoryOfModelInstanceFactory {
+  def getModelInstanceFactory(modelDef: ModelDef, gCtx: EnvContext, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelInstanceFactory
+  def prepareModel(gCtx: EnvContext, modelString: String, inputMessage: String, outputMessage: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef // Input: Model String, input & output Message Names. Output: ModelDef
 }
 
 // partitionKey is the one used for this message
@@ -392,7 +367,7 @@ class ModelContext(val txnContext: TransactionContext, val msg: MessageContainer
   def getPropertyValue(clusterId: String, key: String): String = (txnContext.getPropertyValue(clusterId, key))
 }
 
-class TransactionContext(val transId: Long, val gCtx: EnvContext, val tenantId: String) {
+class TransactionContext(val transId: Long, val gCtx: EnvContext) {
   private var valuesMap = new java.util.HashMap[String, Any]()
   def getPropertyValue(clusterId: String, key: String): String = { gCtx.getPropertyValue(clusterId, key) }
   def setContextValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }

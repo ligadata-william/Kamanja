@@ -68,7 +68,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
       val transId = transService.getNextTransId
-      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.envCtxt, "")
+      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.envCtxt)
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       var outputResults = ArrayBuffer[(String, String, String)]() // Adapter/Queue name, Partition Key & output message 

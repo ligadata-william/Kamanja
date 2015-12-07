@@ -87,7 +87,13 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 			
 		logger.debug("MetadataLoad...loading function macro definitions")
 		initMacroDefs
-	    
+
+		logger.debug("MetadataLoad...loading FactoryOfModelInstanceFactories definitions")
+		initFactoryOfModelInstanceFactories
+	}
+	
+	private def initFactoryOfModelInstanceFactories: Unit = {
+		mgr.AddFactoryOfModelInstanceFactory("com.ligadata.FactoryOfModelInstanceFactory", "JarFactoryOfModelInstanceFactory", "com.ligadata.FactoryOfModelInstanceFactory.JarFactoryOfModelInstanceFactory$", baseTypesVer, "jarfactoryofmodelinstancefactory_2.10-1.0.jar", Array("metadata_2.10-1.0.jar", "exceptions_2.10-1.0.jar", "kamanjabase_2.10-1.0.jar", "log4j-core-2.4.1.jar", "log4j-api-2.4.1.jar"))
 	}
 	
 	// CMS messages + the dimensional data (treated as Containers)

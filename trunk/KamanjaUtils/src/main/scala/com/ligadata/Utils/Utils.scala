@@ -116,8 +116,8 @@ object Utils {
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
-        failStr = "Invalid Configuration. Message: " + e.getMessage() + "\nStackTrace:"+stackTrace
+        logger.error("StackTrace:" + stackTrace)
+        failStr = "Invalid Configuration. Message: " + e.getMessage() + "\nStackTrace:" + stackTrace
         configs = null
     }
     return (configs, failStr)
@@ -126,7 +126,7 @@ object Utils {
   def optionToOptional[T](option: Option[T]): Optional[T] = {
     option match {
       case Some(value) => Optional.of(value)
-      case None => Optional.absent()
+      case None        => Optional.absent()
     }
   }
 
@@ -173,28 +173,30 @@ object Utils {
    *     loader - Custom Class Loader
    */
   def LoadJars(jars: Array[String], loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
-    // Loading all jars
-    for (j <- jars) {
-      logger.debug("Processing Jar " + j.trim)
-      val fl = new File(j.trim)
-      if (fl.exists) {
-        try {
-          if (loadedJars(fl.getPath())) {
-            logger.debug("Jar " + j.trim + " already loaded to class path.")
-          } else {
-            loader.addURL(fl.toURI().toURL())
-            logger.debug("Jar " + j.trim + " added to class path.")
-            loadedJars += fl.getPath()
+    if (jars != null) {
+      // Loading all jars
+      for (j <- jars) {
+        logger.debug("Processing Jar " + j.trim)
+        val fl = new File(j.trim)
+        if (fl.exists) {
+          try {
+            if (loadedJars(fl.getPath())) {
+              logger.debug("Jar " + j.trim + " already loaded to class path.")
+            } else {
+              loader.addURL(fl.toURI().toURL())
+              logger.debug("Jar " + j.trim + " added to class path.")
+              loadedJars += fl.getPath()
+            }
+          } catch {
+            case e: Exception => {
+              logger.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+              return false
+            }
           }
-        } catch {
-          case e: Exception => {
-            logger.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-            return false
-          }
+        } else {
+          logger.error("Jar " + j.trim + " not found")
+          return false
         }
-      } else {
-        logger.error("Jar " + j.trim + " not found")
-        return false
       }
     }
 
