@@ -117,6 +117,7 @@ cp FileDataConsumer/target/scala-2.10/FileDataConsumer* $bin
 echo "copy all Kamanja jars and the jars upon which they depend to the $systemlib"
 
 
+cp $srcPath/FactoriesOfModelInstanceFactory/JarFactoryOfModelInstanceFactory/target/scala-2.10/jarfactoryofmodelinstancefactory_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.logging.log4j/log4j-core/jars/log4j-core-2.4.1.jar $systemlib
 cp $ivyPath/cache/org.apache.logging.log4j/log4j-api/jars/log4j-api-2.4.1.jar $systemlib
 cp $srcPath/Storage/SqlServer/src/test/resources/sqljdbc4-2.0.jar $systemlib
