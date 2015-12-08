@@ -46,6 +46,7 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 import java.util.Locale
 import java.io._
+import com.ligadata.kamanja.metadata.ModelDef;
 
 class SubscriberUsageAlertFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[SubscriberUsage]

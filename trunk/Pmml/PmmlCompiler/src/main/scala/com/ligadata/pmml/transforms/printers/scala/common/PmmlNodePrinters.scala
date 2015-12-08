@@ -887,6 +887,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		commentBuffer.append(s"import com.ligadata.pmml.udfs._\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs.Udfs._\n")
 		commentBuffer.append(s"import com.ligadata.pmml.runtime._\n")
+		commentBuffer.append(s"import com.ligadata.kamanja.metadata.ModelDef;\n")
 		//commentBuffer.append(s"import com.ligadata.KamanjaBase._\n") 
 		commentBuffer.append(s"\n")
 
@@ -1092,9 +1093,9 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
     }
 
 		if (ctx.injectLogging) {
-			objBuffer.append(s"class $classname(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) with LogTrait {\n") 
+			objBuffer.append(s"class ${classname}Factory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) with LogTrait {\n") 
 		} else {
-			objBuffer.append(s"class $classname(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {\n") 
+			objBuffer.append(s"class ${classname}Factory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {\n") 
 		}
 		
 		/** generate static variables */
@@ -1160,7 +1161,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			
 			objBuffer.append(s"    override def createNewModelInstance(): ModelInstance =\n")
 			objBuffer.append(s"    {\n") 
-			objBuffer.append(s"           new $classname(mdlCtxt, this)\n")
+			objBuffer.append(s"           new $classname(this)\n")
 			objBuffer.append(s"    }\n") 	
 			objBuffer.append(s"\n")
 	
@@ -1446,7 +1447,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			 *  Add the execute function to the the class body... the prepareResults function will build the return array for consumption by engine. 
 			 */
 			clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
-			clsBuffer.append(s"    def execute(emitAllResults : Boolean) : ModelResultBase = {\n")
+			clsBuffer.append(s"    def execute(mdlCtxt: ModelContext, emitAllResults : Boolean) : ModelResultBase = {\n")
 			clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
 			clsBuffer.append(s"        prepareResults(emitAllResults)\n")
 			clsBuffer.append(s"    }\n")

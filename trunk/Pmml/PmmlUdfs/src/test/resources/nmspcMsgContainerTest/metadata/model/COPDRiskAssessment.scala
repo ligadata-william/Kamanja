@@ -30,7 +30,7 @@ import scala.io.Source
 import scala.collection.JavaConversions._
 import java.util._
 import org.joda.time._
-
+import com.ligadata.kamanja.metadata.ModelDef;
 
 class COPDRiskAssessmentFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[Beneficiary]
@@ -42,7 +42,7 @@ class COPDRiskAssessmentFactory(modelDef: ModelDef, gCtx: EnvContext) extends Mo
 
 
 class COPDRiskAssessment(factory: ModelInstanceFactory) extends ModelInstance(factory) {
- 
+  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean):ModelResultBase = {
     var msgBeneficiary : Beneficiary =  mdlCtxt.msg.asInstanceOf[Beneficiary]
     val smokingCodeSet : Array[String] = SmokeCodes.getRDD.map{ x => (x.icd9code) }.toArray
     val sputumCodeSet : Array[String] = SputumCodes.getRDD.map{ x => (x.icd9code) }.toArray
@@ -351,9 +351,6 @@ class COPDRiskAssessment(factory: ModelInstanceFactory) extends ModelInstance(fa
       return false
     }
 
-  
-  override def execute(emitAllResults:Boolean):ModelResultBase = {
-   
         println("Executing COPD Risk Assessment against message:");
         println("Message Type: "+msgBeneficiary.FullName)
         println("Message Name: " + msgBeneficiary.Name);

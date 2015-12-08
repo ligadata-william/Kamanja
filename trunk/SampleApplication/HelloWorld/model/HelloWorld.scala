@@ -18,6 +18,7 @@ package com.ligadata.samples.models
 
 import com.ligadata.KamanjaBase._
 import com.ligadata.KvBase.TimeRange
+import com.ligadata.kamanja.metadata.ModelDef;
 
 class HelloWorldModelFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[msg1]

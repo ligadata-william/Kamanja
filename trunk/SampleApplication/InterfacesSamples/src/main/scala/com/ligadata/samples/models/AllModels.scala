@@ -27,6 +27,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.io.Source
 import java.io.{ DataInputStream, DataOutputStream }
+import com.ligadata.kamanja.metadata.ModelDef;
 
 // Implementation notes:
 //   There is no need to pass context in every call to Builder or getRecent as the context is stored

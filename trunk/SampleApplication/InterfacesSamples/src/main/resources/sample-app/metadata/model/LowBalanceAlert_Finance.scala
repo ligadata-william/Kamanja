@@ -25,6 +25,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
 import org.apache.logging.log4j.{ Logger, LogManager }
+import com.ligadata.kamanja.metadata.ModelDef;
 
 class LowBalanceAlertFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
