@@ -519,6 +519,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     if (fDefsOptions != None) {
       val fDefs = fDefsOptions.get
 
+      LOG.debug("Found %d FactoryOfModelInstanceFactory objects".format(fDefs.size))
+      
       fDefs.foreach(f => {
         LoadJarIfNeeded(f)
         // else Assuming we are already loaded all the required jars
@@ -526,6 +528,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
         var clsName = f.PhysicalName.trim
         var orgClsName = clsName
 
+        LOG.debug("FactoryOfModelInstanceFactory. FullName:%s, ClassName:%s".format(f.FullName, clsName))
         var fDefObj = ResolveFactoryOfModelInstanceFactoryDef(clsName, f)
         if (fDefObj == null) {
           if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
@@ -540,6 +543,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
           LOG.error("Failed to resolve FactoryOfModelInstanceFactory object:" + f.FullName)
         }
       })
+    } else {
+      logger.debug("Not Found any FactoryOfModelInstanceFactory objects")
     }
 
     var exp: Exception = null
