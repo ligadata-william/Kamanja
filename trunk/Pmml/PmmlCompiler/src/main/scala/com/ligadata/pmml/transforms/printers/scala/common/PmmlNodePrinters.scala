@@ -1274,12 +1274,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			clsBuffer.append(s"        val $msgName = tmpMsg.asInstanceOf[${msgType}]\n\n")
 		
 			clsBuffer.append(s"\n")
-			clsBuffer.append(s"        /***********************************************************************/\n")
-			clsBuffer.append(s"        ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
-			clsBuffer.append(s"        ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
-			clsBuffer.append(s"        /***********************************************************************/\n")
-			clsBuffer.append(s"\n")
-
 			
 			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 			val ruleCtors = ctx.RuleRuleSetInstantiators.apply("SimpleRule")
@@ -1444,6 +1438,11 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			  case _ => "None"
 			}
 			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}ClassName${'"'}) = Some($clsId)\n")
+			clsBuffer.append(s"\n")
+			clsBuffer.append(s"        /***********************************************************************/\n")
+			clsBuffer.append(s"        ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
+			clsBuffer.append(s"        ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
+			clsBuffer.append(s"        /***********************************************************************/\n")
 			clsBuffer.append(s"\n")
 			clsBuffer.append(s"        this\n")
 			clsBuffer.append(s"    }   /** end of initialize fcn  */	\n")  /** end of initialize fcn  */		
