@@ -31,7 +31,7 @@ case class HeartBeats(heartBeats: List[HeartBeat])
 case class HeartBeat(name: String, uniqueId: Int, lastSeen: DateTime, startTime: DateTime, components: List[String], metrics: List[String])
 
 object CleanZookeeper {
-  private lazy val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  private val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
   private lazy val retryPolicy = new ExponentialBackoffRetry(1000, 3)
   implicit val formats = DefaultFormats
 

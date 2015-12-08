@@ -27,7 +27,7 @@ import org.json4s.jackson.JsonMethods._
 case class ZooKeeperInfo(nodeBasePath: String, connStr: String)
 
 class CleanerConfiguration(metadataConfigFile: String) {
-  private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  private val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
 
   var zookeeperInfo: ZooKeeperInfo = null
   var dataStore: DataStore = null

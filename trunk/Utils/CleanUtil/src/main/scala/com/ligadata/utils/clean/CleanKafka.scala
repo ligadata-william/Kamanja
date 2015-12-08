@@ -22,7 +22,7 @@ import org.I0Itec.zkclient.ZkClient
 import scala.concurrent.duration._
 
 object CleanKafka {
-  val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
 
   def deleteTopic(topicName: String, zookeeperConnectString: String): Unit = {
     val zkClient: ZkClient = new ZkClient(zookeeperConnectString, 30000, 30000, ZKStringSerializer)

@@ -23,7 +23,7 @@ import com.ligadata.Exceptions._
 import scala.io.Source
 
 object CleanUtil {
-  private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  private val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
   private type OptionMap = Map[Symbol, Any]
 
   private val stream: InputStream = getClass.getResourceAsStream("/help.txt")

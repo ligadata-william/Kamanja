@@ -21,7 +21,7 @@ import com.ligadata.keyvaluestore._
 import com.ligadata.StorageBase.DataStore
 
 object CleanStores {
-  private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  private val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
 
   // DataStore table names
   private val CheckPointInformationTable = "checkpointinformation"
