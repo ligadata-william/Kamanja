@@ -1257,22 +1257,28 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
 			val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
 			
+			/** 
+			 *  Add the initialize function to the the class body 
+			 */
+			clsBuffer.append(s"    def initialize(tmpMsg: $msgtype, gCtx: EnvContext) : $classname = {\n")
+			clsBuffer.append(s"\n")
+			
+			clsBuffer.append(s"    /** Initialize the data and transformation dictionaries */\n")
+			clsBuffer.append(s"        if (bInitialized)\n")
+			clsBuffer.append(s"            return this\n")
+			clsBuffer.append(s"        bInitialized = true\n")
+			clsBuffer.append(s"\n")		
+			
+			val msgType : String = if (msgdefTypes != null && msgdefTypes.size > 1) msgdefTypes(1) else "Any"
+			
+			clsBuffer.append(s"    val $msgName = tmpMsg.asInstanceOf[${msgType}]\n\n")
+		
 			clsBuffer.append(s"\n")
 			clsBuffer.append(s"    /***********************************************************************/\n")
 			clsBuffer.append(s"    ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
 			clsBuffer.append(s"    ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
 			clsBuffer.append(s"    /***********************************************************************/\n")
-			/** 
-			 *  Add the initialize function to the the class body 
-			 */
-			clsBuffer.append(s"    def initialize : $classname = {\n")
-			clsBuffer.append(s"\n")
-			
-			clsBuffer.append(s"    /** Initialize the data and transformation dictionaries */\n")
-			clsBuffer.append(s"    if (bInitialized)\n")
-			clsBuffer.append(s"         return this\n")
-			clsBuffer.append(s"     bInitialized = true\n")
-			clsBuffer.append(s"\n")		
+
 			
 			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 			val ruleCtors = ctx.RuleRuleSetInstantiators.apply("SimpleRule")
@@ -1449,7 +1455,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
 			clsBuffer.append(s"    def execute(mdlCtxt: ModelContext, emitAllResults : Boolean) : ModelResultBase = {\n")
 			clsBuffer.append(s"        ctx = new com.ligadata.pmml.runtime.Context(mdlCtxt.TransactionContext.TransactionId, mdlCtxt.TransactionContext.NodeCtxt.EnvCtxt)\n")
-			clsBuffer.append(s"        initialize\n")
+			clsBuffer.append(s"        initialize(mdlCtxt.Message, mdlCtxt.TransactionContext.NodeCtxt.EnvCtxt)\n")
 			clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
 			clsBuffer.append(s"        prepareResults(emitAllResults)\n")
 			clsBuffer.append(s"    }\n")
