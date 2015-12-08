@@ -220,28 +220,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */ )
     }
 
-    /*
-    def IsSameKey(key1: List[String], key2: List[String]): Boolean = {
-      if (key1.size != key2.size)
-        return false
-
-      for (i <- 0 until key1.size) {
-        if (key1(i).compareTo(key2(i)) != 0)
-          return false
-      }
-
-      return true
-    }
-
-    def IsKeyExists(keys: Array[List[String]], searchKey: List[String]): Boolean = {
-      keys.foreach(k => {
-        if (IsSameKey(k, searchKey))
-          return true
-      })
-      return false
-    }
-*/
-
     def getRddData(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, primaryKey: List[String], f: MessageContainerBase => Boolean): Array[(KeyWithBucketIdAndPrimaryKey, MessageContainerBase)] = {
       val retResult = ArrayBuffer[(KeyWithBucketIdAndPrimaryKey, MessageContainerBase)]()
       if (container != null) {
@@ -300,9 +278,18 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             }
           } else {
             var it1 = container.dataByTmPart.entrySet().iterator()
-            while (it1.hasNext()) {
-              val entry = it1.next();
-              retResult += ((entry.getKey(), entry.getValue().value))
+            if (f != null) {
+              while (it1.hasNext()) {
+                val entry = it1.next();
+                val value = entry.getValue();
+                if (f(value.value))
+                  retResult += ((entry.getKey(), value.value))
+              }
+            } else {
+              while (it1.hasNext()) {
+                val entry = it1.next();
+                retResult += ((entry.getKey(), entry.getValue().value))
+              }
             }
           }
         } catch {
@@ -339,6 +326,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
 */
+    /*
     def getAllObjects(containerName: String): Array[MessageContainerBase] = {
       return TxnContextCommonFunctions.getRddData(getMsgContainer(containerName.toLowerCase, false), null, null, null, null).map(kv => kv._2)
     }
@@ -346,6 +334,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getObject(containerName: String, partKey: List[String], primaryKey: List[String]): (MessageContainerBase, Boolean) = {
       return TxnContextCommonFunctions.getRecent(getMsgContainer(containerName.toLowerCase, false), partKey, null, primaryKey, null)
     }
+*/
 
     /*
     def getObjects(containerName: String, partKey: List[String], appendCurrentChanges: Boolean): (Array[MessageContainerBase], Boolean) = {
@@ -373,8 +362,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 */
 
+    /*
     def containsAny(containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): (Boolean, Array[List[String]]) = {
-      /*
       val container = getMsgContainer(containerName.toLowerCase, false)
       if (container != null) {
         val notFndPartkeys = ArrayBuffer[List[String]]()
@@ -395,17 +384,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
         return (false, notFndPartkeys.toArray)
       }
-*/
       (false, primaryKeys)
     }
+*/
 
+    /*
     def containsKeys(containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): (Array[List[String]], Array[List[String]], Array[List[String]], Array[List[String]]) = {
       val container = getMsgContainer(containerName.toLowerCase, false)
       val matchedPartKeys = ArrayBuffer[List[String]]()
       val unmatchedPartKeys = ArrayBuffer[List[String]]()
       val matchedPrimaryKeys = ArrayBuffer[List[String]]()
       val unmatchedPrimaryKeys = ArrayBuffer[List[String]]()
-      /*
       if (container != null) {
         for (i <- 0 until partKeys.size) {
           val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKeys(i)), null)
@@ -425,9 +414,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           }
         }
       }
-*/
       (matchedPartKeys.toArray, unmatchedPartKeys.toArray, matchedPrimaryKeys.toArray, unmatchedPrimaryKeys.toArray)
     }
+*/
 
     def setObjects(containerName: String, tmValues: Array[Long], partKeys: Array[Array[String]], values: Array[MessageContainerBase]): Unit = {
       if (tmValues.size != partKeys.size || partKeys.size != values.size) {
@@ -453,8 +442,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               container.dataByBucketKey.put(putkey, MessageContainerBaseWithModFlag(true, v))
               container.dataByTmPart.put(putkey, MessageContainerBaseWithModFlag(true, v))
               /*
-            container.current_msg_cont_data -= value
-            container.current_msg_cont_data += value // to get the value to end
+              container.current_msg_cont_data -= value
+              container.current_msg_cont_data += value // to get the value to end
 */
             }
           }
@@ -630,7 +619,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   /*
-  
   private def loadObjFromDb(transId: Long, msgOrCont: MsgContainerInfo, key: List[String]): KamanjaData = {
     val partKeyStr = KamanjaData.PrepareKey(msgOrCont.objFullName, key, 0, 0)
     var objs: Array[KamanjaData] = new Array[KamanjaData](1)
@@ -663,147 +651,59 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   */
 
   private def localGetObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
-    /*
-    if (TxnContextCommonFunctions.IsEmptyKey(partKey) || TxnContextCommonFunctions.IsEmptyKey(primaryKey))
-      return null
-    val txnCtxt = getTransactionContext(transId, false)
+    val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
-      val (v, foundPartKey) = txnCtxt.getObject(containerName, partKey, primaryKey)
-      if (foundPartKey) {
-        return v
-      }
-      if (v != null) return v // It must be null. Without finding partition key it should not find the primary key
+      // Try to load the key(s) if they exists in global storage.
+      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(null), if (partKey == null) Array(null) else Array(partKey.toArray))
     }
 
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    if (container != null) {
-      val partKeyStr = InMemoryKeyDataInJson(partKey)
-      var kamanjaData: (Boolean, KamanjaData) = null
-      TxnContextCommonFunctions.ReadLockContainer(container)
-      try {
-        kamanjaData = container.data.getOrElse(partKeyStr, null)
-      } catch {
-        case e: Exception => {
-          throw e
-        }
-      } finally {
-        TxnContextCommonFunctions.ReadUnlockContainer(container)
-      }
-      if (kamanjaData != null) {
-        // Search for primary key match
-        val v = kamanjaData._2.GetMessageContainerBase(primaryKey.toArray, false)
-        if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, kamanjaData._2)
-        return v;
-      }
-      // If not found in memory, try in DB
-      val loadedFfData = loadObjFromDb(transId, container, partKey)
-      if (loadedFfData != null) {
-        // Search for primary key match
-        val v = loadedFfData.GetMessageContainerBase(primaryKey.toArray, false)
-        if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, loadedFfData)
-        return v;
-      }
-      // If not found in DB, Create Empty and set to current transaction context
-      if (txnCtxt != null) {
-        val emptyFfData = new KamanjaData
-        emptyFfData.SetKey(partKey.toArray)
-        emptyFfData.SetTypeName(containerName)
-        txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
+    val retResult = ArrayBuffer[MessageContainerBase]()
+    if (txnCtxt != null) {
+      val res = txnCtxt.getRddData(containerName, partKey, null, primaryKey, null)
+      if (res.size > 0) {
+        retResult ++= res.map(kv => kv._2)
       }
     }
-*/
+
+    if (retResult.size > 0)
+      return retResult(0)
+
     null
   }
 
   private def localHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
-    val retVals = ArrayBuffer[MessageContainerBase]()
-    /*
-    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
-      return retVals.toArray
-    val txnCtxt = getTransactionContext(transId, false)
+    val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
-      val (objs, foundPartKey) = txnCtxt.getObjects(containerName, partKey, appendCurrentChanges)
-      retVals ++= objs
-      if (foundPartKey)
-        return retVals.toArray
+      // Try to load the key(s) if they exists in global storage.
+      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(null), if (partKey == null) Array(null) else Array(partKey.toArray))
     }
 
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    if (container != null) {
-      val partKeyStr = InMemoryKeyDataInJson(partKey)
-      var kamanjaData: (Boolean, KamanjaData) = null
-      TxnContextCommonFunctions.ReadLockContainer(container)
-      try {
-        kamanjaData = container.data.getOrElse(partKeyStr, null)
-      } catch {
-        case e: Exception => {
-          throw e
-        }
-      } finally {
-        TxnContextCommonFunctions.ReadUnlockContainer(container)
-      }
-      if (kamanjaData != null) {
-        // Search for primary key match
-        if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, kamanjaData._2)
-        retVals ++= kamanjaData._2.GetAllData
-      } else {
-        val loadedFfData = loadObjFromDb(transId, container, partKey)
-        if (loadedFfData != null) {
-          // Search for primary key match
-          if (txnCtxt != null)
-            txnCtxt.setFetchedObj(containerName, partKeyStr, loadedFfData)
-          retVals ++= loadedFfData.GetAllData
-        } else {
-          // If not found in DB, Create Empty and set to current transaction context
-          if (txnCtxt != null) {
-            val emptyFfData = new KamanjaData
-            emptyFfData.SetKey(partKey.toArray)
-            emptyFfData.SetTypeName(containerName)
-            txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
-          }
-        }
+    val retResult = ArrayBuffer[MessageContainerBase]()
+    if (txnCtxt != null) {
+      val res = txnCtxt.getRddData(containerName, partKey, null, null, null)
+      if (res.size > 0) {
+        retResult ++= res.map(kv => kv._2)
       }
     }
-*/
-    retVals.toArray
-  }
-  private def localGetAllKeyValues(transId: Long, containerName: String): Array[MessageContainerBase] = {
-    /*
-    val fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    if (fnd != null) {
-      if (fnd.loadedAll) {
-        var allObjs = ArrayBuffer[MessageContainerBase]()
-        TxnContextCommonFunctions.ReadLockContainer(fnd)
-        try {
-        fnd.data.foreach(kv => {
-          allObjs ++= kv._2._2.GetAllData
-        })
-        } catch {
-          case e: Exception => {
-            throw e
-          }
-        } finally {
-          TxnContextCommonFunctions.ReadUnlockContainer(fnd)
-        }
-        val txnCtxt = getTransactionContext(transId, false)
-        if (txnCtxt != null)
-          allObjs ++= txnCtxt.getAllObjects(containerName)
-        return allObjs.toArray
-      } else {
-        throw new Exception("Object %s is not loaded all at once. So, we can not get all objects here".format(fnd.objFullName))
-      }
-    } else {
-      return Array[MessageContainerBase]()
-    }
-*/
-    return Array[MessageContainerBase]()
+
+    retResult.toArray
   }
 
   private def localGetAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
-    return localGetAllKeyValues(transId, containerName)
+    val txnCtxt = getTransactionContext(transId, true)
+    if (txnCtxt != null) {
+      // Try to load the key(s) if they exists in global storage.
+      LoadDataIfNeeded(txnCtxt, transId, containerName, Array(null), Array(null))
+    }
+
+    val retResult = ArrayBuffer[MessageContainerBase]()
+    if (txnCtxt != null) {
+      val res = txnCtxt.getRddData(containerName, null, null, null, null)
+      if (res.size > 0) {
+        retResult ++= res.map(kv => kv._2)
+      }
+    }
+    return retResult.toArray
   }
 
   private def getParallelBucketIdx(key: String): Int = {
@@ -917,123 +817,86 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    * Does at least one of the supplied keys exist in a container with the supplied name?
    */
   private def localContainsAny(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    val txnCtxt = getTransactionContext(transId, true)
     /*
-    var remainingPartKeys = partKeys
-    val txnCtxt = getTransactionContext(transId, false)
+    val bucketKeys = partKeys.map(k => k.toArray)
+    val tmRanges = partKeys.map(k => TimeRange(Long.MinValue, Long.MaxValue))
+
     if (txnCtxt != null) {
-      val (retval, notFoundPartKeys) = txnCtxt.containsAny(containerName, remainingPartKeys, primaryKeys)
-      if (retval)
-        return true
-      remainingPartKeys = notFoundPartKeys
-    }
-
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    val reMainingForDb = ArrayBuffer[List[String]]()
-    if (container != null) {
-      TxnContextCommonFunctions.ReadLockContainer(container)
-      try {
-      for (i <- 0 until remainingPartKeys.size) {
-        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
-        if (kamanjaData != null) {
-          // Search for primary key match
-          val fnd = kamanjaData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
-          if (fnd != null)
-            return true
-        } else {
-          reMainingForDb += remainingPartKeys(i)
-        }
-      }
-      } catch {
-        case e: Exception => {
-          throw e
-        }
-      } finally {
-        TxnContextCommonFunctions.ReadUnlockContainer(container)
-      }
-
-      for (i <- 0 until reMainingForDb.size) {
-        val kamanjaData = loadObjFromDb(transId, container, reMainingForDb(i))
-        if (kamanjaData != null) {
-          // Search for primary key match
-          val fnd = kamanjaData.GetMessageContainerBase(primaryKeys(i).toArray, false)
-          if (fnd != null)
-            return true
-        }
-      }
+      // Try to load the key(s) if they exists in global storage.
+      LoadDataIfNeeded(txnCtxt, transId, containerName, tmRanges, bucketKeys)
     }
 */
+
+    if (txnCtxt != null) {
+      if (primaryKeys != null && primaryKeys.size > 0 && partKeys != null && partKeys.size == primaryKeys.size) {
+        val sz = partKeys.size
+        for (i <- 0 until sz) {
+          LoadDataIfNeeded(txnCtxt, transId, containerName, Array(null), Array(partKeys(i).toArray))
+          val res = txnCtxt.getRddData(containerName, partKeys(i), null, primaryKeys(i), null)
+          if (res.size > 0)
+            return true
+        }
+      } else if (partKeys != null && partKeys.size > 0) {
+        val sz = partKeys.size
+        for (i <- 0 until sz) {
+          LoadDataIfNeeded(txnCtxt, transId, containerName, Array(null), Array(partKeys(i).toArray))
+          val res = txnCtxt.getRddData(containerName, partKeys(i), null, null, null)
+          if (res.size > 0)
+            return true
+        }
+      }
+      /*
+      else {
+        LoadDataIfNeeded(txnCtxt, transId, containerName, Array(null), Array(null))
+        val res = txnCtxt.getRddData(containerName, null, null, null, null)
+        if (res.size > 0)
+          return true
+      }
+*/
+    }
+
     false
   }
+
   /**
    * Do all of the supplied keys exist in a container with the supplied name?
    */
   private def localContainsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
-    /*
-    var remainingPartKeys: Array[List[String]] = partKeys
-    var remainingPrimaryKeys: Array[List[String]] = primaryKeys
-    val txnCtxt = getTransactionContext(transId, false)
+    val txnCtxt = getTransactionContext(transId, true)
+    val bucketKeys = partKeys.map(k => k.toArray)
+    val tmRanges = partKeys.map(k => TimeRange(Long.MinValue, Long.MaxValue))
+
     if (txnCtxt != null) {
-      val (matchedPartKeys, unmatchedPartKeys, matchedPrimaryKeys, unmatchedPrimaryKeys) = txnCtxt.containsKeys(containerName, remainingPartKeys, remainingPrimaryKeys)
-      remainingPartKeys = unmatchedPartKeys
-      remainingPrimaryKeys = unmatchedPrimaryKeys
+      // Try to load the key(s) if they exists in global storage.
+      LoadDataIfNeeded(txnCtxt, transId, containerName, tmRanges, bucketKeys)
     }
 
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    if (container != null) {
-      var unmatchedPartKeys = ArrayBuffer[List[String]]()
-      var unmatchedPrimaryKeys = ArrayBuffer[List[String]]()
-      var unmatchedFinalPatKeys = ArrayBuffer[List[String]]()
-      var unmatchedFinalPrimaryKeys = ArrayBuffer[List[String]]()
-
-      TxnContextCommonFunctions.ReadLockContainer(container)
-      try {
-      for (i <- 0 until remainingPartKeys.size) {
-        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
-        if (kamanjaData != null) {
-          // Search for primary key match
-          val fnd = kamanjaData._2.GetMessageContainerBase(remainingPrimaryKeys(i).toArray, false)
-          if (fnd != null) {
-            // Matched
-          } else {
-            unmatchedPartKeys += remainingPartKeys(i)
-            unmatchedPrimaryKeys += remainingPrimaryKeys(i)
-          }
-        } else {
-          unmatchedPartKeys += remainingPartKeys(i)
-          unmatchedPrimaryKeys += remainingPrimaryKeys(i)
+    if (txnCtxt != null) {
+      var fntCntr = 0
+      val partKeysCnt = if (partKeys != null && partKeys.size > 0) partKeys.size else 0
+      if (primaryKeys != null && primaryKeys.size > 0 && partKeys != null && partKeys.size == primaryKeys.size) {
+        val sz = partKeys.size
+        for (i <- 0 until sz) {
+          val res = txnCtxt.getRddData(containerName, partKeys(i), null, primaryKeys(i), null)
+          if (res.size == 0)
+            return false
+          fntCntr += 1
+        }
+      } else if (partKeys != null && partKeys.size > 0) {
+        val sz = partKeys.size
+        for (i <- 0 until sz) {
+          val res = txnCtxt.getRddData(containerName, partKeys(i), null, null, null)
+          if (res.size == 0)
+            return false
+          fntCntr += 1
         }
       }
 
-
-      // BUGBUG:: Need to check whether the 1st key loaded 2nd key also. Because same partition key can have multiple primary keys or partition key itself can be duplicated
-      for (i <- 0 until unmatchedPartKeys.size) {
-        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(unmatchedPartKeys(i)), null)
-        if (kamanjaData != null) {
-          // Search for primary key match
-          val fnd = kamanjaData._2.GetMessageContainerBase(unmatchedPrimaryKeys(i).toArray, false)
-          if (fnd != null) {
-            // Matched
-          } else {
-            unmatchedFinalPatKeys += unmatchedPartKeys(i)
-            unmatchedFinalPrimaryKeys += unmatchedPrimaryKeys(i)
-          }
-        } else {
-          unmatchedFinalPatKeys += unmatchedPartKeys(i)
-          unmatchedFinalPrimaryKeys += unmatchedPrimaryKeys(i)
-        }
-      }
-      } catch {
-        case e: Exception => {
-          throw e
-        }
-      } finally {
-        TxnContextCommonFunctions.ReadUnlockContainer(container)
-      }
-      remainingPartKeys = unmatchedFinalPatKeys.toArray
+      // Checking all partition keys are matching to found keys or not.
+      return (fntCntr == partKeysCnt)
     }
 
-    (remainingPartKeys.size == 0)
-*/
     false
   }
 
@@ -1060,10 +923,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     } finally {
       TxnContextCommonFunctions.WriteUnlockContainer(container)
     }
-
   }
 
-  // Same kind of code is there in localGetObject
   private def LoadDataIfNeeded(txnCtxt: TransactionContext, transId: Long, contName: String, tmRangeValues: Array[TimeRange], partKeys: Array[Array[String]]): Unit = {
     if (tmRangeValues.size == partKeys.size) {
       val containerName = contName.toLowerCase
