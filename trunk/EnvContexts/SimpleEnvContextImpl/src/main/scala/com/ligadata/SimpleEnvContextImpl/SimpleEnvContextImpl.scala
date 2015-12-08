@@ -53,17 +53,18 @@ case class AdapterUniqueValueDes(T: Long, V: String, Out: Option[List[List[Strin
  */
 object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private def ResolveEnableEachTransactionCommit: Unit = {
-    if (_enableEachTransactionCommit == false && _mgr != null) {
+    if (_mgr != null) {
+      var foundIt = false
       val clusters = _mgr.Clusters
       clusters.foreach(c => {
-        if (_enableEachTransactionCommit == false) {
+        if (foundIt == false) {
           val tmp1 = _mgr.GetUserProperty(c._1, "EnableEachTransactionCommit")
-          if (tmp1.size > 0) {
+          if (tmp1 != null && tmp1.trim().size > 0) {
             try {
-              _enableEachTransactionCommit = tmp1.toBoolean
+              _enableEachTransactionCommit = tmp1.trim().toBoolean
+              foundIt = true
             } catch {
               case e: Exception => {
-
               }
             }
           }
@@ -471,7 +472,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _defaultDataStore: DataStore = null
   private[this] var _statusinfoDataStore: DataStore = null
   private[this] var _mdres: MdBaseResolveInfo = null
-  private[this] var _enableEachTransactionCommit = false
+  private[this] var _enableEachTransactionCommit = true
   private[this] var _jarPaths: collection.immutable.Set[String] = null // Jar paths where we can resolve all jars (including dependency jars).
 
   for (i <- 0 until _buckets) {
@@ -2049,4 +2050,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
   }
+  
+  def EnableEachTransactionCommit: Boolean = _enableEachTransactionCommit
 }

@@ -321,11 +321,8 @@ trait EnvContext {
 
   // Just get the cached container key and see what are the containers we need to cache
   def CacheContainers(clusterId: String): Unit
-}
-
-// Node level context
-class NodeContext {
-
+  
+  def EnableEachTransactionCommit: Boolean
 }
 
 abstract class ModelInstance(val factory: ModelInstanceFactory) {
@@ -364,12 +361,23 @@ class ModelContext(val txnContext: TransactionContext, val msg: MessageContainer
   def Message: MessageContainerBase = msg
   def TransactionContext: TransactionContext = txnContext
   def PartitionKey: String = partitionKey
-  def getPropertyValue(clusterId: String, key: String): String = (txnContext.getPropertyValue(clusterId, key))
+  def getPropertyValue(clusterId: String, key: String): String = { if (txnContext != null) txnContext.getPropertyValue(clusterId, key) else "" }
 }
 
-class TransactionContext(val transId: Long, val gCtx: EnvContext) {
+class TransactionContext(val transId: Long, val nodeCtxt: NodeContext) {
+  def TransactionId = transId
+  def NodeCtxt = nodeCtxt
   private var valuesMap = new java.util.HashMap[String, Any]()
-  def getPropertyValue(clusterId: String, key: String): String = { gCtx.getPropertyValue(clusterId, key) }
+  def getPropertyValue(clusterId: String, key: String): String = { if (nodeCtxt != null) nodeCtxt.getPropertyValue(clusterId, key) else "" }
+  def setContextValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
+  def getContextValue(key: String): Any = { valuesMap.get(key) }
+}
+
+// Node level context
+class NodeContext(val gCtx: EnvContext) {
+  def EnvCtxt = gCtx
+  private var valuesMap = new java.util.HashMap[String, Any]()
+  def getPropertyValue(clusterId: String, key: String): String = { if (gCtx != null) gCtx.getPropertyValue(clusterId, key) else "" }
   def setContextValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
   def getContextValue(key: String): Any = { valuesMap.get(key) }
 }

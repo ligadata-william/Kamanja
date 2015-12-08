@@ -220,7 +220,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
         var msg: BaseMsg = null
         if (isValidPartitionKey && primaryKeyList != null) {
-          val fndmsg = txnCtxt.gCtx.getObject(transId, msgType, partKeyDataList, primaryKeyList)
+          val fndmsg = txnCtxt.NodeCtxt.EnvCtxt.getObject(transId, msgType, partKeyDataList, primaryKeyList)
           if (fndmsg != null) {
             msg = fndmsg.asInstanceOf[BaseMsg]
           }
@@ -233,8 +233,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
         msg.populate(inputdata)
         var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
-          txnCtxt.gCtx.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
-          allMdlsResults = txnCtxt.gCtx.getModelsResult(transId, partKeyDataList)
+          txnCtxt.NodeCtxt.EnvCtxt.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
+          allMdlsResults = txnCtxt.NodeCtxt.EnvCtxt.getModelsResult(transId, partKeyDataList)
         }
         if (allMdlsResults == null)
           allMdlsResults = scala.collection.mutable.Map[String, SavedMdlResult]()
@@ -279,7 +279,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           }
 
           if (isValidPartitionKey) {
-            txnCtxt.gCtx.saveModelsResult(transId, partKeyDataList, allMdlsResults)
+            txnCtxt.NodeCtxt.EnvCtxt.saveModelsResult(transId, partKeyDataList, allMdlsResults)
           }
         }
       } else {

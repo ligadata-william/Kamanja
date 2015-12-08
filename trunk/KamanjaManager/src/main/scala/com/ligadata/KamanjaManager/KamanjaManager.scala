@@ -442,6 +442,8 @@ class KamanjaManager extends Observer {
       if (KamanjaMetadata.envCtxt == null)
         return false
 
+      KamanjaMetadata.gNodeContext = new NodeContext(KamanjaMetadata.envCtxt)
+
       LOG.debug("Loading Adapters")
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
       retval = KamanjaMdCfg.LoadAdapters(inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)

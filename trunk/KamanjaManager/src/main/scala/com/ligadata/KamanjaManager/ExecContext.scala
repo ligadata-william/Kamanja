@@ -68,7 +68,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
       val transId = transService.getNextTransId
-      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.envCtxt)
+      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.gNodeContext)
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       var outputResults = ArrayBuffer[(String, String, String)]() // Adapter/Queue name, Partition Key & output message 
@@ -112,8 +112,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
         val forceCommitVal = txnCtxt.getContextValue("forcecommit")
         val forceCommitFalg = forceCommitVal != null
-        val containerData = if (forceCommitFalg) kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
-        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
+        val containerData = if (forceCommitFalg || kamanjaCallerCtxt.gNodeContext.EnvCtxt.EnableEachTransactionCommit) kamanjaCallerCtxt.gNodeContext.EnvCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
+        kamanjaCallerCtxt.gNodeContext.EnvCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
 
         // Set the uk & uv
         if (adapterInfoMap != null)
@@ -361,7 +361,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        kamanjaCallerCtxt.envCtxt.commitData(transId, null, null, null, false)
+        kamanjaCallerCtxt.gNodeContext.EnvCtxt.commitData(transId, null, null, null, false)
       }
     } catch {
       case e: Exception => {
