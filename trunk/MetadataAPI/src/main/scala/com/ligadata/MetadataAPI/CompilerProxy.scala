@@ -737,6 +737,8 @@ class CompilerProxy {
     if (fDefsOptions != None) {
       val fDefs = fDefsOptions.get
 
+      logger.debug("Found %d FactoryOfModelInstanceFactory objects".format(fDefs.size))
+      
       fDefs.foreach(f => {
         val allJars = GetAllJarsFromElem(f, jarPaths)
         if (allJars.size > 0) {
@@ -745,6 +747,7 @@ class CompilerProxy {
         var clsName = f.PhysicalName.trim
         var orgClsName = clsName
 
+        logger.debug("FactoryOfModelInstanceFactory. FullName:%s, ClassName:%s".format(f.FullName, clsName))
         var fDefObj = ResolveFactoryOfModelInstanceFactoryDef(clsName, f, loaderInfo)
         if (fDefObj == null) {
           if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
@@ -759,6 +762,8 @@ class CompilerProxy {
           logger.error("Failed to resolve FactoryOfModelInstanceFactory object:" + f.FullName)
         }
       })
+    } else {
+      logger.debug("Not Found any FactoryOfModelInstanceFactory objects")
     }
 
     tmpFactoryOfMdlInstFactObjects.toMap
