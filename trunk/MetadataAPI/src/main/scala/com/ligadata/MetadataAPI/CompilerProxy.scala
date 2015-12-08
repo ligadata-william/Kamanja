@@ -771,7 +771,7 @@ class CompilerProxy {
 
   private def GetFactoryOfMdlInstanceFactory(fqName: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): FactoryOfModelInstanceFactory = {
     val factObjs = ResolveAllFactoryOfMdlInstFactoriesObjects(loaderInfo, jarPaths)
-    factObjs.getOrElse(fqName, null)
+    factObjs.getOrElse(fqName.toLowerCase(), null)
   }
 
   def PrepareModelFactory(loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String], mdl: ModelDef): ModelInstanceFactory = {

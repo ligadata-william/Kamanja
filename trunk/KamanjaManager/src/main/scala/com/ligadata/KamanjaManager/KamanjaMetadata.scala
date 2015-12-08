@@ -271,7 +271,7 @@ class KamanjaMetadata {
 
   private def GetFactoryOfMdlInstanceFactory(fqName: String): FactoryOfModelInstanceFactory = {
     val factObjs = KamanjaMetadata.AllFactoryOfMdlInstFactoriesObjects
-    factObjs.getOrElse(fqName, null)
+    factObjs.getOrElse(fqName.toLowerCase(), null)
   }
 
   def PrepareModelFactory(mdl: ModelDef, loadJars: Boolean): Unit = {
