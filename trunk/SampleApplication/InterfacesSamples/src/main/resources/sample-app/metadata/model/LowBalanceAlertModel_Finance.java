@@ -50,7 +50,7 @@ public class LowBalanceAlertModel extends ModelInstance {
 
 
 
-    	TransactionMsg rcntTxn = (TransactionMsg) this.modelContext().msg();
+    	TransactionMsg rcntTxn = (TransactionMsg) mdlCtxt.msg();
 
     	 if (rcntTxn.balance() >= gPref.minalertbalance())
     	      return null;

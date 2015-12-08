@@ -28,7 +28,6 @@ import java.util.*;
 public class COPDRiskAssessment extends ModelInstance {
     public COPDRiskAssessment(ModelInstanceFactory factory) {
         super(factory);
-        init();
     }
 
     public static class COPDRiskAssessmentFactory extends ModelInstanceFactory {
@@ -78,7 +77,6 @@ public class COPDRiskAssessment extends ModelInstance {
     }
 
     private Beneficiary msg = null;
-    private ModelContext mdlContext = null;
 
     // Filtered Message Arrays
     private ArrayList<InpatientClaim> inpatientClaimHistory = new ArrayList<>();
@@ -94,8 +92,8 @@ public class COPDRiskAssessment extends ModelInstance {
 
     private SimpleDateFormat yearMonthDayHourFormat = new SimpleDateFormat("yyyyMMdd");
 
-    private void init() {
-        msg = (Beneficiary) this.modelContext().msg();
+    private void init(ModelContext mdlCtxt) {
+        msg = (Beneficiary) mdlCtxt.msg();
         System.out.println("Executing COPD Risk Assessment against Beneficiary message:");
         System.out.println("\tMessage Name: " + msg.Name());
         System.out.println("\tMessage Version: " + msg.Version());
@@ -387,11 +385,12 @@ public class COPDRiskAssessment extends ModelInstance {
         }
         System.out.println("******************************************************************************");
 
-        return ((MappedModelResults) factory.createResultObject()).withResults(results);
+        return ((MappedModelResults) factory().createResultObject()).withResults(results);
     }
 
     @Override
     public MappedModelResults execute(ModelContext mdlCtxt, boolean outputDefault) {
+        init(mdlCtxt);
         MappedModelResults result = copdRiskLevel();
         if(!outputDefault) {
             if (result.get("COPD Risk Level") == "") {
