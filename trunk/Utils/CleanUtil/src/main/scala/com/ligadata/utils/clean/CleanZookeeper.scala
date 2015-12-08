@@ -43,12 +43,12 @@ object CleanZookeeper {
       logger.info("Deleting Zookeeper node " + zkInfo.nodeBasePath)
       zkc.delete().deletingChildrenIfNeeded.forPath(zkInfo.nodeBasePath)
       if (zkc.checkExists().forPath(zkInfo.nodeBasePath) != null) {
-        throw new CleanUtilException("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath)
+        throw new CleanUtilException("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath, null)
       }
     }
       catch {
         case e: CleanUtilException => throw(e)
-        case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath + " with the following exception:\n" + e)
+        case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to delete zookeeper path " + zkInfo.nodeBasePath, e)
       }
     finally {
       if (zkc != null) zkc.close()
@@ -112,9 +112,9 @@ object CleanZookeeper {
       case e: org.apache.zookeeper.KeeperException.NoNodeException => throw new CleanUtilException(
         "CLEAN-UTIL: Failed to find the zookeeper node path after retrieving it previously. " +
           "An external process may have altered zookeeper. " +
-          "Please check that there are no instances of Kamanja or MetadataAPIService running."
+          "Please check that there are no instances of Kamanja or MetadataAPIService running.", null
       )
-      case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to determine if the kamanja cluster is running with the exception:\n" + e)
+      case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to determine if the kamanja cluster is running", e)
     }
     finally {
       if(zkc != null)
@@ -178,7 +178,7 @@ object CleanZookeeper {
     }
     catch {
       case e: CleanUtilException => throw(e)
-      case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to get zookeeper path " + engineMonitorPath + " with the following exception:\n" + e)
+      case e: Exception => throw new CleanUtilException("CLEAN-UTIL: Failed to get zookeeper path " + engineMonitorPath, e)
     }
     finally {
       if(zkc != null) zkc.close()
