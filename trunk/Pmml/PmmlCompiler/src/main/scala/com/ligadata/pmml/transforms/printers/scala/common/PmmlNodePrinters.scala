@@ -1217,7 +1217,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		 * 
 		 * If no alias is given, the default is System_
 		 */
-		clsBuffer.append(s"class $classname(factory: ModelInstanceFactory, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
+		clsBuffer.append(s"class $classname(factory: ModelInstanceFactory)\n")
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"   extends ModelInstance(factory) with LogTrait {\n") 
 		} else {
@@ -1231,7 +1231,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
 		clsBuffer.append(s"$alternateCtor\n") 
 		
-		clsBuffer.append(s"    val ctx : com.ligadata.pmml.runtime.Context = new com.ligadata.pmml.runtime.Context(transId, gCtx)\n")
+		clsBuffer.append(s"    var ctx : com.ligadata.pmml.runtime.Context = null\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 
 		clsBuffer.append(s"    var bInitialized : Boolean = false\n")
@@ -1240,12 +1240,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		clsBuffer.append(s"    var simpleRules : ArrayBuffer[SimpleRule] = new ArrayBuffer[SimpleRule]\n")
 		
 		clsBuffer.append(s"\n")
-		clsBuffer.append(s"    /** Initialize the data and transformation dictionaries */\n")
-		clsBuffer.append(s"    if (! bInitialized) {\n")
-		clsBuffer.append(s"         initialize\n")
-		clsBuffer.append(s"         bInitialized = true\n")
-		clsBuffer.append(s"    }\n")
-		clsBuffer.append(s"\n")		
 		
 		/** plan for the day when there are multiple messages present in the constructor.  Should multiple messages
 		 *  be supported, the names for them would be msg, msg1, msg2, ..., msgN  */
@@ -1273,6 +1267,12 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			 */
 			clsBuffer.append(s"    def initialize : $classname = {\n")
 			clsBuffer.append(s"\n")
+			
+			clsBuffer.append(s"    /** Initialize the data and transformation dictionaries */\n")
+			clsBuffer.append(s"    if (bInitialized)\n")
+			clsBuffer.append(s"         return this\n")
+			clsBuffer.append(s"     bInitialized = true\n")
+			clsBuffer.append(s"\n")		
 			
 			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 			val ruleCtors = ctx.RuleRuleSetInstantiators.apply("SimpleRule")
@@ -1448,6 +1448,8 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			 */
 			clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
 			clsBuffer.append(s"    def execute(mdlCtxt: ModelContext, emitAllResults : Boolean) : ModelResultBase = {\n")
+			clsBuffer.append(s"        ctx = new com.ligadata.pmml.runtime.Context(mdlCtxt.TransactionContext.TransactionId, mdlCtxt.TransactionContext.NodeCtxt.EnvCtxt)\n")
+			clsBuffer.append(s"        initialize\n")
 			clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
 			clsBuffer.append(s"        prepareResults(emitAllResults)\n")
 			clsBuffer.append(s"    }\n")
@@ -1496,15 +1498,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		/** the second type in the list is for the first message... the first one being the EnvContext */
 		val msgType : String = if (msgdefTypes != null && msgdefTypes.size > 1) msgdefTypes(1) else "Any"
 		
-		ctorBuffer.append(s"    def this(modelContext: ModelContext, factory: ModelInstanceFactory) {\n")
-		ctorBuffer.append(s"        this(modelContext, factory\n")
-		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null)\n")
-		ctorBuffer.append(s"            , (if (modelContext != null) modelContext.msg.asInstanceOf[$msgType] else null)\n")
-		ctorBuffer.append(s"            , factory.ModelName\n")
-		ctorBuffer.append(s"            , factory.Version\n")
-		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null)\n")
-		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else 0L))\n")
-		ctorBuffer.append(s"     }\n")		
 		ctorBuffer.toString
 	}
 
