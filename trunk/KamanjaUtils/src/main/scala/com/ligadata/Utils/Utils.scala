@@ -222,6 +222,14 @@ object Utils {
       }
     }
 
+    if (isIt == false) {
+      val superclass = clz.getSuperclass
+      logger.debug("SuperClass => " + superclass)
+      if (superclass.getName().equals(clsName)) {
+        isIt = true
+      }
+    }
+
     isIt
   }
 
