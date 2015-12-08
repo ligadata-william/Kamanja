@@ -90,7 +90,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to get classname :" + clsName)
+        LOG.debug("Failed to get message classname :" + clsName)
         return false
       }
     }
@@ -142,12 +142,12 @@ class KamanjaMetadata {
           LOG.info("Created Message:" + msgName)
           return true
         } else {
-          LOG.error("Failed to instantiate message object :" + clsName)
+          LOG.debug("Failed to instantiate message object :" + clsName)
           return false
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to instantiate message object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+          LOG.debug("Failed to instantiate message object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
           return false
         }
       }
@@ -172,7 +172,7 @@ class KamanjaMetadata {
       }
     }
     if (foundFlg == false) {
-      LOG.error("Failed to instantiate message object: " + orgClsName)
+      LOG.error("Failed to instantiate message object:%s, class name:%s".format(msg.FullName, orgClsName))
     }
   }
 
@@ -195,7 +195,7 @@ class KamanjaMetadata {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to get classname: " + clsName)
+        LOG.debug("Failed to get container classname: " + clsName)
         return false
       }
     }
@@ -227,12 +227,12 @@ class KamanjaMetadata {
           LOG.info("Created Container:" + contName)
           return true
         } else {
-          LOG.error("Failed to instantiate container object :" + clsName)
+          LOG.debug("Failed to instantiate container object :" + clsName)
           return false
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+          LOG.debug("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
           return false
         }
       }
@@ -265,7 +265,7 @@ class KamanjaMetadata {
       }
     }
     if (foundFlg == false) {
-      LOG.error("Failed to instantiate container object :" + orgClsName)
+      LOG.error("Failed to instantiate container object:%s, class name:%s".format(container.FullName, orgClsName))
     }
   }
 
@@ -291,12 +291,12 @@ class KamanjaMetadata {
             val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
             modelObjsMap(mdlName) = new MdlInfo(factory, mdl.jarName, mdl.dependencyJarNames)
           } else {
-            LOG.error("Failed to get ModelInstanceFactory for " + mdl.FullName)
+            LOG.debug("Failed to get ModelInstanceFactory for " + mdl.FullName)
           }
         } catch {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("Failed to get/initialize ModelInstanceFactory for %s. Reason:%s, Cause:%s\nStackTrace:%s".format(mdl.FullName, e.getMessage, e.getCause, stackTrace))
+            LOG.debug("Failed to get/initialize ModelInstanceFactory for %s. Reason:%s, Cause:%s\nStackTrace:%s".format(mdl.FullName, e.getMessage, e.getCause, stackTrace))
           }
         }
       }
@@ -483,7 +483,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to get classname :" + clsName)
+        LOG.debug("Failed to get model classname :" + clsName)
         return null
       }
     }
@@ -512,13 +512,12 @@ object KamanjaMetadata extends MdBaseResolveInfo {
           LOG.info("Created FactoryOfModelInstanceFactory:" + fName)
           return factoryObj
         } else {
-          LOG.error("Failed to instantiate FactoryOfModelInstanceFactory object :" + clsName)
           LOG.debug("Failed to instantiate FactoryOfModelInstanceFactory object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
           return null
         }
       } catch {
         case e: Exception =>
-          LOG.error("Failed to instantiate FactoryOfModelInstanceFactory object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+          LOG.debug("Failed to instantiate FactoryOfModelInstanceFactory object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
           return null
       }
     }
@@ -553,7 +552,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
         if (fDefObj != null) {
           tmpFactoryOfMdlInstFactObjects(f.FullName.toLowerCase()) = fDefObj
         } else {
-          LOG.error("Failed to resolve FactoryOfModelInstanceFactory object:" + f.FullName)
+          LOG.error("Failed to resolve FactoryOfModelInstanceFactory object:%s, Classname:%s".format(f.FullName, orgClsName))
         }
       })
     } else {
