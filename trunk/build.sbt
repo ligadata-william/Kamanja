@@ -71,7 +71,7 @@ lazy val PmmlUdfs = project.in(file("Pmml/PmmlUdfs")) dependsOn(Metadata, PmmlRu
 
 lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(PmmlUdfs, Metadata, KamanjaBase, Serialize, Exceptions)
 
-lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(StorageManager,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener,OutputMsgDef,Exceptions, SecurityAdapterBase, KamanjaUtils, HeartBeat)
+lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(StorageManager,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener,OutputMsgDef,Exceptions, SecurityAdapterBase, KamanjaUtils, HeartBeat, KamanjaBase)
 
 lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, KamanjaBase, BaseTypes, Exceptions)
 

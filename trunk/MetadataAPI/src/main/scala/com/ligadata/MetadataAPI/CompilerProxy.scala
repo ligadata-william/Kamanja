@@ -41,6 +41,8 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
+import com.ligadata.KamanjaBase.{ ModelInstanceFactory, EnvContext, FactoryOfModelInstanceFactory }
+
 
 // CompilerProxy has utility functions to:
 // Call MessageDefinitionCompiler, 
@@ -649,6 +651,137 @@ class CompilerProxy {
 
   }
 
+  private def GetAllJarsFromElem(elem: BaseElem, jarPaths: collection.immutable.Set[String]): collection.immutable.Set[String] = {
+    var allJars: Array[String] = null
+
+    val jarname = if (elem.JarName == null) "" else elem.JarName.trim
+
+    if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0 && jarname.size > 0) {
+      allJars = elem.DependencyJarNames :+ jarname
+    } else if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
+      allJars = elem.DependencyJarNames
+    } else if (jarname.size > 0) {
+      allJars = Array(jarname)
+    } else {
+      return collection.immutable.Set[String]()
+    }
+
+    return allJars.map(j => Utils.GetValidJarFile(jarPaths, j)).toSet
+  }
+
+  private[this] def ResolveFactoryOfModelInstanceFactoryDef(clsName: String, fDef: FactoryOfModelInstanceFactoryDef, loaderInfo: KamanjaLoaderInfo): FactoryOfModelInstanceFactory = {
+    var isValid = true
+    var curClass: Class[_] = null
+
+    try {
+      // If required we need to enable this test
+      // Convert class name into a class
+      var curClz = Class.forName(clsName, true, loaderInfo.loader)
+      curClass = curClz
+
+      isValid = false
+
+      while (curClz != null && isValid == false) {
+        isValid = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.FactoryOfModelInstanceFactory")
+        if (isValid == false)
+          curClz = curClz.getSuperclass()
+      }
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to get classname :" + clsName)
+        return null
+      }
+    }
+
+    if (isValid) {
+      try {
+        var objinst: Any = null
+        try {
+          // Trying Singleton Object
+          val module = loaderInfo.mirror.staticModule(clsName)
+          val obj = loaderInfo.mirror.reflectModule(module)
+          // curClz.newInstance
+          objinst = obj.instance
+        } catch {
+          case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("StackTrace:" + stackTrace)
+            // Trying Regular Object instantiation
+            objinst = curClass.newInstance
+          }
+        }
+
+        if (objinst.isInstanceOf[FactoryOfModelInstanceFactory]) {
+          val factoryObj = objinst.asInstanceOf[FactoryOfModelInstanceFactory]
+          val fName = (fDef.NameSpace.trim + "." + fDef.Name.trim).toLowerCase
+          logger.info("Created FactoryOfModelInstanceFactory:" + fName)
+          return factoryObj
+        } else {
+          logger.error("Failed to instantiate FactoryOfModelInstanceFactory object :" + clsName)
+          logger.debug("Failed to instantiate FactoryOfModelInstanceFactory object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
+          return null
+        }
+      } catch {
+        case e: Exception =>
+          logger.error("Failed to instantiate FactoryOfModelInstanceFactory object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+          return null
+      }
+    }
+    return null
+  }
+  
+  private def ResolveAllFactoryOfMdlInstFactoriesObjects(loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): scala.collection.immutable.Map[String, FactoryOfModelInstanceFactory] = {
+    val fDefsOptions = MdMgr.GetMdMgr.FactoryOfMdlInstFactories(true, true)
+    val tmpFactoryOfMdlInstFactObjects = scala.collection.mutable.Map[String, FactoryOfModelInstanceFactory]()
+
+    if (fDefsOptions != None) {
+      val fDefs = fDefsOptions.get
+
+      fDefs.foreach(f => {
+        val allJars = GetAllJarsFromElem(f, jarPaths)
+        if (allJars.size > 0) {
+          Utils.LoadJars(allJars.toArray, loaderInfo.loadedJars, loaderInfo.loader)
+        }
+        var clsName = f.PhysicalName.trim
+        var orgClsName = clsName
+
+        var fDefObj = ResolveFactoryOfModelInstanceFactoryDef(clsName, f, loaderInfo)
+        if (fDefObj == null) {
+          if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
+            clsName = clsName + "$"
+            fDefObj = ResolveFactoryOfModelInstanceFactoryDef(clsName, f, loaderInfo)
+          }
+        }
+
+        if (fDefObj != null) {
+          tmpFactoryOfMdlInstFactObjects(f.FullName.toLowerCase()) = fDefObj
+        } else {
+          logger.error("Failed to resolve FactoryOfModelInstanceFactory object:" + f.FullName)
+        }
+      })
+    }
+
+    tmpFactoryOfMdlInstFactObjects.toMap
+  }
+
+  private def GetFactoryOfMdlInstanceFactory(fqName: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): FactoryOfModelInstanceFactory = {
+    val factObjs = ResolveAllFactoryOfMdlInstFactoriesObjects(loaderInfo, jarPaths)
+    factObjs.getOrElse(fqName, null)
+  }
+
+  def PrepareModelFactory(loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String], mdl: ModelDef): ModelInstanceFactory = {
+      // else Assuming we are already loaded all the required jars
+      val factoryOfMdlInstFactoryFqName = "com.ligadata.FactoryOfModelInstanceFactory.JarFactoryOfModelInstanceFactory" //BUGBUG:: We need to get the name from Model Def.
+      val factoryOfMdlInstFactory: FactoryOfModelInstanceFactory = GetFactoryOfMdlInstanceFactory(factoryOfMdlInstFactoryFqName, loaderInfo, jarPaths)
+      if (factoryOfMdlInstFactory == null) {
+        logger.error("FactoryOfModelInstanceFactory %s not found in metadata. Unable to create ModelInstanceFactory for %s".format(factoryOfMdlInstFactoryFqName, mdl.FullName))
+        return null
+      } else {
+        val factory = factoryOfMdlInstFactory.getModelInstanceFactory(mdl, null, loaderInfo, jarPaths)
+        return factory
+      }
+  }
+
   private def getModelMetadataFromJar(jarFileName: String, elements: Set[BaseElemDef], depJars: List[String]): (String, String, String, String) = {
 
     // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
@@ -699,6 +832,27 @@ class CompilerProxy {
       }
       if (isModel) {
         try {
+          val mdlDef = MdMgr.GetMdMgr.MakeModelDef("", "", clsName, "jar", List[(String, String, String, String, Boolean, String)](), List[(String, String, String)]()) // Java/Scala/Jar/PMML models are marked as JAR here.
+          val mdlFactory = PrepareModelFactory(loaderInfo, jarPaths0, mdlDef)
+  
+          if (mdlFactory != null) {
+            var fullName = mdlFactory.getModelName.split('.')
+            return (fullName.dropRight(1).mkString("."), fullName(fullName.length - 1), mdlFactory.getVersion, clsName)
+          }
+
+          logger.error("COMPILER_PROXY: Unable to resolve a class Object from " + jarName0)
+          throw new MsgCompilationFailedException(clsName)
+        } catch {
+          case e: Exception => {
+            // Trying Regular Object instantiation
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from Class:%s, Reason:%s Message:%s.\nStackTrace:%s".format(clsName, e.getCause, e.getMessage, stackTrace))
+            throw new MsgCompilationFailedException(clsName)
+          }
+        }
+  
+/*      
+        try {
           // If we are dealing with
           var objInst: Any = null
           try {
@@ -737,6 +891,8 @@ class CompilerProxy {
             throw new MsgCompilationFailedException(clsName)
           }
         }
+*/
+        
       }
     })
     logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelInstanceFactory was found in the jarred source " + jarFileName)
