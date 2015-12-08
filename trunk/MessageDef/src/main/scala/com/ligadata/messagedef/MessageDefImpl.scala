@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata.MdMgr
 import com.ligadata.kamanja.metadata.EntityType
 import com.ligadata.kamanja.metadata.MessageDef
@@ -69,7 +69,7 @@ object AsString extends ClassCaster[String]
 class MessageDefImpl {
 
   val logger = this.getClass.getName
-  lazy val log = Logger.getLogger(logger)
+  lazy val log = LogManager.getLogger(logger)
   //val pkg: String = "com.ligadata.messagescontainers"
   var rddHandler = new RDDHandler
   var methodGen = new ConstantMethodGenerator

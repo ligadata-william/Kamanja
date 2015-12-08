@@ -116,6 +116,9 @@ cp FileDataConsumer/target/scala-2.10/FileDataConsumer* $bin
 # Base Types and Functions, InputOutput adapters, and original versions of things
 echo "copy all Kamanja jars and the jars upon which they depend to the $systemlib"
 
+
+cp $ivyPath/cache/org.apache.logging.log4j/log4j-core/jars/log4j-core-2.4.1.jar $systemlib
+cp $ivyPath/cache/org.apache.logging.log4j/log4j-api/jars/log4j-api-2.4.1.jar $systemlib
 cp $srcPath/Storage/SqlServer/src/test/resources/sqljdbc4-2.0.jar $systemlib
 cp $ivyPath/cache/org.codehaus.jackson/jackson-xc/jars/jackson-xc-1.8.3.jar $systemlib
 cp $ivyPath/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.0.4.1.jar $systemlib
@@ -134,7 +137,6 @@ cp $srcPath/Pmml/PmmlRuntime/target/scala-2.10/pmmlruntime_2.10-1.0.jar $systeml
 cp $srcPath/SampleApplication/InterfacesSamples/target/scala-2.10/interfacessamples_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/gcm-server.jar $systemlib
 cp $ivyPath/cache/org.parboiled/parboiled-core/bundles/parboiled-core-1.1.6.jar $systemlib
-cp $ivyPath/cache/commons-dbcp/commons-dbcp/jars/commons-dbcp-1.2.2.jar $systemlib
 cp $ivyPath/cache/commons-net/commons-net/jars/commons-net-3.1.jar $systemlib
 cp $ivyPath/cache/org.apache.hadoop/hadoop-auth/jars/hadoop-auth-2.4.1.jar $systemlib
 cp $ivyPath/cache/com.101tec/zkclient/jars/zkclient-0.3.jar $systemlib
@@ -156,7 +158,7 @@ cp $srcPath/InputOutputAdapters/KafkaSimpleInputOutputAdapters/target/scala-2.10
 cp $srcPath/InputOutputAdapters/FileSimpleInputOutputAdapters/target/scala-2.10/filesimpleinputoutputadapters_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/com.ning/compress-lzf/bundles/compress-lzf-0.9.1.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.jms.jar $systemlib
-cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.6.1.jar $systemlib
+# cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.6.1.jar $systemlib
 cp $ivyPath/cache/com.twitter/chill-java/jars/chill-java-0.3.6.jar $systemlib
 cp $ivyPath/cache/org.apache.hadoop/hadoop-common/jars/hadoop-common-2.4.1.jar $systemlib
 cp $ivyPath/cache/com.chuusai/shapeless_2.10/jars/shapeless_2.10-1.2.4.jar $systemlib
@@ -247,7 +249,7 @@ cp $ivyPath/cache/org.jvnet.mimepull/mimepull/jars/mimepull-1.9.4.jar $systemlib
 cp $ivyPath/cache/io.netty/netty/bundles/netty-3.9.0.Final.jar $systemlib
 cp $ivyPath/cache/org.apache.httpcomponents/httpcore/jars/httpcore-4.2.4.jar $systemlib
 cp $ivyPath/cache/commons-configuration/commons-configuration/jars/commons-configuration-1.6.jar $systemlib
-cp $ivyPath/cache/log4j/log4j/bundles/log4j-1.2.17.jar $systemlib
+# cp $ivyPath/cache/log4j/log4j/bundles/log4j-1.2.17.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mqjms.jar $systemlib
 cp $srcPath/Utils/JsonDataGen/target/scala-2.10/jsondatagen_2.10-0.1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.curator/curator-recipes/bundles/curator-recipes-2.6.0.jar $systemlib
@@ -260,7 +262,7 @@ cp $ivyPath/cache/com.typesafe.akka/akka-testkit_2.10/jars/akka-testkit_2.10-2.3
 cp $srcPath/Exceptions/target/scala-2.10/exceptions_2.10-1.0.jar $systemlib
 cp $srcPath/DataDelimiters/target/scala-2.10/datadelimiters_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.zookeeper/zookeeper/jars/zookeeper-3.3.4.jar $systemlib
-cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.7.5.jar $systemlib
+# cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.7.5.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/servlet-api/jars/servlet-api-2.5.20110712.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty/jars/jetty-6.1.26.jar $systemlib
 cp $ivyPath/cache/javax.activation/activation/jars/activation-1.1.jar $systemlib
@@ -292,7 +294,6 @@ cp $ivyPath/cache/uk.co.bigbeeconsultants/bee-client_2.10/jars/bee-client_2.10-0
 cp $ivyPath/cache/com.fasterxml.jackson.core/jackson-core/bundles/jackson-core-2.3.1.jar $systemlib
 cp $ivyPath/cache/commons-lang/commons-lang/jars/commons-lang-2.6.jar $systemlib
 cp $ivyPath/cache/commons-digester/commons-digester/jars/commons-digester-1.8.1.jar $systemlib
-cp $ivyPath/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.10.jar $systemlib
 cp $ivyPath/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.23.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.ref.jar $systemlib
 cp $srcPath/Pmml/PmmlCompiler/target/scala-2.10/pmmlcompiler_2.10-1.0.jar $systemlib
@@ -313,7 +314,6 @@ cp $ivyPath/cache/commons-beanutils/commons-beanutils/jars/commons-beanutils-1.8
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.matchspace.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-sslengine/jars/jetty-sslengine-6.1.26.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.remote.jar $systemlib
-cp $ivyPath/cache/com.google.protobuf/protobuf-java/bundles/protobuf-java-2.5.0.jar $systemlib
 cp $srcPath/Utils/ExtractData/target/scala-2.10/extractdata_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.hbase/hbase-client/jars/hbase-client-0.98.4-hadoop2.jar $systemlib
 cp $srcPath/KamanjaBase/target/scala-2.10/kamanjabase_2.10-1.0.jar $systemlib
@@ -330,7 +330,6 @@ cp $srcPath/Pmml/PmmlUdfs/target/scala-2.10/pmmludfs_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.local.jar $systemlib
 cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.8.2.jar $systemlib
-cp $ivyPath/cache/com.typesafe.akka/akka-slf4j_2.10/jars/akka-slf4j_2.10-2.3.2.jar $systemlib
 cp $ivyPath/cache/jline/jline/jars/jline-0.9.94.jar $systemlib
 cp $ivyPath/cache/org.apache.commons/commons-math3/jars/commons-math3-3.1.1.jar $systemlib
 cp $ivyPath/cache/xmlenc/xmlenc/jars/xmlenc-0.52.jar $systemlib
@@ -387,8 +386,6 @@ cp -rf * $installPath/documentation
 # *******************************
 # copy models, messages, containers, config, scripts, types  messages data prep
 # *******************************
-
-cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/config
 
 #HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/data

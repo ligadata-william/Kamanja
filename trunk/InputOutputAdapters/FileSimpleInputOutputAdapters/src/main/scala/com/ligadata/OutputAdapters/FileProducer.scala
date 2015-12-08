@@ -16,7 +16,7 @@
 
 package com.ligadata.OutputAdapters
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import java.io._
 import java.util.zip.{ZipException, GZIPOutputStream}
 import java.nio.file.{ Paths, Files }
@@ -32,7 +32,8 @@ object FileProducer extends OutputAdapterObj {
 
 class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter) extends OutputAdapter {
   private[this] val _lock = new Object()
-  private[this] val LOG = Logger.getLogger(getClass)
+  private[this] val LOG = LogManager.getLogger(getClass);
+
   private[this] val fc = FileAdapterConfiguration.GetAdapterConfig(inputConfig)
   private var os: OutputStream = null
   private val NEW_LINE = "\n".getBytes("UTF8")

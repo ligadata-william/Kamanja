@@ -17,7 +17,7 @@
 package com.ligadata.kamanja.metadataload
 
 import scala.collection.mutable.{ Set }
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadata.ObjType._
 import com.ligadata.kamanja.metadata._
@@ -36,7 +36,7 @@ import org.joda.time.Years
 
 trait LogTrait {
     val loggerName = this.getClass.getName()
-    val logger = Logger.getLogger(loggerName)
+    val logger = LogManager.getLogger(loggerName)
 }
 
 /** 

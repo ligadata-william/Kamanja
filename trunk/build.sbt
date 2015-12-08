@@ -15,6 +15,10 @@ libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 
 resolvers += Resolver.file("Local repo", file(System.getProperty("user.home") + "/.ivy2/local"))(Resolver.ivyStylePatterns)
 
+resolvers += Resolver.typesafeRepo("releases")
+
+resolvers += Resolver.sonatypeRepo("releases")
+
 val Organization = "com.ligadata"
 
 lazy val BaseTypes = project.in(file("BaseTypes")) dependsOn(Metadata, Exceptions)

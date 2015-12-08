@@ -19,14 +19,14 @@ package com.ligadata.modelLibs.cache
 import scala.collection.JavaConversions._
 import scala.collection.mutable._
 import scala.util.control.Breaks._
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import java.util.{ Calendar, Date }
 import scala.math.abs
 import com.ligadata.modelLibs.cache.javafunctions.{ Function1 => JFunction1 }
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 }
 // CacheByDay exceptions
 case class CbdInvalidTimeRangeError(e: String) extends Exception(e)

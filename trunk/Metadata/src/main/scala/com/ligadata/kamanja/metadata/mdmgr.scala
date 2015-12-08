@@ -27,7 +27,7 @@ import java.util._
 import java.lang.RuntimeException
 import java.util.NoSuchElementException
 
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import ObjTypeType._
 import ObjType._
@@ -58,7 +58,7 @@ class MdMgr {
 
   /** initialize a logger */
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   /** maps that hold caches of the metadata */
   /** making every thing is multi map, because we will have multiple versions for the same one */
@@ -83,10 +83,6 @@ class MdMgr {
   private var adapters = new HashMap[String, AdapterInfo]
   private var modelConfigs = new HashMap[String,scala.collection.immutable.Map[String,List[String]]]
   private var configurations = new HashMap[String,UserPropertiesInfo]
-
-  def SetLoggerLevel(level: Level) {
-    logger.setLevel(level);
-  }
 
   def truncate {
     typeDefs.clear
@@ -3021,7 +3017,7 @@ object MdIdSeq {
 
 trait LogTrait {
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 }
 
 object MdMgr extends LogTrait {

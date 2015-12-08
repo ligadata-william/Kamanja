@@ -18,7 +18,7 @@ package com.ligadata.tools
 
 // import java.nio.charset.StandardCharsets
 import java.io.File
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.keyvaluestore._
 import com.ligadata.KamanjaBase._
 import com.ligadata.kamanja.metadataload.MetadataLoad
@@ -45,7 +45,7 @@ import com.ligadata.transactions.{ SimpleTransService, NodeLevelTransService }
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 }
 
 class SaveContainerDataCompImpl extends LogTrait with MdBaseResolveInfo {

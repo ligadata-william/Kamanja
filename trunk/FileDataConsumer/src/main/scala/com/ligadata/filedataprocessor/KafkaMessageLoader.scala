@@ -16,7 +16,7 @@ import com.ligadata.kamanja.metadata.MessageDef
 import kafka.common.{ QueueFullException, FailedToSendMessageException }
 import kafka.producer.{ KeyedMessage, ProducerConfig, Producer, Partitioner }
 import org.apache.curator.framework.CuratorFramework
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import kafka.utils.VerifiableProperties
 
 
@@ -63,7 +63,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
   var lastOffsetProcessed: Int = 0
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   val dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
   dateFormat.setTimeZone(TimeZone.getTimeZone("UTC")); // Setting the UTC timezone.
