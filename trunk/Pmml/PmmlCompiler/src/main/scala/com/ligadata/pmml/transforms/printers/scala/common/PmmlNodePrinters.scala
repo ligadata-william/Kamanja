@@ -1217,11 +1217,11 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		 * 
 		 * If no alias is given, the default is System_
 		 */
-		clsBuffer.append(s"class $classname(factory: ModelInstanceFactory)\n")
+		clsBuffer.append(s"class $classname(factory: ModelInstanceFactory) ")
 		if (ctx.injectLogging) {
-			clsBuffer.append(s"   extends ModelInstance(factory) with LogTrait {\n") 
+			clsBuffer.append(s" extends ModelInstance(factory) with LogTrait {\n") 
 		} else {
-			clsBuffer.append(s"   extends ModelInstance(factory) {\n") 
+			clsBuffer.append(s" extends ModelInstance(factory) {\n") 
 		}
 
 		/** Create the alternate ctor used by the createNewModelInstance implementation.  Unpack its content and feed the
@@ -1260,10 +1260,10 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			/** 
 			 *  Add the initialize function to the the class body 
 			 */
-			clsBuffer.append(s"    def initialize(tmpMsg: $msgtype, gCtx: EnvContext) : $classname = {\n")
+			clsBuffer.append(s"    def initialize(tmpMsg: MessageContainerBase, gCtx: EnvContext) : $classname = {\n")
 			clsBuffer.append(s"\n")
 			
-			clsBuffer.append(s"    /** Initialize the data and transformation dictionaries */\n")
+			clsBuffer.append(s"        /** Initialize the data and transformation dictionaries */\n")
 			clsBuffer.append(s"        if (bInitialized)\n")
 			clsBuffer.append(s"            return this\n")
 			clsBuffer.append(s"        bInitialized = true\n")
@@ -1271,13 +1271,14 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			
 			val msgType : String = if (msgdefTypes != null && msgdefTypes.size > 1) msgdefTypes(1) else "Any"
 			
-			clsBuffer.append(s"    val $msgName = tmpMsg.asInstanceOf[${msgType}]\n\n")
+			clsBuffer.append(s"        val $msgName = tmpMsg.asInstanceOf[${msgType}]\n\n")
 		
 			clsBuffer.append(s"\n")
-			clsBuffer.append(s"    /***********************************************************************/\n")
-			clsBuffer.append(s"    ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
-			clsBuffer.append(s"    ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
-			clsBuffer.append(s"    /***********************************************************************/\n")
+			clsBuffer.append(s"        /***********************************************************************/\n")
+			clsBuffer.append(s"        ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
+			clsBuffer.append(s"        ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
+			clsBuffer.append(s"        /***********************************************************************/\n")
+			clsBuffer.append(s"\n")
 
 			
 			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */

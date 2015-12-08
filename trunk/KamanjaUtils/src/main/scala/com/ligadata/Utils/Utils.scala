@@ -225,10 +225,12 @@ object Utils {
 
     if (isIt == false) {
       val superclass = clz.getSuperclass
-      val scName = superclass.getName()
-      logger.debug("SuperClass => " + scName)
-      if (scName.equals(clsName)) {
-        isIt = true
+      if (superclass != null) {
+        val scName = superclass.getName()
+        logger.debug("SuperClass => " + scName)
+        if (scName.equals(clsName)) {
+          isIt = true
+        }
       }
     }
 
