@@ -214,8 +214,9 @@ object Utils {
 
     breakable {
       for (intf <- interfecs) {
-        logger.debug("Interface:" + intf.getName())
-        if (intf.getName().equals(clsName)) {
+        val intfName = intf.getName()
+        logger.debug("Interface:" + intfName)
+        if (intfName.equals(clsName)) {
           isIt = true
           break
         }
@@ -224,8 +225,9 @@ object Utils {
 
     if (isIt == false) {
       val superclass = clz.getSuperclass
-      logger.debug("SuperClass => " + superclass)
-      if (superclass.getName().equals(clsName)) {
+      val scName = superclass.getName()
+      logger.debug("SuperClass => " + scName)
+      if (scName.equals(clsName)) {
         isIt = true
       }
     }

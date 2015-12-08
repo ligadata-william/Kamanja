@@ -732,7 +732,8 @@ class CompilerProxy {
         } catch {
           case e: Exception => {
             // Trying Regular Object instantiation
-            logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from " + clsName)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from Class:%s, Reason:%s Message:%s.\nStackTrace:%s".format(clsName, e.getCause, e.getMessage, stackTrace))
             throw new MsgCompilationFailedException(clsName)
           }
         }
