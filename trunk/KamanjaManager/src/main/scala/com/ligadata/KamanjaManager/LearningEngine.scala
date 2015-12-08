@@ -21,7 +21,7 @@ import com.ligadata.KamanjaBase._
 import com.ligadata.Utils.Utils
 import java.util.Map
 import com.ligadata.outputmsg.OutputMsgGenerator
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
 import scala.xml.Elem
@@ -34,7 +34,7 @@ import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, Partitio
 import com.ligadata.Exceptions.StackTrace
 
 class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey) {
-  val LOG = Logger.getLogger(getClass);
+  val LOG = LogManager.getLogger(getClass);
   var cntr: Long = 0
   var mdlsChangedCntr: Long = -1
   var outputGen = new OutputMsgGenerator()

@@ -40,7 +40,7 @@ import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj }
 import org.mapdb._
 import java.io._
 import java.nio.ByteBuffer
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import com.ligadata.Exceptions._
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -50,7 +50,7 @@ import com.ligadata.Utils.{ KamanjaLoaderInfo }
 class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   //logger.setLevel(Level.DEBUG)
 
@@ -773,7 +773,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
 class HashMapAdapterTx(val parent: DataStore) extends Transaction {
 
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
     parent.put(containerName, key, value)

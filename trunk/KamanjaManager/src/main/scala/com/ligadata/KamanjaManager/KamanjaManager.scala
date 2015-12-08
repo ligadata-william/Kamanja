@@ -17,12 +17,12 @@ import scala.collection.mutable.TreeSet
 import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.HeartBeat.HeartBeatUtil
 import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 
 class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   private val serverSocket = new ServerSocket(port)
 
   def run() {
@@ -49,7 +49,7 @@ class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
 }
 
 class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   private val out = new PrintStream(socket.getOutputStream)
   private val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
 
@@ -131,7 +131,7 @@ object KamanjaConfiguration {
 }
 
 object ProcessedAdaptersInfo {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   private val lock = new Object
   private val instances = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[String, String]]()
   private var prevAdapterCommittedValues = Map[String, String]()
@@ -213,7 +213,7 @@ object ProcessedAdaptersInfo {
 }
 
 class KamanjaManager extends Observer {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
 
   // KamanjaServer Object
   private var serviceObj: KamanjaServer = null
@@ -723,7 +723,7 @@ class KamanjaManager extends Observer {
 }
 
 object OleService {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   def main(args: Array[String]): Unit = {
     val mgr = new KamanjaManager
     scala.sys.addShutdownHook({

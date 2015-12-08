@@ -52,7 +52,7 @@ import com.ligadata.messagedef._
 import com.ligadata.Exceptions._
 
 import scala.xml.XML
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -65,7 +65,7 @@ import org.apache.zookeeper.CreateMode
 import com.ligadata.keyvaluestore._
 import com.ligadata.Serialize._
 import com.ligadata.Utils._
-import util.control.Breaks._
+import scala.util.control.Breaks._
 import com.ligadata.AuditAdapterInfo._
 import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import com.ligadata.keyvaluestore.KeyValueManager
@@ -101,7 +101,7 @@ object MetadataAPIImpl extends MetadataAPI {
   lazy val sysNS = "System"
   // system name space
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   lazy val serializerType = "kryo"
   lazy val serializer = SerializerManager.GetSerializer(serializerType)
   lazy val metadataAPIConfig = new Properties()
@@ -558,10 +558,6 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
-  }
-
-  def SetLoggerLevel(level: Level) {
-    logger.setLevel(level);
   }
 
   private var mainDS: DataStore = _
@@ -5907,7 +5903,6 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def InitMdMgr(mgr: MdMgr, jarPathsInfo: String, databaseInfo: String) {
 
-    SetLoggerLevel(Level.INFO)
     val mdLoader = new MetadataLoad(mgr, "", "", "", "")
     mdLoader.initialize
 

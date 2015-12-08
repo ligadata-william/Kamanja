@@ -25,7 +25,7 @@ import scala.util.Random
  * Created by wtarver on 4/23/15.
  */
 object TestUtils {
-  private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+  private val logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass)
   private val random: Random = new Random()
 
   def constructTempDir(dirPrefix:String):File = {

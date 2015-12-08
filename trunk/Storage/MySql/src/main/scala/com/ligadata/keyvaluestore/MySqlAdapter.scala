@@ -38,7 +38,7 @@ import java.sql.Connection
 import com.ligadata.KvBase.{ Key, Value, TimeRange }
 import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj }
 import java.nio.ByteBuffer
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import com.ligadata.Exceptions._
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -86,7 +86,7 @@ class MySqlAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
   private val loadedJars: TreeSet[String] = new TreeSet[String];
   private val clsLoader = new JdbcClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
 
@@ -1140,7 +1140,7 @@ class MySqlAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 class MySqlAdapterTx(val parent: DataStore) extends Transaction {
 
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   override def put(containerName: String, key: Key, value: Value): Unit = {
     parent.put(containerName, key, value)
