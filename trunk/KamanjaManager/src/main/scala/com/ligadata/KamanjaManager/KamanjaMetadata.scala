@@ -284,9 +284,21 @@ class KamanjaMetadata {
       if (factoryOfMdlInstFactory == null) {
         LOG.error("FactoryOfModelInstanceFactory %s not found in metadata. Unable to create ModelInstanceFactory for %s".format(factoryOfMdlInstFactoryFqName, mdl.FullName))
       } else {
-        val factory: ModelInstanceFactory = factoryOfMdlInstFactory.getModelInstanceFactory(mdl, KamanjaMetadata.envCtxt, KamanjaConfiguration.metadataLoader, KamanjaConfiguration.jarPaths)
-        val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
-        modelObjsMap(mdlName) = new MdlInfo(factory, mdl.jarName, mdl.dependencyJarNames)
+        try {
+          val factory: ModelInstanceFactory = factoryOfMdlInstFactory.getModelInstanceFactory(mdl, KamanjaMetadata.envCtxt, KamanjaConfiguration.metadataLoader, KamanjaConfiguration.jarPaths)
+          if (factory != null) {
+            factory.init(KamanjaMetadata.gNodeContext)
+            val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
+            modelObjsMap(mdlName) = new MdlInfo(factory, mdl.jarName, mdl.dependencyJarNames)
+          } else {
+            LOG.error("Failed to get ModelInstanceFactory for " + mdl.FullName)
+          }
+        } catch {
+          case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("Failed to get/initialize ModelInstanceFactory for %s. Reason:%s, Cause:%s\nStackTrace:%s".format(mdl.FullName, e.getMessage, e.getCause, stackTrace))
+          }
+        }
       }
     }
   }
@@ -373,7 +385,7 @@ class KamanjaMetadata {
 
 object KamanjaMetadata extends MdBaseResolveInfo {
   var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
-  var gNodeContext:NodeContext = null
+  var gNodeContext: NodeContext = null
   private[this] val LOG = LogManager.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
@@ -521,7 +533,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       val fDefs = fDefsOptions.get
 
       LOG.debug("Found %d FactoryOfModelInstanceFactory objects".format(fDefs.size))
-      
+
       fDefs.foreach(f => {
         LoadJarIfNeeded(f)
         // else Assuming we are already loaded all the required jars
