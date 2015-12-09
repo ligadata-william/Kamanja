@@ -46,8 +46,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
-      val mdlCtxt = new ModelContext(txnCtxt, finalTopMsgOrContainer, inputData, uk)
-      ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
+      txnCtxt.setMessage(finalTopMsgOrContainer)
+      ThreadLocalStorage.txnContextInfo.set(txnCtxt)
       try {
         val mdlChngCntr = KamanjaMetadata.GetModelsChangedCounter
         val msgFullName = finalTopMsgOrContainer.FullName.toLowerCase()
@@ -156,7 +156,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
                 tInst
               }
               if (curMd != null) {
-                val res = curMd.execute(mdlCtxt, outputDefault)
+                val res = curMd.execute(txnCtxt, outputDefault)
                 if (res != null) {
                   results += new SavedMdlResult().withMdlName(md.mdl.getModelName).withMdlVersion(md.mdl.getVersion).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
                 } else {
@@ -192,7 +192,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           LOG.error("StackTrace:" + stackTrace)
         }
       } finally {
-        ThreadLocalStorage.modelContextInfo.remove
+        ThreadLocalStorage.txnContextInfo.remove
       }
     }
     return results.toArray

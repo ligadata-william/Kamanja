@@ -25,7 +25,7 @@ public class HelloWorldModel extends ModelInstance {
     	super(factory);
     }
 
-	public ModelResultBase execute(ModelContext mdlCtxt, boolean outputDefault) {
+	public ModelResultBase execute(TransactionContext txnCtxt, boolean outputDefault) {
     	/*
 		System.out.println("inside model");
     	GlobalPreferences gPref = GlobalPreferencesFactory.rddObject.getRecentOrNew(new String[]{"PrefType"});  //(new String[]{"Type1"});
@@ -52,12 +52,12 @@ public class HelloWorldModel extends ModelInstance {
     		return null;
     	}
 
-    	TransactionMsg rcntTxn = (TransactionMsg) mdlCtxt.msg();
+    	TransactionMsg rcntTxn = (TransactionMsg) txnCtxt.getMessage();
 
     	 if (rcntTxn.balance() >= gPref.minalertbalance())
     	      return null;
 		*/
-		msg1 helloWorld = (msg1) mdlCtxt.msg();
+		msg1 helloWorld = (msg1) txnCtxt.getMessage();
 		if(helloWorld.score()!=1)
 			return null;
 

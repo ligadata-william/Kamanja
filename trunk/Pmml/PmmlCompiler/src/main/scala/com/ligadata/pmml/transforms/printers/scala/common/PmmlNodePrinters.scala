@@ -1224,10 +1224,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			clsBuffer.append(s" extends ModelInstance(factory) {\n") 
 		}
 
-		/** Create the alternate ctor used by the createModelInstance implementation.  Unpack its content and feed the
-		 *  primary constructor as it is now, passing both the ModelContext and Model object along to satisfy the 
-		 *  ModelInstance abstract class required parameters  
-		 */
 		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
 		clsBuffer.append(s"$alternateCtor\n") 
 		
@@ -1453,9 +1449,9 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			 *  Add the execute function to the the class body... the prepareResults function will build the return array for consumption by engine. 
 			 */
 			clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
-			clsBuffer.append(s"    def execute(mdlCtxt: ModelContext, emitAllResults : Boolean) : ModelResultBase = {\n")
-			clsBuffer.append(s"        ctx = new com.ligadata.pmml.runtime.Context(mdlCtxt.TransactionContext.TransactionId, mdlCtxt.TransactionContext.NodeCtxt.EnvCtxt)\n")
-			clsBuffer.append(s"        initialize(mdlCtxt.Message, mdlCtxt.TransactionContext.NodeCtxt.EnvCtxt)\n")
+			clsBuffer.append(s"    def execute(txnCtxt: TransactionContext, emitAllResults : Boolean) : ModelResultBase = {\n")
+			clsBuffer.append(s"        ctx = new com.ligadata.pmml.runtime.Context(txnCtxt.TransactionId, txnCtxt.getNodeCtxt.getEnvCtxt)\n")
+			clsBuffer.append(s"        initialize(txnCtxt.getMessage, txnCtxt.getNodeCtxt.getEnvCtxt)\n")
 			clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
 			clsBuffer.append(s"        prepareResults(emitAllResults)\n")
 			clsBuffer.append(s"    }\n")
@@ -1475,7 +1471,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 	 *  @param msgdefTypes : an Array[String] containing the message typedef strings that have been supplied
 	 *  	to the model. While we are currently only supporting one as far as the engine goes, the compiler
 	 *   	supports more than one in the event the multiple input messages become a feature.
-	 *  @return the "def this(val modelContext: ModelContext, val factory: ModelInstanceFactory){...}" constructor
+	 *  @return the "def this(val factory: ModelInstanceFactory){...}" constructor
 	 *  	string that will be included into the model being generated  
 	 *   
 	 *  Note: Currently there is only one message supported.

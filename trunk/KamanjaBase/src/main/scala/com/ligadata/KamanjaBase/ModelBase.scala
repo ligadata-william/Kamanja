@@ -290,6 +290,7 @@ trait EnvContext {
   // Final Commit for the given transaction
   // outputResults has AdapterName, PartitionKey & Message
   def commitData(transId: Long, key: String, value: String, outputResults: List[(String, String, String)], forceCommit: Boolean): Unit
+  def rollbackData(transId: Long): Unit
 
   // Save State Entries on local node & on Leader
   // def PersistLocalNodeStateEntries: Unit
@@ -334,7 +335,7 @@ abstract class ModelInstance(val factory: ModelInstanceFactory) {
 
   def init(instanceMetadata: String): Unit = {} // Local Instance level initialization
   def shutdown(): Unit = {} // Shutting down this factory. 
-  def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
+  def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
 
 abstract class ModelInstanceFactory(val modelDef: ModelDef, val nodeContext: NodeContext) {
@@ -362,16 +363,12 @@ trait FactoryOfModelInstanceFactory {
   def prepareModel(nodeContext: NodeContext, modelDefStr: String, inpMsgName: String, outMsgName: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef
 }
 
-// partitionKey is the one used for this message
-class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase, val msgData: Array[Byte], val partitionKey: String) {
+class TransactionContext(val transId: Long, val nodeCtxt: NodeContext, val msgData: Array[Byte], val partitionKey: String) {
+  private var msg: MessageContainerBase = _
   def getInputMessageData: Array[Byte] = msgData
-  def getMessage: MessageContainerBase = msg
-  def getTransactionContext: TransactionContext = txnContext
   def getPartitionKey: String = partitionKey
-  def getPropertyValue(clusterId: String, key: String): String = { if (txnContext != null) txnContext.getPropertyValue(clusterId, key) else "" }
-}
-
-class TransactionContext(val transId: Long, val nodeCtxt: NodeContext) {
+  def getMessage: MessageContainerBase = msg
+  def setMessage(m: MessageContainerBase): Unit = { msg = m }
   def getTransactionId = transId
   def getNodeCtxt = nodeCtxt
   private var valuesMap = new java.util.HashMap[String, Any]()

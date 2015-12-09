@@ -92,8 +92,8 @@ public class COPDRiskAssessment extends ModelInstance {
 
     private SimpleDateFormat yearMonthDayHourFormat = new SimpleDateFormat("yyyyMMdd");
 
-    private void init(ModelContext mdlCtxt) {
-        msg = (Beneficiary) mdlCtxt.msg();
+    private void init(TransactionContext txnCtxt) {
+        msg = (Beneficiary) txnCtxt.getMessage();
         System.out.println("Executing COPD Risk Assessment against Beneficiary message:");
         System.out.println("\tMessage Name: " + msg.Name());
         System.out.println("\tMessage Version: " + msg.Version());
@@ -389,8 +389,8 @@ public class COPDRiskAssessment extends ModelInstance {
     }
 
     @Override
-    public MappedModelResults execute(ModelContext mdlCtxt, boolean outputDefault) {
-        init(mdlCtxt);
+    public MappedModelResults execute(TransactionContext txnCtxt, boolean outputDefault) {
+        init(txnCtxt);
         MappedModelResults result = copdRiskLevel();
         if(!outputDefault) {
             if (result.get("COPD Risk Level") == "") {

@@ -18,7 +18,7 @@ package com.ligadata.models.samples.models
 
 import com.ligadata.kamanja.metadata.{ ModelDef }
 import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ ModelInstance, ModelInstanceFactory, ModelResultBase, TransactionContext, ModelContext, EnvContext, NodeContext }
+import com.ligadata.KamanjaBase.{ ModelInstance, ModelInstanceFactory, ModelResultBase, TransactionContext, EnvContext, NodeContext }
 import com.ligadata.samples.messages.{ CustAlertHistory, GlobalPreferences, CustPreferences, CustTransaction }
 import RddUtils._
 import RddDate._
@@ -163,7 +163,7 @@ class LowBalanceAlertResult extends ModelResultBase {
 }
 
 class LowBalanceAlert(factory: ModelInstanceFactory) extends ModelInstance(factory) {
-  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase = {
+  override def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew
@@ -302,7 +302,7 @@ class LowBalanceAlert2Result extends ModelResultBase {
 }
 
 class LowBalanceAlert2(factory: ModelInstanceFactory) extends ModelInstance(factory) {
-  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase = {
+  override def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew

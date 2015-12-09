@@ -23,7 +23,7 @@ import com.google.common.base.Optional;
 import com.ligadata.kamanja.metadata.ModelDef;
 
 public class JavaTestMdl extends ModelInstance {
-	public ModelResultBase execute(ModelContext mdlCtxt, boolean outputDefault) {
+	public ModelResultBase execute(TransactionContext txnCtxt, boolean outputDefault) {
 		// Directly calling methods from Scala Singleton object. Not preferable
 		// to use direct scala.
 		CustAlertHistory custAlertHistory = CustAlertHistoryFactory.rddObject.getRecentOrNew();

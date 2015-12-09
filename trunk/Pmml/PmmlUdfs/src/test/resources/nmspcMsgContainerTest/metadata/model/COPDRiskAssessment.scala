@@ -19,7 +19,7 @@ package com.ligadata.samples.models
 import com.ligadata.KamanjaBase._
 import RddUtils._
 import RddDate._
-import com.ligadata.KamanjaBase.{ TimeRange, ModelInstanceFactory, ModelInstance, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase.{ TimeRange, ModelInstanceFactory, ModelInstance, ModelResultBase, TransactionContext }
 import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
 import com.ligadata.messagescontainers._
 import com.ligadata.messagescontainers.System._
@@ -42,8 +42,8 @@ class COPDRiskAssessmentFactory(modelDef: ModelDef, nodeContext: NodeContext) ex
 
 
 class COPDRiskAssessment(factory: ModelInstanceFactory) extends ModelInstance(factory) {
-  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean):ModelResultBase = {
-    var msgBeneficiary : Beneficiary =  mdlCtxt.msg.asInstanceOf[Beneficiary]
+  override def execute(txnCtxt: TransactionContext, outputDefault: Boolean):ModelResultBase = {
+    var msgBeneficiary : Beneficiary =  txnCtxt.getMessage().asInstanceOf[Beneficiary]
     val smokingCodeSet : Array[String] = SmokeCodes.getRDD.map{ x => (x.icd9code) }.toArray
     val sputumCodeSet : Array[String] = SputumCodes.getRDD.map{ x => (x.icd9code) }.toArray
     val envExposureCodeSet : Array[String] = EnvCodes.getRDD.map{ x => (x.icd9code)}.toArray

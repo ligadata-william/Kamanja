@@ -1455,6 +1455,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return changedContainersData.toMap
   }
 
+  override def rollbackData(transId: Long): Unit = {
+    removeTransactionContext(transId)
+  }
+
   // Final Commit for the given transaction
   // BUGBUG:: For now we are committing all the data into default datastore. Not yet handled message level datastore.
   override def commitData(transId: Long, key: String, value: String, outResults: List[(String, String, String)], forceCommit: Boolean): Unit = {

@@ -216,7 +216,7 @@ class SubscriberUsageAlert(factory: ModelInstanceFactory) extends ModelInstance(
     finally fw.close()
   }
 
-  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase = {
+  override def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase = {
 
     // Make sure current transaction has some data
     val rcntTxn = SubscriberUsage.getRecent

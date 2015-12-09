@@ -30,9 +30,9 @@ class HelloWorldModelFactory(modelDef: ModelDef, nodeContext: NodeContext) exten
 
 class HelloWorldModel(factory: ModelInstanceFactory) extends ModelInstance(factory) {
   
-   override def execute(mdlCtxt: ModelContext, outputDefault: Boolean):ModelResultBase = {
+   override def execute(txnCtxt: TransactionContext, outputDefault: Boolean):ModelResultBase = {
      
-     var helloWorld : msg1 =  mdlCtxt.msg.asInstanceOf[msg1]
+     var helloWorld : msg1 =  txnCtxt.getMessage().asInstanceOf[msg1]
      
         if(helloWorld.score!=1)
           return null;

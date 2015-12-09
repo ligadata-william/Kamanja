@@ -120,7 +120,7 @@ class LowBalanceAlertResult extends ModelResultBase {
 
 class LowBalanceAlert(factory: ModelInstanceFactory) extends ModelInstance(factory) {
   // private[this] val LOG = LogManager.getLogger(getClass);
-  override def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase = {
+  override def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew

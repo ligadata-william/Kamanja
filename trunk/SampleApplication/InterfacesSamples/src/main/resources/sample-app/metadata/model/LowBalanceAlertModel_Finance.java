@@ -26,7 +26,7 @@ public class LowBalanceAlertModel extends ModelInstance {
     	super(factory);
     }
 
-	public ModelResultBase execute(ModelContext mdlCtxt, boolean outputDefault) {
+	public ModelResultBase execute(TransactionContext txnCtxt, boolean outputDefault) {
 
     	GlobalPreferences gPref = (GlobalPreferences) GlobalPreferences.getRecentOrNew(new String[]{"Type1"});  //(new String[]{"Type1"});
 
@@ -50,7 +50,7 @@ public class LowBalanceAlertModel extends ModelInstance {
 
 
 
-    	TransactionMsg rcntTxn = (TransactionMsg) mdlCtxt.msg();
+    	TransactionMsg rcntTxn = (TransactionMsg) txnCtxt.getMessage();
 
     	 if (rcntTxn.balance() >= gPref.minalertbalance())
     	      return null;

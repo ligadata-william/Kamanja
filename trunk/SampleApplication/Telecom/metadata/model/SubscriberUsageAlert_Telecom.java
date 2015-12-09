@@ -31,9 +31,9 @@ public class SubscriberUsageAlert extends ModelInstance {
     	super(factory);
     }
 
-   public ModelResultBase execute(ModelContext mdlCtxt, boolean outputDefault) {
+   public ModelResultBase execute(TransactionContext txnCtxt, boolean outputDefault) {
 	//Get the current transaction data
-	SubscriberUsage rcntTxn = (SubscriberUsage) mdlCtxt.msg();
+	SubscriberUsage rcntTxn = (SubscriberUsage) txnCtxt.getMessage();
 
     // Get the current subscriber, account info and global preferences
 	SubscriberGlobalPreferences gPref = (SubscriberGlobalPreferences) SubscriberGlobalPreferences.getRecentOrNew(new String[]{"Type 1"});
