@@ -223,6 +223,9 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           val fndmsg = txnCtxt.NodeCtxt.EnvCtxt.getObject(transId, msgType, partKeyDataList, primaryKeyList)
           if (fndmsg != null) {
             msg = fndmsg.asInstanceOf[BaseMsg]
+            LOG.debug("Found %s message for given partitionkey:%s, primarykey:%s. Msg partitionkey:%s, primarykey:%s".format(msgType, if (partKeyDataList != null) partKeyDataList.mkString(",") else "", if (primaryKeyList != null) primaryKeyList.mkString(",") else "", msg.PartitionKeyData.mkString(","), msg.PrimaryKeyData.mkString(",")))
+          } else {
+            LOG.debug("Not Found %s message for given partitionkey:%s, primarykey:%s.".format(msgType, if (partKeyDataList != null) partKeyDataList.mkString(",") else "", if (primaryKeyList != null) primaryKeyList.mkString(",") else ""))
           }
         }
         var createdNewMsg = false

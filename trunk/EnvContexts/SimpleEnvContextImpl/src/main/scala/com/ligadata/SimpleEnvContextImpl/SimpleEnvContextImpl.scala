@@ -220,6 +220,30 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (key == null || key.size == 0 /* || key.filter(k => k != null).size == 0 */ )
     }
 
+    def IsSameKey(key1: List[String], key2: List[String]): Boolean = {
+      if (key1.size != key2.size)
+        return false
+
+      for (i <- 0 until key1.size) {
+        if (key1(i).compareTo(key2(i)) != 0)
+          return false
+      }
+
+      return true
+    }
+
+    def IsSameKey(key1: Array[String], key2: Array[String]): Boolean = {
+      if (key1.size != key2.size)
+        return false
+
+      for (i <- 0 until key1.size) {
+        if (key1(i).compareTo(key2(i)) != 0)
+          return false
+      }
+
+      return true
+    }
+
     def getRddData(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, primaryKey: List[String], f: MessageContainerBase => Boolean): Array[(KeyWithBucketIdAndPrimaryKey, MessageContainerBase)] = {
       val retResult = ArrayBuffer[(KeyWithBucketIdAndPrimaryKey, MessageContainerBase)]()
       if (container != null) {
@@ -233,8 +257,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                 tmRange
             val partKeyAsArray = partKey.toArray
             val primKeyAsArray = if (primaryKey != null && primaryKey.size > 0) primaryKey.toArray else null
-            val fromKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.beginTime, partKeyAsArray, 0, 0), primKeyAsArray != null, primKeyAsArray)
-            val toKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.endTime, partKeyAsArray, Long.MaxValue, Int.MaxValue), primKeyAsArray != null, primKeyAsArray)
+            val fromKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.beginTime, partKeyAsArray, 0, 0), false, null)
+            val toKey = KeyWithBucketIdAndPrimaryKey(KeyWithBucketIdAndPrimaryKeyCompHelper.BucketIdForBucketKey(partKeyAsArray), Key(tmRng.endTime, partKeyAsArray, Long.MaxValue, Int.MaxValue), false, null)
             val tmpDataByTmPart = new TreeMap[KeyWithBucketIdAndPrimaryKey, MessageContainerBaseWithModFlag](KvBaseDefalts.defualtTimePartComp) // By time, BucketKey, then PrimaryKey/{transactionid & rowid}. This is little cheaper if we are going to get exact match, because we compare time & then bucketid
             tmpDataByTmPart.putAll(container.dataByBucketKey.subMap(fromKey, true, toKey, true))
             val tmFilterMap = tmpDataByTmPart.subMap(fromKey, true, toKey, true)
@@ -245,14 +269,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                 val entry = it1.next();
                 val value = entry.getValue();
                 if (f(value.value)) {
-                  retResult += ((entry.getKey(), value.value))
+                  if (primKeyAsArray == null || IsSameKey(primKeyAsArray, value.value.PrimaryKeyData))
+                    retResult += ((entry.getKey(), value.value))
                 }
               }
             } else {
               var it1 = tmFilterMap.entrySet().iterator()
               while (it1.hasNext()) {
                 val entry = it1.next();
-                retResult += ((entry.getKey(), entry.getValue().value))
+                val value = entry.getValue();
+                if (primKeyAsArray == null || IsSameKey(primKeyAsArray, value.value.PrimaryKeyData))
+                  retResult += ((entry.getKey(), value.value))
               }
             }
           } else if (tmRange != null) {
