@@ -365,12 +365,12 @@ trait FactoryOfModelInstanceFactory {
 
 class TransactionContext(val transId: Long, val nodeCtxt: NodeContext, val msgData: Array[Byte], val partitionKey: String) {
   private var msg: MessageContainerBase = _
-  def getInputMessageData: Array[Byte] = msgData
-  def getPartitionKey: String = partitionKey
-  def getMessage: MessageContainerBase = msg
+  def getInputMessageData(): Array[Byte] = msgData
+  def getPartitionKey(): String = partitionKey
+  def getMessage(): MessageContainerBase = msg
   def setMessage(m: MessageContainerBase): Unit = { msg = m }
-  def getTransactionId = transId
-  def getNodeCtxt = nodeCtxt
+  def getTransactionId() = transId
+  def getNodeCtxt() = nodeCtxt
   private var valuesMap = new java.util.HashMap[String, Any]()
   def getPropertyValue(clusterId: String, key: String): String = { if (nodeCtxt != null) nodeCtxt.getPropertyValue(clusterId, key) else "" }
   def putValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
@@ -379,7 +379,7 @@ class TransactionContext(val transId: Long, val nodeCtxt: NodeContext, val msgDa
 
 // Node level context
 class NodeContext(val gCtx: EnvContext) {
-  def getEnvCtxt = gCtx
+  def getEnvCtxt() = gCtx
   private var valuesMap = new java.util.HashMap[String, Any]()
   def getPropertyValue(clusterId: String, key: String): String = { if (gCtx != null) gCtx.getPropertyValue(clusterId, key) else "" }
   def putValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
