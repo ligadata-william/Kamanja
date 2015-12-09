@@ -50,7 +50,7 @@ import com.ligadata.kamanja.metadata.ModelDef;
 
 class SubscriberUsageAlertFactory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[SubscriberUsage]
-  override def createNewModelInstance(): ModelInstance = return new SubscriberUsageAlert(this)
+  override def createModelInstance(): ModelInstance = return new SubscriberUsageAlert(this)
   override def getModelName(): String = "System.SubscriberUsageAlert" // Model Name
   override def getVersion(): String = "0.0.1" // Model Version
   override def createResultObject(): ModelResultBase = new SubscriberUsageAlertResult()

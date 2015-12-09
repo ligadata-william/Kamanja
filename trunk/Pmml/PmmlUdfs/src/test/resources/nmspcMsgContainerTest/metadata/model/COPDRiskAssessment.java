@@ -42,7 +42,7 @@ public class COPDRiskAssessment extends ModelInstance {
             return (msg instanceof Beneficiary);
         }
 
-        public ModelInstance createNewModelInstance() {
+        public ModelInstance createModelInstance() {
             return new COPDRiskAssessment(this);
         }
 

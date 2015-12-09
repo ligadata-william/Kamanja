@@ -155,7 +155,7 @@ public class SubscriberUsageAlert extends ModelInstance {
 				return (msg instanceof SubscriberUsage);
 			}
 
-			public ModelInstance createNewModelInstance() {
+			public ModelInstance createModelInstance() {
 				return new SubscriberUsageAlert(this);
 			}
 

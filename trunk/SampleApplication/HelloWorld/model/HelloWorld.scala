@@ -22,7 +22,7 @@ import com.ligadata.kamanja.metadata.ModelDef;
 
 class HelloWorldModelFactory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[msg1]
-  override def createNewModelInstance(): ModelInstance = return new HelloWorldModel(this)
+  override def createModelInstance(): ModelInstance = return new HelloWorldModel(this)
   override def getModelName: String = "HelloWorldModel" 
   override def getVersion: String = "0.0.1"
   override def createResultObject(): ModelResultBase = new MappedModelResults()

@@ -78,7 +78,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
                   mInfo._3.shutdown()
                 }
                 if (md.mdl.isValidMessage(finalTopMsgOrContainer)) {
-                  val tInst = md.mdl.createNewModelInstance()
+                  val tInst = md.mdl.createModelInstance()
                   val isReusable = md.mdl.isModelInstanceReusable()
                   var newInst: ModelInstance = null
                   if (isReusable) {
@@ -93,7 +93,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
             } else {
               if (md.mdl.isValidMessage(finalTopMsgOrContainer)) {
                 var newInst: ModelInstance = null
-                val tInst = md.mdl.createNewModelInstance()
+                val tInst = md.mdl.createModelInstance()
                 val isReusable = md.mdl.isModelInstanceReusable()
                 if (isReusable) {
                   newInst = tInst
@@ -127,7 +127,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
             val mInfo = models(i)
             if (mInfo._5 == false && mInfo._2.mdl.isValidMessage(finalTopMsgOrContainer)) {
               var newInst: ModelInstance = null
-              val tInst = mInfo._2.mdl.createNewModelInstance()
+              val tInst = mInfo._2.mdl.createModelInstance()
               val isReusable = mInfo._2.mdl.isModelInstanceReusable()
               if (isReusable) {
                 newInst = tInst
@@ -151,7 +151,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
               val curMd = if (q._3) {
                 q._4
               } else {
-                val tInst = md.mdl.createNewModelInstance()
+                val tInst = md.mdl.createModelInstance()
                 tInst.init(uk)
                 tInst
               }
@@ -220,7 +220,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
 
         var msg: BaseMsg = null
         if (isValidPartitionKey && primaryKeyList != null) {
-          val fndmsg = txnCtxt.NodeCtxt.EnvCtxt.getObject(transId, msgType, partKeyDataList, primaryKeyList)
+          val fndmsg = txnCtxt.getNodeCtxt.getEnvCtxt.getObject(transId, msgType, partKeyDataList, primaryKeyList)
           if (fndmsg != null) {
             msg = fndmsg.asInstanceOf[BaseMsg]
             LOG.debug("Found %s message for given partitionkey:%s, primarykey:%s. Msg partitionkey:%s, primarykey:%s".format(msgType, if (partKeyDataList != null) partKeyDataList.mkString(",") else "", if (primaryKeyList != null) primaryKeyList.mkString(",") else "", msg.PartitionKeyData.mkString(","), msg.PrimaryKeyData.mkString(",")))
@@ -236,8 +236,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
         msg.populate(inputdata)
         var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
-          txnCtxt.NodeCtxt.EnvCtxt.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
-          allMdlsResults = txnCtxt.NodeCtxt.EnvCtxt.getModelsResult(transId, partKeyDataList)
+          txnCtxt.getNodeCtxt.getEnvCtxt.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
+          allMdlsResults = txnCtxt.getNodeCtxt.getEnvCtxt.getModelsResult(transId, partKeyDataList)
         }
         if (allMdlsResults == null)
           allMdlsResults = scala.collection.mutable.Map[String, SavedMdlResult]()
@@ -282,7 +282,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           }
 
           if (isValidPartitionKey) {
-            txnCtxt.NodeCtxt.EnvCtxt.saveModelsResult(transId, partKeyDataList, allMdlsResults)
+            txnCtxt.getNodeCtxt.getEnvCtxt.saveModelsResult(transId, partKeyDataList, allMdlsResults)
           }
         }
       } else {

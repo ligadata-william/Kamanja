@@ -110,10 +110,10 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val commitStartTime = System.nanoTime
         // 
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
-        val forceCommitVal = txnCtxt.getContextValue("forcecommit")
+        val forceCommitVal = txnCtxt.getValue("forcecommit")
         val forceCommitFalg = forceCommitVal != null
-        val containerData = if (forceCommitFalg || kamanjaCallerCtxt.gNodeContext.EnvCtxt.EnableEachTransactionCommit) kamanjaCallerCtxt.gNodeContext.EnvCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
-        kamanjaCallerCtxt.gNodeContext.EnvCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
+        val containerData = if (forceCommitFalg || kamanjaCallerCtxt.gNodeContext.getEnvCtxt.EnableEachTransactionCommit) kamanjaCallerCtxt.gNodeContext.getEnvCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
+        kamanjaCallerCtxt.gNodeContext.getEnvCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
 
         // Set the uk & uv
         if (adapterInfoMap != null)
@@ -361,7 +361,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        kamanjaCallerCtxt.gNodeContext.EnvCtxt.commitData(transId, null, null, null, false)
+        kamanjaCallerCtxt.gNodeContext.getEnvCtxt.commitData(transId, null, null, null, false)
       }
     } catch {
       case e: Exception => {

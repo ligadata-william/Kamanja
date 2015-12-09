@@ -74,7 +74,20 @@ object CreateClient {
     // The only required arguments are the connection string and the retry policy
     val curatorZookeeperClient = CuratorFrameworkFactory.newClient(connectionString, sessionTimeoutMs, connectionTimeoutMs, retryPolicy);
     curatorZookeeperClient.start
-    curatorZookeeperClient.getZookeeperClient.blockUntilConnectedOrTimedOut
+    var retry = true
+    while (retry) {
+      retry = false
+      try {
+        curatorZookeeperClient.getZookeeperClient.blockUntilConnectedOrTimedOut
+      } catch {
+        case e: java.lang.InterruptedException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.warn("Got InterruptedException. Going to retry after 50ms. StackTrace:" + stackTrace)
+          Thread.sleep(50)
+          retry = true
+        }
+      }
+    }
     curatorZookeeperClient
   }
 

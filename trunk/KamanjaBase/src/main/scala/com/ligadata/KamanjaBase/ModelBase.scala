@@ -326,6 +326,7 @@ trait EnvContext {
 }
 
 abstract class ModelInstance(val factory: ModelInstanceFactory) {
+  final def getNodeContext() = factory.getNodeContext() // nodeContext
   final def getEnvContext() = factory.getEnvContext() // gCtx
   final def getModelName() = factory.getModelName() // Model Name
   final def getVersion() = factory.getVersion() // Model Version
@@ -338,48 +339,53 @@ abstract class ModelInstance(val factory: ModelInstanceFactory) {
 
 abstract class ModelInstanceFactory(val modelDef: ModelDef, val nodeContext: NodeContext) {
   final def getNodeContext() = nodeContext // nodeContext
-  final def getEnvContext() = if (nodeContext != null) nodeContext.EnvCtxt // gCtx
+  final def getEnvContext() = if (nodeContext != null) nodeContext.getEnvCtxt // gCtx
   final def getModelDef() = modelDef // modelDef
 
-  def init(): Unit = {} // Common initialization for all Model Instances. This gets called once per node during the metadata load or corresponding model def change. 
+  def init(txnContext: TransactionContext): Unit = {} // Common initialization for all Model Instances. This gets called once per node during the metadata load or corresponding model def change. txnContext will go down as soon as init is done. 
   def shutdown(): Unit = {} // Shutting down this factory. 
   def getModelName(): String // Model Name
   def getVersion(): String // Model Version
   def isValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def createNewModelInstance(): ModelInstance // Creating same type of object with given values 
+  def createModelInstance(): ModelInstance // Creating same type of object with given values 
   def createResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
   def isModelInstanceReusable(): Boolean = false // Can we reuse the instances created for this model?
 }
 
 trait FactoryOfModelInstanceFactory {
   def getModelInstanceFactory(modelDef: ModelDef, nodeContext: NodeContext, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelInstanceFactory
-  def prepareModel(nodeContext: NodeContext, modelString: String, inputMessage: String, outputMessage: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef // Input: Model String, input & output Message Names. Output: ModelDef
+  // Input:
+  //  modelDefStr is Model Definition String
+  //  inpMsgName is Input Message Name
+  //  outMsgName is output Message Name
+  // Output: ModelDef
+  def prepareModel(nodeContext: NodeContext, modelDefStr: String, inpMsgName: String, outMsgName: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef
 }
 
 // partitionKey is the one used for this message
 class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase, val msgData: Array[Byte], val partitionKey: String) {
-  def InputMessageData: Array[Byte] = msgData
-  def Message: MessageContainerBase = msg
-  def TransactionContext: TransactionContext = txnContext
-  def PartitionKey: String = partitionKey
+  def getInputMessageData: Array[Byte] = msgData
+  def getMessage: MessageContainerBase = msg
+  def getTransactionContext: TransactionContext = txnContext
+  def getPartitionKey: String = partitionKey
   def getPropertyValue(clusterId: String, key: String): String = { if (txnContext != null) txnContext.getPropertyValue(clusterId, key) else "" }
 }
 
 class TransactionContext(val transId: Long, val nodeCtxt: NodeContext) {
-  def TransactionId = transId
-  def NodeCtxt = nodeCtxt
+  def getTransactionId = transId
+  def getNodeCtxt = nodeCtxt
   private var valuesMap = new java.util.HashMap[String, Any]()
   def getPropertyValue(clusterId: String, key: String): String = { if (nodeCtxt != null) nodeCtxt.getPropertyValue(clusterId, key) else "" }
-  def setContextValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
-  def getContextValue(key: String): Any = { valuesMap.get(key) }
+  def putValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
+  def getValue(key: String): Any = { valuesMap.get(key) }
 }
 
 // Node level context
 class NodeContext(val gCtx: EnvContext) {
-  def EnvCtxt = gCtx
+  def getEnvCtxt = gCtx
   private var valuesMap = new java.util.HashMap[String, Any]()
   def getPropertyValue(clusterId: String, key: String): String = { if (gCtx != null) gCtx.getPropertyValue(clusterId, key) else "" }
-  def setContextValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
-  def getContextValue(key: String): Any = { valuesMap.get(key) }
+  def putValue(key: String, value: Any): Unit = { valuesMap.put(key, value) }
+  def getValue(key: String): Any = { valuesMap.get(key) }
 }
 

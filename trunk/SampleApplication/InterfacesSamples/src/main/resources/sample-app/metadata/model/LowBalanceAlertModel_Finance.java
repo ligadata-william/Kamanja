@@ -89,7 +89,7 @@ public class LowBalanceAlertModel extends ModelInstance {
 			return (msg instanceof TransactionMsg);
 		}
 
-		public ModelInstance createNewModelInstance() {
+		public ModelInstance createModelInstance() {
 			return new LowBalanceAlertModel(this);
 		}
 

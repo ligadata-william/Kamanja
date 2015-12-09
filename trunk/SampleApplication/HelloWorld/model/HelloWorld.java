@@ -80,7 +80,7 @@ public class HelloWorldModel extends ModelInstance {
 			return (msg instanceof msg1);
 		}
 
-		public ModelInstance createNewModelInstance() {
+		public ModelInstance createModelInstance() {
 			return new HelloWorldModel(this);
 		}
 

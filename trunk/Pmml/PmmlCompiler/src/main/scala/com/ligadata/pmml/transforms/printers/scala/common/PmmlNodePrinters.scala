@@ -1159,7 +1159,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			val msgTypeStr : String = msgTypedef.typeString
 			val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
 			
-			objBuffer.append(s"    override def createNewModelInstance(): ModelInstance =\n")
+			objBuffer.append(s"    override def createModelInstance(): ModelInstance =\n")
 			objBuffer.append(s"    {\n") 
 			objBuffer.append(s"           new $classname(this)\n")
 			objBuffer.append(s"    }\n") 	
@@ -1224,7 +1224,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			clsBuffer.append(s" extends ModelInstance(factory) {\n") 
 		}
 
-		/** Create the alternate ctor used by the createNewModelInstance implementation.  Unpack its content and feed the
+		/** Create the alternate ctor used by the createModelInstance implementation.  Unpack its content and feed the
 		 *  primary constructor as it is now, passing both the ModelContext and Model object along to satisfy the 
 		 *  ModelInstance abstract class required parameters  
 		 */
@@ -1467,7 +1467,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
  	}
 
 	/** 
-	 *  Answer the alternate constructor string that the model object's createNewModelInstance method uses.
+	 *  Answer the alternate constructor string that the model object's createModelInstance method uses.
 	 *  The alternate constructor is used to integrate the new traits developed with the
 	 *  current model generator.  Using this approach, very little of the compiler has changed to 
 	 *  support it.

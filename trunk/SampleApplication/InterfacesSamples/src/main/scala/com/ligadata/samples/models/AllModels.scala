@@ -75,7 +75,7 @@ class LowBalanceAlertFactory(modelDef: ModelDef, nodeContext: NodeContext) exten
   override def getModelName(): String = "LowBalanceAlert" // Model Name
   override def getVersion(): String = "0.0.1" // Model Version
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction] // Check to fire the model
-  override def createNewModelInstance(): ModelInstance = return new LowBalanceAlert(this) // Creating same type of object with given values 
+  override def createModelInstance(): ModelInstance = return new LowBalanceAlert(this) // Creating same type of object with given values 
   override def createResultObject(): ModelResultBase = new LowBalanceAlertResult() // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
 }
 
@@ -214,7 +214,7 @@ class LowBalanceAlert2Factory(modelDef: ModelDef, nodeContext: NodeContext) exte
   override def getModelName(): String = "LowBalanceAlert2" // Model Name
   override def getVersion(): String = "0.0.1" // Model Version
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction] // Check to fire the model
-  override def createNewModelInstance(): ModelInstance = return new LowBalanceAlert2(this) // Creating same type of object with given values 
+  override def createModelInstance(): ModelInstance = return new LowBalanceAlert2(this) // Creating same type of object with given values 
   override def createResultObject(): ModelResultBase = new LowBalanceAlert2Result() // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
 }
 

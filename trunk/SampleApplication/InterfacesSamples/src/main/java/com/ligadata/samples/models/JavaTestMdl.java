@@ -54,7 +54,7 @@ public class JavaTestMdl extends ModelInstance {
 			return (msg instanceof CustAlertHistory);
 		}
 
-		public ModelInstance createNewModelInstance() {
+		public ModelInstance createModelInstance() {
 			return new JavaTestMdl(this);
 		}
 
