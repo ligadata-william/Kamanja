@@ -1450,7 +1450,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			 */
 			clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
 			clsBuffer.append(s"    def execute(txnCtxt: TransactionContext, emitAllResults : Boolean) : ModelResultBase = {\n")
-			clsBuffer.append(s"        ctx = new com.ligadata.pmml.runtime.Context(txnCtxt.TransactionId, txnCtxt.getNodeCtxt.getEnvCtxt)\n")
+			clsBuffer.append(s"        ctx = new com.ligadata.pmml.runtime.Context(txnCtxt.getTransactionId, txnCtxt.getNodeCtxt.getEnvCtxt)\n")
 			clsBuffer.append(s"        initialize(txnCtxt.getMessage, txnCtxt.getNodeCtxt.getEnvCtxt)\n")
 			clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
 			clsBuffer.append(s"        prepareResults(emitAllResults)\n")
