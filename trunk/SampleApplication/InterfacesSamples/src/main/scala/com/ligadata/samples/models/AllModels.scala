@@ -18,7 +18,7 @@ package com.ligadata.models.samples.models
 
 import com.ligadata.kamanja.metadata.{ ModelDef }
 import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.KamanjaBase.{ ModelInstance, ModelInstanceFactory, ModelResultBase, TransactionContext, ModelContext, EnvContext }
+import com.ligadata.KamanjaBase.{ ModelInstance, ModelInstanceFactory, ModelResultBase, TransactionContext, ModelContext, EnvContext, NodeContext }
 import com.ligadata.samples.messages.{ CustAlertHistory, GlobalPreferences, CustPreferences, CustTransaction }
 import RddUtils._
 import RddDate._
@@ -71,7 +71,7 @@ import com.ligadata.kamanja.metadata.ModelDef;
 //   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
 //
 
-class LowBalanceAlertFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
+class LowBalanceAlertFactory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
   override def getModelName(): String = "LowBalanceAlert" // Model Name
   override def getVersion(): String = "0.0.1" // Model Version
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction] // Check to fire the model
@@ -210,7 +210,7 @@ class LowBalanceAlert(factory: ModelInstanceFactory) extends ModelInstance(facto
 //   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
 //
 
-class LowBalanceAlert2Factory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
+class LowBalanceAlert2Factory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
   override def getModelName(): String = "LowBalanceAlert2" // Model Name
   override def getVersion(): String = "0.0.1" // Model Version
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction] // Check to fire the model

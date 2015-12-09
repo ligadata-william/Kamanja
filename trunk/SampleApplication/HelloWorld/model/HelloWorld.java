@@ -73,8 +73,8 @@ public class HelloWorldModel extends ModelInstance {
 
 
     public static class HelloWorldModelFactory extends ModelInstanceFactory {
-		public HelloWorldModelFactory(ModelDef modelDef, EnvContext gCtx) {
-			super(modelDef, gCtx);
+		public HelloWorldModelFactory(ModelDef modelDef, NodeContext nodeContext) {
+			super(modelDef, nodeContext);
 		}
 		public boolean isValidMessage(MessageContainerBase msg) {
 			return (msg instanceof msg1);

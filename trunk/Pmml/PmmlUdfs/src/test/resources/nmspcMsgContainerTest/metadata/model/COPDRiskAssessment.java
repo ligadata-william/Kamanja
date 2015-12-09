@@ -34,8 +34,8 @@ public class COPDRiskAssessment extends ModelInstance {
     }
 
     public static class COPDRiskAssessmentFactory extends ModelInstanceFactory {
-		public COPDRiskAssessmentFactory(ModelDef modelDef, EnvContext gCtx) {
-			super(modelDef, gCtx);
+		public COPDRiskAssessmentFactory(ModelDef modelDef, NodeContext nodeContext) {
+			super(modelDef, nodeContext);
 		}
 
         public boolean isValidMessage(MessageContainerBase msg) {

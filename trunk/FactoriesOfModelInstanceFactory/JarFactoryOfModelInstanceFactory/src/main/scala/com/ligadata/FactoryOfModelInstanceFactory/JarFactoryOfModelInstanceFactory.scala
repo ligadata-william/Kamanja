@@ -17,7 +17,7 @@
 package com.ligadata.FactoryOfModelInstanceFactory
 
 import com.ligadata.kamanja.metadata.{ ModelDef, BaseElem }
-import com.ligadata.KamanjaBase.{ FactoryOfModelInstanceFactory, ModelInstanceFactory, EnvContext }
+import com.ligadata.KamanjaBase.{ FactoryOfModelInstanceFactory, ModelInstanceFactory, EnvContext, NodeContext }
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Exceptions.StackTrace
@@ -53,7 +53,7 @@ object JarFactoryOfModelInstanceFactory extends FactoryOfModelInstanceFactory {
     return allJars.map(j => Utils.GetValidJarFile(jarPaths, j)).toSet
   }
 
-  private[this] def CheckAndPrepModelFactory(gCtx: EnvContext, metadataLoader: KamanjaLoaderInfo, clsName: String, mdl: ModelDef): ModelInstanceFactory = {
+  private[this] def CheckAndPrepModelFactory(nodeContext: NodeContext, metadataLoader: KamanjaLoaderInfo, clsName: String, mdl: ModelDef): ModelInstanceFactory = {
     var isModel = true
     var curClass: Class[_] = null
 
@@ -82,7 +82,7 @@ object JarFactoryOfModelInstanceFactory extends FactoryOfModelInstanceFactory {
         var objinst: Any = null
         try {
           // Trying Regular class instantiation
-          objinst = curClass.getConstructor(classOf[ModelDef], classOf[EnvContext]).newInstance(mdl, gCtx)
+          objinst = curClass.getConstructor(classOf[ModelDef], classOf[NodeContext]).newInstance(mdl, nodeContext)
         } catch {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -109,13 +109,13 @@ object JarFactoryOfModelInstanceFactory extends FactoryOfModelInstanceFactory {
     return null
   }
 
-  override def getModelInstanceFactory(modelDef: ModelDef, gCtx: EnvContext, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelInstanceFactory = {
+  override def getModelInstanceFactory(modelDef: ModelDef, nodeContext: NodeContext, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelInstanceFactory = {
     LoadJarIfNeeded(loaderInfo, jarPaths, modelDef)
 
     var clsName = modelDef.PhysicalName.trim
     var orgClsName = clsName
 
-    var mdlInstanceFactory = CheckAndPrepModelFactory(gCtx, loaderInfo, clsName, modelDef)
+    var mdlInstanceFactory = CheckAndPrepModelFactory(nodeContext, loaderInfo, clsName, modelDef)
 
     if (mdlInstanceFactory == null) {
       LOG.error("Failed to instantiate ModelInstanceFactory :" + orgClsName)
@@ -125,7 +125,7 @@ object JarFactoryOfModelInstanceFactory extends FactoryOfModelInstanceFactory {
   }
 
   // Input: Model String, input & output Message Names. Output: ModelDef
-  override def prepareModel(gCtx: EnvContext, modelString: String, inputMessage: String, outputMessage: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef = {
+  override def prepareModel(nodeContext: NodeContext, modelString: String, inputMessage: String, outputMessage: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef = {
     null
   }
 }

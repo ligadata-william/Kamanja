@@ -336,11 +336,12 @@ abstract class ModelInstance(val factory: ModelInstanceFactory) {
   def execute(mdlCtxt: ModelContext, outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
 
-abstract class ModelInstanceFactory(val modelDef: ModelDef, val gCtx: EnvContext) {
-  final def getEnvContext() = gCtx // gCtx
+abstract class ModelInstanceFactory(val modelDef: ModelDef, val nodeContext: NodeContext) {
+  final def getNodeContext() = nodeContext // nodeContext
+  final def getEnvContext() = if (nodeContext != null) nodeContext.EnvCtxt // gCtx
   final def getModelDef() = modelDef // modelDef
 
-  def init(nc: NodeContext): Unit = {} // Common initialization for all Model Instances. This gets called once per node during the metadata load or corresponding model def change. 
+  def init(): Unit = {} // Common initialization for all Model Instances. This gets called once per node during the metadata load or corresponding model def change. 
   def shutdown(): Unit = {} // Shutting down this factory. 
   def getModelName(): String // Model Name
   def getVersion(): String // Model Version
@@ -351,8 +352,8 @@ abstract class ModelInstanceFactory(val modelDef: ModelDef, val gCtx: EnvContext
 }
 
 trait FactoryOfModelInstanceFactory {
-  def getModelInstanceFactory(modelDef: ModelDef, gCtx: EnvContext, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelInstanceFactory
-  def prepareModel(gCtx: EnvContext, modelString: String, inputMessage: String, outputMessage: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef // Input: Model String, input & output Message Names. Output: ModelDef
+  def getModelInstanceFactory(modelDef: ModelDef, nodeContext: NodeContext, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelInstanceFactory
+  def prepareModel(nodeContext: NodeContext, modelString: String, inputMessage: String, outputMessage: String, loaderInfo: KamanjaLoaderInfo, jarPaths: collection.immutable.Set[String]): ModelDef // Input: Model String, input & output Message Names. Output: ModelDef
 }
 
 // partitionKey is the one used for this message

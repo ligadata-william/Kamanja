@@ -20,7 +20,7 @@ import com.ligadata.KamanjaBase._
 import com.ligadata.KvBase.TimeRange
 import com.ligadata.kamanja.metadata.ModelDef;
 
-class HelloWorldModelFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
+class HelloWorldModelFactory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[msg1]
   override def createNewModelInstance(): ModelInstance = return new HelloWorldModel(this)
   override def getModelName: String = "HelloWorldModel" 

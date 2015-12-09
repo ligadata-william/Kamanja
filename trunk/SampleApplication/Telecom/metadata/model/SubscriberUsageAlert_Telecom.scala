@@ -48,7 +48,7 @@ import java.util.Locale
 import java.io._
 import com.ligadata.kamanja.metadata.ModelDef;
 
-class SubscriberUsageAlertFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
+class SubscriberUsageAlertFactory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[SubscriberUsage]
   override def createNewModelInstance(): ModelInstance = return new SubscriberUsageAlert(this)
   override def getModelName(): String = "System.SubscriberUsageAlert" // Model Name

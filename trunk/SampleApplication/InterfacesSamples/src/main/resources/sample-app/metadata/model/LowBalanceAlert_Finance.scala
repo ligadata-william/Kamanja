@@ -27,7 +27,7 @@ import java.io.{ DataInputStream, DataOutputStream }
 import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata.ModelDef;
 
-class LowBalanceAlertFactory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {
+class LowBalanceAlertFactory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
   override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
   override def createNewModelInstance(): ModelInstance = return new LowBalanceAlert(this)
   override def getModelName(): String = "System.LowBalanceAlert" // Model Name

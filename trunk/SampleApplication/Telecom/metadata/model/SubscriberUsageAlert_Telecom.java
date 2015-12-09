@@ -148,8 +148,8 @@ public class SubscriberUsageAlert extends ModelInstance {
 	}
 
 	 public static class SubscriberUsageAlertFactory extends ModelInstanceFactory {
-			public SubscriberUsageAlertFactory(ModelDef modelDef, EnvContext gCtx) {
-				super(modelDef, gCtx);
+			public SubscriberUsageAlertFactory(ModelDef modelDef, NodeContext nodeContext) {
+				super(modelDef, nodeContext);
 			}
 			public boolean isValidMessage(MessageContainerBase msg) {
 				return (msg instanceof SubscriberUsage);

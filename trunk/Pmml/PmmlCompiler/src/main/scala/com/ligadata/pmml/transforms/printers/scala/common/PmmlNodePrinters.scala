@@ -1093,9 +1093,9 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
     }
 
 		if (ctx.injectLogging) {
-			objBuffer.append(s"class ${classname}Factory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) with LogTrait {\n") 
+			objBuffer.append(s"class ${classname}Factory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) with LogTrait {\n") 
 		} else {
-			objBuffer.append(s"class ${classname}Factory(modelDef: ModelDef, gCtx: EnvContext) extends ModelInstanceFactory(modelDef, gCtx) {\n") 
+			objBuffer.append(s"class ${classname}Factory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {\n") 
 		}
 		
 		/** generate static variables */

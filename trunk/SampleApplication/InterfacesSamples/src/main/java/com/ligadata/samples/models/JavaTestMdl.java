@@ -46,8 +46,8 @@ public class JavaTestMdl extends ModelInstance {
 	}
 
 	public static class JavaTestMdlFactory extends ModelInstanceFactory {
-		public JavaTestMdlFactory(ModelDef mdlDef, EnvContext envCtxt) {
-			super(mdlDef, envCtxt);
+		public JavaTestMdlFactory(ModelDef mdlDef, NodeContext nodeContext) {
+			super(mdlDef, nodeContext);
 		}
 
 		public boolean isValidMessage(MessageContainerBase msg) {
