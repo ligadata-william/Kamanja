@@ -24,7 +24,7 @@ import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.KamanjaBase.{ BaseMsg, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelInstanceFactory, TransformMessage, EnvContext, MdBaseResolveInfo, FactoryOfModelInstanceFactory, NodeContext }
+import com.ligadata.KamanjaBase.{ BaseMsg, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelInstanceFactory, TransformMessage, EnvContext, MdBaseResolveInfo, FactoryOfModelInstanceFactory, NodeContext, TransactionContext }
 import scala.collection.mutable.HashMap
 import org.apache.logging.log4j._
 import scala.collection.mutable.ArrayBuffer
@@ -36,6 +36,8 @@ import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.Exceptions.StackTrace
 import com.ligadata.KamanjaBase.{ EnvContext, ContainerNameAndDatastoreInfo }
 import scala.actors.threadpool.{ ExecutorService, Executors }
+import com.ligadata.transactions.{ NodeLevelTransService, SimpleTransService }
+import com.ligadata.KamanjaBase.ThreadLocalStorage
 
 class MdlInfo(val mdl: ModelInstanceFactory, val jarPath: String, val dependencyJarNames: Array[String]) {
 }
@@ -274,7 +276,7 @@ class KamanjaMetadata {
     factObjs.getOrElse(fqName.toLowerCase(), null)
   }
 
-  def PrepareModelFactory(mdl: ModelDef, loadJars: Boolean): Unit = {
+  def PrepareModelFactory(mdl: ModelDef, loadJars: Boolean, txnCtxt: TransactionContext): Unit = {
     if (mdl != null) {
       if (loadJars)
         KamanjaMetadata.LoadJarIfNeeded(mdl)
@@ -287,7 +289,7 @@ class KamanjaMetadata {
         try {
           val factory: ModelInstanceFactory = factoryOfMdlInstFactory.getModelInstanceFactory(mdl, KamanjaMetadata.gNodeContext, KamanjaConfiguration.metadataLoader, KamanjaConfiguration.jarPaths)
           if (factory != null) {
-            factory.init(null)
+            factory.init(txnCtxt)
             val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
             modelObjsMap(mdlName) = new MdlInfo(factory, mdl.jarName, mdl.dependencyJarNames)
           } else {
@@ -377,9 +379,25 @@ class KamanjaMetadata {
       KamanjaMetadata.LoadJarIfNeeded(mdl)
     })
 
-    modelDefs.foreach(mdl => {
-      PrepareModelFactory(mdl, false) // Already Loaded required dependency jars before calling this
-    })
+    var txnCtxt: TransactionContext = null
+    var txnId: Long = 0
+    try {
+      txnId = -100 // getNextTransId
+      txnCtxt = new TransactionContext(txnId, KamanjaMetadata.gNodeContext, Array[Byte](), "")
+      ThreadLocalStorage.txnContextInfo.set(txnCtxt)
+      modelDefs.foreach(mdl => {
+        PrepareModelFactory(mdl, false, txnCtxt) // Already Loaded required dependency jars before calling this
+      })
+    } catch {
+      case e: Exception => throw e
+      case e: Throwable => throw e
+    } finally {
+      ThreadLocalStorage.txnContextInfo.remove
+      if (txnCtxt != null) {
+        KamanjaMetadata.gNodeContext.getEnvCtxt.rollbackData(txnId)
+      }
+    }
+
   }
 }
 
@@ -794,9 +812,35 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     updMetadataExecutor.execute(new MetadataUpdate(zkTransaction))
   }
 
+  def getNextTransId: Long = {
+    NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
+    val transService = new SimpleTransService
+    transService.init(1)
+    return transService.getNextTransId // Getting first transaction. It may get wasted if we don't have any lines to save.
+  }
+
   // Assuming mdMgr is locked at this moment for not to update while doing this operation
   class MetadataUpdate(val zkTransaction: ZooKeeperTransaction) extends Runnable {
     def run() {
+      var txnCtxt: TransactionContext = null
+      var txnId: Long = 0
+      try {
+        txnId = -100 // getNextTransId
+        txnCtxt = new TransactionContext(txnId, KamanjaMetadata.gNodeContext, Array[Byte](), "")
+        ThreadLocalStorage.txnContextInfo.set(txnCtxt)
+        run1(txnCtxt)
+      } catch {
+        case e: Exception => throw e
+        case e: Throwable => throw e
+      } finally {
+        ThreadLocalStorage.txnContextInfo.remove
+        if (txnCtxt != null) {
+          KamanjaMetadata.gNodeContext.getEnvCtxt.rollbackData(txnId)
+        }
+      }
+    }
+
+    private def run1(txnCtxt: TransactionContext) {
       if (updMetadataExecutor.isShutdown)
         return
 
@@ -936,7 +980,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
                 try {
                   val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                   if (mdl != None) {
-                    obj.PrepareModelFactory(mdl.get, true)
+                    obj.PrepareModelFactory(mdl.get, true, txnCtxt)
                   } else {
                     LOG.error("Failed to find Model:" + key)
                   }
