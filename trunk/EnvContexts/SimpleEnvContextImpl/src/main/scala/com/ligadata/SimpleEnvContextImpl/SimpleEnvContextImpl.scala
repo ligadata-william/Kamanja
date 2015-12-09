@@ -557,7 +557,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private[this] def lockIdx(transId: Long): Int = {
-    return (transId % _buckets).toInt
+    return (math.abs(transId) % _buckets).toInt
   }
 
   private[this] def getTransactionContext(transId: Long, addIfMissing: Boolean): TransactionContext = {
