@@ -65,6 +65,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           var newMdlsSet = scala.collection.mutable.Set[String]()
 
           tModels.foreach(tup => {
+            LOG.debug("Model:" + tup._1)
             val md = tup._2
             val mInfo = map.getOrElse(tup._1, null)
             var newInfo: (String, MdlInfo, Boolean, ModelInstance, Boolean) = null

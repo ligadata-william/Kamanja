@@ -606,13 +606,17 @@ object KamanjaMetadata extends MdBaseResolveInfo {
                                           removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
     //BUGBUG:: Assuming there is no issues if we remove the objects first and then add the new objects. We are not adding the object in the same order as it added in the transaction. 
 
+    var mdlsChanged = false
+
     // First removing the objects
     // Removing Models
     if (removedModels != null && removedModels.size > 0) {
+      val prevCnt = modelObjs.size
       removedModels.foreach(mdl => {
         val elemName = (mdl._1.trim + "." + mdl._2.trim).toLowerCase
         modelObjs -= elemName
       })
+      mdlsChanged = (prevCnt != modelObjs.size)
     }
 
     // Removing Messages
@@ -655,8 +659,10 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     }
 
     // Adding Models
-    if (mdlObjects != null && mdlObjects.size > 0)
+    if (mdlObjects != null && mdlObjects.size > 0) {
+      mdlsChanged = true // already checked for mdlObjects.size > 0
       modelObjs ++= mdlObjects
+    }
 
     // If messages/Containers removed or added, jsut change the parents chain
     if ((removedMessages != null && removedMessages.size > 0) ||
@@ -727,8 +733,16 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       } else {
         modelExecOrderedObjects = if (modelObjs != null) modelObjs.toArray else Array[(String, MdlInfo)]()
       }
-      mdlsChangedCntr += 1
+
+      mdlsChanged = true
+    } else {
+      modelExecOrderedObjects = Array[(String, MdlInfo)]()
     }
+
+    LOG.debug("mdlsChanged:" + mdlsChanged.toString)
+
+    if (mdlsChanged)
+      mdlsChangedCntr += 1
   }
 
   def InitBootstrap: Unit = {
