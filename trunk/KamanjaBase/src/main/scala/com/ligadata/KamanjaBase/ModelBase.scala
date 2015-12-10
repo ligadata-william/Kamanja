@@ -322,35 +322,83 @@ trait EnvContext {
 
   // Just get the cached container key and see what are the containers we need to cache
   def CacheContainers(clusterId: String): Unit
-  
+
   def EnableEachTransactionCommit: Boolean
 }
 
+// ModelInstance will be created from ModelInstanceFactory by demand.
+//	If ModelInstanceFactory:isModelInstanceReusable returns true, engine requests one ModelInstance per partition.
+//	If ModelInstanceFactory:isModelInstanceReusable returns false, engine requests one ModelInstance per input message related to this model (message is validated with ModelInstanceFactory.isValidMessage).
 abstract class ModelInstance(val factory: ModelInstanceFactory) {
-  final def getNodeContext() = factory.getNodeContext() // nodeContext
-  final def getEnvContext() = factory.getEnvContext() // gCtx
-  final def getModelName() = factory.getModelName() // Model Name
-  final def getVersion() = factory.getVersion() // Model Version
-  final def getModelInstanceFactory() = factory // factory
+  // Getting NodeContext from ModelInstanceFactory
+  final def getNodeContext() = factory.getNodeContext()
 
+  // Getting EnvContext from ModelInstanceFactory
+  final def getEnvContext() = factory.getEnvContext()
+
+  // Getting ModelName from ModelInstanceFactory
+  final def getModelName() = factory.getModelName()
+
+  // Getting Model Version from ModelInstanceFactory
+  final def getVersion() = factory.getVersion()
+
+  // Getting ModelInstanceFactory, which is passed in constructor
+  final def getModelInstanceFactory() = factory
+
+  // This calls when the instance got created. And only calls once per instance.
+  //	Intput:
+  //		instanceMetadata: Metadata related to this instance (partition information)
   def init(instanceMetadata: String): Unit = {} // Local Instance level initialization
+
+  // This calls when the instance is shutting down. There is no guarantee
   def shutdown(): Unit = {} // Shutting down this factory. 
-  def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
+
+  // This calls for each input message related to this model (message is validated with ModelInstanceFactory.isValidMessage)
+  //	Intput:
+  //		txnCtxt: Transaction context related to this execution
+  //		outputDefault: If this is true, engine is expecting output always.
+  //	Output:
+  //		Derived class of ModelResultBase is the return results expected. null if no results.
+  def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase
 }
 
+// ModelInstanceFactory will be created from FactoryOfModelInstanceFactory when metadata got resolved (while engine is starting and when metadata adding while running the engine).
 abstract class ModelInstanceFactory(val modelDef: ModelDef, val nodeContext: NodeContext) {
-  final def getNodeContext() = nodeContext // nodeContext
-  final def getEnvContext() = if (nodeContext != null) nodeContext.getEnvCtxt // gCtx
-  final def getModelDef() = modelDef // modelDef
+  // Getting NodeContext, which is passed in constructor
+  final def getNodeContext() = nodeContext
 
-  def init(txnContext: TransactionContext): Unit = {} // Common initialization for all Model Instances. This gets called once per node during the metadata load or corresponding model def change. txnContext will go down as soon as init is done. 
+  // Getting EnvContext from nodeContext, if available
+  final def getEnvContext() = if (nodeContext != null) nodeContext.getEnvCtxt else null
+
+  // Getting ModelDef, which is passed in constructor
+  final def getModelDef() = modelDef
+
+  // This calls when the instance got created. And only calls once per instance.
+  // Common initialization for all Model Instances. This gets called once per node during the metadata load or corresponding model def change.
+  //	Intput:
+  //		txnCtxt: Transaction context to do get operations on this transactionid. But this transaction will be rolledback once the initialization is done.
+  def init(txnContext: TransactionContext): Unit = {}
+
+  // This calls when the factory is shutting down. There is no guarantee.
   def shutdown(): Unit = {} // Shutting down this factory. 
+
+  // Getting ModelName.
   def getModelName(): String // Model Name
+
+  // Getting Model Version
   def getVersion(): String // Model Version
-  def isValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def createModelInstance(): ModelInstance // Creating same type of object with given values 
-  def createResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
-  def isModelInstanceReusable(): Boolean = false // Can we reuse the instances created for this model?
+
+  // Checking whether the message is valid to execute this model instance or not.
+  def isValidMessage(msg: MessageContainerBase): Boolean
+
+  // Creating new model instance related to this ModelInstanceFactory.
+  def createModelInstance(): ModelInstance
+
+  // Creating ModelResultBase associated this model/modelfactory.
+  def createResultObject(): ModelResultBase
+
+  // Is the ModelInstance created by this ModelInstanceFactory is reusable?
+  def isModelInstanceReusable(): Boolean = false
 }
 
 trait FactoryOfModelInstanceFactory {
