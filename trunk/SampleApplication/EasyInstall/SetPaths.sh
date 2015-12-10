@@ -7,7 +7,7 @@ fi
 jar_full_path=$(which jar)
 if [ "$?" != "0" ]; then
 	jar_full_path=$JAVA_HOME/bin/jar
-	if [ $jar_full_path == "" ]; then
+	if [ $JAVA_HOME == "" ]; then
 		echo "The command 'which jar' failed and the environment variable $JAVA_HOME is not set. Please set the $JAVA_HOME environment variable."
 		exit 1
 	fi
@@ -16,7 +16,7 @@ fi
 scala_full_path=$(which scala)
 if [ "$?" != "0" ]; then
 	scala_full_path=$SCALA_HOME/bin/scala
-	if [$scala_full_path == ""]; then
+	if [$SCALA_HOME == ""]; then
 		echo "The command 'which scala' failed and the environment variable $SCALA_HOME is not set. Please set the $SCALA_HOME environment variable."
 		exit 1
 	fi
