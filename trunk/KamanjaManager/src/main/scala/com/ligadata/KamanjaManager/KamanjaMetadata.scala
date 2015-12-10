@@ -806,6 +806,8 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       LOG.error("Metadata Manager should not be NULL while updaing metadta in Kamanja manager.")
       return
     }
+    
+    if (zkTransaction.transactionId.getOrElse("0").toLong <= MetadataAPIImpl.getCurrentTranLevel) return
 
     updMetadataExecutor.execute(new MetadataUpdate(zkTransaction))
   }

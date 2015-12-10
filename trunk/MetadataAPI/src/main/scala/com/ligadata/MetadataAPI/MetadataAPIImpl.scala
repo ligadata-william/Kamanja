@@ -121,6 +121,8 @@ object MetadataAPIImpl extends MetadataAPI {
   private val storageDefaultTime = 0L
   private val storageDefaultTxnId = 0L
 
+  def getCurrentTranLevel = currentTranLevel
+
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
   var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS", "ZK_CONNECTION_TIMEOUT_MS", "DATABASE_SCHEMA", "DATABASE", "DATABASE_LOCATION", "DATABASE_HOST", "API_LEADER_SELECTION_ZK_NODE",
