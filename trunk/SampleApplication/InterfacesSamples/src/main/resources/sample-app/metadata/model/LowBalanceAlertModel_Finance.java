@@ -81,7 +81,7 @@ public class LowBalanceAlertModel extends ModelInstance {
     	return false;
     }
 
-    public static class LowBalanceAlertModelObj extends ModelInstanceFactory {
+    public static class LowBalanceAlertFactory extends ModelInstanceFactory {
 		public LowBalanceAlertFactory(ModelDef modelDef, NodeContext nodeContext) {
 			super(modelDef, nodeContext);
 		}
