@@ -321,19 +321,20 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
     try {
       val transId = transService.getNextTransId
       try {
-        val json = parse(new String(data))
+        val inputData = new String(data)
+        val json = parse(inputData)
         if (json == null || json.values == null) {
-          LOG.error("Invalid JSON data : " + data)
+          LOG.error("Invalid JSON data : " + inputData)
           return
         }
         val parsed_json = json.values.asInstanceOf[Map[String, Any]]
         if (parsed_json.size != 1) {
-          LOG.error("Expecting only one ModelsResult in JSON data : " + data)
+          LOG.error("Expecting only one ModelsResult in JSON data : " + inputData)
           return
         }
         val mdlRes = parsed_json.head._1
         if (mdlRes == null || mdlRes.compareTo("ModelsResult") != 0) {
-          LOG.error("Expecting only ModelsResult as key in JSON data : " + data)
+          LOG.error("Expecting only ModelsResult as key in JSON data : " + inputData)
           return
         }
 
@@ -344,7 +345,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
           val uV = allVals.getOrElse("uniqVal", null)
 
           if (uK == null || uV == null) {
-            LOG.error("Not found uniqKey & uniqVal in ModelsResult. JSON string : " + data)
+            LOG.error("Not found uniqKey & uniqVal in ModelsResult. JSON string : " + inputData)
             return
           }
 
