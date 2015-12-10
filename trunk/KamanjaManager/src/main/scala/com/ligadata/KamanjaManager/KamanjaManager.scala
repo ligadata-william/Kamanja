@@ -442,6 +442,8 @@ class KamanjaManager extends Observer {
       if (KamanjaMetadata.envCtxt == null)
         return false
 
+      KamanjaMetadata.gNodeContext = new NodeContext(KamanjaMetadata.envCtxt)
+
       LOG.debug("Loading Adapters")
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
       retval = KamanjaMdCfg.LoadAdapters(inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
@@ -451,6 +453,32 @@ class KamanjaManager extends Observer {
         KamanjaMetadata.InitMdMgr(KamanjaConfiguration.zkConnectString, metadataUpdatesZkNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
         KamanjaMetadata.envCtxt.CacheContainers(KamanjaConfiguration.clusterId) // Load data for Caching
         LOG.debug("Initializing Leader")
+
+        var txnCtxt: TransactionContext = null
+        var txnId = KamanjaConfiguration.nodeId.toString.hashCode()
+        if (txnId > 0)
+          txnId = -1 * txnId
+        // Finally we are taking -ve txnid for this
+        try {
+          txnCtxt = new TransactionContext(txnId, KamanjaMetadata.gNodeContext, Array[Byte](), "")
+          ThreadLocalStorage.txnContextInfo.set(txnCtxt)
+
+          val (tmpMdls, tMdlsChangedCntr) = KamanjaMetadata.getAllModels
+          val tModels = if (tmpMdls != null) tmpMdls else Array[(String, MdlInfo)]()
+
+          tModels.foreach(tup => {
+            tup._2.mdl.init(txnCtxt)
+          })
+        } catch {
+          case e: Exception => throw e
+          case e: Throwable => throw e
+        } finally {
+          ThreadLocalStorage.txnContextInfo.remove
+          if (txnCtxt != null) {
+            KamanjaMetadata.gNodeContext.getEnvCtxt.rollbackData(txnId)
+          }
+        }
+
         KamanjaLeader.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, KamanjaMetadata.envCtxt, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 

@@ -18,7 +18,7 @@ package com.ligadata.MetadataAPI.Utility
 
 import java.io.File
 
-import com.ligadata.MetadataAPI.{MetadataAPIOutputMsg, MetadataAPIImpl}
+import com.ligadata.MetadataAPI.{MetadataAPIOutputMsg, MetadataAPIImpl,ApiResult,ErrorCodeConstants}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
@@ -81,22 +81,20 @@ object MessageService {
 
   def getAllMessages: String = {
     var response = ""
+    var messageKeysList =""
     try {
       val messageKeys: Array[String] = MetadataAPIImpl GetAllMessagesFromCache(true, userid)
       if (messageKeys.length == 0) {
-        response = "Sorry, No messages are available in the Metadata"
+       var emptyAlert="Sorry, No messages are available in the Metadata"
+        response =  (new ApiResult(ErrorCodeConstants.Success, "MessageService",null, emptyAlert)).toString
       } else {
-        var srno = 0
-        println("List of messages:")
-        for (messageKey <- messageKeys) {
-          //srno += 1
-          //println("[" + srno + "] " + messageKey)
-          response += messageKey
-        }
+       response= (new ApiResult(ErrorCodeConstants.Success, "MessageService", messageKeys.mkString(", ") , "Successfully retrieved all the messages")).toString
       }
     } catch {
       case e: Exception => {
         response = e.getStackTrace.toString
+       response= (new ApiResult(ErrorCodeConstants.Failure, "MessageService",null, response)).toString
+
       }
     }
     response

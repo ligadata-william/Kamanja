@@ -605,6 +605,10 @@ class ArgDef {
   def typeString: String = aType.typeString
 }
 
+class FactoryOfModelInstanceFactoryDef extends BaseElemDef {
+  
+}
+
 class FunctionDef extends BaseElemDef {
   var retType: BaseTypeDef = _ // return type of this function - could be simple scalar or array or complex type such as map or set
   var args: Array[ArgDef] = _ // list of arguments definitions

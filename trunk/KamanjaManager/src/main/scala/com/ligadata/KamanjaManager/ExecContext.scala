@@ -68,7 +68,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
       val transId = transService.getNextTransId
-      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.envCtxt, "")
+      val txnCtxt = new TransactionContext(transId, kamanjaCallerCtxt.gNodeContext, data, uk)
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       var outputResults = ArrayBuffer[(String, String, String)]() // Adapter/Queue name, Partition Key & output message 
@@ -110,10 +110,10 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val commitStartTime = System.nanoTime
         // 
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
-        val forceCommitVal = txnCtxt.getContextValue("forcecommit")
+        val forceCommitVal = txnCtxt.getValue("forcecommit")
         val forceCommitFalg = forceCommitVal != null
-        val containerData = if (forceCommitFalg) kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
-        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
+        val containerData = if (forceCommitFalg || kamanjaCallerCtxt.gNodeContext.getEnvCtxt.EnableEachTransactionCommit) kamanjaCallerCtxt.gNodeContext.getEnvCtxt.getChangedData(transId, false, true) else scala.collection.immutable.Map[String, List[Key]]() // scala.collection.immutable.Map[String, List[List[String]]]
+        kamanjaCallerCtxt.gNodeContext.getEnvCtxt.commitData(transId, uk, uv, outputResults.toList, forceCommitFalg)
 
         // Set the uk & uv
         if (adapterInfoMap != null)
@@ -321,19 +321,20 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
     try {
       val transId = transService.getNextTransId
       try {
-        val json = parse(new String(data))
+        val inputData = new String(data)
+        val json = parse(inputData)
         if (json == null || json.values == null) {
-          LOG.error("Invalid JSON data : " + data)
+          LOG.error("Invalid JSON data : " + inputData)
           return
         }
         val parsed_json = json.values.asInstanceOf[Map[String, Any]]
         if (parsed_json.size != 1) {
-          LOG.error("Expecting only one ModelsResult in JSON data : " + data)
+          LOG.error("Expecting only one ModelsResult in JSON data : " + inputData)
           return
         }
         val mdlRes = parsed_json.head._1
         if (mdlRes == null || mdlRes.compareTo("ModelsResult") != 0) {
-          LOG.error("Expecting only ModelsResult as key in JSON data : " + data)
+          LOG.error("Expecting only ModelsResult as key in JSON data : " + inputData)
           return
         }
 
@@ -344,7 +345,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
           val uV = allVals.getOrElse("uniqVal", null)
 
           if (uK == null || uV == null) {
-            LOG.error("Not found uniqKey & uniqVal in ModelsResult. JSON string : " + data)
+            LOG.error("Not found uniqKey & uniqVal in ModelsResult. JSON string : " + inputData)
             return
           }
 
@@ -361,7 +362,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        kamanjaCallerCtxt.envCtxt.commitData(transId, null, null, null, false)
+        kamanjaCallerCtxt.gNodeContext.getEnvCtxt.commitData(transId, null, null, null, false)
       }
     } catch {
       case e: Exception => {
