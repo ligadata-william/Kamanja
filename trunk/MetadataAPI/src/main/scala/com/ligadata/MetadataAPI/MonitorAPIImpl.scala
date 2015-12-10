@@ -21,7 +21,7 @@ import org.apache.zookeeper.KeeperException.NoNodeException
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import scala.collection.JavaConverters._
 import org.apache.curator.framework.recipes.cache._
 import scala.actors.threadpool.{ Executors, ExecutorService }
@@ -34,7 +34,7 @@ import scala.actors.threadpool.{ Executors, ExecutorService }
 object MonitorAPIImpl {
   
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   val CHILD_ADDED_ACTION = "CHILD_ADDED"
   val CHILD_REMOVED_ACTION = "CHILD_REMOVED"
   val CHILD_UPDATED_ACTION = "CHILD_UPDATED"

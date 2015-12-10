@@ -16,12 +16,11 @@
 
 package com.ligadata.audit.adapters
 
-import com.ligadata.StorageBase.{ Key, Value}
 import com.ligadata.AuditAdapterInfo._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.Serialize._
 import com.ligadata.Exceptions._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import java.util.Date
 import java.util.Calendar
 import java.io.File;
@@ -31,7 +30,7 @@ import org.mapdb._;
 
 class AuditHashMapAdapter extends AuditAdapter {
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
   
   var adapterProperties: scala.collection.mutable.Map[String,String] = scala.collection.mutable.Map[String,String]()
   var db: DB = null

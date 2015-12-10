@@ -22,7 +22,7 @@ import com.ligadata.MetadataAPI.{MetadataAPIImpl,ApiResult,ErrorCodeConstants}
 
 import scala.io.Source
 
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 /**
  * Created by dhaval on 8/7/15.
@@ -31,7 +31,7 @@ import org.apache.log4j._
 object ModelService {
   private val userid: Option[String] = Some("metadataapi")
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   def addModelPmml(input: String): String = {
     var modelDef=""

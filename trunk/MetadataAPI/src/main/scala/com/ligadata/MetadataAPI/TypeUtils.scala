@@ -37,7 +37,8 @@ import com.ligadata.kamanja.metadataload.MetadataLoad
 
 // import com.ligadata.keyvaluestore._
 import com.ligadata.HeartBeat.HeartBeatUtil
-import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
+import com.ligadata.StorageBase.{ DataStore, Transaction }
+import com.ligadata.KvBase.{ Key, Value, TimeRange }
 
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.{ JSONObject, JSONArray }
@@ -51,7 +52,7 @@ import com.ligadata.messagedef._
 import com.ligadata.Exceptions._
 
 import scala.xml.XML
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -64,7 +65,6 @@ import org.apache.zookeeper.CreateMode
 import com.ligadata.keyvaluestore._
 import com.ligadata.Serialize._
 import com.ligadata.Utils._
-import util.control.Breaks._
 import com.ligadata.AuditAdapterInfo._
 import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import com.ligadata.keyvaluestore.KeyValueManager
@@ -80,7 +80,7 @@ object TypeUtils {
   lazy val sysNS = "System"
   // system name space
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
   def AddType(typeText: String, format: String): String = {

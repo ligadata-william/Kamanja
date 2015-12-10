@@ -17,23 +17,25 @@
 
 package com.ligadata.KamanjaManager
 
-import com.ligadata.KamanjaBase.{ BaseMsg, InputData, DelimitedData, JsonData, XmlData, EnvContext }
+import com.ligadata.KamanjaBase.{ BaseMsg, DataDelimiters, InputData, DelimitedData, JsonData, XmlData, KvData, EnvContext }
 import com.ligadata.Utils.Utils
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.xml.XML
 import scala.xml.Elem
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 // To filter data coming from Input (Queue/file). This takes N input fields and M output fields. Output fields are subset of Input fields.
 // We also have KEY. So that we can start sending the user into separate threads from here.
 class TransformMessageData {
-  private val LOG = Logger.getLogger(getClass);
-  def parseCsvInputData(inputData: String, associatedMsg: String, delimiterString: String): (String, MsgContainerObjAndTransformInfo, InputData) = {
-    val dataDelim = if (delimiterString != null && delimiterString.size > 0) delimiterString else ","
-    val str_arr = inputData.split(dataDelim, -1)
-    val inpData = new DelimitedData(inputData, dataDelim)
+  private val LOG = LogManager.getLogger(getClass);
+
+  private def parseCsvInputData(inputData: String, associatedMsg: String, delimiters: DataDelimiters): (String, MsgContainerObjAndTransformInfo, InputData) = {
+    if (delimiters.IsFieldDelimiterEmpty) delimiters.fieldDelimiter = ","
+    if (delimiters.IsValueDelimiterEmpty) delimiters.valueDelimiter = "~"
+    val str_arr = inputData.split(delimiters.fieldDelimiter, -1)
+    val inpData = new DelimitedData(inputData, delimiters)
     inpData.curPos = 0
     if (associatedMsg != null && associatedMsg.size > 0) {
       val msgType = associatedMsg
@@ -85,7 +87,7 @@ class TransformMessageData {
     return (msgType, msgInfo, inpData)
   }
 
-  def parseJsonInputData(inputData: String, associatedMsg: String): (String, MsgContainerObjAndTransformInfo, InputData) = {
+  private def parseJsonInputData(inputData: String, associatedMsg: String): (String, MsgContainerObjAndTransformInfo, InputData) = {
     val json = parse(inputData)
     if (json == null || json.values == null)
       throw new Exception("Invalid JSON data : " + inputData)
@@ -118,7 +120,7 @@ class TransformMessageData {
     return (msgType, msgInfo, inpData)
   }
 
-  def parseXmlInputData(inputData: String, associatedMsg: String): (String, MsgContainerObjAndTransformInfo, InputData) = {
+  private def parseXmlInputData(inputData: String, associatedMsg: String): (String, MsgContainerObjAndTransformInfo, InputData) = {
     val xml = XML.loadString(inputData)
     if (xml == null)
       throw new Exception("Invalid XML data : " + inputData)
@@ -145,18 +147,59 @@ class TransformMessageData {
     return (msgType, msgInfo, inpData)
   }
 
-  def parseInputData(inputData: String, msgFormat: String, associatedMsg: String, delimiterString: String): (String, MsgContainerObjAndTransformInfo, InputData) = {
+  private def parseKvInputData(inputData: String, associatedMsg: String, delimiters: DataDelimiters): (String, MsgContainerObjAndTransformInfo, InputData) = {
+    if (associatedMsg == null || associatedMsg.size == 0)
+      throw new Exception("KV data expecting Associated messages as input.")
+
+    if (delimiters.IsFieldDelimiterEmpty) delimiters.fieldDelimiter = ","
+    if (delimiters.IsValueDelimiterEmpty) delimiters.valueDelimiter = "~"
+    if (delimiters.IsKeyAndValueDelimiterEmpty) delimiters.keyAndValueDelimiter = "\\x01"
+
+    val str_arr = inputData.split(delimiters.fieldDelimiter, -1)
+    val inpData = new KvData(inputData, delimiters)
+    val dataMap = scala.collection.mutable.Map[String, String]()
+
+    if (delimiters.fieldDelimiter.compareTo(delimiters.keyAndValueDelimiter) == 0) {
+      if (str_arr.size % 2 != 0) {
+        val errStr = "Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched. We got %d tokens from input string %s".format(str_arr.size, inputData)
+        LOG.error(errStr)
+        throw new Exception(errStr)
+      }
+      for (i <- 0 until str_arr.size by 2) {
+        dataMap(str_arr(i).trim) = str_arr(i + 1)
+      }
+    } else {
+      str_arr.foreach(kv => {
+        val kvpair = kv.split(delimiters.keyAndValueDelimiter)
+        if (kvpair.size != 2) {
+          throw new Exception("Expecting Key & Value pair only")
+        }
+        dataMap(kvpair(0).trim) = kvpair(1)
+      })
+    }
+
+    inpData.dataMap = dataMap.toMap
+    val msgType = associatedMsg
+    val msgInfo = KamanjaMetadata.getMessgeInfo(msgType)
+    if (msgInfo == null)
+      throw new Exception("Not found Message Type \"" + msgType + "\"")
+    return (msgType, msgInfo, inpData)
+  }
+
+  private def parseInputData(inputData: String, msgFormat: String, associatedMsg: String, delimiters: DataDelimiters): (String, MsgContainerObjAndTransformInfo, InputData) = {
     if (msgFormat.equalsIgnoreCase("csv"))
-      return parseCsvInputData(inputData, associatedMsg, delimiterString)
+      return parseCsvInputData(inputData, associatedMsg, delimiters)
     else if (msgFormat.equalsIgnoreCase("json"))
       return parseJsonInputData(inputData, associatedMsg)
     else if (msgFormat.equalsIgnoreCase("xml"))
       return parseXmlInputData(inputData, associatedMsg)
+    else if (msgFormat.equalsIgnoreCase("kv"))
+      return parseKvInputData(inputData, associatedMsg, delimiters)
     else throw new Exception("Invalid input data type")
   }
 
-  def execute(data: Array[Byte], format: String, associatedMsg: String, delimiterString: String, uk: String, uv: String): Array[(String, MsgContainerObjAndTransformInfo, InputData)] = {
-    val output = parseInputData(new String(data), format, associatedMsg, delimiterString)
+  def execute(data: Array[Byte], format: String, associatedMsg: String, delimiters: DataDelimiters, uk: String, uv: String): Array[(String, MsgContainerObjAndTransformInfo, InputData)] = {
+    val output = parseInputData(new String(data), format, associatedMsg, delimiters)
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
     Array((output._1, output._2, output._3))
   }

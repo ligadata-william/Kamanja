@@ -31,7 +31,7 @@ import java.util.Date
 import java.io._
 
 import sys.process._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -53,8 +53,37 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
   var newVersion:String = null
 
   private val loggerName = this.getClass.getName
-  private val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.INFO)
+  private val logger = LogManager.getLogger(loggerName)
+
+  private def TruncateDbStore = {
+      val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+      assert(null != db)
+      db match {
+	case "sqlserver" | "mysql" | "hbase" | "cassandra" | "hashmap" | "treemap" => {
+	  var ds = MetadataAPIImpl.GetMainDS
+	  var containerList:Array[String] = Array("config_objects","jar_store","model_config_objects","metadata_objects","transaction_id")
+	  ds.TruncateContainer(containerList)
+	}
+	case _ => {
+	  logger.info("TruncateDbStore is not supported for database " + db)
+	}
+      }
+  }
+
+  private def DropDbStore = {
+      val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+      assert(null != db)
+      db match {
+	case "sqlserver" | "mysql" | "hbase" | "cassandra" | "hashmap" | "treemap" => {
+	  var ds = MetadataAPIImpl.GetMainDS
+	  var containerList:Array[String] = Array("config_objects","jar_store","model_config_objects","metadata_objects","transaction_id")
+	  ds.DropContainer(containerList)
+	}
+	case _ => {
+	  logger.info("DropDbStore is not supported for database " + db)
+	}
+      }
+  }
 
   override def beforeAll = {
     try {
@@ -76,14 +105,20 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       zkServer.instance.startup
 
       logger.info("Initialize zooKeeper connection")
-      MetadataAPIImpl.initZkListeners
+      MetadataAPIImpl.initZkListeners(false)
 
       logger.info("Initialize datastore")
-      val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+      var tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+      logger.info("jarPaths => " + tmpJarPaths)
       val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
       MetadataAPIImpl.OpenDbStore(jarPaths, MetadataAPIImpl.GetMetadataAPIConfig.getProperty("METADATA_DATASTORE"))
+
+      var jp = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+      logger.info("jarPaths => " + jp)
+
+
       logger.info("Truncating dbstore")
-      MetadataAPIImpl.TruncateDbStore
+      TruncateDbStore
 
       And("PutTranId updates the tranId")
       noException should be thrownBy {
@@ -92,15 +127,20 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
       logger.info("Load All objects into cache")
       MetadataAPIImpl.LoadAllObjectsIntoCache
+
+      // The above call is resetting JAR_PATHS based on nodeId( node-specific configuration)
+      // This is causing unit-tests to fail
+      // restore JAR_PATHS value
+      MetadataAPIImpl.GetMetadataAPIConfig.setProperty("JAR_PATHS",tmpJarPaths)
+      jp = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
+      logger.info("jarPaths => " + jp)
+
       logger.info("Initialize security adapter")
       MetadataAPIImpl.InitSecImpl
 
       MetadataAPIImpl.TruncateAuditStore
       MetadataAPIImpl.isInitilized = true
-
-      System.out.println(MetadataAPIImpl.GetMetadataAPIConfig)
-      //MetadataAPIImpl.SetLoggerLevel(Level.DEBUG)
-
+      logger.info(MetadataAPIImpl.GetMetadataAPIConfig)
    }
     catch {
       case e: EmbeddedZookeeperException => {
@@ -188,6 +228,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       And("The property JAR_PATHS must have been defined")
       val jp = cfg.getProperty("JAR_PATHS")
       assert(null != jp)
+      logger.info("jar_paths => " + jp)
 
       And("The property SECURITY_IMPL_JAR  must have been defined")
       val sij = cfg.getProperty("SECURITY_IMPL_JAR")
@@ -970,20 +1011,22 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       da = cfg.getProperty("DO_AUDIT")
       assert(null != da)
 
-      And("logAuditRec ")
-      noException should be thrownBy {
-	MetadataAPIImpl.logAuditRec(Some("lonestarr"),Some("write"),"GetContainerDef","system.coughcodes.000000100000000000","true","12345657","system.coughcodes.000000100000000000")
-      }
+      if( da.equalsIgnoreCase("YES") ){
+	And("logAuditRec ")
+	noException should be thrownBy {
+	  MetadataAPIImpl.logAuditRec(Some("lonestarr"),Some("write"),"GetContainerDef","system.coughcodes.000000100000000000","true","12345657","system.coughcodes.000000100000000000")
+	}
 
-      And("getAuditRec ")
-      res = MetadataAPIImpl.getAuditRec(new Date((new Date).getTime() - 1500 * 60000),null,null,null,null)
-      assert(res != null)
-      logger.info(res)
-      res should include regex("\"Action\" : \"GetContainerDef\"")
-      res should include regex("\"UserOrRole\" : \"lonestarr\"")
-      res should include regex("\"Status\" : \"true\"")
-      res should include regex("\"ObjectAccessed\" : \"system.coughcodes.000000100000000000\"")
-      res should include regex("\"ActionResult\" : \"system.coughcodes.000000100000000000\"")
+	And("getAuditRec ")
+	res = MetadataAPIImpl.getAuditRec(new Date((new Date).getTime() - 1500 * 60000),null,null,null,null)
+	assert(res != null)
+	logger.info(res)
+	res should include regex("\"Action\" : \"GetContainerDef\"")
+	res should include regex("\"UserOrRole\" : \"lonestarr\"")
+	res should include regex("\"Status\" : \"true\"")
+	res should include regex("\"ObjectAccessed\" : \"system.coughcodes.000000100000000000\"")
+	res should include regex("\"ActionResult\" : \"system.coughcodes.000000100000000000\"")
+      }
 
       And("GetTranId returns last transactionId used as long")
       var l = MetadataAPIImpl.GetTranId
@@ -1005,9 +1048,6 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     }
   }
   override def afterAll = {
-    if (zkServer != null) {
-      zkServer.instance.shutdown
-    }
     logger.info("Truncating dbstore")
     var logFile = new java.io.File("logs")
     if( logFile != null ){
@@ -1017,15 +1057,20 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     if( logFile != null ){
       TestUtils.deleteFile(logFile)
     }
-    logFile = new java.io.File("default.hdb.p")
-    if( logFile != null ){
-      TestUtils.deleteFile(logFile)
+    val db = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+    assert(null != db)
+    db match {
+      case "hashmap" | "treemap" => {
+	DropDbStore
+      }
+      case _ => {
+	logger.info("cleanup...")
+      }
     }
-    logFile = new java.io.File("default.hdb")
-    if( logFile != null ){
-      TestUtils.deleteFile(logFile)
-    }
-    MetadataAPIImpl.TruncateDbStore
+    TruncateDbStore
     MetadataAPIImpl.shutdown
+  }
+  if (zkServer != null) {
+    zkServer.instance.shutdown
   }
 }

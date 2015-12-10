@@ -15,8 +15,6 @@
  */
 
 package com.ligadata.audit.adapters
-
-import com.ligadata.StorageBase.{ Key, Value }
 import com.ligadata.AuditAdapterInfo._
 
 import org.apache.hadoop.hbase._
@@ -34,7 +32,7 @@ import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.conf.Configuration;
 
 import org.apache.hadoop.hbase._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import java.nio.ByteBuffer
 import java.io.IOException
@@ -57,7 +55,7 @@ import com.ligadata.Exceptions._
 class AuditHBaseAdapter extends AuditAdapter
 {
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
   var keyspace: String = _ 
   var hostnames: String = _
   var table: String = _
@@ -266,7 +264,7 @@ class AuditHBaseAdapter extends AuditAdapter
     }
   }
   
-  private def getAllKeys(handler: (Key) => Unit): Unit = {
+  private def getAllKeys(handler: (Array[Byte]) => Unit): Unit = {
     var p = new Scan()
 
     val tableHBase = connection.getTable(table);
@@ -279,11 +277,7 @@ class AuditHBaseAdapter extends AuditAdapter
         do {
           val row = iter.next()
           if (row != null) {
-            val v = row.getRow()
-            val key = new Key
-            key ++= v
-
-            handler(key)
+            handler(row.getRow())
           } else {
             fContinue = false;
           }
@@ -300,8 +294,8 @@ class AuditHBaseAdapter extends AuditAdapter
     }
   }
 
-  private def del(key: Key): Unit = {
-    val p = new Delete(key.toArray[Byte])
+  private def del(key: Array[Byte]): Unit = {
+    val p = new Delete(key)
 
     val tableHBase = connection.getTable(table);
     try {
@@ -315,7 +309,7 @@ class AuditHBaseAdapter extends AuditAdapter
   }
 
   override def TruncateStore(): Unit = {
-    getAllKeys({ (key: Key) => del(key) })
+    getAllKeys({ (key: Array[Byte]) => del(key) })
   }
 
   private def initPropertiesFromFile(parmFile: String): Unit = {  

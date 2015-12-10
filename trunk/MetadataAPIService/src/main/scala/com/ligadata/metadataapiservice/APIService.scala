@@ -27,7 +27,7 @@ import com.ligadata.kamanja.metadata.ObjType._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.MetadataAPI.MetadataAPIImpl
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
 import com.ligadata.Exceptions._
@@ -43,10 +43,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
   val log = Logging(system, getClass)
 
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
-  //logger.setLevel(Level.TRACE);
- // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-  //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
+  lazy val logger = LogManager.getLogger(loggerName)
   var databaseOpen = false
   
   /**

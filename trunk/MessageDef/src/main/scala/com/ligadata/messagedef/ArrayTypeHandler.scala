@@ -18,9 +18,9 @@ package com.ligadata.messagedef
 
 import com.ligadata.kamanja.metadata._
 import scala.collection.mutable.ArrayBuffer
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Exceptions.StackTrace
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 class ArrayTypeHandler {
 
@@ -30,15 +30,16 @@ class ArrayTypeHandler {
   private val pad4 = "\t\t\t\t"
   private val newline = "\n"
   val logger = this.getClass.getName
-  lazy val log = Logger.getLogger(logger)
+  lazy val log = LogManager.getLogger(logger)
   var cnstObjVar = new ConstantMsgObjVarGenerator
   var methodGen = new ConstantMethodGenerator
-  private val LOG = Logger.getLogger(getClass)
+  private val LOG = LogManager.getLogger(getClass)
 
   def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
+    var assignKvdata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
     var addMsg = new StringBuilder(8 * 1024)
     var getMsg = new StringBuilder(8 * 1024)
@@ -65,6 +66,7 @@ class ArrayTypeHandler {
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
     var fromFuncBuf = new StringBuilder(8 * 1024)
+    var getNativeKeyValues = new StringBuilder(8 * 1024)
     var returnAB = new ArrayBuffer[String]
 
     try {
@@ -72,7 +74,7 @@ class ArrayTypeHandler {
 
       if (arrayType == null) throw new Exception("Array type " + f.Ttype + " do not exist")
 
-      if ((arrayType.elemDef.physicalName.equals("String")) || (arrayType.elemDef.physicalName.equals("Int")) || (arrayType.elemDef.physicalName.equals("Float")) || (arrayType.elemDef.physicalName.equals("Double")) || (arrayType.elemDef.physicalName.equals("Char"))) {
+      if ((arrayType.elemDef.physicalName.equals("String")) || (arrayType.elemDef.physicalName.equals("Int")) || (arrayType.elemDef.physicalName.equals("Float")) || (arrayType.elemDef.physicalName.equals("Double")) || (arrayType.elemDef.physicalName.equals("Char")) || (arrayType.elemDef.physicalName.equals("Long")) || (arrayType.elemDef.physicalName.equals("Boolean"))) {
         if (arrayType.elemDef.implementationName.isEmpty())
           throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
         else
@@ -104,6 +106,7 @@ class ArrayTypeHandler {
           fromFuncBuf.append(getPrimitivesFromFunc(f.Name, arrayType.elemDef.implementationName, msg.Fixed, false, typ.get.typeString))
         }
         assignJsondata.append(methodGen.assignJsonForArray(f.Name, fname, msg, typ.get.typeString))
+        assignKvdata.append(methodGen.assignKvDataForArray(f.Name, fname, msg, typ.get.typeString))
 
       } else {
         if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer")) {
@@ -149,14 +152,17 @@ class ArrayTypeHandler {
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
+        getNativeKeyValues = getNativeKeyValues.append("%s keyValues(\"%s\") = (\"%s\", %s); %s".format(pad1, f.Name, f.NativeName, f.Name, newline))
+
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s fields(\"%s\") = (-1, value) %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-
+       
       }
 
       fixedMsgGetKeyStrBuf.append("%s if(key.equals(\"%s\")) return %s; %s".format(pad1, f.Name, f.Name, newline))
+      var nativeKeyMap : String = "(\"%s\", \"%s\"), ".format(f.Name, f.NativeName)
 
       argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
       log.debug("typ.get.typeString " + typ.get.typeString)
@@ -186,11 +192,14 @@ class ArrayTypeHandler {
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
       returnAB += fromFuncBuf.toString
+      returnAB += assignKvdata.toString
+      returnAB += nativeKeyMap.toString
+      returnAB += getNativeKeyValues.toString
 
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -205,6 +214,7 @@ class ArrayTypeHandler {
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
+    var assignKvData = new StringBuilder(8 * 1024)
     var addMsg = new StringBuilder(8 * 1024)
     var getMsg = new StringBuilder(8 * 1024)
     var list = List[(String, String)]()
@@ -232,13 +242,14 @@ class ArrayTypeHandler {
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
     var fromFuncBuf = new StringBuilder(8 * 1024)
+    var getNativeKeyValues = new StringBuilder(8 * 1024)
     var returnAB = new ArrayBuffer[String]
 
     try {
       arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
       if (arrayBufType == null) throw new Exception("Array Byffer of " + f.Ttype + " do not exists throwing Null Pointer")
 
-      if ((arrayBufType.elemDef.physicalName.equals("String")) || (arrayBufType.elemDef.physicalName.equals("Int")) || (arrayBufType.elemDef.physicalName.equals("Float")) || (arrayBufType.elemDef.physicalName.equals("Double")) || (arrayBufType.elemDef.physicalName.equals("Char"))) {
+      if ((arrayBufType.elemDef.physicalName.equals("String")) || (arrayBufType.elemDef.physicalName.equals("Int")) || (arrayBufType.elemDef.physicalName.equals("Float")) || (arrayBufType.elemDef.physicalName.equals("Double")) || (arrayBufType.elemDef.physicalName.equals("Char")) || (arrayBufType.elemDef.physicalName.equals("Long")) || (arrayBufType.elemDef.physicalName.equals("Boolean"))) {
         if (arrayBufType.elemDef.implementationName.isEmpty())
           throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
         else
@@ -272,6 +283,7 @@ class ArrayTypeHandler {
 
         }
         assignJsondata.append(methodGen.assignJsonForPrimArrayBuffer(f.Name, fname, msg, typ.get.typeString))
+        assignKvData.append(methodGen.assignKvForPrimArrayBuffer(f.Name, fname, msg, typ.get.typeString))
 
       } else {
         if (msg.NameSpace != null)
@@ -357,6 +369,8 @@ class ArrayTypeHandler {
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
+        getNativeKeyValues = getNativeKeyValues.append("%s keyValues(\"%s\") = (\"%s\", %s); %s".format(pad1, f.Name, f.NativeName, f.Name, newline))
+
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s fields(\"%s\") = (-1, value) %s".format(pad1, f.Name, newline))
@@ -370,6 +384,8 @@ class ArrayTypeHandler {
         jarset = jarset + arrayBufType.JarName
       else if (arrayBufType.dependencyJarNames != null)
         jarset = jarset ++ arrayBufType.dependencyJarNames
+
+      var nativeKeyMap: String = "(\"%s\", \"%s\"), ".format(f.Name, f.NativeName)
 
       returnAB += scalaclass.toString
       returnAB += assignCsvdata.toString
@@ -391,11 +407,14 @@ class ArrayTypeHandler {
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
       returnAB += fromFuncBuf.toString
+      returnAB += assignKvData.toString
+      returnAB += nativeKeyMap.toString
+      returnAB += getNativeKeyValues.toString
 
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -445,8 +464,9 @@ class ArrayTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
 
     return serializedBuf.toString()
@@ -505,10 +525,11 @@ class ArrayTypeHandler {
         deserializedBuf.append("%s%s fields(\"%s\") = (-1, %s)}%s".format(newline, pad2, f.Name, f.Name, newline))
       }
     } catch {
-      case e: Exception =>{ 
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
     return deserializedBuf.toString
   }
@@ -633,8 +654,9 @@ class ArrayTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString)

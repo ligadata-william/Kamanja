@@ -20,7 +20,7 @@ import com.ligadata.kamanja.metadata._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Exceptions.StackTrace
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 class BaseTypesHandler {
 
@@ -31,13 +31,14 @@ class BaseTypesHandler {
   private val newline = "\n"
   val transactionid: String = "transactionid"
   var cnstObjVar = new ConstantMsgObjVarGenerator
-    private val LOG = Logger.getLogger(getClass)
+  private val LOG = LogManager.getLogger(getClass)
 
   def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean, mappedTypesABuf: ArrayBuffer[String], firstTimeBaseType: Boolean, msg: Message): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], ArrayBuffer[String], ArrayBuffer[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
+    var assignKvData = new StringBuilder(8 * 1024)
     var addMsg = new StringBuilder(8 * 1024)
     var list = List[(String, String)]()
     var argsList = List[(String, String, String, String, Boolean, String)]()
@@ -59,6 +60,7 @@ class BaseTypesHandler {
     var prevObjTypNotMatchDeserializedBuf = new StringBuilder(8 * 1024)
     var prevVerMsgBaseTypesIdxArry1: ArrayBuffer[String] = new ArrayBuffer[String]
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
+    var getNativeKeyValues = new StringBuilder(8 * 1024)
 
     var withMethod = new StringBuilder(8 * 1024)
     var fromFuncBaseTypesBuf = new StringBuilder(8 * 1024)
@@ -94,7 +96,7 @@ class BaseTypesHandler {
 
       if (fixed.toLowerCase().equals("true")) {
 
-        if (f.Name.toLowerCase().equals(transactionid)) {
+        if (f.SystemField) {
           scalaclass = scalaclass.append("")
           withMethod = withMethod.append("")
 
@@ -103,10 +105,13 @@ class BaseTypesHandler {
           assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1;\n".format(pad2, f.Name, fname, pad2))
           assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString);%s".format(pad2, f.Name, fname, f.Name, dval, newline))
           assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s;%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
+          assignKvData.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString);%s".format(pad2, f.Name, fname, f.Name, dval, newline))
 
           withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
           withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
           withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+          getNativeKeyValues = getNativeKeyValues.append("%s keyValues(\"%s\") = (\"%s\", %s); %s".format(pad1, f.Name, f.NativeName, f.Name, newline))
+
         }
 
       } else if (fixed.toLowerCase().equals("false")) {
@@ -127,7 +132,7 @@ class BaseTypesHandler {
         }
 
         keysStr.append("(\"" + f.Name + "\", " + mappedTypesABuf.indexOf(typstring) + "),")
-        if (f.Name.toLowerCase().equals(transactionid)) {
+        if (f.SystemField) {
           withMethod = withMethod.append("")
 
         } else {
@@ -150,6 +155,10 @@ class BaseTypesHandler {
       fixedMsgGetKeyStrBuf.append("%s if(key.equals(\"%s\")) return %s; %s".format(pad1, f.Name, f.Name, newline))
       fromFuncBaseTypesBuf.append(fromFunc(typ, fixed, f, baseTypId))
 
+      var nativeKeyMap: String = "";
+      if (!f.Name.equalsIgnoreCase(transactionid)) {
+        nativeKeyMap = "(\"%s\", \"%s\"), ".format(f.Name, f.NativeName)
+      }
       returnAB += scalaclass.toString
       returnAB += assignCsvdata.toString
       returnAB += assignJsondata.toString
@@ -167,11 +176,14 @@ class BaseTypesHandler {
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
       returnAB += fromFuncBaseTypesBuf.toString
+      returnAB += assignKvData.toString
+      returnAB += nativeKeyMap.toString
+      returnAB += getNativeKeyValues.toString
 
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.debug("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:" + stackTrace)
         throw e
       }
     }
@@ -212,8 +224,9 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
 
     serializedBuf.toString
@@ -241,15 +254,15 @@ class BaseTypesHandler {
           if (mappedMsgBaseTypeIdx != -1)
             deserializedBuf = deserializedBuf.append("%s case %s => fields(key) = (typIdx, %s(dis));%s".format(pad1, mappedMsgBaseTypeIdx, deserType, newline))
 
-          //deserializedBuf = deserializedBuf.append("%sset(\"%s\" , %s(%s));%s".format(pad1, f.Name, deserType, dis, newline))
         }
       }
 
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
 
     deserializedBuf.toString
@@ -329,8 +342,9 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.debug("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause())}
+        LOG.debug("StackTrace:" + stackTrace)
+        throw new Exception("Exception occured " + e.getCause())
+      }
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString, prevObjTypNotMatchDeserializedBuf.toString, prevVerMsgBaseTypesIdxArry)

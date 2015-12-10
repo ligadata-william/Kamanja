@@ -29,16 +29,16 @@ object ObjFormatType extends Enumeration {
   type FormatType = Value
   val fCSV, fJSON, fXML, fSERIALIZED, fJAVA, fSCALA = Value
 
-  def asString(typ : FormatType) : String = {
-     val str = typ.toString match {
-       case "fCSV" =>  "CSV"
-       case "fJSON" => "JSON"
-       case "fXML" => "XML"
-       case "fSERIALIZED" => "SERIALIZED"
-       case "fJAVA" => "JAVA"
-       case "fSCALA" => "SCALA"
-       case _ => "Unknown"
-      }
+  def asString(typ: FormatType): String = {
+    val str = typ.toString match {
+      case "fCSV" => "CSV"
+      case "fJSON" => "JSON"
+      case "fXML" => "XML"
+      case "fSERIALIZED" => "SERIALIZED"
+      case "fJAVA" => "JAVA"
+      case "fSCALA" => "SCALA"
+      case _ => "Unknown"
+    }
     str
   }
 }
@@ -85,31 +85,33 @@ object ObjType extends Enumeration {
       case "tList" => "List"
       case "tQueue" => "Queue"
       case "tStruct" => "Struct"
+      case "tAttr" => "Attr"
       case _ => "None"
     }
     str
   }
   def fromString(typeStr: String): Type = {
-    val typ: Type = typeStr match {
-      case "None" => tNone
-      case "Any" => tAny
-      case "Int" => tInt
-      case "Long" => tLong
-      case "Float" => tFloat
-      case "Double" => tDouble
-      case "String" => tString
-      case "Boolean" => tBoolean
-      case "Char" => tChar
-      case "Array" => tArray
-      case "Set" => tSet
-      case "SortedSet" => tSortedSet
-      case "TreeSet" => tTreeSet
-      case "Map" => tMap
-      case "HashMap" => tHashMap
-      case "MsgMap" => tMap
-      case "List" => tList
-      case "Queue" => tQueue
-      case "Struct" => tStruct
+    val typ: Type = typeStr.toLowerCase match {
+      case "none" => tNone
+      case "any" => tAny
+      case "int" => tInt
+      case "long" => tLong
+      case "float" => tFloat
+      case "double" => tDouble
+      case "string" => tString
+      case "boolean" => tBoolean
+      case "char" => tChar
+      case "array" => tArray
+      case "set" => tSet
+      case "sortedset" => tSortedSet
+      case "treeset" => tTreeSet
+      case "map" => tMap
+      case "hashmap" => tHashMap
+      case "msgmap" => tMap
+      case "list" => tList
+      case "queue" => tQueue
+      case "struct" => tStruct
+      case "attr" => tAttr
       case _ => tNone
     }
     typ
@@ -603,6 +605,10 @@ class ArgDef {
   def typeString: String = aType.typeString
 }
 
+class FactoryOfModelInstanceFactoryDef extends BaseElemDef {
+  
+}
+
 class FunctionDef extends BaseElemDef {
   var retType: BaseTypeDef = _ // return type of this function - could be simple scalar or array or complex type such as map or set
   var args: Array[ArgDef] = _ // list of arguments definitions
@@ -702,7 +708,7 @@ class NodeInfo {
   var java_home: String = _
   var classpath: String = _
   var clusterId: String = _
-  var power:Int = _
+  var power: Int = _
   var roles: Array[String] = new Array[String](0)
   var description: String = _
 
@@ -759,11 +765,14 @@ class AdapterInfo {
   var dataFormat: String = _ // valid only for Input or Validate types. Output and Status does not have this
   var className: String = _
   var inputAdapterToVerify: String = _ // Valid only for Output Adapter.
-  var delimiterString: String = _ // Delimiter String for CSV
+  var delimiterString1: String = _ // Delimiter String for CSV
   var associatedMsg: String = _ // Queue Associated Message
   var jarName: String = _
   var dependencyJars: Array[String] = new Array[String](0)
   var adapterSpecificCfg: String = _
+  var keyAndValueDelimiter: String = _ // Delimiter String for keyAndValueDelimiter
+  var fieldDelimiter: String = _ // Delimiter String for fieldDelimiter
+  var valueDelimiter: String = _ // Delimiter String for valueDelimiter
 
   def Name: String = name
   def TypeString: String = typeString
@@ -773,25 +782,30 @@ class AdapterInfo {
   def DependencyJars: Array[String] = dependencyJars
   def AdapterSpecificCfg: String = adapterSpecificCfg
   def InputAdapterToVerify: String = inputAdapterToVerify
-  def DelimiterString: String = delimiterString
+  def DelimiterString1: String = if (fieldDelimiter != null) fieldDelimiter else delimiterString1
   def AssociatedMessage: String = associatedMsg
+  def KeyAndValueDelimiter: String = keyAndValueDelimiter
+  def FieldDelimiter: String = if (fieldDelimiter != null) fieldDelimiter else delimiterString1
+  def ValueDelimiter: String = valueDelimiter
+
 }
 
 class UserPropertiesInfo {
-   var clusterId: String = _
-   var props: scala.collection.mutable.HashMap[String, String] = _
-   
-   def ClusterId: String = clusterId
-   def Props: scala.collection.mutable.HashMap[String, String] = props  
+  var clusterId: String = _
+  var props: scala.collection.mutable.HashMap[String, String] = _
+
+  def ClusterId: String = clusterId
+  def Props: scala.collection.mutable.HashMap[String, String] = props
 }
 
 class OutputMsgDef extends BaseElemDef {
   var Queue: String = _
-  var ParitionKeys: Array[(String, Array[(String, String)], String, String)] = _ // Output Partition Key. Message/Model Full Qualified Name as first value in tuple, Rest of the field name as second value in tuple and "Mdl" Or "Msg" String as the third value in tuple.
+  var ParitionKeys: Array[(String, Array[(String, String, String, String)], String, String)] = _ // Output Partition Key. Message/Model Full Qualified Name as first value in tuple, Rest of the field name as second value in tuple (filed name, field type, tType string, tTypeType string) and "Mdl" Or "Msg" String as the third value in tuple.
   var DataDeclaration: Map[String, String] = _
   var Defaults: Map[String, String] = _ // Local Variables. So, we are not expecting qualified names here.
-  var Fields: Map[(String, String), Set[(Array[(String, String)], String)]] = _ // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields & corresponding Default Value (if not present NULL)
+  var Fields: Map[(String, String), Set[(Array[(String, String, String, String)], String)]] = _ // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple(filed name, field type, tType string, tTypeType string) and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields & corresponding Default Value (if not present NULL)
   var OutputFormat: String = _ // Format String
+  var FormatSplittedArray: Array[(String, String)] = _ // OutputFormat split to substitute like (constant & substitute variable) tuples 
 }
 
 object ModelCompilationConstants {
