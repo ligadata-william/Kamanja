@@ -24,14 +24,6 @@ object StackTrace {
     val sw = new StringWriter();
     val pw = new PrintWriter(sw);
     t.printStackTrace(pw);
-
-    var cause = t.getCause
-    while (cause != null) {
-      pw.println("========== cause ===============")
-      cause.printStackTrace(pw);
-      cause = cause.getCause
-    }
-
     return sw.toString();
   }
 }
