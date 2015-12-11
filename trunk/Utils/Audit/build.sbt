@@ -29,6 +29,7 @@ libraryDependencies += "com.google.protobuf" % "protobuf-java" % "2.3.0"
 libraryDependencies += "voldemort" % "voldemort" % "0.96"
 
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.4.1"
+
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 
 libraryDependencies += "commons-codec" % "commons-codec" % "1.9"
