@@ -319,7 +319,7 @@ object TestApiService {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("StackTrace:"+stackTrace)
-        throw new InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
+        throw InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage(), e)
       }
     }
   }
@@ -386,7 +386,7 @@ object TestApiService {
         case "XML" => bodyType = TEXT_XML
         case "JSON" => bodyType = APPLICATION_JSON
         case "BINARY_FILE" => bodyType = APPLICATION_OCTET_STREAM
-        case _ => throw new InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType)
+        case _ => throw InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType, null)
       }
       var apiParameters: Option[String] = None
       if (parameterValue != null) {
@@ -1637,7 +1637,7 @@ object TestApiService {
         val cfgfile = args(0)
         if (cfgfile == null) {
           logger.error("Need configuration file as parameter")
-          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+          throw MissingArgumentException("Usage: configFile  supplied as --config myConfig.json", null)
         }
         myConfigFile = cfgfile
       }

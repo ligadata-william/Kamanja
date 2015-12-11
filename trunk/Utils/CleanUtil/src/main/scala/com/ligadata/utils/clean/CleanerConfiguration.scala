@@ -50,7 +50,7 @@ class CleanerConfiguration(metadataConfigFile: String) {
     }
     case e: Exception => {
       shutdown
-      throw new CleanUtilException("CLEAN-UTIL: Failed to initialize", e)
+      throw CleanUtilException("CLEAN-UTIL: Failed to initialize", e)
     }
   }
   // End Constructor
@@ -78,7 +78,7 @@ class CleanerConfiguration(metadataConfigFile: String) {
   private def initialize(): Unit = {
     val clusterCfgs: Array[ClusterCfgInfo] = MdMgr.GetMdMgr.ClusterCfgs.values.toArray
     if(clusterCfgs.length == 0 || clusterCfgs == null)
-      throw new CleanUtilException("CLEAN-UTIL: Failed to retrieve cluster configuration. Please ensure you've uploaded cluster configuration to metadata.", null)
+      throw CleanUtilException("CLEAN-UTIL: Failed to retrieve cluster configuration. Please ensure you've uploaded cluster configuration to metadata.", null)
     clusterCfgs.foreach(clusterCfg => {
       // Retrieving Zookeeper configuration
       logger.info("CLEAN-UTIL: Retrieving Zookeeper Node Base Path from cluster configuration")
@@ -86,7 +86,7 @@ class CleanerConfiguration(metadataConfigFile: String) {
       val nodeBasePath = (zkJson \ "ZooKeeperNodeBasePath").values.toString
       val connStr: String = (zkJson \ "ZooKeeperConnectString").values.toString
       if (zkJson == "None" || nodeBasePath == "None" || connStr == "None")
-        throw new CleanUtilException("CLEAN-UTIL: Failed to retrieve zookeeper configuration. Please ensure you've uploaded cluster configuration to metadata.", null)
+        throw CleanUtilException("CLEAN-UTIL: Failed to retrieve zookeeper configuration. Please ensure you've uploaded cluster configuration to metadata.", null)
       zookeeperInfo = new ZooKeeperInfo(nodeBasePath, connStr)
       // End Zookeeper configuration
 

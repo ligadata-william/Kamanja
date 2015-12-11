@@ -2680,7 +2680,7 @@ println("Getting Messages")
         val cfgfile = options.getOrElse('config, null)
         if (cfgfile == null) {
           logger.error("Need configuration file as parameter")
-          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+          throw MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
         }
         myConfigFile = cfgfile.asInstanceOf[String]
       }

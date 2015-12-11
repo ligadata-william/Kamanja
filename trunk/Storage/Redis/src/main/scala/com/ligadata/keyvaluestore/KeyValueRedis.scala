@@ -129,7 +129,7 @@ class KeyValueRedis(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       for (b <- buffer.getBytes())
         value += b
     } else {
-      throw new KeyNotFoundException("Key Not found")
+      throw KeyNotFoundException("Key Not found")
     }
 
     handler(value)
@@ -147,7 +147,7 @@ class KeyValueRedis(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       value ++= buffer.getBytes()
       println("value " + value)
     } else {
-      throw new KeyNotFoundException("Key Not found")
+      throw KeyNotFoundException("Key Not found")
     }
 
     target.Construct(key, value)
