@@ -666,7 +666,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
    * @param props
    */
   def init(props: scala.collection.mutable.Map[String, String]): Unit = {
-    message_separator = props(SmartFileAdapterConstants.MSG_SEPARATOR).toInt.toChar
+    message_separator = props.getOrElse(SmartFileAdapterConstants.MSG_SEPARATOR, "10").toInt.toChar
     dirToWatch = props.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
     NUMBER_OF_BEES = props.getOrElse(SmartFileAdapterConstants.PAR_DEGREE_OF_FILE_CONSUMER, "1").toInt
     maxlen = props.getOrElse(SmartFileAdapterConstants.WORKER_BUFFER_SIZE, "4").toInt * 1024 * 1024
@@ -674,7 +674,9 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
     readyToProcessKey = props.getOrElse(SmartFileAdapterConstants.READY_MESSAGE_MASK, ".gzip")
     maxBufAllowed = props.getOrElse(SmartFileAdapterConstants.MAX_MEM, "512").toLong * 1024L *1024L
     throttleTime = props.getOrElse(SmartFileAdapterConstants.THROTTLE_TIME, "250").toInt
-
+    var mdConfig = props.getOrElse(SmartFileAdapterConstants.METADATA_CONFIG_FILE,null)
+    var msgName = props.getOrElse(SmartFileAdapterConstants.MESSAGE_NAME, null)
+    var kafkaBroker = props.getOrElse(SmartFileAdapterConstants.KAFKA_BROKER, null)
     kafkaTopic = props.getOrElse(SmartFileAdapterConstants.KAFKA_TOPIC, null)
 
     // Bail out if dirToWatch, Topic are not set
@@ -688,6 +690,24 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
       shutdown
       throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.DIRECTORY_TO_WATCH)
+    }
+
+    if (mdConfig == null) {
+      logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
+      shutdown
+      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.METADATA_CONFIG_FILE)
+    }
+
+    if (msgName == null) {
+      logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
+      shutdown
+      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.MESSAGE_NAME)
+    }
+
+    if (kafkaBroker == null) {
+      logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
+      shutdown
+      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.KAFKA_BROKER)
     }
 
     FileProcessor.setProperties(props, path)
