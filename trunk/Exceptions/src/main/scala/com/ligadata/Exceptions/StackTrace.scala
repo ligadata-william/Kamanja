@@ -29,6 +29,7 @@ object StackTrace {
     while (cause != null) {
       pw.println("========== cause ===============")
       cause.printStackTrace(pw);
+      cause = t.getCause
     }
 
     return sw.toString();
