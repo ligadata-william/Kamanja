@@ -52,7 +52,7 @@ import com.ligadata.messagedef._
 import com.ligadata.Exceptions._
 
 import scala.xml.XML
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -65,7 +65,7 @@ import org.apache.zookeeper.CreateMode
 import com.ligadata.keyvaluestore._
 import com.ligadata.Serialize._
 import com.ligadata.Utils._
-import util.control.Breaks._
+import scala.util.control.Breaks._
 import com.ligadata.AuditAdapterInfo._
 import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import com.ligadata.keyvaluestore.KeyValueManager
@@ -101,7 +101,7 @@ object MetadataAPIImpl extends MetadataAPI {
   lazy val sysNS = "System"
   // system name space
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   lazy val serializerType = "kryo"
   lazy val serializer = SerializerManager.GetSerializer(serializerType)
   lazy val metadataAPIConfig = new Properties()
@@ -120,6 +120,8 @@ object MetadataAPIImpl extends MetadataAPI {
   var zkHeartBeatNodePath = ""
   private val storageDefaultTime = 0L
   private val storageDefaultTxnId = 0L
+
+  def getCurrentTranLevel = currentTranLevel
 
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -158,9 +160,26 @@ object MetadataAPIImpl extends MetadataAPI {
    *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes
    */
   def getHealthCheck(nodeId: String = ""): String = {
-    val ids = parse(nodeId).values.asInstanceOf[List[String]]
-    var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
-    apiResult.toString
+    try {
+      val ids = parse(nodeId).values.asInstanceOf[List[String]]
+      var apiResult = new ApiResultComplex(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
+      apiResult.toString
+    }
+    catch {
+      case cce: java.lang.ClassCastException => {
+        val stackTrace = StackTrace.ThrowableTraceString(cce)
+        logger.warn("Failure processing GET_HEALTH_CHECK - cannot parse the list of desired nodes. \n" + stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetHealthCheck", "No data available", ErrorCodeConstants.GetHeartbeat_Failed + " Error:Parsing Error")
+        return apiResult.toString
+      }
+      case e: Exception => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetHealthCheck", "No data available", ErrorCodeConstants.GetHeartbeat_Failed + " Error: Unknown - see Kamanja Logs")
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Failure processing GET_HEALTH_CHECK - unknown  \n" + stackTrace)
+        return apiResult.toString
+      }
+    }
+
   }
 
   /**
@@ -558,10 +577,6 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
-  }
-
-  def SetLoggerLevel(level: Level) {
-    logger.setLevel(level);
   }
 
   private var mainDS: DataStore = _
@@ -5907,7 +5922,6 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def InitMdMgr(mgr: MdMgr, jarPathsInfo: String, databaseInfo: String) {
 
-    SetLoggerLevel(Level.INFO)
     val mdLoader = new MetadataLoad(mgr, "", "", "", "")
     mdLoader.initialize
 

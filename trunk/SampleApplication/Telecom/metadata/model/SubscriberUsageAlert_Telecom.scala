@@ -41,18 +41,19 @@ import RddDate._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 import java.util.Locale
 import java.io._
+import com.ligadata.kamanja.metadata.ModelDef;
 
-object SubscriberUsageAlert extends ModelBaseObj {
-  override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[SubscriberUsage]
-  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new SubscriberUsageAlert(mdlCtxt)
-  override def ModelName(): String = "System.SubscriberUsageAlert" // Model Name
-  override def Version(): String = "0.0.1" // Model Version
-  override def CreateResultObject(): ModelResultBase = new SubscriberUsageAlertResult()
+class SubscriberUsageAlertFactory(modelDef: ModelDef, nodeContext: NodeContext) extends ModelInstanceFactory(modelDef, nodeContext) {
+  override def isValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[SubscriberUsage]
+  override def createModelInstance(): ModelInstance = return new SubscriberUsageAlert(this)
+  override def getModelName(): String = "System.SubscriberUsageAlert" // Model Name
+  override def getVersion(): String = "0.0.1" // Model Version
+  override def createResultObject(): ModelResultBase = new SubscriberUsageAlertResult()
 }
 
 class SubscriberUsageAlertResult extends ModelResultBase {
@@ -62,7 +63,7 @@ class SubscriberUsageAlertResult extends ModelResultBase {
   var triggerTime: Long = 0
 
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   def withMsisdn(cId: Long): SubscriberUsageAlertResult = {
     msisdn = cId
@@ -131,7 +132,7 @@ class AccountUsageAlertResult extends ModelResultBase {
   var triggerTime: Long = 0
 
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   def withAct(aId: String): AccountUsageAlertResult = {
     actNo = aId
@@ -192,9 +193,9 @@ class AccountUsageAlertResult extends ModelResultBase {
   }
 }
 
-class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, SubscriberUsageAlert) {
+class SubscriberUsageAlert(factory: ModelInstanceFactory) extends ModelInstance(factory) {
   lazy val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   val df = DateTimeFormat.forPattern("yyyyMMdd").withLocale(Locale.US)
   
   private def getMonth(dt: String): Int = {
@@ -215,7 +216,7 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
     finally fw.close()
   }
 
-  override def execute(emitAllResults: Boolean): ModelResultBase = {
+  override def execute(txnCtxt: TransactionContext, outputDefault: Boolean): ModelResultBase = {
 
     // Make sure current transaction has some data
     val rcntTxn = SubscriberUsage.getRecent

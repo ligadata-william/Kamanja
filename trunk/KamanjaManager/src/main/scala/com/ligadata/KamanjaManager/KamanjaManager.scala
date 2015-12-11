@@ -17,12 +17,12 @@ import scala.collection.mutable.TreeSet
 import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.HeartBeat.HeartBeatUtil
 import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 
 class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   private val serverSocket = new ServerSocket(port)
 
   def run() {
@@ -49,7 +49,7 @@ class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
 }
 
 class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   private val out = new PrintStream(socket.getOutputStream)
   private val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
 
@@ -131,7 +131,7 @@ object KamanjaConfiguration {
 }
 
 object ProcessedAdaptersInfo {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   private val lock = new Object
   private val instances = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[String, String]]()
   private var prevAdapterCommittedValues = Map[String, String]()
@@ -213,7 +213,7 @@ object ProcessedAdaptersInfo {
 }
 
 class KamanjaManager extends Observer {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
 
   // KamanjaServer Object
   private var serviceObj: KamanjaServer = null
@@ -442,6 +442,8 @@ class KamanjaManager extends Observer {
       if (KamanjaMetadata.envCtxt == null)
         return false
 
+      KamanjaMetadata.gNodeContext = new NodeContext(KamanjaMetadata.envCtxt)
+
       LOG.debug("Loading Adapters")
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
       retval = KamanjaMdCfg.LoadAdapters(inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
@@ -451,6 +453,32 @@ class KamanjaManager extends Observer {
         KamanjaMetadata.InitMdMgr(KamanjaConfiguration.zkConnectString, metadataUpdatesZkNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
         KamanjaMetadata.envCtxt.CacheContainers(KamanjaConfiguration.clusterId) // Load data for Caching
         LOG.debug("Initializing Leader")
+
+        var txnCtxt: TransactionContext = null
+        var txnId = KamanjaConfiguration.nodeId.toString.hashCode()
+        if (txnId > 0)
+          txnId = -1 * txnId
+        // Finally we are taking -ve txnid for this
+        try {
+          txnCtxt = new TransactionContext(txnId, KamanjaMetadata.gNodeContext, Array[Byte](), "")
+          ThreadLocalStorage.txnContextInfo.set(txnCtxt)
+
+          val (tmpMdls, tMdlsChangedCntr) = KamanjaMetadata.getAllModels
+          val tModels = if (tmpMdls != null) tmpMdls else Array[(String, MdlInfo)]()
+
+          tModels.foreach(tup => {
+            tup._2.mdl.init(txnCtxt)
+          })
+        } catch {
+          case e: Exception => throw e
+          case e: Throwable => throw e
+        } finally {
+          ThreadLocalStorage.txnContextInfo.remove
+          if (txnCtxt != null) {
+            KamanjaMetadata.gNodeContext.getEnvCtxt.rollbackData(txnId)
+          }
+        }
+
         KamanjaLeader.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, KamanjaMetadata.envCtxt, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 
@@ -723,7 +751,7 @@ class KamanjaManager extends Observer {
 }
 
 object OleService {
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = LogManager.getLogger(getClass);
   def main(args: Array[String]): Unit = {
     val mgr = new KamanjaManager
     scala.sys.addShutdownHook({
