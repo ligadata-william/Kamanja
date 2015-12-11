@@ -164,8 +164,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val ids = parse(nodeId).values.asInstanceOf[List[String]]
       var apiResult = new ApiResultComplex(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
       apiResult.toString
-    }
-    catch {
+    } catch {
       case cce: java.lang.ClassCastException => {
         val stackTrace = StackTrace.ThrowableTraceString(cce)
         logger.warn("Failure processing GET_HEALTH_CHECK - cannot parse the list of desired nodes. \n" + stackTrace)
@@ -597,13 +596,11 @@ object MetadataAPIImpl extends MetadataAPI {
       objs(0)
     } catch {
       case e: ObjectNotFoundException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("ObjectNotFound Exception: Error => " + e.getMessage() + "\nStackTrace:" + stackTrace)
-        throw ObjectNotFoundException(e.getMessage(), e)
+        logger.debug("ObjectNotFound Exception: Error => " + e.getMessage())
+        throw e
       }
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("General Exception: Error => " + e.getMessage() + "\nStackTrace:" + stackTrace)
+        logger.debug("General Exception: Error => " + e.getMessage())
         throw ObjectNotFoundException(e.getMessage(), e)
       }
     }
@@ -736,7 +733,7 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: Exception => {
         logger.error("Failed to insert/update object for : " + keyList.mkString(","))
-        throw UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","),e)
+        throw UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","), e)
       }
     }
   }
@@ -828,8 +825,8 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw InternalErrorException("Failed to generate a zookeeper message from the objList " + e.getMessage(), e)
+        logger.error("\nStackTrace:" + stackTrace)
+        throw InternalErrorException("Failed to generate a zookeeper message from the objList", e)
       }
     }
   }
@@ -869,8 +866,8 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw InternalErrorException("Failed to notify a zookeeper message from the objectList " + e.getMessage(), e)
+        logger.error("\nStackTrace:" + stackTrace)
+        throw InternalErrorException("Failed to notify a zookeeper message from the objectList", e)
       }
     }
   }
@@ -882,15 +879,11 @@ object MetadataAPIImpl extends MetadataAPI {
       idStr.toLong + 1
     } catch {
       case e: ObjectNotFoundException => {
-        //val stackTrace = StackTrace.ThrowableTraceString(e)
-        //logger.debug("\nStackTrace:" + stackTrace)
         // first time
         1
       }
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString, e)
+        throw TranIdNotFoundException("Unable to retrieve the transaction id", e)
       }
     }
   }
@@ -902,15 +895,11 @@ object MetadataAPIImpl extends MetadataAPI {
       idStr.toLong
     } catch {
       case e: ObjectNotFoundException => {
-        //val stackTrace = StackTrace.ThrowableTraceString(e)
-        //logger.debug("\nStackTrace:" + stackTrace)
         // first time
         0
       }
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString, e)
+        throw TranIdNotFoundException("Unable to retrieve the transaction id", e)
       }
     }
   }
@@ -921,8 +910,8 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw UpdateStoreFailedException("Unable to Save the transaction id " + tId + ":" + e.getMessage(), e)
+        logger.error("\nStackTrace:" + stackTrace)
+        throw UpdateStoreFailedException("Unable to Save the transaction id " + tId, e)
       }
     }
   }
@@ -1045,13 +1034,11 @@ object MetadataAPIImpl extends MetadataAPI {
       true
     } catch {
       case e: AlreadyExistsException => {
-        e.printStackTrace()
-        logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
+        logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage(), e)
         false
       }
       case e: Exception => {
-        e.printStackTrace()
-        logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
+        logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage(), e)
         false
       }
     }
@@ -1181,13 +1168,11 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: IOException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw new FileNotFoundException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage() + "\nStackTrace:" + stackTrace)
+        logger.error("\nStackTrace:" + stackTrace)
+        throw new FileNotFoundException("Failed to Convert the Jar (" + jarName + ") to array of bytes. Message:" + e.getMessage())
       }
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:" + stackTrace)
-        throw InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage(), e)
+        throw InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes", e)
       }
     }
   }
