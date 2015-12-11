@@ -29,20 +29,32 @@ object LocationWatcher {
 
       val lines = scala.io.Source.fromFile(config).getLines.toList
       lines.foreach(line => {
-        var lProp = line.split("=")
-        try {
-          properties(lProp(0)) = lProp(1)
-        } catch {
-          case iobe: IndexOutOfBoundsException => {
-            logger.error("SMART FILE CONSUMER: Invalid format in the configuration file " + config)
-            logger.error("SMART FILE CONSUMER: unable to determine the value for property " + lProp(0))
-            return
+        if (!line.startsWith("#")) {
+          val lProp = line.split("=")
+          try {
+            logger.info("SMART FILE CONSUMER "+lProp(0) + " = "+lProp(1))
+            properties(lProp(0)) = lProp(1)
+          } catch {
+            case iobe: IndexOutOfBoundsException => {
+              logger.error("SMART FILE CONSUMER: Invalid format in the configuration file " + config)
+              logger.error("SMART FILE CONSUMER: unable to determine the value for property " + lProp(0))
+              return
+            }
           }
         }
-
       })
 
-      var numberOfProcessors = properties(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS).toInt
+      // FileConsumer is a special case we need to default to 1, but also have it present in the properties since
+      // it is used later for memory managemnt
+      var numberOfProcessorsRaw = properties.getOrElse(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS,null)
+      var numberOfProcessors: Int = 1
+      if (numberOfProcessorsRaw == null) {
+        properties(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS) = "1"
+        logger.info("SMART FILE CONSUMER: Defaulting the number of file consumers to 1")
+      } else  {
+        numberOfProcessors = numberOfProcessorsRaw.toInt
+      }
+
       var processors: Array[FileProcessor] = new Array[FileProcessor](numberOfProcessors)
       var threads: Array[Thread] = new Array[Thread](numberOfProcessors)
       var path: Path= null
@@ -66,7 +78,7 @@ object LocationWatcher {
 
     } catch {
       case e: Exception => {
-        logger.error("ERROR in starting SMART FILE CONSUMER "+ e)
+        logger.error("ERROR in starting SMART FILE CONSUMER ", e)
         return
       }
     }
