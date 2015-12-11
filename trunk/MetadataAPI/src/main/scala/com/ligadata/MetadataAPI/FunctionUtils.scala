@@ -175,7 +175,7 @@ object FunctionUtils {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:"+stackTrace)
-        throw UnexpectedMetadataAPIException(e.getMessage()+"\nStackTrace:"+stackTrace, e)
+        throw UnexpectedMetadataAPIException(e.getMessage(), e)
       }
     }
   }
