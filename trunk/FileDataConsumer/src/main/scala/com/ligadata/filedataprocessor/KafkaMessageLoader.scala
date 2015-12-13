@@ -54,13 +54,10 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
   val dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
   dateFormat.setTimeZone(TimeZone.getTimeZone("UTC")); // Setting the UTC timezone.
-  //var frmt: SimpleDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss")
-
-  //private var fileCache: scala.collection.mutable.Map[String, Long] = scala.collection.mutable.Map[String, Long]()
 
   // Set up some properties for the Kafka Producer
   val props = new Properties()
-  props.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,"localhost:9092");
+  props.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, inConfiguration.get(SmartFileAdapterConstants.KAFKA_BROKER).get);
   props.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
   props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
 
