@@ -19,44 +19,18 @@ package com.ligadata.OutputAdapters
 
 import java.util.{ Properties, Arrays }
 import kafka.common.{ QueueFullException, FailedToSendMessageException }
-import kafka.message._
-import kafka.producer.{ ProducerConfig, Producer, KeyedMessage, Partitioner }
 import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.{ KafkaConstants, KafkaQueueAdapterConfiguration }
 import com.ligadata.Exceptions.{ FatalAdapterException, StackTrace }
 import scala.collection.mutable.ArrayBuffer
-import kafka.utils.VerifiableProperties
+
+import org.apache.kafka.clients.producer.{ Callback, RecordMetadata, ProducerRecord }
+import org.apache.kafka.common.serialization.{ ByteArraySerializer /*, StringSerializer */ }
+// import java.util.concurrent.{ TimeUnit, Future }
 
 object KafkaProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new KafkaProducer(inputConfig, cntrAdapter)
-}
-
-/**
- * Handles Strings, Array[Byte], Int, and Long
- * @param props
- */
-class CustPartitioner(props: VerifiableProperties) extends Partitioner {
-  private val random = new java.util.Random
-  def partition(key: Any, numPartitions: Int): Int = {
-    if (key != null) {
-      try {
-        if (key.isInstanceOf[Array[Byte]]) {
-          return (scala.math.abs(Arrays.hashCode(key.asInstanceOf[Array[Byte]])) % numPartitions)
-        } else if (key.isInstanceOf[String]) {
-          return (key.asInstanceOf[String].hashCode() % numPartitions)
-        } else if (key.isInstanceOf[Int]) {
-          return (key.asInstanceOf[Int] % numPartitions)
-        } else if (key.isInstanceOf[Long]) {
-          return ((key.asInstanceOf[Long] % numPartitions).asInstanceOf[Int])
-        }
-      } catch {
-        case e: Exception => {
-        }
-      }
-    }
-    return random.nextInt(numPartitions)
-  }
 }
 
 class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter) extends OutputAdapter {
@@ -65,32 +39,34 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
 
-  val clientId = qc.Name + "_" + hashCode.toString
-
-  val compress: Boolean = false
-  val synchronously: Boolean = false
-  val batchSize: Integer = 1024
-  val queueTime: Integer = 100
-  val bufferMemory: Integer = 16 * 1024 * 1024
-  val messageSendMaxRetries: Integer = 1
-  val requestRequiredAcks: Integer = 1
+  val default_compression_type = "none" // Valida values at this moment are none, gzip, or snappy.
+  val default_value_serializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
+  val default_key_serializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
+  val default_batch_size = "1024"
+  val default_linger_ms = "50" // 50ms
+  val default_producer_type = "async"
+  // val default_retries = "0"
+  val default_block_on_buffer_full = "true" // true or false
+  val default_buffer_memory = "16777216" // 16MB
+  val default_client_id = qc.Name + "_" + hashCode.toString
+  val default_request_timeout_ms = "10000"
   val MAX_RETRY = 3
-  val ackTimeout = 10000
 
-  val codec = if (compress) DefaultCompressionCodec.codec else NoCompressionCodec.codec
-
+  // Set up some properties for the Kafka Producer
+  // New Producer configs are found @ http://kafka.apache.org/082/documentation.html#newproducerconfigs
   val props = new Properties()
-  props.put("compression.codec", if (qc.otherconfigs.contains("compression.codec")) qc.otherconfigs.getOrElse("compression.codec", "").toString else codec.toString)
-  props.put("producer.type", if (qc.otherconfigs.contains("producer.type")) qc.otherconfigs.getOrElse("producer.type", "sync").toString else if (synchronously) "sync" else "async")
-  props.put("metadata.broker.list", qc.hosts.mkString(","))
-  props.put("batch.num.messages", if (qc.otherconfigs.contains("batch.num.messages")) qc.otherconfigs.getOrElse("batch.num.messages", "1024").toString else batchSize.toString)
-  props.put("queue.buffering.max.messages", if (qc.otherconfigs.contains("queue.buffering.max.messages")) qc.otherconfigs.getOrElse("queue.buffering.max.messages", "1024").toString else batchSize.toString)
-  props.put("queue.buffering.max.ms", if (qc.otherconfigs.contains("queue.buffering.max.ms")) qc.otherconfigs.getOrElse("queue.buffering.max.ms", "100").toString else queueTime.toString)
-  props.put("message.send.max.retries", if (qc.otherconfigs.contains("message.send.max.retries")) qc.otherconfigs.getOrElse("message.send.max.retries", "1").toString else messageSendMaxRetries.toString)
-  props.put("request.required.acks", if (qc.otherconfigs.contains("request.required.acks")) qc.otherconfigs.getOrElse("request.required.acks", "1").toString else requestRequiredAcks.toString)
-  props.put("send.buffer.bytes", if (qc.otherconfigs.contains("send.buffer.bytes")) qc.otherconfigs.getOrElse("send.buffer.bytes", "1024000").toString else bufferMemory.toString)
-  props.put("request.timeout.ms", if (qc.otherconfigs.contains("request.timeout.ms")) qc.otherconfigs.getOrElse("request.timeout.ms", "10000").toString else ackTimeout.toString)
-  props.put("client.id", if (qc.otherconfigs.contains("client.id")) qc.otherconfigs.getOrElse("client.id", "kamanja").toString else clientId)
+  props.put("bootstrap.servers", qc.hosts.mkString(",")); // ProducerConfig.BOOTSTRAP_SERVERS_CONFIG
+  props.put("compression.type", qc.otherconfigs.getOrElse("compression.type", default_compression_type).toString.trim()); // ProducerConfig.COMPRESSION_TYPE_CONFIG
+  props.put("value.serializer", qc.otherconfigs.getOrElse("value.serializer", default_value_serializer).toString.trim()); // ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
+  props.put("key.serializer", qc.otherconfigs.getOrElse("key.serializer", default_key_serializer).toString.trim()); // ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
+  props.put("batch.size", qc.otherconfigs.getOrElse("batch.size", default_batch_size).toString.trim()); // ProducerConfig.BATCH_SIZE_CONFIG
+  props.put("linger.ms", qc.otherconfigs.getOrElse("linger.ms", default_linger_ms).toString.trim()) // ProducerConfig.LINGER_MS_CONFIG
+  // props.put("retries", qc.otherconfigs.getOrElse("retries", default_retries).toString.trim()) // ProducerConfig.RETRIES_CONFIG
+  props.put("producer.type", qc.otherconfigs.getOrElse("producer.type", default_producer_type).toString.trim())
+  props.put("block.on.buffer.full", qc.otherconfigs.getOrElse("block.on.buffer.full", default_block_on_buffer_full).toString.trim()) // ProducerConfig.BLOCK_ON_BUFFER_FULL_CONFIG
+  props.put("buffer.memory", qc.otherconfigs.getOrElse("buffer.memory", default_buffer_memory).toString.trim()) // ProducerConfig.BUFFER_MEMORY_CONFIG
+  props.put("client.id", qc.otherconfigs.getOrElse("client.id", default_client_id).toString.trim()) // ProducerConfig.CLIENT_ID_CONFIG
+  props.put("request.timeout.ms", qc.otherconfigs.getOrElse("request.timeout.ms", default_request_timeout_ms).toString.trim())
 
   val tmpProducersStr = qc.otherconfigs.getOrElse("numberofconcurrentproducers", "1").toString.trim()
   var producersCnt = 1
@@ -107,11 +83,31 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
 
   var reqCntr: Int = 0
 
-  val producers = new Array[Producer[Array[Byte], Array[Byte]]](producersCnt)
+  val producers = new Array[org.apache.kafka.clients.producer.KafkaProducer[Array[Byte], Array[Byte]]](producersCnt)
 
   for (i <- 0 until producersCnt) {
     LOG.info("Creating Producer:" + (i + 1))
-    producers(i) = new Producer[Array[Byte], Array[Byte]](new ProducerConfig(props))
+    // create the producer object
+    producers(i) = new org.apache.kafka.clients.producer.KafkaProducer[Array[Byte], Array[Byte]](props)
+  }
+
+  var topicPartitionsCount = producers(0).partitionsFor(qc.topic).size()
+  var partitionsGetTm = System.currentTimeMillis
+  val refreshPartitionTime = 60 * 1000 // 60 secs
+
+  val randomPartitionCntr = new java.util.Random
+
+  private def getPartition(key: Array[Byte], numPartitions: Int): Int = {
+    if (numPartitions == 0) return 0
+    if (key != null) {
+      try {
+        return (scala.math.abs(Arrays.hashCode(key)) % numPartitions)
+      } catch {
+        case e: Exception => {
+        }
+      }
+    }
+    return randomPartitionCntr.nextInt(numPartitions)
   }
 
   // To send an array of messages. messages.size should be same as partKeys.size
@@ -122,21 +118,29 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       throw new Exception(szMsg)
     }
     if (messages.size == 0) return
-    try {
-      val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
-      for (i <- 0 until messages.size) {
-        keyMessages += new KeyedMessage(qc.topic, partKeys(i), messages(i))
-      }
 
-      if (reqCntr > 500000000)
-        reqCntr = 0
-      reqCntr += 1
-      val cntr = reqCntr
+    if (reqCntr > 500000000)
+      reqCntr = 0
+    reqCntr += 1
+    val cntr = reqCntr
+
+    // Refreshing Partitions for every refreshPartitionTime.
+    // BUGBUG:: This may execute multiple times from multiple threads. For now it does not hard too much.
+    if ((System.currentTimeMillis - partitionsGetTm) > refreshPartitionTime) {
+      topicPartitionsCount = producers(cntr % producersCnt).partitionsFor(qc.topic).size()
+      partitionsGetTm = System.currentTimeMillis
+    }
+
+    try {
+      val keyMessages = new ArrayBuffer[ProducerRecord[Array[Byte], Array[Byte]]](messages.size)
+      for (i <- 0 until messages.size) {
+        keyMessages += new ProducerRecord(qc.topic, getPartition(partKeys(i), topicPartitionsCount), partKeys(i), messages(i))
+      }
 
       var sendStatus = KafkaConstants.KAFKA_NOT_SEND
       var retryCount = 0
       while (sendStatus != KafkaConstants.KAFKA_SEND_SUCCESS) {
-        val result = doSend(cntr, keyMessages)
+        val result = doSend(cntr, keyMessages.toArray)
         sendStatus = result._1
         // Queue is full, wait and retry
         if (sendStatus == KafkaConstants.KAFKA_SEND_Q_FULL) {
@@ -165,10 +169,19 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
     }
   }
 
-  private def doSend(cntr: Int, keyMessages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): (Int, Option[Exception]) = {
-
+  private def doSend(cntr: Int, keyMessages: Array[ProducerRecord[Array[Byte], Array[Byte]]]): (Int, Option[Exception]) = {
     try {
-      producers(cntr % producersCnt).send(keyMessages: _*) // Thinking this op is atomic for (can write multiple partitions into one queue, but don't know whether it is atomic per partition in the queue).
+      val respFutures = keyMessages.map(msg => {
+        // Send the request to Kafka
+        producers(cntr % producersCnt).send(msg, new Callback {
+          override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+            val localMsg = msg
+            if (exception != null) {
+              LOG.warn("Failed to send message into the " + msg.topic + ". Exception: " + exception.getMessage)
+            }
+          }
+        })
+      })
     } catch {
       case ftsme: FailedToSendMessageException => return (KafkaConstants.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme))
       case qfe: QueueFullException             => return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
