@@ -52,6 +52,9 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val default_request_timeout_ms = "10000"
   val MAX_RETRY = 3
 
+  val producer_type = qc.otherconfigs.getOrElse("producer.type", default_producer_type).toString.trim()
+  val isSyncProducer = (producer_type.compareToIgnoreCase("sync") == 0)
+
   // Set up some properties for the Kafka Producer
   // New Producer configs are found @ http://kafka.apache.org/082/documentation.html#newproducerconfigs
   val props = new Properties()
@@ -62,7 +65,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   props.put("batch.size", qc.otherconfigs.getOrElse("batch.size", default_batch_size).toString.trim()); // ProducerConfig.BATCH_SIZE_CONFIG
   props.put("linger.ms", qc.otherconfigs.getOrElse("linger.ms", default_linger_ms).toString.trim()) // ProducerConfig.LINGER_MS_CONFIG
   // props.put("retries", qc.otherconfigs.getOrElse("retries", default_retries).toString.trim()) // ProducerConfig.RETRIES_CONFIG
-  props.put("producer.type", qc.otherconfigs.getOrElse("producer.type", default_producer_type).toString.trim())
+  // props.put("producer.type", producer_type)
   props.put("block.on.buffer.full", qc.otherconfigs.getOrElse("block.on.buffer.full", default_block_on_buffer_full).toString.trim()) // ProducerConfig.BLOCK_ON_BUFFER_FULL_CONFIG
   props.put("buffer.memory", qc.otherconfigs.getOrElse("buffer.memory", default_buffer_memory).toString.trim()) // ProducerConfig.BUFFER_MEMORY_CONFIG
   props.put("client.id", qc.otherconfigs.getOrElse("client.id", default_client_id).toString.trim()) // ProducerConfig.CLIENT_ID_CONFIG
@@ -171,17 +174,24 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
 
   private def doSend(cntr: Int, keyMessages: Array[ProducerRecord[Array[Byte], Array[Byte]]]): (Int, Option[Exception]) = {
     try {
-      val respFutures = keyMessages.map(msg => {
-        // Send the request to Kafka
-        producers(cntr % producersCnt).send(msg, new Callback {
-          override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
-            val localMsg = msg
-            if (exception != null) {
-              LOG.warn("Failed to send message into the " + msg.topic + ". Exception: " + exception.getMessage)
-            }
-          }
+      if (isSyncProducer) {
+        val respFutures = keyMessages.map(msg => {
+          // Send the request to Kafka
+          producers(cntr % producersCnt).send(msg)
         })
-      })
+      } else {
+        val respFutures = keyMessages.map(msg => {
+          // Send the request to Kafka
+          producers(cntr % producersCnt).send(msg, new Callback {
+            override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+              val localMsg = msg
+              if (exception != null) {
+                LOG.warn("Failed to send message into the " + msg.topic + ". Exception: " + exception.getMessage) // BUGBUG:: Yet to add more logic here
+              }
+            }
+          })
+        })
+      }
     } catch {
       case ftsme: FailedToSendMessageException => return (KafkaConstants.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme))
       case qfe: QueueFullException             => return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
