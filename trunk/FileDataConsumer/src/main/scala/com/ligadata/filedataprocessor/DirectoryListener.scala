@@ -63,9 +63,9 @@ object LocationWatcher {
         val watch_thread = new Thread(processor)
         watch_thread.start
       }
-
     } catch {
       case e: Exception => {
+        e.printStackTrace()
         logger.error("ERROR in starting SMART FILE CONSUMER "+ e)
         return
       }
