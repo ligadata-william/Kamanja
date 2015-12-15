@@ -184,7 +184,6 @@ cp $srcPath/MetadataAPIServiceClient/target/scala-2.10/metadataapiserviceclient_
 cp $ivyPath/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.10.0.jar $systemlib
 cp $ivyPath/cache/commons-logging/commons-logging/jars/commons-logging-1.1.1.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.wmq.factories.jar $systemlib
-cp $ivyPath/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.2.jar $systemlib
 cp $ivyPath/cache/net.java.dev.jets3t/jets3t/jars/jets3t-0.9.0.jar $systemlib
 cp $srcPath/Utils/KVInit/target/scala-2.10/kvinit_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/jms-1.1.jar $systemlib
@@ -202,7 +201,6 @@ cp $ivyPath/cache/org.mortbay.jetty/servlet-api/jars/servlet-api-2.5.20110712-so
 cp $ivyPath/cache/com.google.collections/google-collections/jars/google-collections-1.0.jar $systemlib
 cp $ivyPath/cache/ch.qos.logback/logback-core/jars/logback-core-1.0.12.jar $systemlib
 cp $ivyPath/cache/io.netty/netty/bundles/netty-3.7.0.Final.jar $systemlib
-cp $ivyPath/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.0.5.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-httpx/bundles/spray-httpx-1.3.1.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-client/bundles/spray-client-1.3.1.jar $systemlib
 cp $ivyPath/cache/com.jamesmurty.utils/java-xmlbuilder/jars/java-xmlbuilder-0.4.jar $systemlib
@@ -258,7 +256,6 @@ cp $ivyPath/cache/net.debasishg/redisclient_2.10/jars/redisclient_2.10-2.13.jar 
 cp $ivyPath/cache/com.typesafe.akka/akka-testkit_2.10/jars/akka-testkit_2.10-2.3.0.jar $systemlib
 cp $srcPath/Exceptions/target/scala-2.10/exceptions_2.10-1.0.jar $systemlib
 cp $srcPath/DataDelimiters/target/scala-2.10/datadelimiters_2.10-1.0.jar $systemlib
-cp $ivyPath/cache/org.apache.zookeeper/zookeeper/jars/zookeeper-3.3.4.jar $systemlib
 # cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.7.5.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/servlet-api/jars/servlet-api-2.5.20110712.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty/jars/jetty-6.1.26.jar $systemlib
@@ -321,8 +318,8 @@ cp $ivyPath/cache/org.scala-lang/scala-actors/jars/scala-actors-2.10.4.jar $syst
 cp $srcPath/Utils/ZooKeeper/CuratorListener/target/scala-2.10/zookeeperlistener_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.kafka/kafka_2.10/jars/kafka_2.10-0.8.2.2.jar $systemlib
 cp $ivyPath/cache/org.apache.kafka/kafka-clients/jars/kafka-clients-0.8.2.2.jar $systemlib
-cp $ivyPath/cache/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.1.1.7.jar $systemlib
-cp $ivyPath/cache/cache/net.jpountz.lz4/lz4/jars/lz4-1.2.0.jar $systemlib
+cp $ivyPath/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.1.1.7.jar $systemlib
+cp $ivyPath/cache/net.jpountz.lz4/lz4/jars/lz4-1.2.0.jar $systemlib
 
 cp $srcPath/Pmml/PmmlUdfs/target/scala-2.10/pmmludfs_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.jar $systemlib
