@@ -319,7 +319,11 @@ cp $ivyPath/cache/javax.servlet/servlet-api/jars/servlet-api-2.5.jar $systemlib
 cp $ivyPath/cache/org.ow2.asm/asm-commons/jars/asm-commons-4.0.jar $systemlib
 cp $ivyPath/cache/org.scala-lang/scala-actors/jars/scala-actors-2.10.4.jar $systemlib
 cp $srcPath/Utils/ZooKeeper/CuratorListener/target/scala-2.10/zookeeperlistener_2.10-1.0.jar $systemlib
-cp $ivyPath/cache/org.apache.kafka/kafka_2.10/jars/kafka_2.10-0.8.1.1.jar $systemlib
+cp $ivyPath/cache/org.apache.kafka/kafka_2.10/jars/kafka_2.10-0.8.2.2.jar $systemlib
+cp $ivyPath/cache/org.apache.kafka/kafka-clients/jars/kafka-clients-0.8.2.2.jar $systemlib
+cp $ivyPath/cache/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.1.1.7.jar $systemlib
+cp $ivyPath/cache/cache/net.jpountz.lz4/lz4/jars/lz4-1.2.0.jar $systemlib
+
 cp $srcPath/Pmml/PmmlUdfs/target/scala-2.10/pmmludfs_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mq.jmqi.local.jar $systemlib
