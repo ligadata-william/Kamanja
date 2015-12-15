@@ -75,10 +75,7 @@ libraryDependencies ++= {
   "io.spray" % "spray-testkit" % sprayVersion,
   "io.spray" % "spray-client" % sprayVersion,
   "io.spray" %%  "spray-json" % "1.2.5",
-  "org.apache.kafka" % "kafka_2.10" % "0.8.1.1"
-       exclude("javax.jms", "jms")
-       exclude("com.sun.jdmk", "jmxtools")
-       exclude("com.sun.jmx", "jmxri"),
+  "org.apache.kafka" % "kafka_2.10" % "0.8.2.2",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
 //   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "ch.qos.logback" % "logback-classic" % "1.0.12",
