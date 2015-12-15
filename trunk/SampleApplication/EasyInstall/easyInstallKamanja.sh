@@ -158,7 +158,7 @@ cp $srcPath/InputOutputAdapters/KafkaSimpleInputOutputAdapters/target/scala-2.10
 cp $srcPath/InputOutputAdapters/FileSimpleInputOutputAdapters/target/scala-2.10/filesimpleinputoutputadapters_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/com.ning/compress-lzf/bundles/compress-lzf-0.9.1.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.msg.client.jms.jar $systemlib
-# cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.6.1.jar $systemlib
+cp $ivyPath/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.6.1.jar $systemlib
 cp $ivyPath/cache/com.twitter/chill-java/jars/chill-java-0.3.6.jar $systemlib
 cp $ivyPath/cache/org.apache.hadoop/hadoop-common/jars/hadoop-common-2.7.1.jar $systemlib
 cp $ivyPath/cache/com.chuusai/shapeless_2.10/jars/shapeless_2.10-1.2.4.jar $systemlib
@@ -244,7 +244,7 @@ cp $ivyPath/cache/org.jvnet.mimepull/mimepull/jars/mimepull-1.9.4.jar $systemlib
 cp $ivyPath/cache/io.netty/netty/bundles/netty-3.9.0.Final.jar $systemlib
 cp $ivyPath/cache/org.apache.httpcomponents/httpcore/jars/httpcore-4.2.4.jar $systemlib
 cp $ivyPath/cache/commons-configuration/commons-configuration/jars/commons-configuration-1.6.jar $systemlib
-# cp $ivyPath/cache/log4j/log4j/bundles/log4j-1.2.17.jar $systemlib
+cp $ivyPath/cache/log4j/log4j/bundles/log4j-1.2.17.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/com.ibm.mqjms.jar $systemlib
 cp $srcPath/Utils/JsonDataGen/target/scala-2.10/jsondatagen_2.10-0.1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.curator/curator-recipes/bundles/curator-recipes-2.6.0.jar $systemlib
