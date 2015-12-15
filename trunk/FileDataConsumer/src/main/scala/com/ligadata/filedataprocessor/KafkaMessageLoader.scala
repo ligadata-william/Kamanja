@@ -41,6 +41,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   var endFileProcessingTimeStamp: Long = 0
   val RC_RETRY: Int = 3
   var retryCount = 0
+  var recPartitionMap: scala.collection.mutable.Map[Int,Int] = scala.collection.mutable.Map[Int,Int]()
 
   val MAX_RETRY = 1
   val INIT_KAFKA_UNAVAILABLE_WAIT_VALUE = 1000
@@ -101,6 +102,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       numberOfValidEvents = 0
       startFileProcessingTimeStamp = 0 //scala.compat.Platform.currentTime
       fileBeingProcessed = messages(0).relatedFileName
+      recPartitionMap = messages(0).partMap
       val fileTokens = fileBeingProcessed.split("/")
       FileProcessor.addToZK(fileTokens(fileTokens.size - 1), 0)
     }
@@ -108,10 +110,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     if (startFileProcessingTimeStamp == 0)
       startFileProcessingTimeStamp = scala.compat.Platform.currentTime
 
-    //val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](messages.size)
     val keyMessages = new ArrayBuffer[ProducerRecord[Array[Byte], Array[Byte]]](messages.size)
-
-
 
     var isLast = false
     messages.foreach(msg => {
@@ -143,29 +142,43 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
           currentOffset += 1
           numberOfMessagesProcessedInFile += 1
 
-          // Only add those messages that we have not previously processed....
-          if (msg.offsetInFile == FileProcessor.NOT_RECOVERY_SITUATION ||
-            (msg.offsetInFile >= 0 &&
-              msg.offsetInFile < currentOffset)) {
-            val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString(",")
-            /*keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
-                                                            partitionKey.getBytes("UTF8"),
-                                                            msgStr.getBytes("UTF8"))*/
+          val partitionKey = objInst.asInstanceOf[MessageContainerObjBase].PartitionKeyData(inputData).mkString(",")
 
+          // By far the most common path..  just add the message
+          if (msg.offsetInFile == FileProcessor.NOT_RECOVERY_SITUATION) {
             keyMessages += new ProducerRecord[Array[Byte],Array[Byte]](inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
-                                             getPartition(partitionKey.getBytes("UTF8"), numPartitionsForMainTopic.size),
-                                             partitionKey.getBytes("UTF8"),
-                                             msgStr.getBytes("UTF8"))
-
+                                                                        getPartition(partitionKey.getBytes("UTF8"), numPartitionsForMainTopic.size),
+                                                                        partitionKey.getBytes("UTF8"),
+                                                                        msgStr.getBytes("UTF8"))
           } else {
-            // This is just for reporting purposes... do not report messages that were below the recovery offset
-            numberOfMessagesProcessedInFile = numberOfMessagesProcessedInFile - 1
+            // Recovery... do checking for the message
+            // Only add those messages that we have not previously processed....
+            if (msg.offsetInFile >= 0 && msg.offsetInFile < currentOffset)  {
+              // We may be part of in doubt batch.. gotta check partition recovery info
+              var partition = getPartition(partitionKey.getBytes("UTF8"), numPartitionsForMainTopic.size)
+              if (recPartitionMap.contains(partition) && recPartitionMap(partition) == 0) {
+                keyMessages += new ProducerRecord[Array[Byte],Array[Byte]](inConfiguration(SmartFileAdapterConstants.KAFKA_TOPIC),
+                                                                           getPartition(partitionKey.getBytes("UTF8"), numPartitionsForMainTopic.size),
+                                                                           partitionKey.getBytes("UTF8"),
+                                                                           msgStr.getBytes("UTF8"))
+              } else {
+                if (recPartitionMap.contains(partition)) {
+                  // The partition key exists and its > 0...  meaning we need to ignore the messagem but need to
+                  // decrement the counter
+                  recPartitionMap(partition) = recPartitionMap(partition) - 1
+                } else {
+        //          println(" DEFCON 1")
+                }
+              }
+            } else {
+              // Ignoring shit...
+            }
           }
-
         } catch {
           case mfe: KVMessageFormatingException =>
             writeErrorMsg(msg)
           case e: Exception => {
+            e.printStackTrace()
             val stackTrace = StackTrace.ThrowableTraceString(e)
             logger.warn("Unknown message format in partition " + partIdx + " \n" + stackTrace)
             writeErrorMsg(msg)
@@ -180,17 +193,19 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       }
     })
 
+   // println("PASSING " + keyMessages.size + " to Kafka")
     // Write to kafka
-    sendToKafka(keyMessages, "msgPush")
+    if (isLast)
+      sendToKafka(keyMessages, "msgPush1", numberOfValidEvents)
+    else
+      sendToKafka(keyMessages, "msgPush2", (numberOfValidEvents - messages.size), fileBeingProcessed)
+
     // Make sure you dont write extra for DummyLast
     if (!isLast) {
       writeStatusMsg(fileBeingProcessed)
       val fileTokens = fileBeingProcessed.split("/")
       FileProcessor.addToZK(fileTokens(fileTokens.size - 1), numberOfValidEvents)
-      //FileProcessor.setFileOffset(fileTokens(fileTokens.size - 1),numberOfValidEvents)
-    }
-
-    if (isLast) {
+    } else {
       // output the status message to the KAFAKA_STATUS_TOPIC
       writeStatusMsg(fileBeingProcessed, true)
       closeOutFile(fileBeingProcessed)
@@ -207,8 +222,11 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    * @return
    */
   //private def sendToKafka(messages: ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]]): Int = {
-  private def sendToKafka(messages: ArrayBuffer[ProducerRecord[Array[Byte],Array[Byte]]], sentFrom: String): Int = {
+  private def sendToKafka(messages: ArrayBuffer[ProducerRecord[Array[Byte],Array[Byte]]], sentFrom: String, fullSuccessOffset: Int = 0, fileToUpdate: String = null): Int = {
     try {
+      var partitionsStats = scala.collection.mutable.Map[Int, Int]()
+
+      //println("SEND TO KAFKA CALLED WITH " + fullSuccessOffset + "  -  " + fileToUpdate + " ..." + sentFrom)
       logger.info("SMART FILE CONSUMER ("+partIdx+") Sending " + messages.size + " to kafka from " + sentFrom)
       if (messages.size == 0) return FileProcessor.KAFKA_SEND_SUCCESS
 
@@ -219,19 +237,27 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         respFutures(currentMessage) = null
         currentMessage += 1
       })
-
-
+      var successVector = Array.fill[Boolean](messages.size)(false)  //Array[Boolean](messages.size)
+      //println
+     // println
+     // println(successVector.size)
       var isFullySent = false
       var isRetry = false
       var failedPush = 0
-      currentMessage = 0
-
+    //  println("-- Pushing " + messages.size+ " messages")
+    //  println("-- before "+ successVector.foreach(x=>println(x)))
       while (!isFullySent) {
         if (isRetry) {
+        //  println("\n\n\n RETRYIING RETRYING \n\n\n")
           Thread.sleep(getCurrentSleepTimer)
         }
+
+        currentMessage = 0
         messages.foreach(msg => {
-          if (respFutures.contains(currentMessage)) {
+       //   println(" ----- Message " + currentMessage + " futuresVector is " + respFutures.contains(currentMessage) + "  and success vector is " + successVector(currentMessage))
+       //   println(new String (msg.value))
+          if (//respFutures.contains(currentMessage) &&
+              !successVector(currentMessage)) {
             // Send the request to Kafka
             val response = producer.send(msg, new Callback {
               override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
@@ -241,19 +267,47 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
                 }
               }
             })
+           // println("----- FUTURE SEt for msg " + currentMessage)
             respFutures(currentMessage) = response
             currentMessage += 1
           }
         })
-
+//println("STEP1 DONE")
         // Make sure all messages have been successfuly sent, and resend them if we detected bad messages
         isFullySent = true
-        for (i <- (messages.size - 1) to 0) {
-          if (checkMessage(respFutures,i) > 0) {
-            isFullySent = false
-            isRetry = true
+        var numberOfFailuresThisTime = 0
+       // println("Check futures "+ (messages.size - 1) + " to 0")
+        for (i <- 0 until messages.size) {
+       //   println("  LOOP " + i)
+          if (!successVector(i)) {
+            val (rc, partitionId) = checkMessage(respFutures,i)
+          //  println(i + " with result " + rc + ". " + partitionId)
+            if (rc > 0) {
+              isFullySent = false
+              isRetry = true
+              numberOfFailuresThisTime += 1
+            } else {
+              if (partitionsStats.contains(partitionId)) {
+                var newval = partitionsStats(partitionId)
+                newval += 1
+                partitionsStats(partitionId) = newval
+              } else {
+                partitionsStats(partitionId) = 1
+              }
+          //    println("*** " + partitionsStats )
+              successVector(i) = true
+            }
           }
         }
+     //   println("STEP2 DONE " + fullSuccessOffset)
+
+        // We can now fail for some messages, so, we need to update the recovery area in ZK, to make sure the retry does not
+        // process these messages.
+        if (fileToUpdate != null) {
+          val fileTokens = fileBeingProcessed.split("/")
+          FileProcessor.addToZK(fileTokens(fileTokens.size - 1), fullSuccessOffset, partitionsStats)
+        }
+      //  println("-- after "+ successVector.foreach(x=>println(x)))
       }
       resetSleepTimer
     } catch {
@@ -263,14 +317,18 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
     FileProcessor.KAFKA_SEND_SUCCESS
   }
 
-  private def checkMessage(mapF: scala.collection.mutable.Map[Int,Future[RecordMetadata]], i: Int): Int = {
+  private def checkMessage(mapF: scala.collection.mutable.Map[Int,Future[RecordMetadata]], i: Int): (Int,Int) = {
     try {
+ //     println("Checking for " + i)
       var md = mapF(i).get
-      mapF.remove(i)
-      FileProcessor.KAFKA_SEND_SUCCESS
+      //return FileProcessor.KAFKA_SEND_Q_FULL
+
+    //  if (i == 3) return(FileProcessor.KAFKA_SEND_DEAD_PRODUCER, md.partition)
+      mapF(i) = null //.remove(i)
+      return(FileProcessor.KAFKA_SEND_SUCCESS, md.partition)
     } catch {
-      case ftsme: FailedToSendMessageException => {FileProcessor.KAFKA_SEND_DEAD_PRODUCER}
-      case qfe: QueueFullException => {FileProcessor.KAFKA_SEND_Q_FULL}
+      case ftsme: FailedToSendMessageException => {return (FileProcessor.KAFKA_SEND_DEAD_PRODUCER, -1)}
+      case qfe: QueueFullException => {return (FileProcessor.KAFKA_SEND_Q_FULL, -1 )}
       case e: Exception => {logger.error("CHECK_MESSAGE ",e);throw e}
     }
   }
@@ -278,7 +336,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   private def getCurrentSleepTimer: Int = {
     currentSleepValue = currentSleepValue * 2
     logger.error("SMART FILE CONSUMER ("+partIdx+") detected a problem with Kafka... Retry in " + scala.math.min(currentSleepValue, MAX_WAIT) / 1000 + " seconds")
-    return scala.math.min(currentSleepValue, MAX_WAIT)
+    currentSleepValue = scala.math.min(currentSleepValue, MAX_WAIT)
+    currentSleepValue
   }
 
   private def resetSleepTimer: Unit = {
@@ -333,7 +392,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
         else
           statusMsg = SmartFileAdapterConstants.TOTAL_FILE_STATUS + dateFormat.format(cdate) + "," + fileName + "," + numberOfMessagesProcessedInFile + "," + (endFileProcessingTimeStamp - FileProcessor.getTimingFromFileCache(nameToken(nameToken.size - 1)))
         val statusPartitionId = "it does not matter"
-
+println(statusMsg)
         // Write a Status Message
        // val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
        // keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC), statusPartitionId.getBytes("UTF8"), new String(statusMsg).getBytes("UTF8"))

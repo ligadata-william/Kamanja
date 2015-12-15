@@ -111,17 +111,17 @@ object FileProcessor {
   def addToZK (fileName: String, offset: Int, partitions: scala.collection.mutable.Map[Int,Int] = null) : Unit = {
     zkRecoveryLock.synchronized {
 
-      println("ADD TO ZK " + offset + " - " + partitions)
+      //println("ADD TO ZK " + offset + " - " + partitions)
       var zkValue: String = ""
       logger.info("SMART_FILE_CONSUMER (global): Getting zookeeper info for "+ znodePath)
       CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath + "/" + fileName)
       zkValue = zkValue + offset.toString
-      println("====> " + zkValue)
+     // println("====> " + zkValue)
 
       // Set up Partition data
       if (partitions == null) {
         zkValue = zkValue + ",[]"
-        println("====> " + zkValue)
+      //  println("====> " + zkValue)
       } else {
         zkValue = zkValue + ",["
         var isFirst = true
@@ -129,11 +129,11 @@ object FileProcessor {
           if (!isFirst) zkValue = zkValue + ";"
           var mapVal = partitions(key)
           zkValue = zkValue + key.toString + ":" + mapVal.toString
-          println("====> " + zkValue)
+     //     println("====> " + zkValue)
           isFirst = false
         })
         zkValue = zkValue + "]"
-        println("====> " + zkValue)
+     //   println("====> " + zkValue)
       }
 
       zkc.setData().forPath(znodePath + "/" + fileName, zkValue.getBytes)
@@ -277,7 +277,7 @@ object FileProcessor {
     logger.info("SMART FILE CONSUMER (global): Initializing global queues")
 
     localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
-    println(localMetadataConfig)
+   // println(localMetadataConfig)
     MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
     zkc = initZookeeper
 
@@ -363,7 +363,7 @@ object FileProcessor {
   private def processExistingFiles(d: File): Unit = {
     // Process all the existing files in the directory that are not marked complete.
     if (d.exists && d.isDirectory) {
-      println("Checking for existing files")
+   //   println("Checking for existing files")
       val files = d.listFiles.filter(_.isFile).sortWith(_.lastModified < _.lastModified).toList
       files.foreach(file => {
         if (isValidFile(file.toString) && file.toString.endsWith(readyToProcessKey)) {
@@ -398,19 +398,17 @@ object FileProcessor {
               var recoveryInfo = new String(offset)
               logger.info("SMART FILE CONSUMER (global): " + fileToReprocess+ " from offset " + recoveryInfo)
 
-              println("Recovering  " + fileToReprocess + ",   " + recoveryInfo)
               // There will always be 2 parts here.
               var partMap = scala.collection.mutable.Map[Int,Int]()
               var recoveryTokens = recoveryInfo.split(",")
               var parts = recoveryTokens(1).substring(1,recoveryTokens(1).size - 1)
-              var kvs = parts.split(";")
-              kvs.foreach(kv => {
-                var pair = kv.split(":")
-                partMap(pair(0).toInt) = pair(1).toInt
-              })
-
-              println(partMap)
-
+              if (parts.size != 0) {
+                var kvs = parts.split(";")
+                kvs.foreach(kv => {
+                  var pair = kv.split(":")
+                  partMap(pair(0).toInt) = pair(1).toInt
+                })
+              }
               FileProcessor.enQFile(dirToWatch + "/" + fileToReprocess.asInstanceOf[String],recoveryTokens(0).toInt, FileProcessor.RECOVERY_DUMMY_START_TIME, partMap)
               if (d.exists && d.isDirectory) {
                 var files = d.listFiles.filter(file => { file.isFile && (file.getName).equals(fileToReprocess.asInstanceOf[String]) })
@@ -1060,7 +1058,6 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
         Thread.sleep(500)
       } else {
         logger.info("SMART_FILE_CONSUMER partition " + partitionId + " Processing file " + fileToProcess)
-        println("SMART_FILE_CONSUMER partition " + partitionId + " Processing file " + fileToProcess)
         val tokenName = fileToProcess.name.split("/")
         FileProcessor.markFileProcessing(tokenName(tokenName.size - 1), fileToProcess.offset, fileToProcess.createDate)
         curTimeStart = System.currentTimeMillis
