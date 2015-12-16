@@ -67,19 +67,20 @@ object LocationWatcher {
         }
       }
 
-      logger.info("Starting "+ numberOfProcessors+" file consumers, reading from "+ path)
-    try {
-      for (i <- 1 to numberOfProcessors) {
-        var processor = new FileProcessor(path,i)
-        processor.init(properties)
-        val watch_thread = new Thread(processor)
-        watch_thread.start
+      logger.info("SMART FILE CONSUMER: Starting "+ numberOfProcessors+" file consumers, reading from "+ path)
+
+      try {
+        for (i <- 1 to numberOfProcessors) {
+          var processor = new FileProcessor(path,i)
+          processor.init(properties)
+          val watch_thread = new Thread(processor)
+          watch_thread.start
+        }
+      } catch {
+        case e: Exception => {
+          logger.error("SMART FILE CONSUMER:  ERROR in starting SMART FILE CONSUMER ", e)
+          return
+        }
       }
-    } catch {
-      case e: Exception => {
-        logger.error("ERROR in starting SMART FILE CONSUMER ", e)
-        return
-      }
-    }
   }
 }
