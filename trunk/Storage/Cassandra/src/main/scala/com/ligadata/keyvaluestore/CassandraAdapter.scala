@@ -215,7 +215,7 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         session.execute(createKeySpaceStmt);
       } catch {
         case e: Exception => {
-          throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
+          throw CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage(), e)
         }
       }
       // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
@@ -230,7 +230,7 @@ class CassandraAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
       logger.error("Stacktrace:" + stackTrace)
-      throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
+      throw ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage(), e)
     }
   }
 

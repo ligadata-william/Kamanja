@@ -713,13 +713,13 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
     if (kafkaTopic == null) {
       logger.error("SMART_FILE_CONSUMER ("+partitionId+") Kafka Topic to populate must be specified")
       shutdown
-      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.KAFKA_TOPIC)
+      throw MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.KAFKA_TOPIC, null)
     }
 
     if (dirToWatch == null) {
       logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
       shutdown
-      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.DIRECTORY_TO_WATCH)
+      throw MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
     }
 
     if (mdConfig == null) {

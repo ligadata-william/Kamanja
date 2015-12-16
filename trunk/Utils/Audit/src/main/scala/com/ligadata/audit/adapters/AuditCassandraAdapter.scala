@@ -108,7 +108,7 @@ class AuditCassandraAdapter extends AuditAdapter {
           case e: Exception => {
               val stackTrace =   StackTrace.ThrowableTraceString(e)
               logger.debug("Stacktrace:"+stackTrace)
-              throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()) 
+              throw CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage(), e) 
             }
         }
       
@@ -125,7 +125,7 @@ class AuditCassandraAdapter extends AuditAdapter {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:"+stackTrace)
-        throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
+        throw ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage(), e)
       }
     } 
        
