@@ -110,18 +110,14 @@ object FileProcessor {
   //
   def addToZK (fileName: String, offset: Int, partitions: scala.collection.mutable.Map[Int,Int] = null) : Unit = {
     zkRecoveryLock.synchronized {
-
-      //println("ADD TO ZK " + offset + " - " + partitions)
       var zkValue: String = ""
       logger.info("SMART_FILE_CONSUMER (global): Getting zookeeper info for "+ znodePath)
       CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath + "/" + fileName)
       zkValue = zkValue + offset.toString
-     // println("====> " + zkValue)
 
       // Set up Partition data
       if (partitions == null) {
         zkValue = zkValue + ",[]"
-      //  println("====> " + zkValue)
       } else {
         zkValue = zkValue + ",["
         var isFirst = true
@@ -129,11 +125,9 @@ object FileProcessor {
           if (!isFirst) zkValue = zkValue + ";"
           var mapVal = partitions(key)
           zkValue = zkValue + key.toString + ":" + mapVal.toString
-     //     println("====> " + zkValue)
           isFirst = false
         })
         zkValue = zkValue + "]"
-     //   println("====> " + zkValue)
       }
 
       zkc.setData().forPath(znodePath + "/" + fileName, zkValue.getBytes)
@@ -277,7 +271,6 @@ object FileProcessor {
     logger.info("SMART FILE CONSUMER (global): Initializing global queues")
 
     localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
-   // println(localMetadataConfig)
     MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
     zkc = initZookeeper
 
@@ -363,7 +356,6 @@ object FileProcessor {
   private def processExistingFiles(d: File): Unit = {
     // Process all the existing files in the directory that are not marked complete.
     if (d.exists && d.isDirectory) {
-   //   println("Checking for existing files")
       val files = d.listFiles.filter(_.isFile).sortWith(_.lastModified < _.lastModified).toList
       files.foreach(file => {
         if (isValidFile(file.toString) && file.toString.endsWith(readyToProcessKey)) {
