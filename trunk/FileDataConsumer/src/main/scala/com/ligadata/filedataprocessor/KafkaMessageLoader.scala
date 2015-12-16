@@ -75,6 +75,8 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   var debug_IgnoreKafka = inConfiguration.getOrElse("READ_TEST_ONLY", "FALSE")
   var status_frequency: Int = inConfiguration.getOrElse(SmartFileAdapterConstants.STATUS_FREQUENCY, "100000").toInt
   var isZKIgnore: Boolean = inConfiguration.getOrElse(SmartFileAdapterConstants.ZOOKEEPER_IGNORE, "FALSE").toBoolean
+  var errorTopic = inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC, null)
+  var statusTopic = inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC, null)
 
   val zkcConnectString = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
   logger.debug(partIdx + " SMART FILE CONSUMER Using zookeeper " + zkcConnectString)
@@ -359,6 +361,9 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    * @param fileName
    */
   private def writeStatusMsg(fileName: String, isTotal: Boolean = false): Unit = {
+
+    if (statusTopic == null) return
+
     try {
       val cdate: Date = new Date
       if (inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_STATUS_TOPIC, "").length > 0) {
@@ -395,14 +400,15 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
    * @param msg
    */
   private def writeErrorMsg(msg: KafkaMessage): Unit = {
+
+    if (errorTopic == null) return
+
     val cdate: Date = new Date
     val errorMsg = dateFormat.format(cdate) + "," + msg.relatedFileName + "," + (new String(msg.msg))
     logger.warn(" SMART FILE CONSUMER ("+partIdx+"): invalid message in file " + msg.relatedFileName)
     logger.warn(errorMsg)
 
     // Write a Error Message
-   // val keyMessages = new ArrayBuffer[KeyedMessage[Array[Byte], Array[Byte]]](1)
-   // keyMessages += new KeyedMessage(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
     val keyMessages = new ArrayBuffer[ProducerRecord[Array[Byte], Array[Byte]]](1)
     keyMessages += new ProducerRecord(inConfiguration(SmartFileAdapterConstants.KAFKA_ERROR_TOPIC), "rare event".getBytes("UTF8"), errorMsg.getBytes("UTF8"))
     sendToKafka(keyMessages, "Error")
@@ -410,6 +416,9 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   }
 
   private def writeGenericMsg(msg: String, fileName: String, topicName: String): Unit = {
+
+    if (statusTopic == null) return
+
     val cdate: Date = new Date
     // Corrupted_File_Detected,Date-XXXXXX,FileName,-1
     val genMsg = SmartFileAdapterConstants.CORRUPTED_FILE + dateFormat.format(cdate) + "," + fileName + ",-1"

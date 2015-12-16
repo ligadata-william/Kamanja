@@ -59,10 +59,15 @@ object LocationWatcher {
       var threads: Array[Thread] = new Array[Thread](numberOfProcessors)
       var path: Path= null
       try {
-         path = FileSystems.getDefault().getPath(properties(SmartFileAdapterConstants.DIRECTORY_TO_WATCH))
+         val dirName = properties.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
+         if (dirName == null) {
+           logger.error("SMART FILE CONSUMER: Directory to watch is missing, must be specified")
+           return
+         }
+         path = FileSystems.getDefault().getPath(dirName)
       } catch {
         case e: IOException => {
-          println ("Unable to find the directory to watch")
+          logger.error ("Unable to find the directory to watch")
           return
         }
       }
