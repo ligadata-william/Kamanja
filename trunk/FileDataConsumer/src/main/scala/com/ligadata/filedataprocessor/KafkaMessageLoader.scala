@@ -83,7 +83,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   var objInst: Any = configureMessageDef
   if (objInst == null) {
     shutdown
-    throw new UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+    throw UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME), null)
   }
 
   /**
@@ -449,7 +449,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       if (str_arr.size % 2 != 0) {
         val errStr = "Expecting Key & Value pairs are even number of tokens when FieldDelimiter & KeyAndValueDelimiter are matched. We got %d tokens from input string %s".format(str_arr.size, inputData)
         logger.error(errStr)
-        throw new KVMessageFormatingException(errStr)
+        throw KVMessageFormatingException(errStr, null)
       }
       for (i <- 0 until str_arr.size by 2) {
         dataMap(str_arr(i).trim) = str_arr(i + 1)
@@ -458,7 +458,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       str_arr.foreach(kv => {
         val kvpair = kv.split(delimiters.keyAndValueDelimiter)
         if (kvpair.size != 2) {
-          throw new KVMessageFormatingException("Expecting Key & Value pair only")
+          throw KVMessageFormatingException("Expecting Key & Value pair only", null)
         }
         dataMap(kvpair(0).trim) = kvpair(1)
       })
@@ -484,14 +484,14 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
       case e: Exception => {
         shutdown
         logger.error("Unable to to parse message defintion")
-        throw new UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+        throw UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME), e)
       }
     }
 
     if (msgDef == null) {
       shutdown
       logger.error("Unable to to retrieve message defintion")
-      throw new UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME))
+      throw UnsupportedObjectException("Unknown message definition " + inConfiguration(SmartFileAdapterConstants.MESSAGE_NAME), null)
     }
     // Just in case we want this to deal with more then 1 MSG_DEF in a future.  - msgName paramter will probably have to
     // be an array inthat case.. but for now......

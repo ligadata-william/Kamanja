@@ -140,7 +140,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
     case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
       logger.debug("StackTrace:"+stackTrace)
-      throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+      throw ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
     }
   }
 
@@ -232,7 +232,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-        throw new KeyNotFoundException(e.getMessage())
+        throw KeyNotFoundException(e.getMessage())
       }
     }
   }
@@ -257,7 +257,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-        throw new KeyNotFoundException(e.getMessage())
+        throw KeyNotFoundException(e.getMessage())
       }
     }
   }

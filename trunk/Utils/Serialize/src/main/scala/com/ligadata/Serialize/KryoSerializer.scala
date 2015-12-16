@@ -25,11 +25,11 @@ import org.apache.logging.log4j._
 import com.ligadata.kamanja.metadata._
 
 import com.twitter.chill.ScalaKryoInstantiator
-import com.esotericsoftware.kryo.io.{Input, Output}
+import com.esotericsoftware.kryo.io.{ Input, Output }
 import com.ligadata.Exceptions._
 import com.ligadata.Exceptions.StackTrace
 
-class KryoSerializer extends Serializer{
+class KryoSerializer extends Serializer {
 
   lazy val kryoFactory = new ScalaKryoInstantiator
   private[this] var classLoader: java.lang.ClassLoader = null
@@ -37,34 +37,33 @@ class KryoSerializer extends Serializer{
   val loggerName = this.getClass.getName
   lazy val logger = LogManager.getLogger(loggerName)
 
-  override def SetClassLoader(cl : java.lang.ClassLoader): Unit = {
+  override def SetClassLoader(cl: java.lang.ClassLoader): Unit = {
     classLoader = cl
   }
 
-  override def SerializeObjectToByteArray(obj : Object) : Array[Byte] = {
-    try{
+  override def SerializeObjectToByteArray(obj: Object): Array[Byte] = {
+    try {
       val kryo = kryoFactory.newKryo()
       val baos = new ByteArrayOutputStream
       val output = new Output(baos)
       if (classLoader != null)
         kryo.setClassLoader(classLoader)
-      kryo.writeClassAndObject(output,obj)
+      kryo.writeClassAndObject(output, obj)
       output.close()
       val ba = baos.toByteArray()
       logger.debug("Serialized data contains " + ba.length + " bytes ")
       ba
-    }catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
-	throw new KryoSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
+        logger.debug("StackTrace:" + stackTrace)
+        throw KryoSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage(), e)
       }
     }
   }
 
-
-  override def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
-    try{
+  override def DeserializeObjectFromByteArray(ba: Array[Byte]): Object = {
+    try {
       val kryo = kryoFactory.newKryo()
       val bais = new ByteArrayInputStream(ba);
       val inp = new Input(bais)
@@ -74,16 +73,16 @@ class KryoSerializer extends Serializer{
       logger.debug("DeSerialized object => " + m.getClass().getName())
       inp.close()
       m
-    }catch{
-      case e:Exception => {
+    } catch {
+      case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
-	throw new KryoSerializationException("Failed to DeSerialize the object:" + e.getMessage())
+        logger.debug("StackTrace:" + stackTrace)
+        throw KryoSerializationException("Failed to DeSerialize the object:" + e.getMessage(), e)
       }
     }
   }
 
-  override def DeserializeObjectFromByteArray(ba: Array[Byte],objectType: String) : Object = {
+  override def DeserializeObjectFromByteArray(ba: Array[Byte], objectType: String): Object = {
     DeserializeObjectFromByteArray(ba)
   }
 }

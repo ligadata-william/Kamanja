@@ -48,7 +48,7 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
   // Taking only first file, if exists
   val sFileName = if (fc.Files != null && fc.Files.size > 0) fc.Files(0).trim else null
   if (sFileName == null || sFileName.size == 0)
-    throw new FatalAdapterException("First File Name should not be NULL or empty", new Exception("Invalid Parameters"))
+    throw FatalAdapterException("First File Name should not be NULL or empty", new Exception("Invalid Parameters"))
 
   // Initialize the type of a file to Write to... Currently handles only TXT and GZ formats.
   val compString = if (fc.CompressionString == null) null else fc.CompressionString.trim
@@ -63,18 +63,18 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
         throw new Exception("Invalid Parameters")
       }
     } catch {
-      case zio: ZipException => {throw new FatalAdapterException("File Corruption (bad compression)", zio)}
+      case zio: ZipException => {throw FatalAdapterException("File Corruption (bad compression)", zio)}
       case fio: IOException => {
         LOG.warn("File input adapter "+fc.Name + ": Unable to create a file destination " + sFileName + " due to an IOException", fio)
         if (numOfRetries > MAX_RETRIES) {
           LOG.error("File input adapter " + fc.Name + ":Unable to create a file destination after " + MAX_RETRIES +" tries.  Aborting.")
-          throw new FatalAdapterException("Unable to open connection to specified file after " + MAX_RETRIES +" retries", fio)
+          throw FatalAdapterException("Unable to open connection to specified file after " + MAX_RETRIES +" retries", fio)
         }
         numOfRetries += 1
         LOG.warn("File input adapter " + fc.Name + ": Retyring "+ numOfRetries + "/" + MAX_RETRIES)
         Thread.sleep(FAIL_WAIT)
       }
-      case e: Exception => {throw new FatalAdapterException("Unable to open connection to specified file ", e)}
+      case e: Exception => {throw FatalAdapterException("Unable to open connection to specified file ", e)}
     }
     LOG.info("File input adapter " + fc.Name + ": Output adapter file destination is " + sFileName)
     numOfRetries = 0
@@ -110,7 +110,7 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
               LOG.warn("File input adapter " + fc.Name + ": Unable to write to file " + sFileName)
               if (numOfRetries >= MAX_RETRIES) {
                 LOG.error("File input adapter " + fc.Name + ": Unable to create a file destination after " + MAX_RETRIES +" tries.  Aborting.")
-                throw new FatalAdapterException("Unable to open connection to specified file after " + MAX_RETRIES +" retries", fio)
+                throw FatalAdapterException("Unable to open connection to specified file after " + MAX_RETRIES +" retries", fio)
               }
               numOfRetries += 1
               LOG.warn("File input adapter " + fc.Name + ": Retyring "+ numOfRetries + "/" + MAX_RETRIES)
@@ -128,7 +128,7 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
     } catch {
       case e: Exception => {
         LOG.error("File input adapter " + fc.Name + ": Failed to send :" + e.getMessage)
-        throw new FatalAdapterException("Unable to send message",e)
+        throw FatalAdapterException("Unable to send message",e)
       }
     }
   }

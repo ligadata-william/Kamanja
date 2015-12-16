@@ -139,7 +139,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
       logger.debug("StackTrace:"+stackTrace)
-      throw new ConnectionFailedException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage())
+      throw ConnectionFailedException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage(), e)
       }
     }
   }
@@ -204,7 +204,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
       logger.error("Stacktrace:" + stackTrace)
-      throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+      throw ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage(), e)
     }
   }
   val admin = new HBaseAdmin(config);
@@ -269,7 +269,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
       logger.debug("StackTrace:"+stackTrace)
-      throw new ConnectionFailedException("Unable to delete hbase name space " + namespace + ":" + e.getMessage())
+      throw ConnectionFailedException("Unable to delete hbase name space " + namespace + ":" + e.getMessage(), e)
       }
     }
   }
