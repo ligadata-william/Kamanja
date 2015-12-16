@@ -22,10 +22,11 @@ import java.nio.file.Files.copy
 import java.nio.file.Paths.get
 
 case class BufferLeftoversArea(workerNumber: Int, leftovers: Array[Char], relatedChunk: Int)
-case class BufferToChunk(len: Int, payload: Array[Char], chunkNumber: Int, relatedFileName: String, firstValidOffset: Int)
-case class KafkaMessage(msg: Array[Char], offsetInFile: Int, isLast: Boolean, isLastDummy: Boolean, relatedFileName: String)
-case class EnqueuedFile(name: String, offset: Int, createDate: Long)
+case class BufferToChunk(len: Int, payload: Array[Char], chunkNumber: Int, relatedFileName: String, firstValidOffset: Int, partMap: scala.collection.mutable.Map[Int,Int])
+case class KafkaMessage(msg: Array[Char], offsetInFile: Int, isLast: Boolean, isLastDummy: Boolean, relatedFileName: String, partMap: scala.collection.mutable.Map[Int,Int])
+case class EnqueuedFile(name: String, offset: Int, createDate: Long, partMap: scala.collection.mutable.Map[Int,Int])
 case class FileStatus(status: Int, offset: Long, createDate: Long)
+case class OffsetValue (lastGoodOffset: Int, partitionOffsets: Map[Int,Int])
 
 
 /**
@@ -107,11 +108,29 @@ object FileProcessor {
     }}
 
   //
-  def addToZK (fileName: String, offset: Int) : Unit = {
+  def addToZK (fileName: String, offset: Int, partitions: scala.collection.mutable.Map[Int,Int] = null) : Unit = {
     zkRecoveryLock.synchronized {
+      var zkValue: String = ""
       logger.info("SMART_FILE_CONSUMER (global): Getting zookeeper info for "+ znodePath)
       CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath + "/" + fileName)
-      zkc.setData().forPath(znodePath + "/" + fileName, offset.toString.getBytes)
+      zkValue = zkValue + offset.toString
+
+      // Set up Partition data
+      if (partitions == null) {
+        zkValue = zkValue + ",[]"
+      } else {
+        zkValue = zkValue + ",["
+        var isFirst = true
+        partitions.keySet.foreach(key => {
+          if (!isFirst) zkValue = zkValue + ";"
+          var mapVal = partitions(key)
+          zkValue = zkValue + key.toString + ":" + mapVal.toString
+          isFirst = false
+        })
+        zkValue = zkValue + "]"
+      }
+
+      zkc.setData().forPath(znodePath + "/" + fileName, zkValue.getBytes)
     }
   }
 
@@ -224,10 +243,10 @@ object FileProcessor {
     file.createDate * -1
   }
 
-  private def enQFile(file: String, offset: Int, createDate: Long): Unit = {
+  private def enQFile(file: String, offset: Int, createDate: Long, partMap: scala.collection.mutable.Map[Int,Int] = scala.collection.mutable.Map[Int,Int]()): Unit = {
     fileQLock.synchronized {
       logger.info("SMART FILE CONSUMER (global):  enq file " + file + " with priority " + createDate+" --- curretnly " + fileQ.size + " files on a QUEUE")
-      fileQ += new EnqueuedFile(file, offset, createDate)
+      fileQ += new EnqueuedFile(file, offset, createDate, partMap)
     }
   }
 
@@ -252,7 +271,6 @@ object FileProcessor {
     logger.info("SMART FILE CONSUMER (global): Initializing global queues")
 
     localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
-    println(localMetadataConfig)
     MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
     zkc = initZookeeper
 
@@ -338,7 +356,6 @@ object FileProcessor {
   private def processExistingFiles(d: File): Unit = {
     // Process all the existing files in the directory that are not marked complete.
     if (d.exists && d.isDirectory) {
-      println("Checking for existing files")
       val files = d.listFiles.filter(_.isFile).sortWith(_.lastModified < _.lastModified).toList
       files.foreach(file => {
         if (isValidFile(file.toString) && file.toString.endsWith(readyToProcessKey)) {
@@ -370,8 +387,21 @@ object FileProcessor {
             logger.info("SMART FILE CONSUMER (global): Consumer  recovery of file " + fileToReprocess)
             if (!checkIfFileBeingProcessed(fileToReprocess.asInstanceOf[String])) {
               val offset = zkc.getData.forPath(znodePath + "/" + fileToReprocess)
-              logger.info("SMART FILE CONSUMER (global): " + fileToReprocess+ " from offset " + new String(offset))
-              FileProcessor.enQFile(dirToWatch + "/" + fileToReprocess.asInstanceOf[String], new String(offset).toInt, FileProcessor.RECOVERY_DUMMY_START_TIME)
+              var recoveryInfo = new String(offset)
+              logger.info("SMART FILE CONSUMER (global): " + fileToReprocess+ " from offset " + recoveryInfo)
+
+              // There will always be 2 parts here.
+              var partMap = scala.collection.mutable.Map[Int,Int]()
+              var recoveryTokens = recoveryInfo.split(",")
+              var parts = recoveryTokens(1).substring(1,recoveryTokens(1).size - 1)
+              if (parts.size != 0) {
+                var kvs = parts.split(";")
+                kvs.foreach(kv => {
+                  var pair = kv.split(":")
+                  partMap(pair(0).toInt) = pair(1).toInt
+                })
+              }
+              FileProcessor.enQFile(dirToWatch + "/" + fileToReprocess.asInstanceOf[String],recoveryTokens(0).toInt, FileProcessor.RECOVERY_DUMMY_START_TIME, partMap)
               if (d.exists && d.isDirectory) {
                 var files = d.listFiles.filter(file => { file.isFile && (file.getName).equals(fileToReprocess.asInstanceOf[String]) })
                 while (files.size != 0) {
@@ -800,10 +830,10 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
           // Broken File is recoverable, CORRUPTED FILE ISNT!!!!!
           if (buffer.firstValidOffset == FileProcessor.BROKEN_FILE) {
             logger.error("SMART FILE CONSUMER (" + partitionId + "): Detected a broken file")
-            messages.add(new KafkaMessage(Array[Char](), FileProcessor.BROKEN_FILE, true, true, buffer.relatedFileName))
+            messages.add(new KafkaMessage(Array[Char](), FileProcessor.BROKEN_FILE, true, true, buffer.relatedFileName, buffer.partMap))
           } else {
             logger.error("SMART FILE CONSUMER (" + partitionId + "): Detected a broken file")
-            messages.add(new KafkaMessage(Array[Char](), FileProcessor.CORRUPT_FILE, true, true, buffer.relatedFileName))
+            messages.add(new KafkaMessage(Array[Char](), FileProcessor.CORRUPT_FILE, true, true, buffer.relatedFileName, buffer.partMap))
           }
         } else {
           // Look for messages.
@@ -816,7 +846,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
 
               // Ok, we could be in recovery, so we have to ignore some messages, but these ignoraable messages must still
               // appear in the leftover areas
-              messages.add(new KafkaMessage(newMsg, buffer.firstValidOffset, false, false, buffer.relatedFileName))
+              messages.add(new KafkaMessage(newMsg, buffer.firstValidOffset, false, false, buffer.relatedFileName, buffer.partMap))
 
               prevIndx = indx + 1
             }
@@ -841,7 +871,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
             val msgArray = messages.toArray
             var firstMsgWithLefovers: KafkaMessage = null
             if (messages.size > 0) {
-              firstMsgWithLefovers = new KafkaMessage(leftOvers ++ msgArray(0).msg, msgArray(0).offsetInFile, false, false, buffer.relatedFileName)
+              firstMsgWithLefovers = new KafkaMessage(leftOvers ++ msgArray(0).msg, msgArray(0).offsetInFile, false, false, buffer.relatedFileName, msgArray(0).partMap)
               msgArray(0) = firstMsgWithLefovers
               enQMsg(msgArray, beeNumber)
             }
@@ -881,6 +911,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
 
     val fileName = file.name
     val offset = file.offset
+    val partMap = file.partMap
 
     // Start the worker bees... should only be started the first time..
     if (workerBees == null) {
@@ -945,19 +976,19 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       } catch {
         case ze: ZipException => {
           logger.error("Failed to read file, file currupted " + fileName, ze)
-          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE, partMap)
           enQBuffer(BufferToChunk)
           return
         }
         case ioe: IOException => {
           logger.error("Failed to read file " + fileName, ioe)
-          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.BROKEN_FILE)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.BROKEN_FILE, partMap)
           enQBuffer(BufferToChunk)
           return
         }
         case e: Exception => {
           logger.error("Failed to read file, file currupted " + fileName, e)
-          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE, partMap)
           enQBuffer(BufferToChunk)
           return
         }
@@ -965,7 +996,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       if (readlen > 0) {
         totalLen += readlen
         len += readlen
-        var BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, offset)
+        var BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, offset, partMap)
         enQBuffer(BufferToChunk)
         chunkNumber += 1
       }
@@ -985,7 +1016,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
           logger.warn("SMART FILE CONSUMER: partition " + partitionId + ": NON-EMPTY final leftovers, this really should not happend... check the file ")
         } else {
           val messages: scala.collection.mutable.LinkedHashSet[KafkaMessage] = scala.collection.mutable.LinkedHashSet[KafkaMessage]()
-          messages.add(new KafkaMessage(null, 0, true, true, fileName))
+          messages.add(new KafkaMessage(null, 0, true, true, fileName, scala.collection.mutable.Map[Int,Int]()))
           enQMsg(messages.toArray, 1000)
         }
         foundRelatedLeftovers = true
@@ -1019,7 +1050,6 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
         Thread.sleep(500)
       } else {
         logger.info("SMART_FILE_CONSUMER partition " + partitionId + " Processing file " + fileToProcess)
-        println("SMART_FILE_CONSUMER partition " + partitionId + " Processing file " + fileToProcess)
         val tokenName = fileToProcess.name.split("/")
         FileProcessor.markFileProcessing(tokenName(tokenName.size - 1), fileToProcess.offset, fileToProcess.createDate)
         curTimeStart = System.currentTimeMillis
