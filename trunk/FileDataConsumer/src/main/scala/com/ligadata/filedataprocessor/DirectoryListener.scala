@@ -65,7 +65,6 @@ object LocationWatcher {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
         logger.error("ERROR in starting SMART FILE CONSUMER "+ e)
         return
       }

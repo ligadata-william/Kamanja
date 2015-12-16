@@ -178,7 +178,6 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
           case mfe: KVMessageFormatingException =>
             writeErrorMsg(msg)
           case e: Exception => {
-            e.printStackTrace()
             val stackTrace = StackTrace.ThrowableTraceString(e)
             logger.warn("Unknown message format in partition " + partIdx + " \n" + stackTrace)
             writeErrorMsg(msg)
