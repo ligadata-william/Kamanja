@@ -177,8 +177,24 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       if (isSyncProducer) {
         val respFutures = keyMessages.map(msg => {
           // Send the request to Kafka
-          producers(cntr % producersCnt).send(msg)
+          producers(cntr % producersCnt).send(msg, new Callback {
+            override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+              val localMsg = msg
+              if (exception != null) {
+                LOG.warn("Failed to send message into the " + msg.topic, exception) // BUGBUG:: Yet to add more logic here
+              }
+            }
+          })
         })
+        val responses = respFutures.map(f => f.get)
+/*
+        LOG.warn(responses.map(rm1 => {
+          val t = rm1.topic()
+          val p = rm1.partition()
+          val o = rm1.offset()
+          "topic:%s, partition:%d, offset:%d".format(t, p, o);
+        }).mkString("~"))
+*/
       } else {
         val respFutures = keyMessages.map(msg => {
           // Send the request to Kafka
@@ -186,16 +202,16 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
             override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
               val localMsg = msg
               if (exception != null) {
-                LOG.warn("Failed to send message into the " + msg.topic + ". Exception: " + exception.getMessage) // BUGBUG:: Yet to add more logic here
+                LOG.warn("Failed to send message into the " + msg.topic, exception) // BUGBUG:: Yet to add more logic here
               }
             }
           })
         })
       }
     } catch {
-      case ftsme: FailedToSendMessageException => return (KafkaConstants.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme))
-      case qfe: QueueFullException             => return (KafkaConstants.KAFKA_SEND_Q_FULL, None)
-      case e: Exception                        => throw new FatalAdapterException("Unknown exception", e)
+      case ftsme: FailedToSendMessageException => { /* LOG.error("Got FailedToSendMessageException", ftsme); */ return (KafkaConstants.KAFKA_SEND_DEAD_PRODUCER, Some(ftsme)) }
+      case qfe: QueueFullException             => { /* LOG.error("Got FailedToSendMessageException", qfe); */ return (KafkaConstants.KAFKA_SEND_Q_FULL, None) }
+      case e: Exception                        => { /* LOG.error("Got FailedToSendMessageException", e); */ throw new FatalAdapterException("Unknown exception", e) }
     }
     return (KafkaConstants.KAFKA_SEND_SUCCESS, None)
   }
