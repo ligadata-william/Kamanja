@@ -109,7 +109,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         val cfgfile = options.getOrElse('config, null)
         if (cfgfile == null) {
           logger.error("Need configuration file as parameter")
-          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.properties")
+          throw MissingArgumentException("Usage: configFile  supplied as --config myConfig.properties", null)
         }
         configFile = cfgfile.asInstanceOf[String]
       }

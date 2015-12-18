@@ -142,7 +142,7 @@ class MySqlAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   if (parsed_json.contains("hostname")) {
     hostname = parsed_json.get("hostname").get.toString.trim
   } else {
-    throw new ConnectionFailedException("Unable to find hostname in adapterConfig ")
+    throw ConnectionFailedException("Unable to find hostname in adapterConfig ")
   }
 
   var instanceName: String = null;
@@ -159,35 +159,35 @@ class MySqlAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   if (parsed_json.contains("database")) {
     database = parsed_json.get("database").get.toString.trim
   } else {
-    throw new ConnectionFailedException("Unable to find database in adapterConfig ")
+    throw ConnectionFailedException("Unable to find database in adapterConfig ")
   }
 
   var user: String = null;
   if (parsed_json.contains("user")) {
     user = parsed_json.get("user").get.toString.trim
   } else {
-    throw new ConnectionFailedException("Unable to find user in adapterConfig ")
+    throw ConnectionFailedException("Unable to find user in adapterConfig ")
   }
 
   var password: String = null;
   if (parsed_json.contains("password")) {
     password = parsed_json.get("password").get.toString.trim
   } else {
-    throw new ConnectionFailedException("Unable to find password in adapterConfig ")
+    throw ConnectionFailedException("Unable to find password in adapterConfig ")
   }
 
   var jarpaths: String = null;
   if (parsed_json.contains("jarpaths")) {
     jarpaths = parsed_json.get("jarpaths").get.toString.trim
   } else {
-    throw new ConnectionFailedException("Unable to find jarpaths in adapterConfig ")
+    throw ConnectionFailedException("Unable to find jarpaths in adapterConfig ")
   }
 
   var jdbcJar: String = null;
   if (parsed_json.contains("jdbcJar")) {
     jdbcJar = parsed_json.get("jdbcJar").get.toString.trim
   } else {
-    throw new ConnectionFailedException("Unable to find jdbcJar in adapterConfig ")
+    throw ConnectionFailedException("Unable to find jdbcJar in adapterConfig ")
   }
 
   // The following three properties are used for connection pooling

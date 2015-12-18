@@ -159,7 +159,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
             LOG.warn("KAFKA PRODUCER: Error sending to kafka, Retrying " + retryCount + "/" + MAX_RETRY)
           } else {
             LOG.error("KAFKA PRODUCER: Error sending to kafka,  MAX_RETRY reached... shutting down")
-            throw new FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", result._2.getOrElse(null))
+            throw FatalAdapterException("Unable to send to Kafka, MAX_RETRY reached", result._2.getOrElse(null))
           }
         }
       }
@@ -168,7 +168,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       cntrAdapter.addCntr(key, messages.size) // for now adding rows
     } catch {
       case fae: FatalAdapterException => throw fae
-      case e: Exception               => throw new FatalAdapterException("Unknown exception", e)
+      case e: Exception               => throw FatalAdapterException("Unknown exception", e)
     }
   }
 

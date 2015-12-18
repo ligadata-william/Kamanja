@@ -306,7 +306,7 @@ object TypeUtils {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:"+stackTrace)
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the types:" + e.toString+"\nStackTrace:"+stackTrace)
+        throw UnexpectedMetadataAPIException("Failed to fetch all the types:" + e.toString, e)
       }
     }
   }
@@ -444,7 +444,7 @@ object TypeUtils {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("\nStackTrace:"+stackTrace)
-        throw new UnexpectedMetadataAPIException(e.getMessage()+"\nStackTrace:"+stackTrace)
+        throw UnexpectedMetadataAPIException(e.getMessage(), e)
       }
     }
   }

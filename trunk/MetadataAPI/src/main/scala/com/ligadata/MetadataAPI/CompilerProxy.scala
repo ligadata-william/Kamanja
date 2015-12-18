@@ -157,7 +157,7 @@ class CompilerProxy {
 
         /* The following check require cleanup at some point */
         if (jarFile.compareToIgnoreCase("Not Set") == 0) {
-          throw new ModelCompilationFailedException("Failed to produce the jar file")
+          throw ModelCompilationFailedException("Failed to produce the jar file", null)
         }
 
         modDef.jarName = jarFile
@@ -179,11 +179,11 @@ class CompilerProxy {
     } catch {
       case e: Exception => {
         logger.error("Failed to compile the model definition " + e.toString)
-        throw new ModelCompilationFailedException(e.getMessage())
+        throw ModelCompilationFailedException(e.getMessage(), e)
       }
       case e: AlreadyExistsException => {
         logger.error("Failed to compile the model definition " + e.toString)
-        throw new ModelCompilationFailedException(e.getMessage())
+        throw ModelCompilationFailedException(e.getMessage(), e)
       }
     }
   }
@@ -275,7 +275,7 @@ class CompilerProxy {
 
       if (status != 0) {
         logger.error("Compilation of MessgeDef scala file has failed, Message is not added")
-        throw new MsgCompilationFailedException(msgDefStr)
+        throw MsgCompilationFailedException(msgDefStr, null)
       }
 
       logger.debug("Jar Files => " + jarFileVersion + ", " + jarFileNoVersion)
@@ -295,11 +295,11 @@ class CompilerProxy {
     } catch {
       case e: Exception => {
         logger.error("Failed to compile the message definition " + e.toString)
-        throw new MsgCompilationFailedException(e.getMessage())
+        throw MsgCompilationFailedException(e.getMessage(), e)
       }
       case e: AlreadyExistsException => {
         logger.error("Failed to compile the message definition " + e.toString)
-        throw new MsgCompilationFailedException(e.getMessage())
+        throw MsgCompilationFailedException(e.getMessage(), e)
       }
     }
   }
@@ -365,7 +365,7 @@ class CompilerProxy {
   private def jarCode(moduleNamespace: String, modelName: String, moduleVersion: String, sourceCode: String, classpath: String, jarTargetDir: String, clientName: String, sourceFilePath: String, scalahome: String, javahome: String, isLocalOnly: Boolean = false, sourceLanguage: String = "scala", helperJavaSource: String = null, helperJavaSourcePath: String = null): (Int, String) =
     {
       var currentWorkFolder: String = modelName
-      if (moduleNamespace == null || moduleNamespace.length == 0) throw new ModelCompilationFailedException("Missing Namespace")
+      if (moduleNamespace == null || moduleNamespace.length == 0) throw ModelCompilationFailedException("Missing Namespace", null)
 
       if (isLocalOnly) {
         currentWorkFolder = currentWorkFolder + "_local"
@@ -496,7 +496,7 @@ class CompilerProxy {
 
       /* The following check require cleanup at some point */
       if (status2 > 1) {
-        throw new ModelCompilationFailedException("Failed to produce the jar file")
+        throw ModelCompilationFailedException("Failed to produce the jar file", null)
       }
 
       val depJars = getJarsFromClassPath(classPath)
@@ -527,7 +527,7 @@ class CompilerProxy {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Failed to compile the model definition:%s.\nStackTrace:%s".format(e.toString, stackTrace))
-        throw new ModelCompilationFailedException(e.getMessage())
+        throw ModelCompilationFailedException(e.getMessage(), e)
       }
     }
 
@@ -608,7 +608,7 @@ class CompilerProxy {
     //typeNamesace contains all the messages and containers 
     if (typeNamespace == null) {
       logger.error("COMPILER_PROXY: Unable to find at least one message in the Metadata for this model")
-      throw new MsgCompilationFailedException(modelConfigName)
+      throw MsgCompilationFailedException(modelConfigName, null)
     }
 
     //Replace the "import com....*;" statement - JAVA STYLE IMPORT ALL
@@ -642,7 +642,7 @@ class CompilerProxy {
 
     if (status != 0) {
       logger.error("COMPILER_PROXY: Error compiling model source. Unable to create Jar RC = " + status)
-      throw new MsgCompilationFailedException(modelConfigName)
+      throw MsgCompilationFailedException(modelConfigName, null)
     }
     
     val depJars = getJarsFromClassPath(classPath)
@@ -846,13 +846,13 @@ class CompilerProxy {
           }
 
           logger.error("COMPILER_PROXY: Unable to resolve a class Object from " + jarName0)
-          throw new MsgCompilationFailedException(clsName)
+          throw MsgCompilationFailedException(clsName, null)
         } catch {
           case e: Exception => {
             // Trying Regular Object instantiation
             val stackTrace = StackTrace.ThrowableTraceString(e)
             logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from Class:%s, Reason:%s Message:%s.\nStackTrace:%s".format(clsName, e.getCause, e.getMessage, stackTrace))
-            throw new MsgCompilationFailedException(clsName)
+            throw MsgCompilationFailedException(clsName, e)
           }
         }
   
@@ -887,13 +887,13 @@ class CompilerProxy {
             return (fullName.dropRight(1).mkString("."), fullName(fullName.length - 1), baseModelTrait.getVersion, clsName)
           }
           logger.error("COMPILER_PROXY: Unable to resolve a class Object from " + jarName0)
-          throw new MsgCompilationFailedException(clsName)
+          throw MsgCompilationFailedException(clsName)
         } catch {
           case e: Exception => {
             // Trying Regular Object instantiation
             val stackTrace = StackTrace.ThrowableTraceString(e)
             logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from Class:%s, Reason:%s Message:%s.\nStackTrace:%s".format(clsName, e.getCause, e.getMessage, stackTrace))
-            throw new MsgCompilationFailedException(clsName)
+            throw MsgCompilationFailedException(clsName)
           }
         }
 */
@@ -901,7 +901,7 @@ class CompilerProxy {
       }
     })
     logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelInstanceFactory was found in the jarred source " + jarFileName)
-    throw new MsgCompilationFailedException(jarFileName)
+    throw MsgCompilationFailedException(jarFileName, null)
   }
 
   /**
@@ -1057,7 +1057,7 @@ class CompilerProxy {
       return packageName
     } else {
       logger.error("COMPILER_PROXY: Error compiling model source. unable to find package")
-      throw new MsgCompilationFailedException("Unable to determine package name")
+      throw MsgCompilationFailedException("Unable to determine package name", null)
     }
   }
 

@@ -78,19 +78,19 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 
   private def CreateConnectionException(msg: String, ie: Exception): StorageConnectionException = {
     logger.error(msg)
-    val ex = new StorageConnectionException("Failed to connect to Database", ie)
+    val ex = StorageConnectionException("Failed to connect to Database", ie)
     ex
   }
 
   private def CreateDMLException(msg: String, ie: Exception): StorageDMLException = {
     logger.error(msg)
-    val ex = new StorageDMLException("Failed to execute select/insert/delete/update operation on Database", ie)
+    val ex = StorageDMLException("Failed to execute select/insert/delete/update operation on Database", ie)
     ex
   }
 
   private def CreateDDLException(msg: String, ie: Exception): StorageDDLException = {
     logger.error(msg)
-    val ex = new StorageDDLException("Failed to execute create/drop operations on Database", ie)
+    val ex = StorageDDLException("Failed to execute create/drop operations on Database", ie)
     ex
   }
 

@@ -8,6 +8,7 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 resolvers += "Apache repo" at "https://repository.apache.org/content/repositories/releases"
 
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.4.1"
+
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 
 libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-actors" % _)
