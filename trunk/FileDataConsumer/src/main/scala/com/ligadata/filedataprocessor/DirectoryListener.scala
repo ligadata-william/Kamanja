@@ -29,45 +29,63 @@ object LocationWatcher {
 
       val lines = scala.io.Source.fromFile(config).getLines.toList
       lines.foreach(line => {
-        var lProp = line.split("=")
-        try {
-          properties(lProp(0)) = lProp(1)
-        } catch {
-          case iobe: IndexOutOfBoundsException => {
-            logger.error("SMART FILE CONSUMER: Invalid format in the configuration file " + config)
-            logger.error("SMART FILE CONSUMER: unable to determine the value for property " + lProp(0))
-            return
+        if (!line.startsWith("#")) {
+          val lProp = line.split("=")
+          try {
+            logger.info("SMART FILE CONSUMER "+lProp(0) + " = "+lProp(1))
+            properties(lProp(0)) = lProp(1)
+          } catch {
+            case iobe: IndexOutOfBoundsException => {
+              logger.error("SMART FILE CONSUMER: Invalid format in the configuration file " + config)
+              logger.error("SMART FILE CONSUMER: unable to determine the value for property " + lProp(0))
+              return
+            }
           }
         }
-
       })
 
-      var numberOfProcessors = properties(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS).toInt
+      // FileConsumer is a special case we need to default to 1, but also have it present in the properties since
+      // it is used later for memory managemnt
+      var numberOfProcessorsRaw = properties.getOrElse(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS,null)
+      var numberOfProcessors: Int = 1
+      if (numberOfProcessorsRaw == null) {
+        properties(SmartFileAdapterConstants.NUMBER_OF_FILE_CONSUMERS) = "1"
+        logger.info("SMART FILE CONSUMER: Defaulting the number of file consumers to 1")
+      } else  {
+        numberOfProcessors = numberOfProcessorsRaw.toInt
+      }
+
       var processors: Array[FileProcessor] = new Array[FileProcessor](numberOfProcessors)
       var threads: Array[Thread] = new Array[Thread](numberOfProcessors)
       var path: Path= null
       try {
-         path = FileSystems.getDefault().getPath(properties(SmartFileAdapterConstants.DIRECTORY_TO_WATCH))
+         val dirName = properties.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
+         if (dirName == null) {
+           logger.error("SMART FILE CONSUMER: Directory to watch is missing, must be specified")
+           return
+         }
+         path = FileSystems.getDefault().getPath(dirName)
       } catch {
         case e: IOException => {
-          println ("Unable to find the directory to watch")
+          logger.error ("Unable to find the directory to watch")
           return
         }
       }
 
-      logger.info("Starting "+ numberOfProcessors+" file consumers, reading from "+ path)
-    try {
-      for (i <- 1 to numberOfProcessors) {
-        var processor = new FileProcessor(path,i)
-        processor.init(properties)
-        val watch_thread = new Thread(processor)
-        watch_thread.start
+      logger.info("SMART FILE CONSUMER: Starting "+ numberOfProcessors+" file consumers, reading from "+ path)
+
+      try {
+        for (i <- 1 to numberOfProcessors) {
+          var processor = new FileProcessor(path,i)
+          processor.init(properties)
+          val watch_thread = new Thread(processor)
+          watch_thread.start
+        }
+      } catch {
+        case e: Exception => {
+          logger.error("SMART FILE CONSUMER:  ERROR in starting SMART FILE CONSUMER ", e)
+          return
+        }
       }
-    } catch {
-      case e: Exception => {
-        logger.error("ERROR in starting SMART FILE CONSUMER "+ e)
-        return
-      }
-    }
   }
 }
