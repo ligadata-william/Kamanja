@@ -41,6 +41,8 @@
 #   NOTE: Only tar'd gzip files supported at the moment for the tarballs.
 #
 
+script_dir=$(dirname "$0")
+
 scalaversion="2.10"
 name1=$1
 
@@ -421,9 +423,9 @@ while read LINE; do
     scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
 
     # Engine Logfile. For now all nodes log files are same. May be later we can change.
-    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" ./engine_log4j2_template.xml > $workDir/engine_log4j2.xml
-    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" ./restapi_log4j2_template.xml > $workDir/restapi_log4j2.xml
-    sed "s/{NodeId}/$id/g;s/{HostName}/$machine/g" ./ClusterCfgMetadataAPIConfig.properties > $workDir/MetadataAPIConfig_${id}.properties
+    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" $script_dir/engine_log4j2_template.xml > $workDir/engine_log4j2.xml
+    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" $script_dir/restapi_log4j2_template.xml > $workDir/restapi_log4j2.xml
+    sed "s/{NodeId}/$id/g;s/{HostName}/$machine/g" $script_dir/ClusterCfgMetadataAPIConfig.properties > $workDir/MetadataAPIConfig_${id}.properties
     scp -o StrictHostKeyChecking=no "$workDir/engine_log4j2.xml" "$machine:$targetPath/"
     scp -o StrictHostKeyChecking=no "$workDir/restapi_log4j2.xml" "$machine:$targetPath/"
     scp -o StrictHostKeyChecking=no "$workDir/MetadataAPIConfig_${id}.properties" "$machine:$targetPath/MetadataAPIConfig_${id}.properties"

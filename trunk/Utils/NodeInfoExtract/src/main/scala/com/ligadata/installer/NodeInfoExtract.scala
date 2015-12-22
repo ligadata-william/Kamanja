@@ -29,38 +29,6 @@ class NodeInfoExtract(val metadataAPIConfig: String, val nodeConfigPath: String,
 
   MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig, false)
 
-  /** FIXME: At some point, the engine and MetadataAPI prop name will converge and these keys will likely be wrong!!!!!!!!!!!!!!!!!!! */
-  val metadataDataStore: String =
-    if (MetadataAPIImpl.GetMetadataAPIConfig.contains("METADATA_DATASTORE")) {
-      MetadataAPIImpl.GetMetadataAPIConfig.getProperty("METADATA_DATASTORE")
-    } else {
-      val dbType = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
-      val dbHost = if (MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_HOST") != null) MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_HOST") else MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
-      val dbSchema = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
-      val dbAdapterSpecific = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG")
-
-      val dbType1 = if (dbType == null) "" else dbType.trim
-      val dbHost1 = if (dbHost == null) "" else dbHost.trim
-      val dbSchema1 = if (dbSchema == null) "" else dbSchema.trim
-
-      val jsonStr =
-        if (dbAdapterSpecific != null) {
-          val json = ("StoreType" -> dbType1) ~
-            ("SchemaName" -> dbSchema1) ~
-            ("Location" -> dbHost1) ~
-            ("AdapterSpecificConfig" -> dbAdapterSpecific)
-          pretty(render(json))
-        } else {
-          val json = ("StoreType" -> dbType1) ~
-            ("SchemaName" -> dbSchema1) ~
-            ("Location" -> dbHost1)
-          pretty(render(json))
-        }
-      jsonStr
-    }
-
-  def MetadataDataStore: String = metadataDataStore
-
   /**
    *  Optionally called when an EngineConfig file with cluster decl in it is supplied as an argument, this
    *  command updates the metadata referred to by the metadataapiconfig properties file.
@@ -223,7 +191,34 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
    */
   private def writeNodeIdConfigs(workDir: String, ipIdCfgTargPathQuartetFileName: String, extractor: NodeInfoExtract, ipIdTargs: Array[(String, String, String, String)]) {
 
-    val metadataDataStore: String = extractor.MetadataDataStore
+    val metadataDataStore: String =
+      if (MetadataAPIImpl.GetMetadataAPIConfig.contains("METADATA_DATASTORE")) {
+        MetadataAPIImpl.GetMetadataAPIConfig.getProperty("METADATA_DATASTORE")
+      } else {
+        val dbType = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+        val dbHost = if (MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_HOST") != null) MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_HOST") else MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+        val dbSchema = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
+        val dbAdapterSpecific = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG")
+
+        val dbType1 = if (dbType == null) "" else dbType.trim
+        val dbHost1 = if (dbHost == null) "" else dbHost.trim
+        val dbSchema1 = if (dbSchema == null) "" else dbSchema.trim
+
+        val jsonStr =
+          if (dbAdapterSpecific != null) {
+            val json = ("StoreType" -> dbType1) ~
+              ("SchemaName" -> dbSchema1) ~
+              ("Location" -> dbHost1) ~
+              ("AdapterSpecificConfig" -> dbAdapterSpecific)
+            pretty(render(json))
+          } else {
+            val json = ("StoreType" -> dbType1) ~
+              ("SchemaName" -> dbSchema1) ~
+              ("Location" -> dbHost1)
+            pretty(render(json))
+          }
+        jsonStr
+      }
 
     ipIdTargs.foreach(ipIdTargQuad => {
       val (_, id, _, _): (String, String, String, String) = ipIdTargQuad
