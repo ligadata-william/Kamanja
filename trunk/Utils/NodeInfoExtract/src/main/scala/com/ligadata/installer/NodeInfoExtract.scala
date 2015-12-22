@@ -27,8 +27,7 @@ import org.json4s.jackson.JsonMethods._
 
 class NodeInfoExtract(val metadataAPIConfig: String, val nodeConfigPath: String, val clusterId: String, val installDir: String) {
 
-  //MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig)
-  MetadataAPIImpl.InitMdMgr(metadataAPIConfig, false)
+  MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig, false)
 
   /** FIXME: At some point, the engine and MetadataAPI prop name will converge and these keys will likely be wrong!!!!!!!!!!!!!!!!!!! */
   val metadataDataStore: String =
@@ -185,6 +184,7 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
     writeFileIps(s"$workDir/$ipFileName", ips)
     writeFilePairs(s"$workDir/$ipPathPairFileName", ipPathPairs)
     writeNodeIdConfigs(workDir, ipIdCfgTargPathQuartetFileName, extractor, ipIdTargPaths)
+    MetadataAPIImpl.CloseDbStore
   }
 
   private def writeFileIps(outputPath: String, ips: Array[String]) {
