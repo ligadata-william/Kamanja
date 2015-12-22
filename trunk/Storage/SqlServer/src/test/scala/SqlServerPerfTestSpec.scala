@@ -49,6 +49,7 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
 
   private val loggerName = this.getClass.getName
   private val logger = LogManager.getLogger(loggerName)
+
   val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
   val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
   // set the timezone to UTC for all time values
@@ -167,7 +168,7 @@ class SqlServerPerfTestSpec extends FunSpec with BeforeAndAfter with BeforeAndAf
 
       logger.info(GetCurDtTmStr + ": Start Loading  1 million records 1000 at a time")
 
-      for (batch <- 1 to 10000) {
+      for (batch <- 1 to 1000) {
 	var successful = false
 	while ( ! successful ){
           var keyValueList = new Array[(Key, Value)](0)

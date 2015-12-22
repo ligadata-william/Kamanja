@@ -70,6 +70,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
   val logger = LogManager.getLogger(loggerName)
+
   private val loadedJars: TreeSet[String] = new TreeSet[String];
   private val clsLoader = new JdbcClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
 
@@ -224,12 +225,18 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   if (parsed_json.contains("clusteredIndex")) {
     clusteredIndex = parsed_json.get("clusteredIndex").get.toString.trim
   }
+  var autoCreateTables = "YES"
+  if (parsed_json.contains("autoCreateTables")) {
+    autoCreateTables = parsed_json.get("autoCreateTables").get.toString.trim
+  }
 
   logger.info("hostname => " + hostname)
   logger.info("username => " + user)
   logger.info("SchemaName => " + SchemaName)
   logger.info("jarpaths => " + jarpaths)
   logger.info("jdbcJar  => " + jdbcJar)
+  logger.info("clusterdIndex  => " + clusteredIndex)
+  logger.info("autoCreateTables  => " + autoCreateTables)
 
   var sqlServerInstance: String = hostname
   if (instanceName != null) {
@@ -386,12 +393,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     }
   }
 
-  private def CheckTableExists(containerName: String): Unit = {
+  private def CheckTableExists(containerName: String, apiType: String = "dml"): Unit = {
     try{
       if (containerList.contains(containerName)) {
 	return
       } else {
-	CreateContainer(containerName)
+	CreateContainer(containerName,apiType)
 	containerList.add(containerName)
       }
     } catch {
@@ -540,7 +547,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         if (pstmt != null) {
           pstmt.close
         }
-        logger.debug("Deleted " + totalRowsDeleted + " rows from " + tableName)
+        logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
         // insert rows 
         sql = "insert into " + tableName + "(timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo) values(?,?,?,?,?,?)"
         pstmt = con.prepareStatement(sql)
@@ -562,7 +569,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         logger.debug("Executing bulk Insert...")
         var insertCount = pstmt.executeBatch();
         insertCount.foreach(cnt => { totalRowsInserted += cnt });
-        logger.debug("Inserted " + totalRowsInserted + " rows into " + tableName)
+        logger.info("Inserted " + totalRowsInserted + " rows into " + tableName)
         if (pstmt != null) {
           pstmt.close
         }
@@ -1210,7 +1217,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     })
   }
 
-  private def CreateContainer(containerName: String): Unit = lock.synchronized {
+  private def CreateContainer(containerName: String,apiType: String): Unit = lock.synchronized {
     var con: Connection = null
     var stmt: Statement = null
     var rs: ResultSet = null
@@ -1225,6 +1232,16 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       if (rs.next()) {
         logger.debug("The table " + tableName + " already exists ")
       } else {
+	if( autoCreateTables.equalsIgnoreCase("NO") ){
+	  apiType match {
+	    case "dml" => {
+              throw new Exception("The option autoCreateTables is set to NO, So Can't create non-existent table automatically to support the requested DML operation")
+	    }
+	    case _ => {
+	      logger.info("proceed with creating table..")
+	    }
+	  }
+	}
         query = "create table " + fullTableName + "(timePartition bigint,bucketKey varchar(1024), transactionId bigint, rowId Int, serializerType varchar(128), serializedInfo varbinary(max))"
         stmt = con.createStatement()
         stmt.executeUpdate(query);
@@ -1272,7 +1289,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     logger.info("create the container tables")
     containerNames.foreach(cont => {
       logger.info("create the container " + cont)
-      CreateContainer(cont)
+      CreateContainer(cont,"ddl")
     })
   }
 }
