@@ -61,6 +61,7 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   props.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, inConfiguration.get(SmartFileAdapterConstants.KAFKA_BROKER).get)
   props.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer")
   props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer")
+  props.put("request.required.acks",inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "0"))
 
   // create the producer object
  // val producer = new KafkaProducer[Array[Byte], Array[Byte]](new ProducerConfig(props))
