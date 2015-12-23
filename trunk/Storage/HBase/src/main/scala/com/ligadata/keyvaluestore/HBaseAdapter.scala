@@ -61,9 +61,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
   private var msg: String = ""
 
-  private val stStrBytes = "serializerType".getBytes
-  private val siStrBytes = "serializedInfo".getBytes
-  private val baseStrBytes = "base".getBytes
+  private val stStrBytes = "serializerType".getBytes()
+  private val siStrBytes = "serializedInfo".getBytes()
+  private val baseStrBytes = "base".getBytes()
 
   private def CreateConnectionException(msg: String, ie: Exception): StorageConnectionException = {
     logger.error(msg)
@@ -262,8 +262,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         }
         val tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
         val colDesc1 = new HColumnDescriptor("key".getBytes())
-        val colDesc2 = new HColumnDescriptor("serializerType".getBytes())
-        val colDesc3 = new HColumnDescriptor("serializedInfo".getBytes())
+        val colDesc2 = new HColumnDescriptor(stStrBytes)
+        val colDesc3 = new HColumnDescriptor(siStrBytes)
         tableDesc.addFamily(colDesc1)
         tableDesc.addFamily(colDesc2)
         tableDesc.addFamily(colDesc3)
@@ -390,8 +390,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       tableHBase = getTableFromConnection(tableName);
       var kba = MakeCompositeKey(key)
       var p = new Put(kba)
-      p.addColumn(Bytes.toBytes("serializerType"), Bytes.toBytes("base"), Bytes.toBytes(value.serializerType))
-      p.addColumn(Bytes.toBytes("serializedInfo"), Bytes.toBytes("base"), value.serializedInfo)
+      p.addColumn(stStrBytes, baseStrBytes, Bytes.toBytes(value.serializerType))
+      p.addColumn(siStrBytes, baseStrBytes, value.serializedInfo)
       tableHBase.put(p)
     } catch {
       case e: Exception => {
@@ -420,8 +420,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
           var value = keyValuePair._2
           var kba = MakeCompositeKey(key)
           var p = new Put(kba)
-          p.addColumn(Bytes.toBytes("serializerType"), Bytes.toBytes("base"), Bytes.toBytes(value.serializerType))
-          p.addColumn(Bytes.toBytes("serializedInfo"), Bytes.toBytes("base"), value.serializedInfo)
+          p.addColumn(stStrBytes, baseStrBytes, Bytes.toBytes(value.serializerType))
+          p.addColumn(siStrBytes, baseStrBytes, value.serializedInfo)
           puts = puts :+ p
         })
         try {
@@ -677,7 +677,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val filters = new java.util.ArrayList[Filter]()
       keys.foreach(key => {
         var kba = MakeCompositeKey(key)
-        val f = new SingleColumnValueFilter(Bytes.toBytes("key"), Bytes.toBytes("base"),
+        val f = new SingleColumnValueFilter(Bytes.toBytes("key"), baseStrBytes,
           CompareOp.EQUAL, kba)
         filters.add(f);
       })
@@ -713,7 +713,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val filters = new java.util.ArrayList[Filter]()
       keys.foreach(key => {
         var kba = MakeCompositeKey(key)
-        val f = new SingleColumnValueFilter(Bytes.toBytes("key"), Bytes.toBytes("base"),
+        val f = new SingleColumnValueFilter(Bytes.toBytes("key"), baseStrBytes,
           CompareOp.EQUAL, kba)
         filters.add(f);
       })
