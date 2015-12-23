@@ -58,6 +58,10 @@ object FileProcessor {
   val NOT_RECOVERY_SITUATION = -1
   val BROKEN_FILE = -100
   val CORRUPT_FILE = -200
+  val REFRESH_RATE = 2000
+  val MAX_WAIT_TIME = 60000
+  var errorWaitTime = 1000
+
   var reset_watcher = false
 
   val KAFKA_SEND_SUCCESS = 0
@@ -271,7 +275,7 @@ object FileProcessor {
     logger.info("SMART FILE CONSUMER (global): Initializing global queues")
 
     // Default to 5 minutes (value given in secopnds
-    bufferTimeout = 1000 * props.getOrElse(SmartFileAdapterConstants.FILE_BUFFERING_TIMEOUT,300).toInt
+    bufferTimeout = 1000 * props.getOrElse(SmartFileAdapterConstants.FILE_BUFFERING_TIMEOUT,"300").toInt
     localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
     MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
     zkc = initZookeeper
@@ -428,62 +432,16 @@ object FileProcessor {
       breakable {
         while (true) {
           try {
-            logger.info("SMART FILE CONSUMER (global) awaiting work")
-            val key = watchService.take()
-            val dir = keys.getOrElse(key, null)
-            if (dir != null) {
-              key.pollEvents.asScala.foreach(event => {
-                val kind = event.kind
-                logger.info("SMART FILE CONSUMER (global) event detected " + kind)
-                // Only worry about new files.
-                if (kind.equals(StandardWatchEventKinds.ENTRY_CREATE)) {
-                  val event_path = event.context().asInstanceOf[Path]
-                  val fileName = dirToWatch + "/" + event_path.toString
-                  if (fileName.endsWith(readyToProcessKey)) {
-                      if (isValidFile(fileName)) {
-                        val tokenName = fileName.split("/")
-                        if (!checkIfFileBeingProcessed(tokenName(tokenName.size - 1))) {
-                          logger.info("SMART FILE CONSUMER (global) QUEUEING(" + kind + ") " + fileName)
-                          enQBufferedFile(fileName)
-                        } else {
-                          logger.info(" SMART FILE CONSUMER (global): ABORT QUEUEING(" + kind + ") this (file by the same name already queued) " + fileName)
-                        }
-
-                      }
-                  }
-                }
-              })
-            } else {
-              logger.warn("SMART FILE CONSUMER (global): WatchKey not recognized!!")
-            }
-
-            if (!key.reset()) {
-              logger.warn("SMART FILE CONSUMER (global): key failed to reset, tracking total of " + keys.size + " keys.")
-              keys.remove(key)
-              if (keys.isEmpty) {
-                logger.warn("SMART FILE CONSUMER (global): trying to reset watcher")
-                resetWatcher
-              }
-            }
+            processExistingFiles(d)
+            errorWaitTime = 1000
           } catch {
-            case ioe: Exception => {
-              var cntOfRetries: Long = 1
-              logger.error("SMART FILE CONSUMER (global): Attempting to recreate a directory listener... Due to the following exception ", ioe)
-              var restartSuccesfull = false
-              while (!restartSuccesfull) {
-                try {
-                  resetWatcher
-                  restartSuccesfull = true
-                } catch {
-                  case ioe: IOException => {
-                    logger.error("MART FILE CONSUMER (global): Retry " + cntOfRetries + ", Unable to access the directory to watch, Retrying again ")
-                    cntOfRetries += 1
-                    Thread.sleep(10000)
-                  }
-                }
-              }
+            case e: Exception => {
+              logger.warn("Unable to access Directory, Retrying after " + errorWaitTime + " seconds", e)
+              errorWaitTime = scala.math.min((errorWaitTime * 2), FileProcessor.MAX_WAIT_TIME)
             }
           }
+          Thread.sleep(FileProcessor.REFRESH_RATE)
+
         }
       }
     }  catch {
@@ -1171,7 +1129,6 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       }
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        e.printStackTrace()
         return false
     }
 
