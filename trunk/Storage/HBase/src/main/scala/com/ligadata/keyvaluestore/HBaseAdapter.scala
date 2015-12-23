@@ -332,8 +332,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   private def toTableName(containerName: String): String = {
     // we need to check for other restrictions as well
     // such as length of the table, special characters etc
-    //containerName.replace('.','_')
-    namespace + ':' + containerName.toLowerCase.replace('.', '_').replace('-', '_')
+    namespace + ':' + containerName.toLowerCase.replace('.', '_').replace('-', '_').replace(' ', '_')
   }
 
   private def toFullTableName(containerName: String): String = {
@@ -362,8 +361,16 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     })
   }
 
+  private def MakeBucketKeyToStr(bucketKey: Array[String]): String = {
+    bucketKey.mkString(".")
+  }
+
+  private def MakeStrFromBucketKey(keyStr: String): Array[String] = {
+    if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
+  }
+
   private def MakeCompositeKey(key: Key): Array[Byte] = {
-    var compKey = key.timePartition.toString + "|" + key.bucketKey.mkString(".") +
+    var compKey = key.timePartition.toString + "|" + MakeBucketKeyToStr(key.bucketKey) +
       "|" + key.transactionId.toString + "|" + key.rowId.toString
     compKey.getBytes()
   }
@@ -372,14 +379,6 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     var keyArray = compKey.split('|').toArray
     (keyArray(0), keyArray(1), keyArray(2), keyArray(3))
   }
-
-  /*
-  private def GetKeyFromTuple(tpStr: String, keyStr: String, tIdStr: String, rIdStr: String): Key = {
-      var timePartition = tpStr.toLong
-      var tId = tIdStr.toLong
-      var rId = rIdStr.toInt
-  }
-*/
 
   private def getTableFromConnection(tableName: String): Table = {
     try {
@@ -504,7 +503,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       tableHBase = getTableFromConnection(tableName);
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-        var bkey = bucketKey.mkString(".")
+        var bkey = MakeBucketKeyToStr(bucketKey)
         bucketKeyMap.put(bkey, true)
       })
 
@@ -582,7 +581,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       var tId = tIdStr.toLong
       var rId = rIdStr.toInt
       // format the data to create Key/Value
-      val bucketKey = if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
+      val bucketKey = MakeStrFromBucketKey(keyStr)
       var key = new Key(timePartition, bucketKey, tId, rId)
       var value = new Value(st, si)
       (callbackFunction)(key, value)
@@ -611,7 +610,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       var tId = tIdStr.toLong
       var rId = rIdStr.toInt
       // format the data to create Key/Value
-      val bucketKey = if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
+      val bucketKey = MakeStrFromBucketKey(keyStr)
       var key = new Key(timePartition, bucketKey, tId, rId)
       (callbackFunction)(key)
     } catch {
@@ -827,7 +826,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       tableHBase = getTableFromConnection(tableName);
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-        var bkey = bucketKey.mkString(".")
+        var bkey = MakeBucketKeyToStr(bucketKey)
         bucketKeyMap.put(bkey, true)
       })
       time_ranges.foreach(time_range => {
@@ -871,7 +870,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-        var bkey = bucketKey.mkString(".")
+        var bkey = MakeBucketKeyToStr(bucketKey)
         bucketKeyMap.put(bkey, true)
       })
 
@@ -912,7 +911,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       tableHBase = getTableFromConnection(tableName);
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-        var bkey = bucketKey.mkString(".")
+        var bkey = MakeBucketKeyToStr(bucketKey)
         bucketKeyMap.put(bkey, true)
       })
 
@@ -952,7 +951,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       tableHBase = getTableFromConnection(tableName);
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
-        var bkey = bucketKey.mkString(".")
+        var bkey = MakeBucketKeyToStr(bucketKey)
         bucketKeyMap.put(bkey, true)
       })
       // scan the whole table
