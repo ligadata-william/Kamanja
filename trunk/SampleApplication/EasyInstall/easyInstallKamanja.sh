@@ -104,7 +104,6 @@ cp KamanjaManager/target/scala-2.10/KamanjaManager* $bin
 cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $bin
 cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $bin
 cp Utils/ExtractData/target/scala-2.10/ExtractData* $bin
-cp Utils/NodeInfoExtract/target/scala-2.10/NodeInfoExtract* $bin
 cp Utils/JdbcDataCollector/target/scala-2.10/JdbcDataCollector* $bin
 cp MetadataAPIService/target/scala-2.10/MetadataAPIService* $bin
 cp FileDataConsumer/target/scala-2.10/FileDataConsumer* $bin
@@ -376,6 +375,13 @@ echo "Prepare test messages and copy them into place..."
 # *******************************
 cd $srcPath/Documentation
 cp -rf * $installPath/documentation
+
+# *******************************
+# Copy ClusterInstall
+# *******************************
+mkdir -p $installPath/ClusterInstall
+cp -rf $srcPath/SampleApplication/ClusterInstall/* $installPath/ClusterInstall/
+cp $srcPath/Utils/NodeInfoExtract/target/scala-2.10/NodeInfoExtract* $installPath/ClusterInstall/
 
 # *******************************
 # copy models, messages, containers, config, scripts, types  messages data prep

@@ -61,7 +61,7 @@ workDir="/tmp"
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
 
 echo "...extract node information for the cluster to be started from the Metadata configuration information supplied"
 
@@ -96,7 +96,7 @@ while read LINE; do
     processingengine_cnt=`echo $roles_lc | grep "processingengine" | grep -v "grep" | wc -l`
     echo "NodeInfo = $machine, $id, $cfgFile, $targetPath, $roles"
     echo "...On machine $machine, starting Kamanja node with configuration $cfgFile for NodeId $id to $machine:$targetPath"
-    nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+    nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g'`
     pidfile=node$id.pid
      #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
 	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
@@ -104,7 +104,7 @@ while read LINE; do
 		cd $targetPath
 		echo "nodeCfg=$nodeCfg"
         if [ "$processingengine_cnt" -gt 0 ]; then
-		java -Xmx50g -Xms50g -Dlog4j.configurationFile=file:$targetPath/engine_log4j2.xml -Djavax.net.ssl.trustStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStorePassword=fc2appKey16app -Djavax.net.ssl.trustStorePassword=fc2appKey16app -jar "$installDir/bin/KamanjaManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
+		java -Xmx4g -Xms4g -Dlog4j.configurationFile=file:$targetPath/engine_log4j2.xml -jar "$installDir/bin/KamanjaManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
         fi
         if [ "$restapi_cnt" -gt 0 ]; then
 		java -Dlog4j.configurationFile=file:$targetPath/restapi_log4j2.xml -jar "$installDir/bin/MetadataAPIService-1.0" --config "$targetPath/MetadataAPIConfig_${id}.properties" < /dev/null > /dev/null 2>&1 & 
@@ -124,3 +124,5 @@ exec 0<&12 12<&-
 
 echo
 
+# Adding 
+# java -Xmx50g -Xms50g -Dlog4j.configurationFile=file:$targetPath/engine_log4j2.xml -Djavax.net.ssl.trustStore=/apps/projects/jks/kamanja.jks -Djavax.net.ssl.keyStore=/apps/projects/jks/kamanja.jks -Djavax.net.ssl.keyStorePassword=kamanja -Djavax.net.ssl.trustStorePassword=kamanja -jar "$installDir/bin/KamanjaManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
