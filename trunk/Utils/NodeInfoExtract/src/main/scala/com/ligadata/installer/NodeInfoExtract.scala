@@ -190,10 +190,11 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
    *  @param ipIdTargs the (ip,id, targetPath) triple values for the cluster being processed
    */
   private def writeNodeIdConfigs(workDir: String, ipIdCfgTargPathQuartetFileName: String, extractor: NodeInfoExtract, ipIdTargs: Array[(String, String, String, String)]) {
-
     val metadataDataStore: String =
-      if (MetadataAPIImpl.GetMetadataAPIConfig.contains("METADATA_DATASTORE")) {
+      if (MetadataAPIImpl.GetMetadataAPIConfig.getProperty("METADATA_DATASTORE") != null) {
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("METADATA_DATASTORE")
+      } else if (MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MetadataDataStore") != null) {
+        MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MetadataDataStore")
       } else {
         val dbType = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
         val dbHost = if (MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_HOST") != null) MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_HOST") else MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")

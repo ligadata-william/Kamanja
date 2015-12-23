@@ -1,0 +1,45 @@
+Kamanja Cluster Installation
+
+Note: 
+	1. Always make sure we do step 3 to before we do steps 4, 5, 6 & 7
+
+1. Extract <KamanjaPackageTarGzFile> into <ExtractKamanjaDirectory>
+2. Update the following files in <ExtractKamanjaDirectory>/ClusterInstall
+	Changes in ClusterCfgMetadataAPIConfig.properties
+		1. Replace {InstallDirectory} with proper Kamanja Installing Directory. Ex: /apps/project/Kamanja/KamanjaInstall/Kamanja
+		2. Replace {ScalaInstallDirectory} with proper Scala installed Directory. Ex: /apps/project/Kamanja/KamanjaInstall/scala-2.10.4
+		3. Replace {JavaInstallDirectory} with proper JDK installed Directory. Ex: /apps/project/Kamanja/KamanjaInstall/jdk-1.7.0_71-x86_64
+		4. Replace proper metadata store information for the key MetadataDataStore
+		5. Make sure we have valid information for SSL_CERTIFICATE & SSL_PASSWD if required.
+		6. Make sure we have proper zookeeper information for keys ZOOKEEPER_CONNECT_STRING, ZNODE_PATH & API_LEADER_SELECTION_ZK_NODE
+
+	Changes in ClusterConfig.json
+		1. Replace {InstallDirectory} with proper Kamanja Installing Directory. Ex: /apps/project/Kamanja/KamanjaInstall/Kamanja
+		2. Replace {ScalaInstallDirectory} with proper Scala installed Directory. Ex: /apps/project/Kamanja/KamanjaInstall/scala-2.10.4
+		3. Replace {JavaInstallDirectory} with proper JDK installed Directory. Ex: /apps/project/Kamanja/KamanjaInstall/jdk-1.7.0_71-x86_64
+		4. Replace proper Data store information for the key DataStore & StatusInfo
+		5. Make sure we have proper zookeeper information for key ZooKeeperInfo.
+		6. And also make sure this has valid all nodes information. (if we have more nodes, need to add more nodes information)
+		
+3. Prepend <ExtractKamanjaDirectory>/ClusterInstall to PATH to make sure new NodeInfoExtract is available for this run
+	PATH=<ExtractKamanjaDirectory>/ClusterInstall:$PATH
+
+4. Execute installation script
+	bash <ExtractKamanjaDirectory>/ClusterInstall/KamanjaClusterInstall.sh --ClusterId <ClusterId> --MetadataAPIConfig <ExtractKamanjaDirectory>/ClusterInstall/ClusterCfgMetadataAPIConfig.properties --TarballPath <KamanjaPackageTarGzFile> --NodeConfigPath <ExtractKamanjaDirectory>/ClusterInstall/ClusterConfig.json --WorkingDir <WorkingDirectoryPath> 2>&1 | tee /tmp/KamanjaInstall.txt
+	
+	Ex: bash /apps/project/Kamanja/KamanjaExtract1_2_1/KamanjaClusterInstall.sh --ClusterId kamanjacluster1 --MetadataAPIConfig /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterCfgMetadataAPIConfig.properties --TarballPath /apps/project/Kamanja/Repos/Kamanja-1.2.1.tar.gz --NodeConfigPath /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterConfig.json --WorkingDir /tmp/KamanjaWorkDir  2>&1 | tee /tmp/KamanjaExtract1_2_1.txt
+
+5. Start Cluster
+	bash <ExtractKamanjaDirectory>/ClusterInstall/StartKamanjaCluster.sh --ClusterId <ClusterId> --MetadataAPIConfig <ExtractKamanjaDirectory>/ClusterInstall/ClusterCfgMetadataAPIConfig.properties 2>&1 | tee /tmp/KamanjaClusterStart.txt
+
+	Ex: bash /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterInstall/StartKamanjaCluster.sh --ClusterId kamanjacluster1 --MetadataAPIConfig /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterCfgMetadataAPIConfig.properties 2>&1 | tee /tmp/KamanjaClusterStart.txt
+
+6. Get Cluster Status:
+	bash <ExtractKamanjaDirectory>/ClusterInstall/StatusKamanjaCluster.sh --ClusterId <ClusterId> --MetadataAPIConfig <ExtractKamanjaDirectory>/ClusterInstall/ClusterCfgMetadataAPIConfig.properties 2>&1 | tee /tmp/KamanjaClusterStatus.txt
+
+	Ex: bash /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterInstall/StatusKamanjaCluster.sh --ClusterId kamanjacluster1 --MetadataAPIConfig /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterCfgMetadataAPIConfig.properties 2>&1 | tee /tmp/KamanjaClusterStatus.txt
+
+7. Stop Cluster:
+	bash <ExtractKamanjaDirectory>/ClusterInstall/StopKamanjaCluster.sh --ClusterId <ClusterId> --MetadataAPIConfig <ExtractKamanjaDirectory>/ClusterInstall/ClusterCfgMetadataAPIConfig.properties 2>&1 | tee /tmp/KamanjaClusterStop.txt
+
+	Ex: bash /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterInstall/StopKamanjaCluster.sh --ClusterId kamanjacluster1 --MetadataAPIConfig /apps/project/Kamanja/KamanjaExtract1_2_1/ClusterCfgMetadataAPIConfig.properties 2>&1 | tee /tmp/KamanjaClusterStop.txt

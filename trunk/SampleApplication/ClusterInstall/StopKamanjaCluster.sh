@@ -108,7 +108,7 @@ while read LINE; do
             echo "Killing Pid(s):$pidvals on $machine"
            # FIXME: We can check whether we really have pidvals or not and do ssh
            ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
-              kill -9 $pidvals
+              kill -15 $pidvals
 EOF
 
        fi
