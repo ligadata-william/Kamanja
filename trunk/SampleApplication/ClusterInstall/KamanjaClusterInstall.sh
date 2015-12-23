@@ -287,8 +287,8 @@ dtPrefix="Kamanja`date +"%Y%b%d"`"
 tarName="$dtPrefix.tgz"
 trunkDir=`pwd` #save the current trunk directory 
 
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
-installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
+installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g'`
 if [ -z "$tarballPath" ]; then
 	# 1 build the installation in the staging directory
 	stagingDir="$workDir/$installDirName"
