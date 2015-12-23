@@ -368,6 +368,19 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     compKey.getBytes()
   }
 
+  private def GetTupleFromCompositeKey(compKey: String): (String, String, String, String) = {
+    var keyArray = compKey.split('|').toArray
+    (keyArray(0), keyArray(1), keyArray(2), keyArray(3))
+  }
+
+  /*
+  private def GetKeyFromTuple(tpStr: String, keyStr: String, tIdStr: String, rIdStr: String): Key = {
+      var timePartition = tpStr.toLong
+      var tId = tIdStr.toLong
+      var rId = rIdStr.toInt
+  }
+*/
+
   private def getTableFromConnection(tableName: String): Table = {
     try {
       relogin
@@ -508,9 +521,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       while (it.hasNext()) {
         val r = it.next()
         var k = Bytes.toString(r.getRow())
-        var keyArray = k.split('|')
-        logger.info("searching for " + keyArray(1))
-        var keyExists = bucketKeyMap.getOrElse(keyArray(1), null)
+        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+        logger.info("searching for " + keyStr)
+        var keyExists = bucketKeyMap.getOrElse(keyStr, null)
         if (keyExists != null) {
           dels = dels :+ new Delete(r.getRow())
         }
@@ -564,11 +577,10 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   private def processRow(k: String, st: String, si: Array[Byte], callbackFunction: (Key, Value) => Unit) {
     try {
-      var keyArray = k.split('|').toArray
-      var timePartition = keyArray(0).toLong
-      var keyStr = keyArray(1)
-      var tId = keyArray(2).toLong
-      var rId = keyArray(3).toInt
+      var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+      var timePartition = tpStr.toLong
+      var tId = tIdStr.toLong
+      var rId = rIdStr.toInt
       // format the data to create Key/Value
       val bucketKey = if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
       var key = new Key(timePartition, bucketKey, tId, rId)
@@ -594,11 +606,10 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   private def processKey(k: String, callbackFunction: (Key) => Unit) {
     try {
-      var keyArray = k.split('|').toArray
-      var timePartition = keyArray(0).toLong
-      var keyStr = keyArray(1)
-      var tId = keyArray(2).toLong
-      var rId = keyArray(3).toInt
+      var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+      var timePartition = tpStr.toLong
+      var tId = tIdStr.toLong
+      var rId = rIdStr.toInt
       // format the data to create Key/Value
       val bucketKey = if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
       var key = new Key(timePartition, bucketKey, tId, rId)
@@ -829,8 +840,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         while (it.hasNext()) {
           val r = it.next()
           val k = Bytes.toString(r.getRow())
-          val keyArray = k.split('|')
-          val keyExists = bucketKeyMap.getOrElse(keyArray(1), null)
+          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+          val keyExists = bucketKeyMap.getOrElse(keyStr, null)
           if (keyExists != null) {
             val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
             val si = r.getValue(siStrBytes, baseStrBytes)
@@ -874,8 +885,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         while (it.hasNext()) {
           val r = it.next()
           val k = Bytes.toString(r.getRow())
-          val keyArray = k.split('|')
-          val keyExists = bucketKeyMap.getOrElse(keyArray(1), null)
+          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+          val keyExists = bucketKeyMap.getOrElse(keyStr, null)
           if (keyExists != null) {
             processKey(k, callbackFunction)
           }
@@ -913,8 +924,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       while (it.hasNext()) {
         val r = it.next()
         val k = Bytes.toString(r.getRow())
-        val keyArray = k.split('|')
-        val keyExists = bucketKeyMap.getOrElse(keyArray(1), null)
+        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+        val keyExists = bucketKeyMap.getOrElse(keyStr, null)
         if (keyExists != null) {
           val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
           val si = r.getValue(siStrBytes, baseStrBytes)
@@ -951,8 +962,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       while (it.hasNext()) {
         val r = it.next()
         val k = Bytes.toString(r.getRow())
-        val keyArray = k.split('|')
-        val keyExists = bucketKeyMap.getOrElse(keyArray(1), null)
+        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+        val keyExists = bucketKeyMap.getOrElse(keyStr, null)
         if (keyExists != null) {
           processKey(k, callbackFunction)
         }
