@@ -362,11 +362,44 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   }
 
   private def MakeBucketKeyToStr(bucketKey: Array[String]): String = {
-    bucketKey.mkString(".")
+    // First one is Number of Array Elements
+    // Next follows Each Element size & Element Data
+    val sb = new StringBuilder()
+    sb.append((bucketKey.size).toByte)
+    bucketKey.foreach(k => {
+      val kBytes = k.getBytes
+      val sz = kBytes.size
+      sb.append(((sz >>> 8) & 0xFF).toByte)
+      sb.append(((sz >>> 0) & 0xFF).toByte)
+      sb.append(kBytes)
+    })
+
+    sb.toString
   }
 
   private def MakeStrFromBucketKey(keyStr: String): Array[String] = {
-    if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
+    if (keyStr != null && keyStr.size > 0) {
+      val keyBytes = keyStr.getBytes
+      var cntr = 0
+      val cnt = (0xff & keyBytes(cntr).toInt)
+      cntr += 1
+
+      val bucketKey = new Array[String](cnt)
+      for (i <- 0 until cnt) {
+        val b1 = keyBytes(cntr)
+        cntr += 1
+        val b2 = keyBytes(cntr)
+        cntr += 1
+
+        val sz = ((0xff & b1.asInstanceOf[Int]) << 8) + ((0xff & b2.asInstanceOf[Int]) << 0)
+        bucketKey(i) = new String(keyBytes, cntr, sz)
+        cntr += sz
+      }
+
+      bucketKey
+    } else {
+      new Array[String](0)
+    }
   }
 
   private def MakeCompositeKey(key: Key): Array[Byte] = {
