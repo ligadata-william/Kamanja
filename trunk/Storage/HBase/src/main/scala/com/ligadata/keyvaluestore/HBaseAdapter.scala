@@ -375,9 +375,23 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     compKey.getBytes()
   }
 
+  private def GetTupleFromCompositeKey(compKey: Array[Byte]): (String, String, String, String) = {
+    var keyArray = Bytes.toString(compKey).split('|').toArray
+    (keyArray(0), keyArray(1), keyArray(2), keyArray(3))
+  }
+
   private def GetTupleFromCompositeKey(compKey: String): (String, String, String, String) = {
     var keyArray = compKey.split('|').toArray
     (keyArray(0), keyArray(1), keyArray(2), keyArray(3))
+  }
+
+  private def GetKeyFromTuple(tpStr: String, keyStr: String, tIdStr: String, rIdStr: String): Key = {
+    var timePartition = tpStr.toLong
+    var tId = tIdStr.toLong
+    var rId = rIdStr.toInt
+    // format the data to create Key/Value
+    val bucketKey = MakeStrFromBucketKey(keyStr)
+    new Key(timePartition, bucketKey, tId, rId)
   }
 
   private def getTableFromConnection(tableName: String): Table = {
@@ -519,8 +533,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       var dels = new Array[Delete](0)
       while (it.hasNext()) {
         val r = it.next()
-        var k = Bytes.toString(r.getRow())
-        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
         logger.info("searching for " + keyStr)
         var keyExists = bucketKeyMap.getOrElse(keyStr, null)
         if (keyExists != null) {
@@ -574,7 +587,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     }
   }
 
-  private def processRow(k: String, st: String, si: Array[Byte], callbackFunction: (Key, Value) => Unit) {
+  private def processRow(k: Array[Byte], st: String, si: Array[Byte], callbackFunction: (Key, Value) => Unit) {
     try {
       var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
       var timePartition = tpStr.toLong
@@ -584,7 +597,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val bucketKey = MakeStrFromBucketKey(keyStr)
       var key = new Key(timePartition, bucketKey, tId, rId)
       var value = new Value(st, si)
-      (callbackFunction)(key, value)
+      if (callbackFunction != null)
+        (callbackFunction)(key, value)
     } catch {
       case e: Exception => {
         throw e
@@ -595,7 +609,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   private def processRow(key: Key, st: String, si: Array[Byte], callbackFunction: (Key, Value) => Unit) {
     try {
       var value = new Value(st, si)
-      (callbackFunction)(key, value)
+      if (callbackFunction != null)
+        (callbackFunction)(key, value)
     } catch {
       case e: Exception => {
         throw e
@@ -603,7 +618,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     }
   }
 
-  private def processKey(k: String, callbackFunction: (Key) => Unit) {
+  private def processKey(k: Array[Byte], callbackFunction: (Key) => Unit) {
     try {
       var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
       var timePartition = tpStr.toLong
@@ -612,7 +627,19 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       // format the data to create Key/Value
       val bucketKey = MakeStrFromBucketKey(keyStr)
       var key = new Key(timePartition, bucketKey, tId, rId)
-      (callbackFunction)(key)
+      if (callbackFunction != null)
+        (callbackFunction)(key)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    }
+  }
+
+  private def processKey(key: Key, callbackFunction: (Key) => Unit) {
+    try {
+      if (callbackFunction != null)
+        (callbackFunction)(key)
     } catch {
       case e: Exception => {
         throw e
@@ -633,10 +660,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val it = rs.iterator()
       while (it.hasNext()) {
         val r = it.next()
-        val k = Bytes.toString(r.getRow())
         val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
         val si = r.getValue(siStrBytes, baseStrBytes)
-        processRow(k, st, si, callbackFunction)
+        processRow(r.getRow(), st, si, callbackFunction)
       }
     } catch {
       case e: Exception => {
@@ -662,8 +688,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val it = rs.iterator()
       while (it.hasNext()) {
         val r = it.next()
-        var k = Bytes.toString(r.getRow())
-        processKey(k, callbackFunction)
+        processKey(r.getRow(), callbackFunction)
       }
     } catch {
       case e: Exception => {
@@ -698,8 +723,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val it = rs.iterator()
       while (it.hasNext()) {
         val r = it.next()
-        var k = Bytes.toString(r.getRow())
-        processKey(k, callbackFunction)
+        processKey(r.getRow(), callbackFunction)
       }
     } catch {
       case e: Exception => {
@@ -734,10 +758,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val it = rs.iterator()
       while (it.hasNext()) {
         val r = it.next()
-        val k = Bytes.toString(r.getRow())
         val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
         val si = r.getValue(siStrBytes, baseStrBytes)
-        processRow(k, st, si, callbackFunction)
+        processRow(r.getRow(), st, si, callbackFunction)
       }
     } catch {
       case e: Exception => {
@@ -767,10 +790,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         val it = rs.iterator()
         while (it.hasNext()) {
           val r = it.next()
-          val k = Bytes.toString(r.getRow())
           val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
           val si = r.getValue(siStrBytes, baseStrBytes)
-          processRow(k, st, si, callbackFunction)
+          processRow(r.getRow(), st, si, callbackFunction)
         }
       })
     } catch {
@@ -801,8 +823,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         val it = rs.iterator()
         while (it.hasNext()) {
           val r = it.next()
-          var k = Bytes.toString(r.getRow())
-          processKey(k, callbackFunction)
+          processKey(r.getRow(), callbackFunction)
         }
       })
     } catch {
@@ -838,13 +859,12 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         val it = rs.iterator()
         while (it.hasNext()) {
           val r = it.next()
-          val k = Bytes.toString(r.getRow())
-          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
           val keyExists = bucketKeyMap.getOrElse(keyStr, null)
           if (keyExists != null) {
             val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
             val si = r.getValue(siStrBytes, baseStrBytes)
-            processRow(k, st, si, callbackFunction)
+            processRow(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), st, si, callbackFunction)
           }
         }
       })
@@ -883,11 +903,10 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         val it = rs.iterator()
         while (it.hasNext()) {
           val r = it.next()
-          val k = Bytes.toString(r.getRow())
-          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
           val keyExists = bucketKeyMap.getOrElse(keyStr, null)
           if (keyExists != null) {
-            processKey(k, callbackFunction)
+            processKey(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), callbackFunction)
           }
         }
       })
@@ -922,13 +941,12 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       var dels = new Array[Delete](0)
       while (it.hasNext()) {
         val r = it.next()
-        val k = Bytes.toString(r.getRow())
-        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
         val keyExists = bucketKeyMap.getOrElse(keyStr, null)
         if (keyExists != null) {
           val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
           val si = r.getValue(siStrBytes, baseStrBytes)
-          processRow(k, st, si, callbackFunction)
+          processRow(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), st, si, callbackFunction)
         }
       }
     } catch {
@@ -960,11 +978,10 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val it = rs.iterator()
       while (it.hasNext()) {
         val r = it.next()
-        val k = Bytes.toString(r.getRow())
-        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
+        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
         val keyExists = bucketKeyMap.getOrElse(keyStr, null)
         if (keyExists != null) {
-          processKey(k, callbackFunction)
+          processKey(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), callbackFunction)
         }
       }
     } catch {
