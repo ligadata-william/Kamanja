@@ -200,7 +200,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
   }
 
   // The following three properties are used for connection pooling
-  var maxActiveConnections = 20
+  var maxActiveConnections = 1000
   if (parsed_json.contains("maxActiveConnections")) {
     maxActiveConnections = parsed_json.get("maxActiveConnections").get.toString.trim.toInt
   }
@@ -484,7 +484,12 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       pstmt.setString(5, value.serializerType)
       pstmt.setBinaryStream(6, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
       pstmt.executeUpdate();
-      con.setAutoCommit(true)
+
+      con.commit
+      pstmt.close
+      pstmt = null
+      con.close
+      con = null
     } catch {
       case e: Exception => {
         if (con != null){
@@ -523,7 +528,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       logger.debug("Get a new connection...")
       con = getConnection
       // we need to commit entire batch
-      con.setAutoCommit(false)
+      //con.setAutoCommit(false)
       data_list.foreach(li => {
         var containerName = li._1
         CheckTableExists(containerName)
@@ -545,7 +550,9 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         var deleteCount = pstmt.executeBatch();
         deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
         if (pstmt != null) {
+	  pstmt.clearBatch();
           pstmt.close
+	  pstmt = null;
         }
         logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
         // insert rows 
@@ -571,11 +578,14 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
         insertCount.foreach(cnt => { totalRowsInserted += cnt });
         logger.info("Inserted " + totalRowsInserted + " rows into " + tableName)
         if (pstmt != null) {
+	  pstmt.clearBatch();
           pstmt.close
+	  pstmt = null;
         }
       })
-      con.commit()
-      con.setAutoCommit(true)
+      //con.commit()
+      con.close
+      con = null
     } catch {
       case e: Exception => {
         if (con != null){
@@ -594,8 +604,10 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     } finally {
       if (pstmt != null) {
         pstmt.close
+	pstmt = null
       }
       if (con != null) {
+	//con.setAutoCommit(true)
         con.close
       }
     }
@@ -629,7 +641,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       var totalRowsDeleted = 0;
       deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
       logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
-      con.setAutoCommit(true)
+      pstmt.clearBatch()
+      pstmt.close
+      pstmt = null
+      con.close
+      con = null
     } catch {
       case e: Exception => {
         if (con != null){
@@ -687,7 +703,11 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       var totalRowsDeleted = 0;
       deleteCount.foreach(cnt => { totalRowsDeleted += cnt });
       logger.info("Deleted " + totalRowsDeleted + " rows from " + tableName)
-      con.setAutoCommit(true)
+      pstmt.clearBatch()
+      pstmt.close
+      pstmt = null
+      con.close
+      con = null
     } catch {
       case e: Exception => {
         if (con != null){
