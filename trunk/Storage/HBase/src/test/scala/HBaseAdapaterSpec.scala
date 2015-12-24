@@ -64,6 +64,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
   private val maxConnectionAttempts = 10;
   var cnt:Long = 0
   private val containerName = "sys.customer1"
+  private var readCount = 0
 
   private def RoundDateToSecs(d:Date): Date = {
     var c = Calendar.getInstance()
@@ -88,6 +89,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
     val cust = serializer.DeserializeObjectFromByteArray(value.serializedInfo).asInstanceOf[Customer]
     logger.info("serializedObject => " + cust)
     logger.info("----------------------------------------------------")
+    readCount = readCount + 1
   }
 
   def readKeyCallBack(key:Key) {
@@ -96,6 +98,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
     logger.info("----------------------------------------------------")
+    readCount = readCount + 1
   }
 
   def deleteFile(path:File):Unit = {
@@ -306,6 +309,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
 	adapter.del(containerName,keys)
       }
 
+
       And("Check the row count after deleting all the rows with same bucketKey and different timestamp")
       cnt = hbaseAdapter.getRowCount(containerName)
       assert(cnt == 0)
@@ -384,7 +388,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
 	adapter.getKeys(containerName,readKeyCallBack _)
       }
 
-      And("Test Delete for a time range")
+      And("Set time range for 2 days ")
       var  cal = Calendar.getInstance();
       cal.add(Calendar.DATE, -10);    
       var beginTime = cal.getTime()
@@ -393,8 +397,9 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       cal.add(Calendar.DATE, -8);    
       var endTime = cal.getTime()
       logger.info("end time => " + dateFormat.format(endTime))
-
       var timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
+
+      And("Test Delete for a time range")
       noException should be thrownBy {
 	adapter.del(containerName,timeRange,keyStringList)
       }
@@ -402,6 +407,46 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       And("Check the row count after deleting a bunch based on time range")
       cnt = hbaseAdapter.getRowCount(containerName)
       assert(cnt == 8)
+
+      And("Test the count by Setting time range for all days ")
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -11);    
+      beginTime = cal.getTime()
+      logger.info("begin time => " + dateFormat.format(beginTime))
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, +1);    
+      endTime = cal.getTime()
+      logger.info("end time => " + dateFormat.format(endTime))
+      timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
+      var timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 8)
+
+
+      And("Test the count by Setting time range to Long.MinValue to Long.MaxValue  ")
+      timeRange = new TimeRange(Long.MinValue,Long.MaxValue)
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 0)
+
+      And("Test the count by Setting time range to 0 to Long.MaxValue  ")
+      timeRange = new TimeRange(0,Long.MaxValue)
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 8)
+
 
       And("Test Get for a time range")
       cal = Calendar.getInstance();
@@ -414,7 +459,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       logger.info("end time => " + dateFormat.format(endTime))
 
       timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
-      var timeRanges = new Array[TimeRange](0)
+      timeRanges = new Array[TimeRange](0)
       timeRanges = timeRanges :+ timeRange
 
       noException should be thrownBy {
