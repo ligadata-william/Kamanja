@@ -413,6 +413,20 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     bucketKey
   }
 
+  private def MakeLongSerializedVal(l: Long): Array[Byte] = {
+    val ab = new ArrayBuffer[Byte](16)
+    ab += (((l >>> 56) & 0xFF).toByte)
+    ab += (((l >>> 48) & 0xFF).toByte)
+    ab += (((l >>> 40) & 0xFF).toByte)
+    ab += (((l >>> 32) & 0xFF).toByte)
+    ab += (((l >>> 24) & 0xFF).toByte)
+    ab += (((l >>> 16) & 0xFF).toByte)
+    ab += (((l >>> 8) & 0xFF).toByte)
+    ab += (((l >>> 0) & 0xFF).toByte)
+
+    ab.toArray
+  }
+
   private def MakeCompositeKey(key: Key): Array[Byte] = {
     val ab = new ArrayBuffer[Byte](256)
     ab += (((key.timePartition >>> 56) & 0xFF).toByte)
@@ -685,8 +699,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       logger.info("endTime => " + time.endTime)
 
       var scan = new Scan()
-      scan.setStartRow(Bytes.toBytes(time.beginTime.toString))
-      scan.setStopRow(Bytes.toBytes((time.endTime + 1).toString))
+        scan.setStartRow(MakeLongSerializedVal(time.beginTime))
+        scan.setStopRow(MakeLongSerializedVal(time.beginTime + 1))
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
       var dels = new Array[Delete](0)
@@ -931,8 +945,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       time_ranges.foreach(time_range => {
         // try scan with beginRow and endRow
         var scan = new Scan()
-        scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-        scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
+        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
+        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
@@ -964,8 +978,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       time_ranges.foreach(time_range => {
         // try scan with beginRow and endRow
         var scan = new Scan()
-        scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-        scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
+        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
+        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
@@ -999,8 +1013,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       time_ranges.foreach(time_range => {
         // try scan with beginRow and endRow
         var scan = new Scan()
-        scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-        scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
+        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
+        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
@@ -1041,8 +1055,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       time_ranges.foreach(time_range => {
         // try scan with beginRow and endRow
         var scan = new Scan()
-        scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-        scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
+        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
+        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
