@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configuration monitorInterval="300">
   <Properties>
-    <Property name="log-path">{InstallPath}/logs</Property>
+    <Property name="log-path">/media/home2/installKamanja/logs</Property>
   </Properties>
   <Appenders>
-    <RollingFile name="HourlyRoll" fileName="${log-path}/RestApi_Node{NodeId}.log" filePattern="${log-path}/RestApi_Node{NodeId}-%d{yyyy-MM-dd-HH}-%i.log.gz">
+    <RollingFile name="HourlyRoll" fileName="${log-path}/KamanjaLog.log" filePattern="${log-path}/KamanjaLog-%d{yyyy-MM-dd-HH}-%i.log.gz">
       <!-- PatternLayout pattern="%d - %c [%t] (%F:%L) - %p - %m %n"  -->
       <!-- PatternLayout pattern="%d - %c [%t] (%M) - %p - %m %n"  -->
       <PatternLayout pattern="%d - %c [%t] - %p - %m %n" />
       <Policies>
-        <SizeBasedTriggeringPolicy size="2 GB" />
+        <SizeBasedTriggeringPolicy size="200 MB" />
         <TimeBasedTriggeringPolicy />
         <OnStartupTriggeringPolicy />
       </Policies>      
@@ -20,6 +20,7 @@
   </Appenders>
   <Loggers>
     <Root level="WARN">
+      <AppenderRef ref="CONSOLE" />
       <AppenderRef ref="HourlyRoll" />
     </Root>
   </Loggers>

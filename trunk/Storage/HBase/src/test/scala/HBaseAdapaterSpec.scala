@@ -42,7 +42,6 @@ import com.ligadata.Exceptions._
 
 case class Customer(name:String, address: String, homePhone: String)
 
-@Ignore
 class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAll with GivenWhenThen {
   var res : String = null;
   var statusCode: Int = -1;
@@ -65,6 +64,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
   private val maxConnectionAttempts = 10;
   var cnt:Long = 0
   private val containerName = "sys.customer1"
+  private var readCount = 0
 
   private def RoundDateToSecs(d:Date): Date = {
     var c = Calendar.getInstance()
@@ -89,6 +89,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
     val cust = serializer.DeserializeObjectFromByteArray(value.serializedInfo).asInstanceOf[Customer]
     logger.info("serializedObject => " + cust)
     logger.info("----------------------------------------------------")
+    readCount = readCount + 1
   }
 
   def readKeyCallBack(key:Key) {
@@ -97,6 +98,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
     logger.info("transactionId => " + key.transactionId)
     logger.info("rowId => " + key.rowId)
     logger.info("----------------------------------------------------")
+    readCount = readCount + 1
   }
 
   def deleteFile(path:File):Unit = {
@@ -193,6 +195,20 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       cnt = hbaseAdapter.getRowCount(containerName)
       assert(cnt == 0)
 
+      And("Test create container that has spaces")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ "my test container"
+	adapter.CreateContainer(containers)
+      }
+
+      And("Test drop container that has spaces")
+      noException should be thrownBy {
+	var containers = new Array[String](0)
+	containers = containers :+ "my test container"
+	adapter.DropContainer(containers)
+      }
+
       And("Test create container")
       noException should be thrownBy {
 	var containers = new Array[String](0)
@@ -264,6 +280,42 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       cnt = hbaseAdapter.getRowCount(containerName)
       assert(cnt == 0)
 
+      And("Add rows with same bucketKey and different timestamp")
+      keys = new Array[Key](0) // to be used by a delete operation later on
+      var custName = "customer0"
+      for( i <- 1 to 10 ){
+	var currentTime = new Date()
+	var keyArray = new Array[String](0)
+	keyArray = keyArray :+ custName
+	var key = new Key(currentTime.getTime(),keyArray,i,i)
+	keys = keys :+ key
+	var custAddress = "1000" + i + ",Main St, Redmond WA 98052"
+	var custNumber = "425666777" + i
+	var obj = new Customer(custName,custAddress,custNumber)
+	var v = serializer.SerializeObjectToByteArray(obj)
+	var value = new Value("kryo",v)
+	noException should be thrownBy {
+	  adapter.put(containerName,key,value)
+	}
+      }
+
+      And("Get all the rows that were just added")
+      noException should be thrownBy {
+	adapter.get(containerName,readCallBack _)
+      }
+
+      And("Test Delete same bucketKey and different timestamp")
+      noException should be thrownBy {
+	adapter.del(containerName,keys)
+      }
+
+
+      And("Check the row count after deleting all the rows with same bucketKey and different timestamp")
+      cnt = hbaseAdapter.getRowCount(containerName)
+      assert(cnt == 0)
+
+
+      And("Adding hundred rows for testing truncate")
       for( i <- 1 to 100 ){
 	var currentTime = new Date()
 	var keyArray = new Array[String](0)
@@ -336,7 +388,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
 	adapter.getKeys(containerName,readKeyCallBack _)
       }
 
-      And("Test Delete for a time range")
+      And("Set time range for 2 days ")
       var  cal = Calendar.getInstance();
       cal.add(Calendar.DATE, -10);    
       var beginTime = cal.getTime()
@@ -345,8 +397,9 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       cal.add(Calendar.DATE, -8);    
       var endTime = cal.getTime()
       logger.info("end time => " + dateFormat.format(endTime))
-
       var timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
+
+      And("Test Delete for a time range")
       noException should be thrownBy {
 	adapter.del(containerName,timeRange,keyStringList)
       }
@@ -354,6 +407,71 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       And("Check the row count after deleting a bunch based on time range")
       cnt = hbaseAdapter.getRowCount(containerName)
       assert(cnt == 8)
+
+      And("Test the count by Setting time range for all days ")
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -11);    
+      beginTime = cal.getTime()
+      logger.info("begin time => " + dateFormat.format(beginTime))
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, +1);    
+      endTime = cal.getTime()
+      logger.info("end time => " + dateFormat.format(endTime))
+      timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
+      var timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 8)
+
+
+      And("Test the count by Setting time range to Long.MinValue to Long.MaxValue  ")
+      timeRange = new TimeRange(Long.MinValue,Long.MaxValue)
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 8)
+
+      And("Test the count by Setting time range to 0 to Long.MaxValue  ")
+      timeRange = new TimeRange(0,Long.MaxValue)
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 8)
+
+
+      And("Test the count by Setting time range to some negative value to  another  negative value ")
+      timeRange = new TimeRange(-1000000000,-900000000)
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 0)
+
+      And("Test the count by Setting time range to some radom negative value to  some good value ")
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -6);    
+      endTime = cal.getTime()
+      logger.info("end time => " + dateFormat.format(endTime))
+      timeRange = new TimeRange(-1000000000,endTime.getTime())
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 3)
+
 
       And("Test Get for a time range")
       cal = Calendar.getInstance();
@@ -366,7 +484,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       logger.info("end time => " + dateFormat.format(endTime))
 
       timeRange = new TimeRange(beginTime.getTime(),endTime.getTime())
-      var timeRanges = new Array[TimeRange](0)
+      timeRanges = new Array[TimeRange](0)
       timeRanges = timeRanges :+ timeRange
 
       noException should be thrownBy {

@@ -59,6 +59,10 @@ scalaVersion := "2.10.4"
 
 scalacOptions += "-deprecation"
 
+libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.9" 
+
+libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.9" 
+
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 
