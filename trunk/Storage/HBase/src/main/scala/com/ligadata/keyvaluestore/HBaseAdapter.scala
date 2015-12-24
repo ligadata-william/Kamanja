@@ -681,6 +681,30 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   val arrOfStrsComp = new ArrayOfStringsComp()
 
+  private def getUnsignedTimeRanges(timeRanges: Array[TimeRange]): Array[TimeRange] = {
+    if (timeRanges == null || timeRanges.size == 0) return Array[TimeRange]()
+
+    val arrTimeRanges = ArrayBuffer[TimeRange]()
+
+    // Assuming each input time range is tr.beginTime <= tr.endTime in Signed comparision
+    timeRanges.foreach(tr => {
+      if (tr.beginTime >= 0 && tr.endTime >= 0) {
+        // Nothing special
+        arrTimeRanges += tr
+      } else if (tr.beginTime < 0 && tr.endTime >= 0) {
+        // Split this into two time ranges. First one is from (0 - tr.endTime) and second one from (-1 to tr.beginTime). more -ve is Bigger value in Unsigned
+        arrTimeRanges += TimeRange(0, tr.endTime)
+        arrTimeRanges += TimeRange(-1, tr.beginTime)
+      } else { // Both tr.beginTime < 0 && tr.endTime < 0
+        // Now reverse the time ranges
+        arrTimeRanges += TimeRange(tr.endTime, tr.beginTime)
+      }
+    })
+
+    arrTimeRanges.toArray
+
+  }
+
   override def del(containerName: String, time: TimeRange, bucketKeys: Array[Array[String]]): Unit = {
     var tableName = toFullTableName(containerName)
     var tableHBase: Table = null
@@ -698,20 +722,24 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       logger.info("endTime => " + time.endTime)
 
       var dels = new ArrayBuffer[Delete]()
-      bucketKeys.foreach(bucketKey => {
-        var scan = new Scan()
-        scan.setStartRow(MakeCompositeKey(new Key(time.beginTime, bucketKey, 0, 0)))
-        scan.setStopRow(MakeCompositeKey(new Key(time.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
-        val rs = tableHBase.getScanner(scan);
-        val it = rs.iterator()
-        while (it.hasNext()) {
-          val r = it.next()
-          var key = GetKeyFromCompositeKey(r.getRow())
-          logger.info("searching for " + key.bucketKey.mkString(","))
-          if (bucketKeySet.contains(key.bucketKey)) {
-            dels += new Delete(r.getRow())
+
+      val tmRanges = getUnsignedTimeRanges(Array(time))
+      tmRanges.foreach(tr => {
+        bucketKeys.foreach(bucketKey => {
+          var scan = new Scan()
+          scan.setStartRow(MakeCompositeKey(new Key(tr.beginTime, bucketKey, 0, 0)))
+          scan.setStopRow(MakeCompositeKey(new Key(tr.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
+          val rs = tableHBase.getScanner(scan);
+          val it = rs.iterator()
+          while (it.hasNext()) {
+            val r = it.next()
+            var key = GetKeyFromCompositeKey(r.getRow())
+            logger.info("searching for " + key.bucketKey.mkString(","))
+            if (bucketKeySet.contains(key.bucketKey)) {
+              dels += new Delete(r.getRow())
+            }
           }
-        }
+        })
       })
       if (dels.length > 0) {
         tableHBase.delete(new java.util.ArrayList(dels.toList)) // callling tableHBase.delete(dels.toList) results java.lang.UnsupportedOperationException
@@ -942,7 +970,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
 
-      time_ranges.foreach(time_range => {
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
         // try scan with beginRow and endRow
         var scan = new Scan()
         scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
@@ -975,7 +1004,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
 
-      time_ranges.foreach(time_range => {
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
         // try scan with beginRow and endRow
         var scan = new Scan()
         scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
@@ -1010,7 +1040,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       bucketKeys.foreach(bucketKey => {
         bucketKeySet.add(bucketKey)
       })
-      time_ranges.foreach(time_range => {
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
         // try scan with beginRow and endRow
         bucketKeys.foreach(bucketKey => {
           var scan = new Scan()
@@ -1054,7 +1085,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         bucketKeySet.add(bucketKey)
       })
 
-      time_ranges.foreach(time_range => {
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
         // try scan with beginRow and endRow
         bucketKeys.foreach(bucketKey => {
           var scan = new Scan()
