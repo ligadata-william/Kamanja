@@ -435,7 +435,7 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
       noException should be thrownBy {
 	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
       }
-      assert(readCount == 0)
+      assert(readCount == 8)
 
       And("Test the count by Setting time range to 0 to Long.MaxValue  ")
       timeRange = new TimeRange(0,Long.MaxValue)
@@ -446,6 +446,31 @@ class HBaseAdapterSpec extends FunSpec with BeforeAndAfter with BeforeAndAfterAl
 	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
       }
       assert(readCount == 8)
+
+
+      And("Test the count by Setting time range to some negative value to  another  negative value ")
+      timeRange = new TimeRange(-1000000000,-900000000)
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 0)
+
+      And("Test the count by Setting time range to some radom negative value to  some good value ")
+      cal = Calendar.getInstance();
+      cal.add(Calendar.DATE, -6);    
+      endTime = cal.getTime()
+      logger.info("end time => " + dateFormat.format(endTime))
+      timeRange = new TimeRange(-1000000000,endTime.getTime())
+      timeRanges = new Array[TimeRange](0)
+      timeRanges = timeRanges :+ timeRange
+      readCount = 0
+      noException should be thrownBy {
+	adapter.getKeys(containerName,timeRanges,readKeyCallBack _)
+      }
+      assert(readCount == 3)
 
 
       And("Test Get for a time range")
