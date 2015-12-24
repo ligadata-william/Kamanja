@@ -363,7 +363,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     })
   }
 
-  private def AddBucketKeyToStringBuilder(bucketKey: Array[String], ab: ArrayBuffer[Byte]): Unit = {
+  private def AddBucketKeyToArrayBuffer(bucketKey: Array[String], ab: ArrayBuffer[Byte]): Unit = {
     // First one is Number of Array Elements
     // Next follows Each Element size & Element Data
     ab += ((bucketKey.size).toByte)
@@ -380,7 +380,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     // First one is Number of Array Elements
     // Next follows Each Element size & Element Data
     val ab = new ArrayBuffer[Byte](128)
-    AddBucketKeyToStringBuilder(bucketKey, ab)
+    AddBucketKeyToArrayBuffer(bucketKey, ab)
     ab.toArray
   }
 
@@ -424,7 +424,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     ab += (((key.timePartition >>> 8) & 0xFF).toByte)
     ab += (((key.timePartition >>> 0) & 0xFF).toByte)
 
-    AddBucketKeyToStringBuilder(key.bucketKey, ab)
+    AddBucketKeyToArrayBuffer(key.bucketKey, ab)
 
     ab += (((key.transactionId >>> 56) & 0xFF).toByte)
     ab += (((key.transactionId >>> 48) & 0xFF).toByte)
