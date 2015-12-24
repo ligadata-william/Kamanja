@@ -62,7 +62,7 @@ workDir="/tmp"
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
 
 echo "...extract node information for the cluster to be started from the Metadata configuration information supplied"
 
@@ -108,7 +108,7 @@ while read LINE; do
             echo "Killing Pid(s):$pidvals on $machine"
            # FIXME: We can check whether we really have pidvals or not and do ssh
            ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
-              kill -9 $pidvals
+              kill -15 $pidvals
 EOF
 
        fi

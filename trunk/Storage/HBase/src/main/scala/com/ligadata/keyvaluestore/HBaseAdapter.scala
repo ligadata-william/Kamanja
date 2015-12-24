@@ -20,41 +20,38 @@ package com.ligadata.keyvaluestore
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+// hbase client
+import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-// hbase client
-import org.apache.hadoop.hbase.client.Get
-import org.apache.hadoop.hbase.client.Put
-import org.apache.hadoop.hbase.client.Delete
-import org.apache.hadoop.hbase.client.HConnection
-import org.apache.hadoop.hbase.client.HConnectionManager
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 // hbase filters
-import org.apache.hadoop.hbase.filter.Filter
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter
-import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter
-import org.apache.hadoop.hbase.filter.FilterList
-import org.apache.hadoop.hbase.filter.CompareFilter
+import org.apache.hadoop.hbase.filter.{ Filter, SingleColumnValueFilter, FirstKeyOnlyFilter, FilterList, CompareFilter }
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp
 // hadoop security model
 import org.apache.hadoop.security.UserGroupInformation
 
+import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.client.{ BufferedMutator, BufferedMutatorParams, Connection, ConnectionFactory }
+
+import org.apache.hadoop.hbase._
+
 import org.apache.logging.log4j._
 import java.nio.ByteBuffer
+import java.io.IOException
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions._
-import com.ligadata.Utils.{KamanjaLoaderInfo}
+import com.ligadata.Utils.{ KamanjaLoaderInfo }
 import com.ligadata.KvBase.{ Key, Value, TimeRange }
 import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj }
 import java.util.{ Date, Calendar, TimeZone }
 import java.text.SimpleDateFormat
+
+import scala.collection.mutable.ArrayBuffer
 
 import scala.collection.JavaConversions._
 
@@ -64,11 +61,33 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   val logger = LogManager.getLogger(loggerName)
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+  private var msg: String = ""
 
-  //logger.setLevel(Level.DEBUG)
+  private val stStrBytes = "serializerType".getBytes()
+  private val siStrBytes = "serializedInfo".getBytes()
+  private val baseStrBytes = "base".getBytes()
+
+  private def CreateConnectionException(msg: String, ie: Exception): StorageConnectionException = {
+    logger.error(msg)
+    val ex = new StorageConnectionException("Failed to connect to Database", ie)
+    ex
+  }
+
+  private def CreateDMLException(msg: String, ie: Exception): StorageDMLException = {
+    logger.error(msg)
+    val ex = new StorageDMLException("Failed to execute select/insert/delete/update operation on Database", ie)
+    ex
+  }
+
+  private def CreateDDLException(msg: String, ie: Exception): StorageDDLException = {
+    logger.error(msg)
+    val ex = new StorageDDLException("Failed to execute create/drop operations on Database", ie)
+    ex
+  }
 
   if (adapterConfig.size == 0) {
-    throw new Exception("Not found valid HBase Configuration.")
+    msg = "Invalid HBase Json Configuration string:" + adapterConfig
+    throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
   }
 
   logger.debug("HBase configuration:" + adapterConfig)
@@ -76,14 +95,14 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   try {
     val json = parse(adapterConfig)
     if (json == null || json.values == null) {
-      logger.error("Failed to parse HBase JSON configuration string:" + adapterConfig)
-      throw new Exception("Failed to parse HBase JSON configuration string:" + adapterConfig)
+      var msg = "Failed to parse HBase JSON configuration string:" + adapterConfig
+      throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
     }
     parsed_json = json.values.asInstanceOf[Map[String, Any]]
   } catch {
     case e: Exception => {
-      logger.error("Failed to parse HBase JSON configuration string:%s. Reason:%s Message:%s".format(adapterConfig, e.getCause, e.getMessage))
-      throw e
+      var msg = "Failed to parse HBase JSON configuration string:%s. Message:%s".format(adapterConfig, e.getMessage)
+      throw CreateConnectionException(msg, e)
     }
   }
 
@@ -96,14 +115,14 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       try {
         val json = parse(adapterSpecificStr)
         if (json == null || json.values == null) {
-          logger.error("Failed to parse Cassandra Adapter Specific JSON configuration string:" + adapterSpecificStr)
-          throw new Exception("Failed to parse Cassandra Adapter Specific JSON configuration string:" + adapterSpecificStr)
+          msg = "Failed to parse HBase JSON configuration string:" + adapterSpecificStr
+          throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
         }
         adapterSpecificConfig_json = json.values.asInstanceOf[Map[String, Any]]
       } catch {
         case e: Exception => {
-          logger.error("Failed to parse Cassandra Adapter Specific JSON configuration string:%s. Reason:%s Message:%s".format(adapterSpecificStr, e.getCause, e.getMessage))
-          throw e
+          msg = "Failed to parse HBase Adapter Specific JSON configuration string:%s. Message:%s".format(adapterSpecificStr, e.getMessage)
+          throw CreateConnectionException(msg, e)
         }
       }
     }
@@ -125,21 +144,19 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   def CreateNameSpace(nameSpace: String): Unit = {
     relogin
-    try{
+    try {
       val nsd = admin.getNamespaceDescriptor(nameSpace)
       return
-    } catch{
+    } catch {
       case e: Exception => {
-	logger.info("Namespace " + nameSpace + " doesn't exist, create it")
+        logger.info("Namespace " + nameSpace + " doesn't exist, create it")
       }
     }
-    try{
+    try {
       admin.createNamespace(NamespaceDescriptor.create(nameSpace).build)
-    } catch{
+    } catch {
       case e: Exception => {
-      val stackTrace = StackTrace.ThrowableTraceString(e)
-      logger.debug("StackTrace:"+stackTrace)
-      throw ConnectionFailedException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage(), e)
+        throw CreateConnectionException("Unable to create hbase name space " + nameSpace + ":" + e.getMessage(), e)
       }
     }
   }
@@ -154,7 +171,15 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   config.setInt("hbase.client.retries.number", getOptionalField("hbase_client_retries_number", parsed_json, adapterSpecificConfig_json, "3").toString.trim.toInt);
   config.setInt("hbase.client.pause", getOptionalField("hbase_client_pause", parsed_json, adapterSpecificConfig_json, "5000").toString.trim.toInt);
   config.set("hbase.zookeeper.quorum", hostnames);
-  config.setInt("hbase.client.keyvalue.maxsize", getOptionalField("hbase_client_keyvalue_maxsize", parsed_json, adapterSpecificConfig_json, "104857600").toString.trim.toInt);
+
+  val keyMaxSz = getOptionalField("hbase_client_keyvalue_maxsize", parsed_json, adapterSpecificConfig_json, "104857600").toString.trim.toInt
+  var clntWrtBufSz = getOptionalField("hbase_client_write_buffer", parsed_json, adapterSpecificConfig_json, "104857600").toString.trim.toInt
+
+  if (clntWrtBufSz < keyMaxSz)
+    clntWrtBufSz = keyMaxSz + 1024 // 1K Extra
+
+  config.setInt("hbase.client.keyvalue.maxsize", keyMaxSz);
+  config.setInt("hbase.client.write.buffer", clntWrtBufSz);
 
   var isKerberos: Boolean = false
   var ugi: UserGroupInformation = null
@@ -185,26 +210,27 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         ugi = UserGroupInformation.getLoginUser
       } catch {
         case e: Exception => {
-          logger.error("HBase issue from JSON configuration string:%s. Reason:%s Message:%s".format(adapterConfig, e.getCause, e.getMessage))
-          throw e
+          throw CreateConnectionException("HBase issue from JSON configuration string:%s. Reason:%s Message:%s".format(adapterConfig, e.getCause, e.getMessage), e)
         }
       }
     } else {
-      logger.error("Not handling any authentication other than KERBEROS. AdapterSpecificConfig:" + adapterConfig)
-      throw new Exception("Not handling any authentication other than KERBEROS. AdapterSpecificConfig:" + adapterConfig)
+      throw CreateConnectionException("Not handling any authentication other than KERBEROS. AdapterSpecificConfig:" + adapterConfig, new Exception("Authentication Exception"))
     }
-  } else {
-    logger.debug("HBase info => Hosts:" + hostnames + ", Namespace:" + namespace)
   }
 
-  var connection: HConnection = _
+  var autoCreateTables = "YES"
+  if (parsed_json.contains("autoCreateTables")) {
+    autoCreateTables = parsed_json.get("autoCreateTables").get.toString.trim
+  }
+
+  logger.info("HBase info => Hosts:" + hostnames + ", Namespace:" + namespace + ",autoCreateTables:" + autoCreateTables)
+
+  var conn: Connection = _
   try {
-    connection = HConnectionManager.createConnection(config);
+    conn = ConnectionFactory.createConnection(config);
   } catch {
     case e: Exception => {
-      val stackTrace = StackTrace.ThrowableTraceString(e)
-      logger.error("Stacktrace:" + stackTrace)
-      throw ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage(), e)
+      throw CreateConnectionException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage(), e)
     }
   }
   val admin = new HBaseAdmin(config);
@@ -222,54 +248,85 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     }
   }
 
-  private def createTable(tableName: String): Unit = {
-    relogin
-    if (!admin.tableExists(tableName)) {
-      val tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
-      val colDesc1 = new HColumnDescriptor("key".getBytes())
-      val colDesc2 = new HColumnDescriptor("serializerType".getBytes())
-      val colDesc3 = new HColumnDescriptor("serializedInfo".getBytes())
-      tableDesc.addFamily(colDesc1)
-      tableDesc.addFamily(colDesc2)
-      tableDesc.addFamily(colDesc3)
-      admin.createTable(tableDesc);
+  private def createTable(tableName: String, apiType: String): Unit = {
+    try {
+      relogin
+      if (!admin.tableExists(tableName)) {
+        if (autoCreateTables.equalsIgnoreCase("NO")) {
+          apiType match {
+            case "dml" => {
+              throw new Exception("The option autoCreateTables is set to NO, So Can't create non-existent table automatically to support the requested DML operation")
+            }
+            case _ => {
+              logger.info("proceed with creating table..")
+            }
+          }
+        }
+        val tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
+        val colDesc1 = new HColumnDescriptor("key".getBytes())
+        val colDesc2 = new HColumnDescriptor(stStrBytes)
+        val colDesc3 = new HColumnDescriptor(siStrBytes)
+        tableDesc.addFamily(colDesc1)
+        tableDesc.addFamily(colDesc2)
+        tableDesc.addFamily(colDesc3)
+        admin.createTable(tableDesc);
+      }
+    } catch {
+      case e: Exception => {
+        throw CreateDDLException("Failed to create table " + tableName + ":" + e.getMessage(), e)
+      }
     }
   }
 
   private def dropTable(tableName: String): Unit = {
-    relogin
-    if (admin.tableExists(tableName)) {
-      admin.disableTable(tableName)
-      admin.deleteTable(tableName)
+    try {
+      relogin
+      if (admin.tableExists(tableName)) {
+        if (admin.isTableEnabled(tableName)) {
+          admin.disableTable(tableName)
+        }
+        admin.deleteTable(tableName)
+      }
+    } catch {
+      case e: Exception => {
+        throw CreateDDLException("Failed to drop table " + tableName + ":" + e.getMessage(), e)
+      }
     }
   }
 
-  private def CheckTableExists(containerName: String): Unit = {
-    if (containerList.contains(containerName)) {
-      return
-    } else {
-      CreateContainer(containerName)
-      containerList.add(containerName)
+  private def CheckTableExists(containerName: String, apiType: String = "dml"): Unit = {
+    try {
+      if (containerList.contains(containerName)) {
+        return
+      } else {
+        CreateContainer(containerName, apiType)
+        containerList.add(containerName)
+      }
+    } catch {
+      case e: Exception => {
+        throw new Exception("Failed to create table  " + toTableName(containerName) + ":" + e.getMessage())
+      }
     }
   }
 
   def DropNameSpace(namespace: String): Unit = lock.synchronized {
+    logger.info("Drop namespace " + namespace)
     relogin
-    try{
+    try {
+      logger.info("Check whether namespace exists " + namespace)
       val nsd = admin.getNamespaceDescriptor(namespace)
-    } catch{
+    } catch {
       case e: Exception => {
-	logger.info("Namespace " + namespace + " doesn't exist, nothing to delete")
-	return
+        logger.info("Namespace " + namespace + " doesn't exist, nothing to delete")
+        return
       }
     }
-    try{
+    try {
+      logger.info("delete namespace: " + namespace)
       admin.deleteNamespace(namespace)
-    } catch{
+    } catch {
       case e: Exception => {
-      val stackTrace = StackTrace.ThrowableTraceString(e)
-      logger.debug("StackTrace:"+stackTrace)
-      throw ConnectionFailedException("Unable to delete hbase name space " + namespace + ":" + e.getMessage(), e)
+        throw CreateDDLException("Unable to delete hbase name space " + namespace + ":" + e.getMessage(), e)
       }
     }
   }
@@ -277,8 +334,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   private def toTableName(containerName: String): String = {
     // we need to check for other restrictions as well
     // such as length of the table, special characters etc
-    //containerName.replace('.','_')
-    namespace + ':' + containerName.toLowerCase.replace('.', '_').replace('-', '_')
+    namespace + ':' + containerName.toLowerCase.replace('.', '_').replace('-', '_').replace(' ', '_')
   }
 
   private def toFullTableName(containerName: String): String = {
@@ -287,15 +343,14 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     toTableName(containerName)
   }
 
-  private def CreateContainer(containerName: String): Unit = lock.synchronized {
+  private def CreateContainer(containerName: String, apiType: String): Unit = lock.synchronized {
     var tableName = toTableName(containerName)
     var fullTableName = toFullTableName(containerName)
     try {
-      createTable(fullTableName)
+      createTable(fullTableName, apiType)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw e
       }
     }
   }
@@ -304,573 +359,827 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     logger.info("create the container tables")
     containerNames.foreach(cont => {
       logger.info("create the container " + cont)
-      CreateContainer(cont)
+      CreateContainer(cont, "ddl")
     })
   }
 
-  private def MakeCompositeKey(key: Key): Array[Byte] = {
-    var compKey = key.timePartition.toString + "|" + key.bucketKey.mkString(".") + 
-		  "|" + key.transactionId.toString + "|" + key.rowId.toString
-    compKey.getBytes()
+  private def AddBucketKeyToArrayBuffer(bucketKey: Array[String], ab: ArrayBuffer[Byte]): Unit = {
+    // First one is Number of Array Elements
+    // Next follows Each Element size & Element Data
+    ab += ((bucketKey.size).toByte)
+    bucketKey.foreach(k => {
+      val kBytes = k.getBytes
+      val sz = kBytes.size
+      ab += (((sz >>> 8) & 0xFF).toByte)
+      ab += (((sz >>> 0) & 0xFF).toByte)
+      ab ++= kBytes
+    })
   }
-    
+
+  private def MakeBucketKeyToByteArray(bucketKey: Array[String]): Array[Byte] = {
+    // First one is Number of Array Elements
+    // Next follows Each Element size & Element Data
+    val ab = new ArrayBuffer[Byte](128)
+    AddBucketKeyToArrayBuffer(bucketKey, ab)
+    ab.toArray
+  }
+
+  private def MakeBucketKeyFromByteArr(keyBytes: Array[Byte], startIdx: Int): (Array[String], Int) = {
+    if (keyBytes.size > startIdx) {
+      var cntr = startIdx
+      val cnt = (0xff & keyBytes(cntr).toInt)
+      cntr += 1
+
+      val bucketKey = new Array[String](cnt)
+      for (i <- 0 until cnt) {
+        val b1 = keyBytes(cntr)
+        cntr += 1
+        val b2 = keyBytes(cntr)
+        cntr += 1
+
+        val sz = ((0xff & b1.asInstanceOf[Int]) << 8) + ((0xff & b2.asInstanceOf[Int]) << 0)
+        bucketKey(i) = new String(keyBytes, cntr, sz)
+        cntr += sz
+      }
+
+      (bucketKey, (cntr - startIdx))
+    } else {
+      (Array[String](), 0)
+    }
+  }
+
+  private def MakeBucketKeyFromByteArr(keyBytes: Array[Byte]): Array[String] = {
+    val (bucketKey, consumedBytes) = MakeBucketKeyFromByteArr(keyBytes, 0)
+    bucketKey
+  }
+
+  private def MakeLongSerializedVal(l: Long): Array[Byte] = {
+    val ab = new ArrayBuffer[Byte](16)
+    ab += (((l >>> 56) & 0xFF).toByte)
+    ab += (((l >>> 48) & 0xFF).toByte)
+    ab += (((l >>> 40) & 0xFF).toByte)
+    ab += (((l >>> 32) & 0xFF).toByte)
+    ab += (((l >>> 24) & 0xFF).toByte)
+    ab += (((l >>> 16) & 0xFF).toByte)
+    ab += (((l >>> 8) & 0xFF).toByte)
+    ab += (((l >>> 0) & 0xFF).toByte)
+
+    ab.toArray
+  }
+
+  private def MakeCompositeKey(key: Key): Array[Byte] = {
+    val ab = new ArrayBuffer[Byte](256)
+    ab += (((key.timePartition >>> 56) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 48) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 40) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 32) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 24) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 16) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 8) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 0) & 0xFF).toByte)
+
+    AddBucketKeyToArrayBuffer(key.bucketKey, ab)
+
+    ab += (((key.transactionId >>> 56) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 48) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 40) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 32) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 24) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 16) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 8) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 0) & 0xFF).toByte)
+
+    ab += (((key.rowId >>> 24) & 0xFF).toByte)
+    ab += (((key.rowId >>> 16) & 0xFF).toByte)
+    ab += (((key.rowId >>> 8) & 0xFF).toByte)
+    ab += (((key.rowId >>> 0) & 0xFF).toByte)
+
+    ab.toArray
+  }
+
+  private def GetKeyFromCompositeKey(compKey: Array[Byte]): Key = {
+    var cntr = 0
+    val tp_b1 = compKey(cntr)
+    cntr += 1
+    val tp_b2 = compKey(cntr)
+    cntr += 1
+    val tp_b3 = compKey(cntr)
+    cntr += 1
+    val tp_b4 = compKey(cntr)
+    cntr += 1
+    val tp_b5 = compKey(cntr)
+    cntr += 1
+    val tp_b6 = compKey(cntr)
+    cntr += 1
+    val tp_b7 = compKey(cntr)
+    cntr += 1
+    val tp_b8 = compKey(cntr)
+    cntr += 1
+
+    val timePartition =
+      (((0xff & tp_b1.asInstanceOf[Long]) << 56) + ((0xff & tp_b2.asInstanceOf[Long]) << 48) +
+        ((0xff & tp_b3.asInstanceOf[Long]) << 40) + ((0xff & tp_b4.asInstanceOf[Long]) << 32) +
+        ((0xff & tp_b5.asInstanceOf[Long]) << 24) + ((0xff & tp_b6.asInstanceOf[Long]) << 16) +
+        ((0xff & tp_b7.asInstanceOf[Long]) << 8) + ((0xff & tp_b8.asInstanceOf[Long]) << 0))
+
+    val (bucketKey, consumedBytes) = MakeBucketKeyFromByteArr(compKey, cntr)
+    cntr += consumedBytes
+
+    val tx_b1 = compKey(cntr)
+    cntr += 1
+    val tx_b2 = compKey(cntr)
+    cntr += 1
+    val tx_b3 = compKey(cntr)
+    cntr += 1
+    val tx_b4 = compKey(cntr)
+    cntr += 1
+    val tx_b5 = compKey(cntr)
+    cntr += 1
+    val tx_b6 = compKey(cntr)
+    cntr += 1
+    val tx_b7 = compKey(cntr)
+    cntr += 1
+    val tx_b8 = compKey(cntr)
+    cntr += 1
+
+    val transactionId =
+      (((0xff & tx_b1.asInstanceOf[Long]) << 56) + ((0xff & tx_b2.asInstanceOf[Long]) << 48) +
+        ((0xff & tx_b3.asInstanceOf[Long]) << 40) + ((0xff & tx_b4.asInstanceOf[Long]) << 32) +
+        ((0xff & tx_b5.asInstanceOf[Long]) << 24) + ((0xff & tx_b6.asInstanceOf[Long]) << 16) +
+        ((0xff & tx_b7.asInstanceOf[Long]) << 8) + ((0xff & tx_b8.asInstanceOf[Long]) << 0))
+
+    val rowid_b1 = compKey(cntr)
+    cntr += 1
+    val rowid_b2 = compKey(cntr)
+    cntr += 1
+    val rowid_b3 = compKey(cntr)
+    cntr += 1
+    val rowid_b4 = compKey(cntr)
+    cntr += 1
+
+    val rowId =
+      (((0xff & rowid_b1.asInstanceOf[Int]) << 24) + ((0xff & rowid_b2.asInstanceOf[Int]) << 16) +
+        ((0xff & rowid_b3.asInstanceOf[Int]) << 8) + ((0xff & rowid_b4.asInstanceOf[Int]) << 0))
+
+    new Key(timePartition, bucketKey, transactionId, rowId)
+  }
+
+  /*
+  private def GetTupleFromCompositeKey(compKey: String): (String, String, String, String) = {
+    var keyArray = compKey.split('|').toArray
+    (keyArray(0), keyArray(1), keyArray(2), keyArray(3))
+  }
+
+  private def GetKeyFromTuple(tpStr: String, keyStr: String, tIdStr: String, rIdStr: String): Key = {
+    var timePartition = tpStr.toLong
+    var tId = tIdStr.toLong
+    var rId = rIdStr.toInt
+    // format the data to create Key/Value
+    val bucketKey = MakeBucketKeyFromStr(keyStr)
+    new Key(timePartition, bucketKey, tId, rId)
+  }
+*/
+
+  private def getTableFromConnection(tableName: String): Table = {
+    try {
+      relogin
+      return conn.getTable(TableName.valueOf(tableName))
+    } catch {
+      case e: Exception => {
+        throw ConnectionFailedException("Failed to get table " + tableName + ":" + e.getMessage(), e)
+      }
+    }
+
+    return null
+  }
+
   override def put(containerName: String, key: Key, value: Value): Unit = {
     var tableName = toFullTableName(containerName)
-    try{
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      val tableHBase = connection.getTable(tableName);
+      tableHBase = getTableFromConnection(tableName);
       var kba = MakeCompositeKey(key)
       var p = new Put(kba)
-      p.add(Bytes.toBytes("serializerType"),Bytes.toBytes("base"),Bytes.toBytes(value.serializerType))
-      p.add(Bytes.toBytes("serializedInfo"),Bytes.toBytes("base"),value.serializedInfo)
+      p.addColumn(stStrBytes, baseStrBytes, Bytes.toBytes(value.serializerType))
+      p.addColumn(siStrBytes, baseStrBytes, value.serializedInfo)
       tableHBase.put(p)
     } catch {
-      case e:Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Stacktrace:"+stackTrace)
-	throw new Exception("Failed to save an object in HBase table " + tableName + ":" + e.getMessage())
+      case e: Exception => {
+        throw CreateDMLException("Failed to save an object in table " + tableName, e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def put(data_list: Array[(String, Array[(Key, Value)])]): Unit = {
-    try{
+    var tableHBase: Table = null
+    try {
       relogin
       data_list.foreach(li => {
         var containerName = li._1
-	CheckTableExists(containerName)
-	var tableName = toFullTableName(containerName)
-	val tableHBase = connection.getTable(tableName);
+        CheckTableExists(containerName)
+        var tableName = toFullTableName(containerName)
+        tableHBase = getTableFromConnection(tableName);
         var keyValuePairs = li._2
-	var puts = new Array[Put](0)
+        var puts = new Array[Put](0)
         keyValuePairs.foreach(keyValuePair => {
           var key = keyValuePair._1
           var value = keyValuePair._2
-	  var kba = MakeCompositeKey(key)
-	  var p = new Put(kba)
-	  p.add(Bytes.toBytes("serializerType"),Bytes.toBytes("base"),Bytes.toBytes(value.serializerType))
-	  p.add(Bytes.toBytes("serializedInfo"),Bytes.toBytes("base"),value.serializedInfo)
-	  puts = puts :+ p
-	})
-	if( puts.length > 0 ){
-	  tableHBase.put(puts.toList)
-	}
+          var kba = MakeCompositeKey(key)
+          var p = new Put(kba)
+          p.addColumn(stStrBytes, baseStrBytes, Bytes.toBytes(value.serializerType))
+          p.addColumn(siStrBytes, baseStrBytes, value.serializedInfo)
+          puts = puts :+ p
+        })
+        try {
+          if (puts.length > 0) {
+            tableHBase.put(puts.toList)
+          }
+        } catch {
+          case e: Exception => {
+            throw CreateDMLException("Failed to save an object in table " + tableName + ":" + e.getMessage(), e)
+          }
+        }
       })
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to save a list of objects in table(s) " + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   // delete operations
   override def del(containerName: String, keys: Array[Key]): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
-      var dels = new Array[Delete](0)
+      tableHBase = getTableFromConnection(tableName);
+      var dels = new ArrayBuffer[Delete]()
 
       keys.foreach(key => {
-	var kba = MakeCompositeKey(key)
-	dels = dels :+ new Delete(kba)
+        var kba = MakeCompositeKey(key)
+        dels += new Delete(kba)
       })
 
-      if( dels.length > 0 ){
-	// callling tableHBase.delete(dels.toList) results in an exception as below ??
-	//  Stacktrace:java.lang.UnsupportedOperationException
-	// at java.util.AbstractList.remove(AbstractList.java:161)
-	// at org.apache.hadoop.hbase.client.HTable.delete(HTable.java:896)
-	// at com.ligadata.keyvaluestore.HBaseAdapter.del(HBaseAdapter.scala:387)
-	val dl = new java.util.ArrayList(dels.toList)
-	tableHBase.delete(dl)
-      }
-      else{
-	logger.info("No rows found for the delete operation")
+      if (dels.length > 0) {
+        // callling tableHBase.delete(dels.toList) results in an exception as below ??
+        //  Stacktrace:java.lang.UnsupportedOperationException
+        // at java.util.AbstractList.remove(AbstractList.java:161)
+        // at org.apache.hadoop.hbase.client.HTable.delete(HTable.java:896)
+        // at com.ligadata.keyvaluestore.HBaseAdapter.del(HBaseAdapter.scala:387)
+        tableHBase.delete(new java.util.ArrayList(dels.toList)) // callling tableHBase.delete(dels.toList) results java.lang.UnsupportedOperationException
+      } else {
+        logger.info("No rows found for the delete operation")
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to delete object(s) from table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
+  class ArrayOfStringsComp extends java.util.Comparator[Array[String]] {
+    override def compare(k1: Array[String], k2: Array[String]): Int = {
+      if (k1 == null && k2 == null)
+        return 0
+
+      if (k1 != null && k2 == null)
+        return 1
+
+      if (k1 == null && k2 != null)
+        return -1
+
+      // Next compare Bucket Keys
+      if (k1.size < k2.size)
+        return -1
+      if (k1.size > k2.size)
+        return 1
+
+      for (i <- 0 until k1.size) {
+        val cmp = k1(i).compareTo(k2(i))
+        if (cmp != 0)
+          return cmp
+      }
+      return 0
+    }
+  }
+
+  val arrOfStrsComp = new ArrayOfStringsComp()
+
+  private def getUnsignedTimeRanges(timeRanges: Array[TimeRange]): Array[TimeRange] = {
+    if (timeRanges == null || timeRanges.size == 0) return Array[TimeRange]()
+
+    val arrTimeRanges = ArrayBuffer[TimeRange]()
+
+    // Assuming each input time range is tr.beginTime <= tr.endTime in Signed comparision
+    timeRanges.foreach(tr => {
+      if (tr.beginTime >= 0 && tr.endTime >= 0) {
+        // Nothing special
+        arrTimeRanges += tr
+      } else if (tr.beginTime < 0 && tr.endTime >= 0) {
+        // Split this into two time ranges. First one is from (0 - tr.endTime) and second one from (-1 to tr.beginTime). more -ve is Bigger value in Unsigned
+        arrTimeRanges += TimeRange(0, tr.endTime)
+        arrTimeRanges += TimeRange(-1, tr.beginTime)
+      } else { // Both tr.beginTime < 0 && tr.endTime < 0
+        // Now reverse the time ranges
+        arrTimeRanges += TimeRange(tr.endTime, tr.beginTime)
+      }
+    })
+
+    arrTimeRanges.toArray
+
+  }
 
   override def del(containerName: String, time: TimeRange, bucketKeys: Array[Array[String]]): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+      tableHBase = getTableFromConnection(tableName);
+      val bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        bucketKeySet.add(bucketKey)
       })
-	
+
       // try scan with beginRow and endRow
       logger.info("beginTime => " + time.beginTime)
       logger.info("endTime => " + time.endTime)
 
-      var scan = new Scan()
-      scan.setStartRow(Bytes.toBytes(time.beginTime.toString))
-      scan.setStopRow(Bytes.toBytes((time.endTime + 1).toString))
-      val rs = tableHBase.getScanner(scan);
-      val it = rs.iterator()
-      var dels = new Array[Delete](0)
-      while( it.hasNext() ){
-	val r = it.next()
-	var k = Bytes.toString(r.getRow())
-	var keyArray = k.split('|')
-	logger.info("searching for " + keyArray(1))
-	var keyExists = bucketKeyMap.getOrElse(keyArray(1),null)
-	if (keyExists != null ){
-	  dels = dels :+ new Delete(r.getRow())
-	}
-      }
-      if( dels.length > 0 ){
-	val dl = new java.util.ArrayList(dels.toList)
-	tableHBase.delete(dl)
-	// tableHBase.delete(dels.toList)
-      }
-      else{
-	logger.info("No rows found for the delete operation")
+      var dels = new ArrayBuffer[Delete]()
+
+      val tmRanges = getUnsignedTimeRanges(Array(time))
+      tmRanges.foreach(tr => {
+        bucketKeys.foreach(bucketKey => {
+          var scan = new Scan()
+          scan.setStartRow(MakeCompositeKey(new Key(tr.beginTime, bucketKey, 0, 0)))
+          scan.setStopRow(MakeCompositeKey(new Key(tr.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
+          val rs = tableHBase.getScanner(scan);
+          val it = rs.iterator()
+          while (it.hasNext()) {
+            val r = it.next()
+            var key = GetKeyFromCompositeKey(r.getRow())
+            logger.info("searching for " + key.bucketKey.mkString(","))
+            if (bucketKeySet.contains(key.bucketKey)) {
+              dels += new Delete(r.getRow())
+            }
+          }
+        })
+      })
+      if (dels.length > 0) {
+        tableHBase.delete(new java.util.ArrayList(dels.toList)) // callling tableHBase.delete(dels.toList) results java.lang.UnsupportedOperationException
+      } else {
+        logger.info("No rows found for the delete operation")
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to delete object(s) from table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   // get operations
   def getRowCount(containerName: String): Long = {
-    relogin
-    var tableName = toFullTableName(containerName)
-    val tableHBase = connection.getTable(tableName);
+    var tableHBase: Table = null
+    try {
+      relogin
+      var tableName = toFullTableName(containerName)
+      CheckTableExists(containerName)
+      tableHBase = getTableFromConnection(tableName);
 
-    var scan = new Scan();
-    scan.setFilter(new FirstKeyOnlyFilter());
-    var rs = tableHBase.getScanner(scan);
-    val it = rs.iterator()
-    var cnt = 0
-    while( it.hasNext() ){
-      var r = it.next()
-      cnt = cnt + 1
+      var scan = new Scan();
+      scan.setFilter(new FirstKeyOnlyFilter());
+      var rs = tableHBase.getScanner(scan);
+      val it = rs.iterator()
+      var cnt = 0
+      while (it.hasNext()) {
+        var r = it.next()
+        cnt = cnt + 1
+      }
+      return cnt
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
+      }
     }
-    return cnt
   }
 
-  private def processRow(k:String,st:String, si:Array[Byte],callbackFunction: (Key, Value) => Unit){
-    var keyArray = k.split('|').toArray
-    var timePartition = keyArray(0).toLong
-    var keyStr = keyArray(1)
-    var tId = keyArray(2).toLong
-    var rId = keyArray(3).toInt
-    // format the data to create Key/Value
-    val bucketKey = if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
-    var key = new Key(timePartition, bucketKey, tId, rId)
-    var value = new Value(st, si)
-    (callbackFunction)(key, value)
+  private def processRow(k: Array[Byte], st: String, si: Array[Byte], callbackFunction: (Key, Value) => Unit) {
+    try {
+      var key = GetKeyFromCompositeKey(k)
+      // format the data to create Key/Value
+      var value = new Value(st, si)
+      if (callbackFunction != null)
+        (callbackFunction)(key, value)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    }
   }
 
-  private def processRow(key: Key, st:String, si:Array[Byte],callbackFunction: (Key, Value) => Unit){
-    var value = new Value(st, si)
-    (callbackFunction)(key, value)
+  private def processRow(key: Key, st: String, si: Array[Byte], callbackFunction: (Key, Value) => Unit) {
+    try {
+      var value = new Value(st, si)
+      if (callbackFunction != null)
+        (callbackFunction)(key, value)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    }
   }
 
-  private def processKey(k: String,callbackFunction: (Key) => Unit){
-    var keyArray = k.split('|').toArray
-    var timePartition = keyArray(0).toLong
-    var keyStr = keyArray(1)
-    var tId = keyArray(2).toLong
-    var rId = keyArray(3).toInt
-    // format the data to create Key/Value
-    val bucketKey = if (keyStr != null) keyStr.split('.').toArray else new Array[String](0)
-    var key = new Key(timePartition, bucketKey, tId, rId)
-    (callbackFunction)(key)
+  private def processKey(k: Array[Byte], callbackFunction: (Key) => Unit) {
+    try {
+      var key = GetKeyFromCompositeKey(k)
+      if (callbackFunction != null)
+        (callbackFunction)(key)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    }
+  }
+
+  private def processKey(key: Key, callbackFunction: (Key) => Unit) {
+    try {
+      if (callbackFunction != null)
+        (callbackFunction)(key)
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    }
   }
 
   override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
+      CheckTableExists(containerName)
+      tableHBase = getTableFromConnection(tableName);
       var scan = new Scan();
       var rs = tableHBase.getScanner(scan);
+
       val it = rs.iterator()
-      while( it.hasNext() ){
-	val r = it.next()
-	var k = Bytes.toString(r.getRow())
-	val kvit = r.list().iterator()
-	var st:String  = null
-	var si:Array[Byte] = null
-	while( kvit.hasNext() ){
-	  val kv = kvit.next()
-	  val q = Bytes.toString(kv.getFamily())
-	  q match  {
-	    case "serializerType" => {
-	      st = Bytes.toString(kv.getValue())
-	    }
-	    case "serializedInfo" => {
-	      si = kv.getValue()
-	    }
-	  }
-	}
-	processRow(k,st,si,callbackFunction)
+      while (it.hasNext()) {
+        val r = it.next()
+        val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
+        val si = r.getValue(siStrBytes, baseStrBytes)
+        processRow(r.getRow(), st, si, callbackFunction)
       }
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def getKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
+      CheckTableExists(containerName)
+      tableHBase = getTableFromConnection(tableName);
       var scan = new Scan();
       scan.setFilter(new FirstKeyOnlyFilter());
       var rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
-      while( it.hasNext() ){
-	val r = it.next()
-	var k = Bytes.toString(r.getRow())
-	processKey(k,callbackFunction)
+      while (it.hasNext()) {
+        val r = it.next()
+        processKey(r.getRow(), callbackFunction)
       }
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def getKeys(containerName: String, keys: Array[Key], callbackFunction: (Key) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
+      CheckTableExists(containerName)
+      tableHBase = getTableFromConnection(tableName);
 
       val filters = new java.util.ArrayList[Filter]()
       keys.foreach(key => {
-	var kba = MakeCompositeKey(key)	
-	val f = new SingleColumnValueFilter(Bytes.toBytes("key"), Bytes.toBytes("base"),
-						CompareOp.EQUAL, kba)
-	filters.add(f);
+        var kba = MakeCompositeKey(key)
+        val f = new SingleColumnValueFilter(Bytes.toBytes("key"), baseStrBytes,
+          CompareOp.EQUAL, kba)
+        filters.add(f);
       })
-      val fl = new FilterList(filters);  
-      val scan = new Scan();  
-      scan.setFilter(fl);  
+      val fl = new FilterList(filters);
+      val scan = new Scan();
+      scan.setFilter(fl);
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
-      while( it.hasNext() ){
-	val r = it.next()
-	var k = Bytes.toString(r.getRow())
-	processKey(k,callbackFunction)
+      while (it.hasNext()) {
+        val r = it.next()
+        processKey(r.getRow(), callbackFunction)
       }
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
+      CheckTableExists(containerName)
+      tableHBase = getTableFromConnection(tableName);
 
       val filters = new java.util.ArrayList[Filter]()
       keys.foreach(key => {
-	var kba = MakeCompositeKey(key)	
-	val f = new SingleColumnValueFilter(Bytes.toBytes("key"), Bytes.toBytes("base"),
-						CompareOp.EQUAL, kba)
-	filters.add(f);
+        var kba = MakeCompositeKey(key)
+        val f = new SingleColumnValueFilter(Bytes.toBytes("key"), baseStrBytes,
+          CompareOp.EQUAL, kba)
+        filters.add(f);
       })
-      val fl = new FilterList(filters);  
-      val scan = new Scan();  
-      scan.setFilter(fl);  
+      val fl = new FilterList(filters);
+      val scan = new Scan();
+      scan.setFilter(fl);
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
-      while( it.hasNext() ){
-	val r = it.next()
-	var k = Bytes.toString(r.getRow())
-	val kvit = r.list().iterator()
-	var st:String  = null
-	var si:Array[Byte] = null
-	while( kvit.hasNext() ){
-	  val kv = kvit.next()
-	  val q = Bytes.toString(kv.getFamily())
-	  q match  {
-	    case "serializerType" => {
-	      st = Bytes.toString(kv.getValue())
-	    }
-	    case "serializedInfo" => {
-	      si = kv.getValue()
-	    }
-	  }
-	}
-	processRow(k,st,si,callbackFunction)
+      while (it.hasNext()) {
+        val r = it.next()
+        val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
+        val si = r.getValue(siStrBytes, baseStrBytes)
+        processRow(r.getRow(), st, si, callbackFunction)
       }
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
+      tableHBase = getTableFromConnection(tableName);
 
-      time_ranges.foreach(time_range => {	
-	// try scan with beginRow and endRow
-	var scan = new Scan()
-	scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-	scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
-	val rs = tableHBase.getScanner(scan);
-	val it = rs.iterator()
-	while( it.hasNext() ){
-	  val r = it.next()
-	  var k = Bytes.toString(r.getRow())
-	  val kvit = r.list().iterator()
-	  var st:String  = null
-	  var si:Array[Byte] = null
-	  while( kvit.hasNext() ){
-	    val kv = kvit.next()
-	    val q = Bytes.toString(kv.getFamily())
-	    q match  {
-	      case "serializerType" => {
-		st = Bytes.toString(kv.getValue())
-	      }
-	      case "serializedInfo" => {
-		si = kv.getValue()
-	      }
-	    }
-	  }
-	  processRow(k,st,si,callbackFunction)
-	}
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
+        // try scan with beginRow and endRow
+        var scan = new Scan()
+        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
+        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
+        val rs = tableHBase.getScanner(scan);
+        val it = rs.iterator()
+        while (it.hasNext()) {
+          val r = it.next()
+          val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
+          val si = r.getValue(siStrBytes, baseStrBytes)
+          processRow(r.getRow(), st, si, callbackFunction)
+        }
       })
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
+      tableHBase = getTableFromConnection(tableName);
 
-      time_ranges.foreach(time_range => {	
-	// try scan with beginRow and endRow
-	var scan = new Scan()
-	scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-	scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
-	val rs = tableHBase.getScanner(scan);
-	val it = rs.iterator()
-	while( it.hasNext() ){
-	  val r = it.next()
-	  var k = Bytes.toString(r.getRow())
-	  processKey(k,callbackFunction)
-	}
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
+        // try scan with beginRow and endRow
+        var scan = new Scan()
+        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
+        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
+        val rs = tableHBase.getScanner(scan);
+        val it = rs.iterator()
+        while (it.hasNext()) {
+          val r = it.next()
+          processKey(r.getRow(), callbackFunction)
+        }
       })
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
-
-  override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+  override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]],
+                   callbackFunction: (Key, Value) => Unit): Unit = {
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
-
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+      tableHBase = getTableFromConnection(tableName);
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        bucketKeySet.add(bucketKey)
       })
-
-      time_ranges.foreach(time_range => {	
-	// try scan with beginRow and endRow
-	var scan = new Scan()
-	scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-	scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
-	val rs = tableHBase.getScanner(scan);
-	val it = rs.iterator()
-	while( it.hasNext() ){
-	  val r = it.next()
-	  var k = Bytes.toString(r.getRow())
-	  var keyArray = k.split('|')
-	  var keyExists = bucketKeyMap.getOrElse(keyArray(1),null)
-	  var st:String  = null
-	  var si:Array[Byte] = null
-	  if (keyExists != null ){
-	    val kvit = r.list().iterator()
-	    while( kvit.hasNext() ){
-	      val kv = kvit.next()
-	      val q = Bytes.toString(kv.getFamily())
-	      q match  {
-		case "serializerType" => {
-		  st = Bytes.toString(kv.getValue())
-		}
-		case "serializedInfo" => {
-		  si = kv.getValue()
-		}
-	      }
-	    }
-	    processRow(k,st,si,callbackFunction)
-	  }
-	}
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
+        // try scan with beginRow and endRow
+        bucketKeys.foreach(bucketKey => {
+          var scan = new Scan()
+          scan.setStartRow(MakeCompositeKey(new Key(time_range.beginTime, bucketKey, 0, 0)))
+          scan.setStopRow(MakeCompositeKey(new Key(time_range.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
+          val rs = tableHBase.getScanner(scan);
+          val it = rs.iterator()
+          while (it.hasNext()) {
+            val r = it.next()
+            var key = GetKeyFromCompositeKey(r.getRow())
+            if (bucketKeySet.contains(key.bucketKey)) {
+              val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
+              val si = r.getValue(siStrBytes, baseStrBytes)
+              processRow(key, st, si, callbackFunction)
+            }
+          }
+        })
       })
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
-  override def getKeys(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key) => Unit): Unit = {
-    try{
+  override def getKeys(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]],
+                       callbackFunction: (Key) => Unit): Unit = {
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
+      tableHBase = getTableFromConnection(tableName);
 
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        bucketKeySet.add(bucketKey)
       })
 
-      time_ranges.foreach(time_range => {	
-	// try scan with beginRow and endRow
-	var scan = new Scan()
-	scan.setStartRow(Bytes.toBytes(time_range.beginTime.toString))
-	scan.setStopRow(Bytes.toBytes((time_range.endTime + 1).toString))
-	val rs = tableHBase.getScanner(scan);
-	val it = rs.iterator()
-	while( it.hasNext() ){
-	  val r = it.next()
-	  var k = Bytes.toString(r.getRow())
-	  var keyArray = k.split('|')
-	  var keyExists = bucketKeyMap.getOrElse(keyArray(1),null)
-	  if (keyExists != null ){
-	    processKey(k,callbackFunction)
-	  }
-	}
+      val tmRanges = getUnsignedTimeRanges(time_ranges)
+      tmRanges.foreach(time_range => {
+        // try scan with beginRow and endRow
+        bucketKeys.foreach(bucketKey => {
+          var scan = new Scan()
+          scan.setStartRow(MakeCompositeKey(new Key(time_range.beginTime, bucketKey, 0, 0)))
+          scan.setStopRow(MakeCompositeKey(new Key(time_range.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
+          val rs = tableHBase.getScanner(scan);
+          val it = rs.iterator()
+          while (it.hasNext()) {
+            val r = it.next()
+            var key = GetKeyFromCompositeKey(r.getRow())
+            if (bucketKeySet.contains(key.bucketKey)) {
+              processKey(key, callbackFunction)
+            }
+          }
+        })
       })
-    }catch {
+    } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+      tableHBase = getTableFromConnection(tableName);
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        bucketKeySet.add(bucketKey)
       })
-	
+
       // try scan with beginRow and endRow
       var scan = new Scan()
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
       var dels = new Array[Delete](0)
-      while( it.hasNext() ){
-	val r = it.next()
-	var k = Bytes.toString(r.getRow())
-	var keyArray = k.split('|')
-	var keyExists = bucketKeyMap.getOrElse(keyArray(1),null)
-	if (keyExists != null ){
-	  val kvit = r.list().iterator()
-	  var st:String  = null
-	  var si:Array[Byte] = null
-	  while( kvit.hasNext() ){
-	    val kv = kvit.next()
-	    val q = Bytes.toString(kv.getFamily())
-	    q match  {
-	      case "serializerType" => {
-		st = Bytes.toString(kv.getValue())
-	      }
-	      case "serializedInfo" => {
-		si = kv.getValue()
-	      }
-	    }
-	  }
-	  processRow(k,st,si,callbackFunction)
-	}
+      while (it.hasNext()) {
+        val r = it.next()
+        var key = GetKeyFromCompositeKey(r.getRow())
+        if (bucketKeySet.contains(key.bucketKey)) {
+          val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
+          val si = r.getValue(siStrBytes, baseStrBytes)
+          processRow(key, st, si, callbackFunction)
+        }
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
 
   override def getKeys(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key) => Unit): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
-      var bucketKeyMap: scala.collection.mutable.Map[String,Boolean] = new scala.collection.mutable.HashMap()      
+      tableHBase = getTableFromConnection(tableName);
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-	var bkey = bucketKey.mkString(".")
-	bucketKeyMap.put(bkey,true)
+        bucketKeySet.add(bucketKey)
       })
       // scan the whole table
       var scan = new Scan()
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
-      while( it.hasNext() ){
-	val r = it.next()
-	var k = Bytes.toString(r.getRow())
-	var keyArray = k.split('|')
-	var keyExists = bucketKeyMap.getOrElse(keyArray(1),null)
-	if (keyExists != null ){
-	  processKey(k,callbackFunction)
-	}
+      while (it.hasNext()) {
+        val r = it.next()
+        var key = GetKeyFromCompositeKey(r.getRow())
+        if (bucketKeySet.contains(key.bucketKey)) {
+          processKey(key, callbackFunction)
+        }
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
@@ -887,32 +1196,36 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   override def Shutdown(): Unit = {
     logger.info("close the session and connection pool")
-    if (connection != null) {
-      connection.close()
-      connection = null
+    if (conn != null) {
+      conn.close()
+      conn = null
     }
   }
 
   private def TruncateContainer(containerName: String): Unit = {
-    try{
+    var tableName = toFullTableName(containerName)
+    var tableHBase: Table = null
+    try {
       relogin
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
-      val tableHBase = connection.getTable(tableName);
-      var dels = new Array[Delete](0)
+      tableHBase = getTableFromConnection(tableName);
+      var dels = new ArrayBuffer[Delete]()
       var scan = new Scan()
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
-      while( it.hasNext() ){
-	val r = it.next()
-	dels = dels :+ new Delete(r.getRow())
+      while (it.hasNext()) {
+        val r = it.next()
+        dels += new Delete(r.getRow())
       }
-      val dl = new java.util.ArrayList(dels.toList)
-      tableHBase.delete(dl)
+      if (dels.size > 0)
+        tableHBase.delete(new java.util.ArrayList(dels.toList)) // callling tableHBase.delete(dels.toList) results java.lang.UnsupportedOperationException
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to truncate the table " + tableName + ":" + e.getMessage(), e)
+      }
+    } finally {
+      if (tableHBase != null) {
+        tableHBase.close()
       }
     }
   }
@@ -926,16 +1239,13 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
   }
 
   private def DropContainer(containerName: String): Unit = lock.synchronized {
+    var fullTableName = toFullTableName(containerName)
     try {
       relogin
-      CheckTableExists(containerName)
-      var tableName = toTableName(containerName)
-      var fullTableName = toFullTableName(containerName)
       dropTable(fullTableName)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDDLException("Failed to drop the table " + fullTableName + ":" + e.getMessage(), e)
       }
     }
   }
