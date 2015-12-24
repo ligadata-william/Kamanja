@@ -700,7 +700,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
       var scan = new Scan()
         scan.setStartRow(MakeLongSerializedVal(time.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time.beginTime + 1))
+        scan.setStopRow(MakeLongSerializedVal(time.endTime + 1))
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
       var dels = new Array[Delete](0)
@@ -946,7 +946,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         // try scan with beginRow and endRow
         var scan = new Scan()
         scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
+        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
@@ -979,7 +979,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         // try scan with beginRow and endRow
         var scan = new Scan()
         scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
+        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
@@ -1014,7 +1014,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         // try scan with beginRow and endRow
         var scan = new Scan()
         scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
+        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
@@ -1056,7 +1056,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         // try scan with beginRow and endRow
         var scan = new Scan()
         scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time_range.beginTime + 1))
+        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
         val rs = tableHBase.getScanner(scan);
         val it = rs.iterator()
         while (it.hasNext()) {
