@@ -51,6 +51,8 @@ import com.ligadata.StorageBase.{ DataStore, Transaction, StorageAdapterObj }
 import java.util.{ Date, Calendar, TimeZone }
 import java.text.SimpleDateFormat
 
+import scala.collection.mutable.ArrayBuffer
+
 import scala.collection.JavaConversions._
 
 class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
@@ -361,26 +363,30 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     })
   }
 
-  private def MakeBucketKeyToStr(bucketKey: Array[String]): String = {
+  private def AddBucketKeyToStringBuilder(bucketKey: Array[String], ab: ArrayBuffer[Byte]): Unit = {
     // First one is Number of Array Elements
     // Next follows Each Element size & Element Data
-    val sb = new StringBuilder()
-    sb.append((bucketKey.size).toByte)
+    ab += ((bucketKey.size).toByte)
     bucketKey.foreach(k => {
       val kBytes = k.getBytes
       val sz = kBytes.size
-      sb.append(((sz >>> 8) & 0xFF).toByte)
-      sb.append(((sz >>> 0) & 0xFF).toByte)
-      sb.append(kBytes)
+      ab += (((sz >>> 8) & 0xFF).toByte)
+      ab += (((sz >>> 0) & 0xFF).toByte)
+      ab ++= kBytes
     })
-
-    sb.toString
   }
 
-  private def MakeStrFromBucketKey(keyStr: String): Array[String] = {
-    if (keyStr != null && keyStr.size > 0) {
-      val keyBytes = keyStr.getBytes
-      var cntr = 0
+  private def MakeBucketKeyToByteArray(bucketKey: Array[String]): Array[Byte] = {
+    // First one is Number of Array Elements
+    // Next follows Each Element size & Element Data
+    val ab = new ArrayBuffer[Byte](128)
+    AddBucketKeyToStringBuilder(bucketKey, ab)
+    ab.toArray
+  }
+
+  private def MakeBucketKeyFromByteArr(keyBytes: Array[Byte], startIdx: Int): (Array[String], Int) = {
+    if (keyBytes.size > startIdx) {
+      var cntr = startIdx
       val cnt = (0xff & keyBytes(cntr).toInt)
       cntr += 1
 
@@ -396,23 +402,115 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         cntr += sz
       }
 
-      bucketKey
+      (bucketKey, (cntr - startIdx))
     } else {
-      new Array[String](0)
+      (Array[String](), 0)
     }
   }
 
+  private def MakeBucketKeyFromByteArr(keyBytes: Array[Byte]): Array[String] = {
+    val (bucketKey, consumedBytes) = MakeBucketKeyFromByteArr(keyBytes, 0)
+    bucketKey
+  }
+
   private def MakeCompositeKey(key: Key): Array[Byte] = {
-    var compKey = key.timePartition.toString + "|" + MakeBucketKeyToStr(key.bucketKey) +
-      "|" + key.transactionId.toString + "|" + key.rowId.toString
-    compKey.getBytes()
+    val ab = new ArrayBuffer[Byte](256)
+    ab += (((key.timePartition >>> 56) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 48) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 40) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 32) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 24) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 16) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 8) & 0xFF).toByte)
+    ab += (((key.timePartition >>> 0) & 0xFF).toByte)
+
+    AddBucketKeyToStringBuilder(key.bucketKey, ab)
+
+    ab += (((key.transactionId >>> 56) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 48) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 40) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 32) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 24) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 16) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 8) & 0xFF).toByte)
+    ab += (((key.transactionId >>> 0) & 0xFF).toByte)
+
+    ab += (((key.rowId >>> 24) & 0xFF).toByte)
+    ab += (((key.rowId >>> 16) & 0xFF).toByte)
+    ab += (((key.rowId >>> 8) & 0xFF).toByte)
+    ab += (((key.rowId >>> 0) & 0xFF).toByte)
+
+    ab.toArray
   }
 
-  private def GetTupleFromCompositeKey(compKey: Array[Byte]): (String, String, String, String) = {
-    var keyArray = Bytes.toString(compKey).split('|').toArray
-    (keyArray(0), keyArray(1), keyArray(2), keyArray(3))
+  private def GetKeyFromCompositeKey(compKey: Array[Byte]): Key = {
+    var cntr = 0
+    val tp_b1 = compKey(cntr)
+    cntr += 1
+    val tp_b2 = compKey(cntr)
+    cntr += 1
+    val tp_b3 = compKey(cntr)
+    cntr += 1
+    val tp_b4 = compKey(cntr)
+    cntr += 1
+    val tp_b5 = compKey(cntr)
+    cntr += 1
+    val tp_b6 = compKey(cntr)
+    cntr += 1
+    val tp_b7 = compKey(cntr)
+    cntr += 1
+    val tp_b8 = compKey(cntr)
+    cntr += 1
+
+    val timePartition =
+      (((0xff & tp_b1.asInstanceOf[Long]) << 56) + ((0xff & tp_b2.asInstanceOf[Long]) << 48) +
+        ((0xff & tp_b3.asInstanceOf[Long]) << 40) + ((0xff & tp_b4.asInstanceOf[Long]) << 32) +
+        ((0xff & tp_b5.asInstanceOf[Long]) << 24) + ((0xff & tp_b6.asInstanceOf[Long]) << 16) +
+        ((0xff & tp_b7.asInstanceOf[Long]) << 8) + ((0xff & tp_b8.asInstanceOf[Long]) << 0))
+
+    val (bucketKey, consumedBytes) = MakeBucketKeyFromByteArr(compKey, cntr)
+    cntr += consumedBytes
+
+    val tx_b1 = compKey(cntr)
+    cntr += 1
+    val tx_b2 = compKey(cntr)
+    cntr += 1
+    val tx_b3 = compKey(cntr)
+    cntr += 1
+    val tx_b4 = compKey(cntr)
+    cntr += 1
+    val tx_b5 = compKey(cntr)
+    cntr += 1
+    val tx_b6 = compKey(cntr)
+    cntr += 1
+    val tx_b7 = compKey(cntr)
+    cntr += 1
+    val tx_b8 = compKey(cntr)
+    cntr += 1
+
+    val transactionId =
+      (((0xff & tx_b1.asInstanceOf[Long]) << 56) + ((0xff & tx_b2.asInstanceOf[Long]) << 48) +
+        ((0xff & tx_b3.asInstanceOf[Long]) << 40) + ((0xff & tx_b4.asInstanceOf[Long]) << 32) +
+        ((0xff & tx_b5.asInstanceOf[Long]) << 24) + ((0xff & tx_b6.asInstanceOf[Long]) << 16) +
+        ((0xff & tx_b7.asInstanceOf[Long]) << 8) + ((0xff & tx_b8.asInstanceOf[Long]) << 0))
+
+    val rowid_b1 = compKey(cntr)
+    cntr += 1
+    val rowid_b2 = compKey(cntr)
+    cntr += 1
+    val rowid_b3 = compKey(cntr)
+    cntr += 1
+    val rowid_b4 = compKey(cntr)
+    cntr += 1
+
+    val rowId =
+      (((0xff & rowid_b1.asInstanceOf[Int]) << 24) + ((0xff & rowid_b2.asInstanceOf[Int]) << 16) +
+        ((0xff & rowid_b3.asInstanceOf[Int]) << 8) + ((0xff & rowid_b4.asInstanceOf[Int]) << 0))
+
+    new Key(timePartition, bucketKey, transactionId, rowId)
   }
 
+  /*
   private def GetTupleFromCompositeKey(compKey: String): (String, String, String, String) = {
     var keyArray = compKey.split('|').toArray
     (keyArray(0), keyArray(1), keyArray(2), keyArray(3))
@@ -423,9 +521,10 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     var tId = tIdStr.toLong
     var rId = rIdStr.toInt
     // format the data to create Key/Value
-    val bucketKey = MakeStrFromBucketKey(keyStr)
+    val bucketKey = MakeBucketKeyFromStr(keyStr)
     new Key(timePartition, bucketKey, tId, rId)
   }
+*/
 
   private def getTableFromConnection(tableName: String): Table = {
     try {
@@ -541,6 +640,34 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
     }
   }
 
+  class ArrayOfStringsComp extends java.util.Comparator[Array[String]] {
+    override def compare(k1: Array[String], k2: Array[String]): Int = {
+      if (k1 == null && k2 == null)
+        return 0
+
+      if (k1 != null && k2 == null)
+        return 1
+
+      if (k1 == null && k2 != null)
+        return -1
+
+      // Next compare Bucket Keys
+      if (k1.size < k2.size)
+        return -1
+      if (k1.size > k2.size)
+        return 1
+
+      for (i <- 0 until k1.size) {
+        val cmp = k1(i).compareTo(k2(i))
+        if (cmp != 0)
+          return cmp
+      }
+      return 0
+    }
+  }
+
+  val arrOfStrsComp = new ArrayOfStringsComp()
+
   override def del(containerName: String, time: TimeRange, bucketKeys: Array[Array[String]]): Unit = {
     var tableName = toFullTableName(containerName)
     var tableHBase: Table = null
@@ -548,10 +675,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       relogin
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
-      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
+      val bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-        var bkey = MakeBucketKeyToStr(bucketKey)
-        bucketKeyMap.put(bkey, true)
+        bucketKeySet.add(bucketKey)
       })
 
       // try scan with beginRow and endRow
@@ -566,10 +692,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       var dels = new Array[Delete](0)
       while (it.hasNext()) {
         val r = it.next()
-        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
-        logger.info("searching for " + keyStr)
-        var keyExists = bucketKeyMap.getOrElse(keyStr, null)
-        if (keyExists != null) {
+        var key = GetKeyFromCompositeKey(r.getRow())
+        logger.info("searching for " + key.bucketKey.mkString(","))
+        if (bucketKeySet.contains(key.bucketKey)) {
           dels = dels :+ new Delete(r.getRow())
         }
       }
@@ -622,13 +747,8 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   private def processRow(k: Array[Byte], st: String, si: Array[Byte], callbackFunction: (Key, Value) => Unit) {
     try {
-      var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
-      var timePartition = tpStr.toLong
-      var tId = tIdStr.toLong
-      var rId = rIdStr.toInt
+      var key = GetKeyFromCompositeKey(k)
       // format the data to create Key/Value
-      val bucketKey = MakeStrFromBucketKey(keyStr)
-      var key = new Key(timePartition, bucketKey, tId, rId)
       var value = new Value(st, si)
       if (callbackFunction != null)
         (callbackFunction)(key, value)
@@ -653,13 +773,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
   private def processKey(k: Array[Byte], callbackFunction: (Key) => Unit) {
     try {
-      var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(k)
-      var timePartition = tpStr.toLong
-      var tId = tIdStr.toLong
-      var rId = rIdStr.toInt
-      // format the data to create Key/Value
-      val bucketKey = MakeStrFromBucketKey(keyStr)
-      var key = new Key(timePartition, bucketKey, tId, rId)
+      var key = GetKeyFromCompositeKey(k)
       if (callbackFunction != null)
         (callbackFunction)(key)
     } catch {
@@ -878,10 +992,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       relogin
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
-      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-        var bkey = MakeBucketKeyToStr(bucketKey)
-        bucketKeyMap.put(bkey, true)
+        bucketKeySet.add(bucketKey)
       })
       time_ranges.foreach(time_range => {
         // try scan with beginRow and endRow
@@ -892,12 +1005,11 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         val it = rs.iterator()
         while (it.hasNext()) {
           val r = it.next()
-          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
-          val keyExists = bucketKeyMap.getOrElse(keyStr, null)
-          if (keyExists != null) {
+          var key = GetKeyFromCompositeKey(r.getRow())
+          if (bucketKeySet.contains(key.bucketKey)) {
             val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
             val si = r.getValue(siStrBytes, baseStrBytes)
-            processRow(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), st, si, callbackFunction)
+            processRow(key, st, si, callbackFunction)
           }
         }
       })
@@ -921,10 +1033,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
 
-      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-        var bkey = MakeBucketKeyToStr(bucketKey)
-        bucketKeyMap.put(bkey, true)
+        bucketKeySet.add(bucketKey)
       })
 
       time_ranges.foreach(time_range => {
@@ -936,10 +1047,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         val it = rs.iterator()
         while (it.hasNext()) {
           val r = it.next()
-          var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
-          val keyExists = bucketKeyMap.getOrElse(keyStr, null)
-          if (keyExists != null) {
-            processKey(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), callbackFunction)
+          var key = GetKeyFromCompositeKey(r.getRow())
+          if (bucketKeySet.contains(key.bucketKey)) {
+            processKey(key, callbackFunction)
           }
         }
       })
@@ -961,10 +1071,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       relogin
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
-      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-        var bkey = MakeBucketKeyToStr(bucketKey)
-        bucketKeyMap.put(bkey, true)
+        bucketKeySet.add(bucketKey)
       })
 
       // try scan with beginRow and endRow
@@ -974,12 +1083,11 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       var dels = new Array[Delete](0)
       while (it.hasNext()) {
         val r = it.next()
-        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
-        val keyExists = bucketKeyMap.getOrElse(keyStr, null)
-        if (keyExists != null) {
+        var key = GetKeyFromCompositeKey(r.getRow())
+        if (bucketKeySet.contains(key.bucketKey)) {
           val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
           val si = r.getValue(siStrBytes, baseStrBytes)
-          processRow(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), st, si, callbackFunction)
+          processRow(key, st, si, callbackFunction)
         }
       }
     } catch {
@@ -1000,10 +1108,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       relogin
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
-      var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
+      var bucketKeySet = new java.util.TreeSet[Array[String]](arrOfStrsComp)
       bucketKeys.foreach(bucketKey => {
-        var bkey = MakeBucketKeyToStr(bucketKey)
-        bucketKeyMap.put(bkey, true)
+        bucketKeySet.add(bucketKey)
       })
       // scan the whole table
       var scan = new Scan()
@@ -1011,10 +1118,9 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       val it = rs.iterator()
       while (it.hasNext()) {
         val r = it.next()
-        var (tpStr, keyStr, tIdStr, rIdStr) = GetTupleFromCompositeKey(r.getRow())
-        val keyExists = bucketKeyMap.getOrElse(keyStr, null)
-        if (keyExists != null) {
-          processKey(GetKeyFromTuple(tpStr, keyStr, tIdStr, rIdStr), callbackFunction)
+        var key = GetKeyFromCompositeKey(r.getRow())
+        if (bucketKeySet.contains(key.bucketKey)) {
+          processKey(key, callbackFunction)
         }
       }
     } catch {
