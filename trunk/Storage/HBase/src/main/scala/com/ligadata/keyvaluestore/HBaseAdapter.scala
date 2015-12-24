@@ -638,7 +638,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         // at java.util.AbstractList.remove(AbstractList.java:161)
         // at org.apache.hadoop.hbase.client.HTable.delete(HTable.java:896)
         // at com.ligadata.keyvaluestore.HBaseAdapter.del(HBaseAdapter.scala:387)
-        tableHBase.delete(dels.toList)
+        tableHBase.delete(new java.util.ArrayList(dels.toList)) // callling tableHBase.delete(dels.toList) results java.lang.UnsupportedOperationException
       } else {
         logger.info("No rows found for the delete operation")
       }
@@ -714,7 +714,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         }
       })
       if (dels.length > 0) {
-        tableHBase.delete(dels.toList)
+        tableHBase.delete(new java.util.ArrayList(dels.toList)) // callling tableHBase.delete(dels.toList) results java.lang.UnsupportedOperationException
       } else {
         logger.info("No rows found for the delete operation")
       }
@@ -1186,7 +1186,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         dels += new Delete(r.getRow())
       }
       if (dels.size > 0)
-        tableHBase.delete(dels.toList)
+        tableHBase.delete(new java.util.ArrayList(dels.toList)) // callling tableHBase.delete(dels.toList) results java.lang.UnsupportedOperationException
     } catch {
       case e: Exception => {
         throw CreateDMLException("Failed to truncate the table " + tableName + ":" + e.getMessage(), e)
