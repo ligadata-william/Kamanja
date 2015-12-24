@@ -625,11 +625,11 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       relogin
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
-      var dels = new Array[Delete](0)
+      var dels = new ArrayBuffer[Delete]()
 
       keys.foreach(key => {
         var kba = MakeCompositeKey(key)
-        dels = dels :+ new Delete(kba)
+        dels += new Delete(kba)
       })
 
       if (dels.length > 0) {
@@ -638,8 +638,7 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
         // at java.util.AbstractList.remove(AbstractList.java:161)
         // at org.apache.hadoop.hbase.client.HTable.delete(HTable.java:896)
         // at com.ligadata.keyvaluestore.HBaseAdapter.del(HBaseAdapter.scala:387)
-        val dl = new java.util.ArrayList(dels.toList)
-        tableHBase.delete(dl)
+        tableHBase.delete(dels.toList)
       } else {
         logger.info("No rows found for the delete operation")
       }
@@ -698,23 +697,24 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       logger.info("beginTime => " + time.beginTime)
       logger.info("endTime => " + time.endTime)
 
-      var scan = new Scan()
-        scan.setStartRow(MakeLongSerializedVal(time.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time.endTime + 1))
-      val rs = tableHBase.getScanner(scan);
-      val it = rs.iterator()
-      var dels = new Array[Delete](0)
-      while (it.hasNext()) {
-        val r = it.next()
-        var key = GetKeyFromCompositeKey(r.getRow())
-        logger.info("searching for " + key.bucketKey.mkString(","))
-        if (bucketKeySet.contains(key.bucketKey)) {
-          dels = dels :+ new Delete(r.getRow())
+      var dels = new ArrayBuffer[Delete]()
+      bucketKeys.foreach(bucketKey => {
+        var scan = new Scan()
+        scan.setStartRow(MakeCompositeKey(new Key(time.beginTime, bucketKey, 0, 0)))
+        scan.setStopRow(MakeCompositeKey(new Key(time.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
+        val rs = tableHBase.getScanner(scan);
+        val it = rs.iterator()
+        while (it.hasNext()) {
+          val r = it.next()
+          var key = GetKeyFromCompositeKey(r.getRow())
+          logger.info("searching for " + key.bucketKey.mkString(","))
+          if (bucketKeySet.contains(key.bucketKey)) {
+            dels += new Delete(r.getRow())
+          }
         }
-      }
+      })
       if (dels.length > 0) {
-        val dl = new java.util.ArrayList(dels.toList)
-        tableHBase.delete(dl)
+        tableHBase.delete(dels.toList)
       } else {
         logger.info("No rows found for the delete operation")
       }
@@ -1012,20 +1012,22 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       })
       time_ranges.foreach(time_range => {
         // try scan with beginRow and endRow
-        var scan = new Scan()
-        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
-        val rs = tableHBase.getScanner(scan);
-        val it = rs.iterator()
-        while (it.hasNext()) {
-          val r = it.next()
-          var key = GetKeyFromCompositeKey(r.getRow())
-          if (bucketKeySet.contains(key.bucketKey)) {
-            val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
-            val si = r.getValue(siStrBytes, baseStrBytes)
-            processRow(key, st, si, callbackFunction)
+        bucketKeys.foreach(bucketKey => {
+          var scan = new Scan()
+          scan.setStartRow(MakeCompositeKey(new Key(time_range.beginTime, bucketKey, 0, 0)))
+          scan.setStopRow(MakeCompositeKey(new Key(time_range.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
+          val rs = tableHBase.getScanner(scan);
+          val it = rs.iterator()
+          while (it.hasNext()) {
+            val r = it.next()
+            var key = GetKeyFromCompositeKey(r.getRow())
+            if (bucketKeySet.contains(key.bucketKey)) {
+              val st = Bytes.toString(r.getValue(stStrBytes, baseStrBytes))
+              val si = r.getValue(siStrBytes, baseStrBytes)
+              processRow(key, st, si, callbackFunction)
+            }
           }
-        }
+        })
       })
     } catch {
       case e: Exception => {
@@ -1054,18 +1056,20 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
 
       time_ranges.foreach(time_range => {
         // try scan with beginRow and endRow
-        var scan = new Scan()
-        scan.setStartRow(MakeLongSerializedVal(time_range.beginTime))
-        scan.setStopRow(MakeLongSerializedVal(time_range.endTime + 1))
-        val rs = tableHBase.getScanner(scan);
-        val it = rs.iterator()
-        while (it.hasNext()) {
-          val r = it.next()
-          var key = GetKeyFromCompositeKey(r.getRow())
-          if (bucketKeySet.contains(key.bucketKey)) {
-            processKey(key, callbackFunction)
+        bucketKeys.foreach(bucketKey => {
+          var scan = new Scan()
+          scan.setStartRow(MakeCompositeKey(new Key(time_range.beginTime, bucketKey, 0, 0)))
+          scan.setStopRow(MakeCompositeKey(new Key(time_range.endTime, bucketKey, Long.MaxValue, Int.MaxValue)))
+          val rs = tableHBase.getScanner(scan);
+          val it = rs.iterator()
+          while (it.hasNext()) {
+            val r = it.next()
+            var key = GetKeyFromCompositeKey(r.getRow())
+            if (bucketKeySet.contains(key.bucketKey)) {
+              processKey(key, callbackFunction)
+            }
           }
-        }
+        })
       })
     } catch {
       case e: Exception => {
@@ -1173,16 +1177,16 @@ class HBaseAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: 
       relogin
       CheckTableExists(containerName)
       tableHBase = getTableFromConnection(tableName);
-      var dels = new Array[Delete](0)
+      var dels = new ArrayBuffer[Delete]()
       var scan = new Scan()
       val rs = tableHBase.getScanner(scan);
       val it = rs.iterator()
       while (it.hasNext()) {
         val r = it.next()
-        dels = dels :+ new Delete(r.getRow())
+        dels += new Delete(r.getRow())
       }
-      val dl = new java.util.ArrayList(dels.toList)
-      tableHBase.delete(dl)
+      if (dels.size > 0)
+        tableHBase.delete(dels.toList)
     } catch {
       case e: Exception => {
         throw CreateDMLException("Failed to truncate the table " + tableName + ":" + e.getMessage(), e)
