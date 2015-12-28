@@ -22,9 +22,9 @@ import java.nio.file.Files.copy
 import java.nio.file.Paths.get
 
 case class BufferLeftoversArea(workerNumber: Int, leftovers: Array[Char], relatedChunk: Int)
-case class BufferToChunk(len: Int, payload: Array[Char], chunkNumber: Int, relatedFileName: String, firstValidOffset: Int, partMap: scala.collection.mutable.Map[Int,Int])
+case class BufferToChunk(len: Int, payload: Array[Char], chunkNumber: Int, relatedFileName: String, firstValidOffset: Int, isEof: Boolean, partMap: scala.collection.mutable.Map[Int,Int])
 case class KafkaMessage(msg: Array[Char], offsetInFile: Int, isLast: Boolean, isLastDummy: Boolean, relatedFileName: String, partMap: scala.collection.mutable.Map[Int,Int])
-case class EnqueuedFile(name: String, offset: Int, createDate: Long, partMap: scala.collection.mutable.Map[Int,Int])
+case class EnqueuedFile(name: String, offset: Int, createDate: Long,  partMap: scala.collection.mutable.Map[Int,Int])
 case class FileStatus(status: Int, offset: Long, createDate: Long)
 case class OffsetValue (lastGoodOffset: Int, partitionOffsets: Map[Int,Int])
 
@@ -58,6 +58,10 @@ object FileProcessor {
   val NOT_RECOVERY_SITUATION = -1
   val BROKEN_FILE = -100
   val CORRUPT_FILE = -200
+  val REFRESH_RATE = 2000
+  val MAX_WAIT_TIME = 60000
+  var errorWaitTime = 1000
+
   var reset_watcher = false
 
   val KAFKA_SEND_SUCCESS = 0
@@ -71,8 +75,7 @@ object FileProcessor {
   val IN_PROCESS_FAILED = 2
   val FINISHED_FAILED_TO_COPY = 3
   val BUFFERING_FAILED = 4
-
-  var tempBlah: String = _
+  var bufferTimeout: Int = 300000  // Default to 5 minutes
 
   val HEALTHCHECK_TIMEOUT = 30000
 
@@ -153,8 +156,9 @@ object FileProcessor {
    */
   def checkIfFileBeingProcessed(file: String): Boolean = {
     fileCacheLock.synchronized {
-      if (fileCache.contains(file))
+      if (fileCache.contains(file)) {
         return true
+      }
       else {
         fileCache(file) = scala.compat.Platform.currentTime
         return false
@@ -270,6 +274,8 @@ object FileProcessor {
 
     logger.info("SMART FILE CONSUMER (global): Initializing global queues")
 
+    // Default to 5 minutes (value given in secopnds
+    bufferTimeout = 1000 * props.getOrElse(SmartFileAdapterConstants.FILE_BUFFERING_TIMEOUT,"300").toInt
     localMetadataConfig = props(SmartFileAdapterConstants.METADATA_CONFIG_FILE)
     MetadataAPIImpl.InitMdMgrFromBootStrap(localMetadataConfig, false)
     zkc = initZookeeper
@@ -316,25 +322,26 @@ object FileProcessor {
       // Scan all the files that we are buffering, if there is not difference in their file size.. move them onto
       // the FileQ, they are ready to process.
       bufferingQLock.synchronized {
-        var iter = bufferingQ_map.iterator
+        val iter = bufferingQ_map.iterator
         iter.foreach(fileTuple => {
           try {
             val d = new File(fileTuple._1)
-
             // If the the new length of the file is the same as a second ago... this file is done, so move it
             // onto the ready to process q.  Else update the latest length
-
             if (fileTuple._2 == d.length) {
               if (d.length > 0) {
                 logger.info("SMART FILE CONSUMER (global):  File READY TO PROCESS " + d.toString)
                 enQFile(fileTuple._1, FileProcessor.NOT_RECOVERY_SITUATION, d.lastModified)
                 bufferingQ_map.remove(fileTuple._1)
               } else {
-                if ((specialWarnCounter % 500) == 0) {
-                  logger.warn("SMART_FILE_CONSUMER  Detected a delay in creation of file " + d.toString)
-                  logger.warn("SMART_FILE_CONSUMER  This file could also be empty ")
+                var diff = (System.currentTimeMillis - d.lastModified)
+                if (diff > bufferTimeout) {
+                  logger.warn("SMART FILE CONSUMER (global): Detected that " + d.toString + " has been on the buffering queue longer then " + bufferTimeout / 1000 + " seconds - Cleaning up" )
+                  bufferingQ_map.remove(fileTuple._1)
+                  var nameTokens = fileTuple._1.split("/")
+                  fileCacheRemove(nameTokens(nameTokens.size - 1))
+                  moveFile(fileTuple._1)
                 }
-                specialWarnCounter += 1
               }
             } else {
               bufferingQ_map(fileTuple._1) = d.length
@@ -342,7 +349,6 @@ object FileProcessor {
           } catch {
             case ioe: IOException => {
               logger.error("SMART_FILE_CONSUMER: IOException trying to monitor the buffering queue ",ioe)
-              //setFileState(fileTuple._1, BUFFERING_FAILED)
             }
           }
 
@@ -426,59 +432,16 @@ object FileProcessor {
       breakable {
         while (true) {
           try {
-            logger.info("SMART FILE CONSUMER (global) awaiting work")
-            val key = watchService.take()
-             val dir = keys.getOrElse(key, null)
-            if (dir != null) {
-              key.pollEvents.asScala.foreach(event => {
-                val kind = event.kind
-                // Only worry about new files.
-                if (kind.equals(StandardWatchEventKinds.ENTRY_CREATE)) {
-                  val event_path = event.context().asInstanceOf[Path]
-                  val fileName = dirToWatch + "/" + event_path.toString
-                  if (fileName.endsWith(readyToProcessKey)) {
-                      if (isValidFile(fileName)) {
-                        val tokenName = fileName.split("/")
-                        if (!checkIfFileBeingProcessed(tokenName(tokenName.size - 1))) {
-                          logger.info("SMART FILE CONSUMER (global) QUEUEING(" + kind + ") " + fileName)
-                          enQBufferedFile(fileName)
-                        } else {
-                          logger.info(" SMART FILE CONSUMER (global): ABORT QUEUEING(" + kind + ") this (file by the same name already queued) " + fileName)
-                        }
-
-                      }
-                  }
-                }
-              })
-            } else {
-              logger.warn("SMART FILE CONSUMER (global): WatchKey not recognized!!")
-            }
-
-            if (!key.reset()) {
-              keys.remove(key)
-              if (keys.isEmpty) {
-                resetWatcher
-              }
-            }
+            processExistingFiles(d)
+            errorWaitTime = 1000
           } catch {
-            case ioe: Exception => {
-              var cntOfRetries: Long = 1
-              logger.error("SMART FILE CONSUMER (global): Attempting to recreate a directory listener... Due to the following exception ", ioe)
-              var restartSuccesfull = false
-              while (!restartSuccesfull) {
-                try {
-                  resetWatcher
-                  restartSuccesfull = true
-                } catch {
-                  case ioe: IOException => {
-                    logger.error("MART FILE CONSUMER (global): Retry " + cntOfRetries + ", Unable to access the directory to watch, Retrying again ")
-                    cntOfRetries += 1
-                    Thread.sleep(10000)
-                  }
-                }
-              }
+            case e: Exception => {
+              logger.warn("Unable to access Directory, Retrying after " + errorWaitTime + " seconds", e)
+              errorWaitTime = scala.math.min((errorWaitTime * 2), FileProcessor.MAX_WAIT_TIME)
             }
           }
+          Thread.sleep(FileProcessor.REFRESH_RATE)
+
         }
       }
     }  catch {
@@ -614,15 +577,8 @@ object FileProcessor {
     try {
       logger.info("SMART FILE CONSUMER {global): - cleaning up after " + fileName)
       // Either move or rename the file.
-      val fileStruct = fileName.split("/")
-      if (targetMoveDir != null) {
-        logger.info("SMART FILE CONSUMER Moving File" + dirToWatch+"/"+fileStruct(fileStruct.size - 1) + " to " + targetMoveDir)
-        Files.copy(Paths.get(dirToWatch+"/"+fileStruct(fileStruct.size - 1)), Paths.get(targetMoveDir + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
-        Files.deleteIfExists(Paths.get(dirToWatch+"/"+fileStruct(fileStruct.size - 1)))
-      } else {
-        logger.info("SMART FILE CONSUMER Renaming file " + fileName + " to " + fileName + "_COMPLETE")
-        (new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1))).renameTo(new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1) + "_COMPLETE"))
-      }
+      moveFile(fileName)
+
       val tokenName = fileName.split("/")
       markFileProcessingEnd(tokenName(tokenName.size - 1))
       fileCacheRemove(tokenName(tokenName.size - 1))
@@ -633,6 +589,18 @@ object FileProcessor {
         val tokenName = fileName.split("/")
         FileProcessor.setFileState(tokenName(tokenName.size - 1),FileProcessor.FINISHED_FAILED_TO_COPY)
       }
+    }
+  }
+
+  private def moveFile(fileName: String): Unit = {
+    val fileStruct = fileName.split("/")
+    if (targetMoveDir != null) {
+      logger.info("SMART FILE CONSUMER Moving File" + dirToWatch+"/"+fileStruct(fileStruct.size - 1) + " to " + targetMoveDir)
+      Files.copy(Paths.get(dirToWatch+"/"+fileStruct(fileStruct.size - 1)), Paths.get(targetMoveDir + "/" + fileStruct(fileStruct.size - 1)), REPLACE_EXISTING)
+      Files.deleteIfExists(Paths.get(dirToWatch+"/"+fileStruct(fileStruct.size - 1)))
+    } else {
+      logger.info("SMART FILE CONSUMER Renaming file " + fileName + " to " + fileName + "_COMPLETE")
+      (new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1))).renameTo(new File(dirToWatch+"/"+fileStruct(fileStruct.size - 1) + "_COMPLETE"))
     }
   }
 }
@@ -696,7 +664,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
    * @param props
    */
   def init(props: scala.collection.mutable.Map[String, String]): Unit = {
-    message_separator = props(SmartFileAdapterConstants.MSG_SEPARATOR).toInt.toChar
+    message_separator = props.getOrElse(SmartFileAdapterConstants.MSG_SEPARATOR, "10").toInt.toChar
     dirToWatch = props.getOrElse(SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
     NUMBER_OF_BEES = props.getOrElse(SmartFileAdapterConstants.PAR_DEGREE_OF_FILE_CONSUMER, "1").toInt
     maxlen = props.getOrElse(SmartFileAdapterConstants.WORKER_BUFFER_SIZE, "4").toInt * 1024 * 1024
@@ -704,9 +672,10 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
     readyToProcessKey = props.getOrElse(SmartFileAdapterConstants.READY_MESSAGE_MASK, ".gzip")
     maxBufAllowed = props.getOrElse(SmartFileAdapterConstants.MAX_MEM, "512").toLong * 1024L *1024L
     throttleTime = props.getOrElse(SmartFileAdapterConstants.THROTTLE_TIME, "250").toInt
-
+    var mdConfig = props.getOrElse(SmartFileAdapterConstants.METADATA_CONFIG_FILE,null)
+    var msgName = props.getOrElse(SmartFileAdapterConstants.MESSAGE_NAME, null)
+    var kafkaBroker = props.getOrElse(SmartFileAdapterConstants.KAFKA_BROKER, null)
     kafkaTopic = props.getOrElse(SmartFileAdapterConstants.KAFKA_TOPIC, null)
-
     // Bail out if dirToWatch, Topic are not set
     if (kafkaTopic == null) {
       logger.error("SMART_FILE_CONSUMER ("+partitionId+") Kafka Topic to populate must be specified")
@@ -718,6 +687,24 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
       shutdown
       throw MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.DIRECTORY_TO_WATCH, null)
+    }
+
+    if (mdConfig == null) {
+      logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
+      shutdown
+      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.METADATA_CONFIG_FILE, null)
+    }
+
+    if (msgName == null) {
+      logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
+      shutdown
+      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.MESSAGE_NAME, null)
+    }
+
+    if (kafkaBroker == null) {
+      logger.error("SMART_FILE_CONSUMER ("+partitionId+") Directory to watch must be specified")
+      shutdown
+      throw new MissingPropertyException("Missing Paramter: " + SmartFileAdapterConstants.KAFKA_BROKER, null)
     }
 
     FileProcessor.setProperties(props, path)
@@ -803,6 +790,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
     var myLeftovers: BufferLeftoversArea = null
     var buffer: BufferToChunk = null;
     var fileNameToProcess: String = ""
+    var isEofBuffer = false
 
     // basically, keep running until shutdown.
     while (isConsuming) {
@@ -818,6 +806,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
         if (!fileNameToProcess.equalsIgnoreCase(buffer.relatedFileName)) {
           msgNum = 0
           fileNameToProcess = buffer.relatedFileName
+          isEofBuffer = false
         }
 
         // need a ordered structure to keep the messages.
@@ -826,6 +815,7 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
         var indx = 0
         var prevIndx = indx
 
+        isEofBuffer = buffer.isEof
         if (buffer.firstValidOffset <= FileProcessor.BROKEN_FILE) {
           // Broken File is recoverable, CORRUPTED FILE ISNT!!!!!
           if (buffer.firstValidOffset == FileProcessor.BROKEN_FILE) {
@@ -837,21 +827,22 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
           }
         } else {
           // Look for messages.
-          buffer.payload.foreach(x => {
-            if (x.asInstanceOf[Char] == message_separator) {
-              var newMsg: Array[Char] = buffer.payload.slice(prevIndx, indx)
+          if (!buffer.isEof){
+            buffer.payload.foreach(x => {
+              if (x.asInstanceOf[Char] == message_separator) {
+                var newMsg: Array[Char] = buffer.payload.slice(prevIndx, indx)
+                msgNum += 1
+                logger.debug("SMART_FILE_CONSUMER (" + partitionId + ") Message offset " + msgNum + ", and the buffer offset is " + buffer.firstValidOffset)
 
-              msgNum += 1
-              logger.debug("SMART_FILE_CONSUMER (" + partitionId + ") Message offset " + msgNum + ", and the buffer offset is " + buffer.firstValidOffset)
+                // Ok, we could be in recovery, so we have to ignore some messages, but these ignoraable messages must still
+                // appear in the leftover areas
+                messages.add(new KafkaMessage(newMsg, buffer.firstValidOffset, false, false, buffer.relatedFileName,  buffer.partMap))
 
-              // Ok, we could be in recovery, so we have to ignore some messages, but these ignoraable messages must still
-              // appear in the leftover areas
-              messages.add(new KafkaMessage(newMsg, buffer.firstValidOffset, false, false, buffer.relatedFileName, buffer.partMap))
-
-              prevIndx = indx + 1
-            }
-            indx = indx + 1
-          })
+                prevIndx = indx + 1
+              }
+              indx = indx + 1
+            })
+          }
         }
 
         // Wait for a previous worker be to finish so that we can get the leftovers.,, If we are the first buffer, then
@@ -870,10 +861,18 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
             // Prepend the leftovers to the first element of the array of messages
             val msgArray = messages.toArray
             var firstMsgWithLefovers: KafkaMessage = null
-            if (messages.size > 0) {
-              firstMsgWithLefovers = new KafkaMessage(leftOvers ++ msgArray(0).msg, msgArray(0).offsetInFile, false, false, buffer.relatedFileName, msgArray(0).partMap)
-              msgArray(0) = firstMsgWithLefovers
-              enQMsg(msgArray, beeNumber)
+            if (isEofBuffer) {
+              if (leftOvers.size > 0) {
+                firstMsgWithLefovers = new KafkaMessage(leftOvers, buffer.firstValidOffset, false, false, buffer.relatedFileName, buffer.partMap)
+                messages.add(firstMsgWithLefovers)
+                enQMsg(messages.toArray, beeNumber)
+              }
+            } else {
+              if (messages.size > 0) {
+                firstMsgWithLefovers = new KafkaMessage(leftOvers ++ msgArray(0).msg, msgArray(0).offsetInFile, false, false, buffer.relatedFileName, msgArray(0).partMap)
+                msgArray(0) = firstMsgWithLefovers
+                enQMsg(msgArray, beeNumber)
+              }
             }
           } else {
             Thread.sleep(100)
@@ -883,8 +882,14 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
         // whatever is left is the leftover we need to pass to another thread.
         indx = scala.math.min(indx, buffer.len)
         if (indx != prevIndx) {
-          val newFileLeftOvers = BufferLeftoversArea(beeNumber, buffer.payload.slice(prevIndx, indx), buffer.chunkNumber)
-          setLeftovers(newFileLeftOvers, beeNumber)
+          if (!isEofBuffer) {
+            val newFileLeftOvers = BufferLeftoversArea(beeNumber, buffer.payload.slice(prevIndx, indx), buffer.chunkNumber)
+            setLeftovers(newFileLeftOvers, beeNumber)
+          } else {
+            val newFileLeftOvers = BufferLeftoversArea(beeNumber, new Array[Char](0), buffer.chunkNumber)
+            setLeftovers(newFileLeftOvers, beeNumber)
+          }
+
         } else {
           val newFileLeftOvers = BufferLeftoversArea(beeNumber, new Array[Char](0), buffer.chunkNumber)
           setLeftovers(newFileLeftOvers, beeNumber)
@@ -970,25 +975,26 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       }
 
       BufferCounters.inMemoryBuffersCntr.incrementAndGet() // Incrementing when we enQBuffer and Decrementing when we deQMsg
-
+      var isLastChunk = false
       try {
         readlen = bis.read(buffer, 0, maxlen - 1)
+        // if (readlen < (maxlen - 1)) isLastChunk = true
       } catch {
         case ze: ZipException => {
           logger.error("Failed to read file, file currupted " + fileName, ze)
-          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE, partMap)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE, isLastChunk, partMap)
           enQBuffer(BufferToChunk)
           return
         }
         case ioe: IOException => {
           logger.error("Failed to read file " + fileName, ioe)
-          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.BROKEN_FILE, partMap)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.BROKEN_FILE, isLastChunk, partMap)
           enQBuffer(BufferToChunk)
           return
         }
         case e: Exception => {
           logger.error("Failed to read file, file currupted " + fileName, e)
-          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE, partMap)
+          val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, FileProcessor.CORRUPT_FILE, isLastChunk, partMap)
           enQBuffer(BufferToChunk)
           return
         }
@@ -996,10 +1002,15 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       if (readlen > 0) {
         totalLen += readlen
         len += readlen
-        var BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, offset, partMap)
+        val BufferToChunk = new BufferToChunk(readlen, buffer.slice(0, readlen), chunkNumber, fileName, offset, isLastChunk, partMap)
+        enQBuffer(BufferToChunk)
+        chunkNumber += 1
+      } else {
+        val BufferToChunk = new BufferToChunk(readlen, Array[Char](message_separator), chunkNumber, fileName, offset, true, partMap)
         enQBuffer(BufferToChunk)
         chunkNumber += 1
       }
+
     } while (readlen > 0)
 
     // Pass the leftovers..  - some may have been left by the last chunkBuffer... nothing else will pick it up...
@@ -1118,7 +1129,6 @@ class FileProcessor(val path: Path, val partitionId: Int) extends Runnable {
       }
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        e.printStackTrace()
         return false
     }
 

@@ -32,5 +32,6 @@ object SmartFileAdapterConstants {
   val KAFKA_LOAD_STATUS = "Kafka_Load_Result,"
   val TOTAL_FILE_STATUS = "File_Total_Result,"
   val CORRUPTED_FILE = "Corrupted_File_Detected,"
+  val FILE_BUFFERING_TIMEOUT = "fileBufferingTimeout"
 
 }
