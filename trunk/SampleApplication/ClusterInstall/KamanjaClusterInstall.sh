@@ -12,10 +12,10 @@
 #       a) Using the node config file Engine2BoxConfigV1.json 
 #       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
 #                               --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
-#                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
+#                               --KafkaInstallPath ~/tarballs/kafka/2.11/kafka_2.11-0.8.1.1
 #       b) Using the metadata found in the metadata store specified by the MetadataAPIConfig.properties
 #       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
-#                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
+#                               --KafkaInstallPath ~/tarballs/kafka/2.11/kafka_2.11-0.8.1.1
 #
 #   TarballPath distribution examples (when the tarball has been built outside this script):
 #       a) Using the node config file Engine2BoxConfigV1.json 
@@ -43,7 +43,7 @@
 
 script_dir=$(dirname "$0")
 
-scalaversion="2.10"
+scalaversion="2.11"
 name1=$1
 
 Usage()
