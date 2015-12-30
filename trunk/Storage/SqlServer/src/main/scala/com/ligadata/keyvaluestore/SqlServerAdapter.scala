@@ -472,7 +472,7 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
 	    " end " +
 	    " else " +
 	    " begin " +
-	    " update " + tableName + " set serializerType = ?, serializedInfo = ? " + 
+	    " update " + tableName + " set serializerType = ?, serializedInfo = ? where timePartition = ? and bucketKey = ?  and transactionId = ?  and rowId = ?  " + 
 	    " end ";
       logger.debug("sql => " + sql)
       pstmt = con.prepareStatement(sql) 
@@ -488,6 +488,10 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
       pstmt.setBinaryStream(10, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
       pstmt.setString(11, value.serializerType)
       pstmt.setBinaryStream(12, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
+      pstmt.setLong(13, key.timePartition)
+      pstmt.setString(14, key.bucketKey.mkString(","))
+      pstmt.setLong(15, key.transactionId)
+      pstmt.setInt(16, key.rowId)          
       pstmt.executeUpdate();
     } catch {
       case e: Exception => {
@@ -514,64 +518,86 @@ class SqlServerAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConf
     }
   }
 
+  private def IsSingleRowPut(data_list: Array[(String, Array[(Key, Value)])]): Boolean = {
+    if( data_list.length == 1 ){
+      if( data_list(0)._2.length == 1 ){
+	return true
+      }
+    }
+    return false
+  }
+
   override def put(data_list: Array[(String, Array[(Key, Value)])]): Unit = {
     var con: Connection = null
     var pstmt: PreparedStatement = null
     var sql: String = null
     var totalRowsUpdated = 0;
     try {
-      logger.debug("Get a new connection...")
-      con = getConnection
-      // we need to commit entire batch
-      con.setAutoCommit(false)
-      data_list.foreach(li => {
-	var containerName = li._1
-	CheckTableExists(containerName)
-	var tableName = toFullTableName(containerName)
-	var keyValuePairs = li._2
-	sql = "if ( not exists(select * from " + tableName + 
-	    " where timePartition = ? and bucketKey = ?  and transactionId = ?  and rowId = ? ) ) " + 
-	    " begin " +
-	    " insert into " + tableName + "(timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo)" +
-	    " values(?,?,?,?,?,?)" + 
-	    " end " +
-	    " else " +
-	    " begin " +
-	    " update " + tableName + " set serializerType = ?, serializedInfo = ? " + 
-	    " end ";
-	logger.debug("sql => " + sql)
-	pstmt = con.prepareStatement(sql) 
-	keyValuePairs.foreach(keyValuePair => {
-          var key = keyValuePair._1
-          var value = keyValuePair._2
-          pstmt.setLong(1, key.timePartition)
-          pstmt.setString(2, key.bucketKey.mkString(","))
-          pstmt.setLong(3, key.transactionId)
-          pstmt.setInt(4, key.rowId)
-          pstmt.setLong(5, key.timePartition)
-          pstmt.setString(6, key.bucketKey.mkString(","))
-          pstmt.setLong(7, key.transactionId)
-          pstmt.setInt(8, key.rowId)
-          pstmt.setString(9, value.serializerType)
-          pstmt.setBinaryStream(10, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
-          pstmt.setString(11, value.serializerType)
-          pstmt.setBinaryStream(12, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
-          // Add it to the batch
-          pstmt.addBatch()
+      if( IsSingleRowPut(data_list) ){
+	var containerName = data_list(0)._1
+	var keyValuePairs = data_list(0)._2
+	var key = keyValuePairs(0)._1
+	var value = keyValuePairs(0)._2
+	put(containerName,key,value)
+      }
+      else{
+	logger.debug("Get a new connection...")
+	con = getConnection
+	// we need to commit entire batch
+	con.setAutoCommit(false)
+	data_list.foreach(li => {
+	  var containerName = li._1
+	  CheckTableExists(containerName)
+	  var tableName = toFullTableName(containerName)
+	  var keyValuePairs = li._2
+	  logger.info("Input row count for the table " + tableName + " => " + keyValuePairs.length)
+	  sql = "if ( not exists(select * from " + tableName + 
+	  " where timePartition = ? and bucketKey = ?  and transactionId = ?  and rowId = ? ) ) " + 
+	  " begin " +
+	  " insert into " + tableName + "(timePartition,bucketKey,transactionId,rowId,serializerType,serializedInfo)" +
+	  " values(?,?,?,?,?,?)" + 
+	  " end " +
+	  " else " +
+	  " begin " +
+	  " update " + tableName + " set serializerType = ?, serializedInfo = ? where timePartition = ? and bucketKey = ?  and transactionId = ?  and rowId = ?  " + 
+	  " end ";
+	  logger.debug("sql => " + sql)
+	  pstmt = con.prepareStatement(sql) 
+	  keyValuePairs.foreach(keyValuePair => {
+            var key = keyValuePair._1
+            var value = keyValuePair._2
+            pstmt.setLong(1, key.timePartition)
+            pstmt.setString(2, key.bucketKey.mkString(","))
+            pstmt.setLong(3, key.transactionId)
+            pstmt.setInt(4, key.rowId)
+            pstmt.setLong(5, key.timePartition)
+            pstmt.setString(6, key.bucketKey.mkString(","))
+            pstmt.setLong(7, key.transactionId)
+            pstmt.setInt(8, key.rowId)
+            pstmt.setString(9, value.serializerType)
+            pstmt.setBinaryStream(10, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
+            pstmt.setString(11, value.serializerType)
+            pstmt.setBinaryStream(12, new java.io.ByteArrayInputStream(value.serializedInfo), value.serializedInfo.length)
+            pstmt.setLong(13, key.timePartition)
+            pstmt.setString(14, key.bucketKey.mkString(","))
+            pstmt.setLong(15, key.transactionId)
+            pstmt.setInt(16, key.rowId)
+            pstmt.addBatch()
+	  })
+          logger.debug("Executing bulk upsert...")
+          var updateCount = pstmt.executeBatch();
+          updateCount.foreach(cnt => { totalRowsUpdated += cnt });
+          if (pstmt != null) {
+	    pstmt.clearBatch();
+            pstmt.close
+	    pstmt = null;
+          }
+          logger.info("Inserted/Updated " + totalRowsUpdated + " rows for " + tableName)
 	})
-        logger.debug("Executing bulk upsert...")
-        var updateCount = pstmt.executeBatch();
-        updateCount.foreach(cnt => { totalRowsUpdated += cnt });
-        if (pstmt != null) {
-	  pstmt.clearBatch();
-          pstmt.close
-	  pstmt = null;
-        }
-        logger.info("Inserted/Updated " + totalRowsUpdated + " rows for " + tableName)
-      })
-      con.commit()
-      con.close
-      con = null
+	con.commit()
+	con.close
+	con = null
+      }
     } catch {
       case e: Exception => {
         if (con != null){

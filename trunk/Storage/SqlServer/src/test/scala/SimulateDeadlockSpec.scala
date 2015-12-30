@@ -120,32 +120,26 @@ class SimulateDeadlockSpec extends FunSuite with BeforeAndAfter with BeforeAndAf
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
   }
 
-  private def SimulateDML: Unit = {
-    logger.info(GetCurDtTmStr + ": Start Loading  records 10 at a time")
+  private def SimulateDML(keyIndex: Int): Unit = {
     for (batch <- 1 to 100 ) {
+      logger.info("put for batch " + batch + ",row : " + keyIndex)
       var successful = false
       while ( ! successful ){
-        var keyValueList = new Array[(Key, Value)](0)
-	var dataList = new Array[(String, Array[(Key, Value)])](0)
-	for( i <- 1 to 10 ){
+	try{
+          var keyValueList = new Array[(Key, Value)](0)
+	  var dataList = new Array[(String, Array[(Key, Value)])](0)
           var keyArray = new Array[String](0)
-          var custName = "customer-" + i
+          var custName = "customer-" + keyIndex
           keyArray = keyArray :+ custName
-          //var key = new Key(0, keyArray, i, (new scala.util.Random).nextInt)
           var key = new Key(0, keyArray, 0, 0)
-          var custAddress = "1000" + batch * i + ",Main St, Redmond WA 98052"
-          var custNumber = "4256667777" + batch * i
+          var custAddress = "1000" + batch * keyIndex + ",Main St, Redmond WA 98052"
+          var custNumber = "4256667777" + batch * keyIndex
           var obj = new Customer(custName, custAddress, custNumber)
           var v = serializer.SerializeObjectToByteArray(obj)
           var value = new Value("kryo", v)
           keyValueList = keyValueList :+ (key, value)
           dataList = dataList :+ (containerName, keyValueList)
-	}
-	try{
 	  adapter.put(dataList)
-	  //adapter.put(containerName,keyValueList)
-	  //adapter.upsert(containerName,keyValueList)
-          logger.info(GetCurDtTmStr + ": inserted " + batch  + " objects ")
 	  successful = true
 	}
 	catch{
@@ -160,35 +154,35 @@ class SimulateDeadlockSpec extends FunSuite with BeforeAndAfter with BeforeAndAf
   }
 
   test("thread1") {
-    SimulateDML
+    SimulateDML(1)
   }
 
   test("thread2") {
-    SimulateDML
+    SimulateDML(2)
   }
 
   test("thread3") {
-    SimulateDML
+    SimulateDML(3)
   }
 
   test("thread4") {
-    SimulateDML
+    SimulateDML(4)
   }
 
   test("thread5") {
-    SimulateDML
+    SimulateDML(5)
   }
 
   test("thread6") {
-    SimulateDML
+    SimulateDML(6)
   }
 
   test("thread7") {
-    SimulateDML
+    SimulateDML(7)
   }
 
   test("thread8") {
-    SimulateDML
+    SimulateDML(8)
   }
 
   after {
