@@ -58,9 +58,10 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
   // Set up some properties for the Kafka Producer
   val props = new Properties()
-  props.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, inConfiguration.get(SmartFileAdapterConstants.KAFKA_BROKER).get);
-  props.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
-  props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer");
+  props.put(org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, inConfiguration.get(SmartFileAdapterConstants.KAFKA_BROKER).get)
+  props.put(org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer")
+  props.put(org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,"org.apache.kafka.common.serialization.ByteArraySerializer")
+  props.put("request.required.acks",inConfiguration.getOrElse(SmartFileAdapterConstants.KAFKA_ACK, "0"))
 
   // create the producer object
  // val producer = new KafkaProducer[Array[Byte], Array[Byte]](new ProducerConfig(props))
@@ -225,7 +226,6 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
   private def sendToKafka(messages: ArrayBuffer[ProducerRecord[Array[Byte],Array[Byte]]], sentFrom: String, fullSuccessOffset: Int = 0, fileToUpdate: String = null): Int = {
     try {
       var partitionsStats = scala.collection.mutable.Map[Int, Int]()
-
       logger.info("SMART FILE CONSUMER ("+partIdx+") Sending " + messages.size + " to kafka from " + sentFrom)
       if (messages.size == 0) return FileProcessor.KAFKA_SEND_SUCCESS
 
@@ -302,13 +302,21 @@ class KafkaMessageLoader(partIdx: Int, inConfiguration: scala.collection.mutable
 
   private def checkMessage(mapF: scala.collection.mutable.Map[Int,Future[RecordMetadata]], i: Int): (Int,Int) = {
     try {
-      var md = mapF(i).get
+      val md = mapF(i).get(10, TimeUnit.SECONDS)
       mapF(i) = null
       return(FileProcessor.KAFKA_SEND_SUCCESS, md.partition)
     } catch {
-      case ftsme: FailedToSendMessageException => {return (FileProcessor.KAFKA_SEND_DEAD_PRODUCER, -1)}
-      case qfe: QueueFullException => {return (FileProcessor.KAFKA_SEND_Q_FULL, -1 )}
-      case e: Exception => {logger.error("CHECK_MESSAGE ",e);throw e}
+      case e1: java.util.concurrent.ExecutionException => {
+        return (FileProcessor.KAFKA_SEND_DEAD_PRODUCER, -1)
+      }
+      case e: java.util.concurrent.TimeoutException => {
+         return (FileProcessor.KAFKA_SEND_DEAD_PRODUCER, -1)
+      }
+     // case ftsme: FailedToSendMessageException => {
+      case ftsme: java.lang.InterruptedException => {
+        return (FileProcessor.KAFKA_SEND_DEAD_PRODUCER, -1)
+      }
+      case e: Exception => {logger.error("CHECK_MESSAGE: Unknown error from Kafka ",e);throw e}
     }
   }
 
