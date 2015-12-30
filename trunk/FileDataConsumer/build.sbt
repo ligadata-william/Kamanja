@@ -70,8 +70,8 @@ libraryDependencies ++= {
    // "io.spray" %% "spray-client" % sprayVersion,
    // "io.spray" %%  "spray-json" % "1.3.2",
 
-   // "org.apache.kafka" %% "kafka" % "0.8.2.1",
-    "org.apache.kafka" % "kafka_2.10" % "0.8.2.2",
+    "org.apache.kafka" %% "kafka" % "0.8.2.1",
+    //"org.apache.kafka" % "kafka_2.10" % "0.8.2.2",
    // "org.apache.logging.log4j" % "log4j-api" % "2.4.1",
   //  "org.apache.logging.log4j" % "log4j-core" % "2.4.1",
  //     exclude("javax.jms", "jms")
