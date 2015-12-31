@@ -40,37 +40,24 @@ import com.ligadata.keyvaluestore.SqlServerAdapter
 
 import com.ligadata.Exceptions._
 
-@Ignore
-class SimulateDeadlockSpec extends FunSuite with BeforeAndAfter with BeforeAndAfterAll with ParallelTestExecution {
-  var res: String = null;
-  var statusCode: Int = -1;
-  var adapter: DataStore = null
-  var serializer: Serializer = null
 
+object SimulateDeadlockSpec {
+  private var adapter:DataStore = null
   private val loggerName = this.getClass.getName
   private val logger = LogManager.getLogger(loggerName)
+  private[this] val lock = new Object
 
-  val dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-  val dateFormat1 = new SimpleDateFormat("yyyy/MM/dd")
-  // set the timezone to UTC for all time values
-  TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-  
   val dataStoreInfo = """{"StoreType": "sqlserver","hostname": "192.168.56.1","instancename":"KAMANJA","portnumber":"1433","database": "bofa","user":"bofauser","SchemaName":"bofauser","password":"bofauser","jarpaths":"/media/home2/jdbc","jdbcJar":"sqljdbc4-2.0.jar","clusteredIndex":"YES","autoCreateTables":"YES"}"""
 
   private val kvManagerLoader = new KamanjaLoaderInfo
   private val maxConnectionAttempts = 10;
-  var cnt = 0
-  val containerName = "sys.uniquedata"
-  var exitImmediately = true
 
-  private def CreateAdapter: DataStore = {
+  private def CreateAdapter: DataStore = lock.synchronized {
+    logger.info("Creating a new adapter")
     var connectionAttempts = 0
     while (connectionAttempts < maxConnectionAttempts) {
       try {
         adapter = SqlServerAdapter.CreateStorageAdapter(kvManagerLoader, dataStoreInfo)
-	var containers = new Array[String](0)
-	containers = containers :+ containerName
-	adapter.CreateContainer(containers)
 	return adapter
       } catch {
         case e: StorageConnectionException => {
@@ -87,13 +74,37 @@ class SimulateDeadlockSpec extends FunSuite with BeforeAndAfter with BeforeAndAf
     }
     return null;
   }
+  private def getAdapter: DataStore = lock.synchronized {
+    if( adapter != null ){
+      return adapter
+    }
+    else{
+      return CreateAdapter
+    }
+  }
+}
+
+@Ignore
+class SimulateDeadlockSpec extends FunSuite with BeforeAndAfter with BeforeAndAfterAll with ParallelTestExecution {
+  var adapter: DataStore = null
+  var serializer: Serializer = null
+  private[this] val lock = new Object
+
+  private val loggerName = this.getClass.getName
+  private val logger = LogManager.getLogger(loggerName)
+  TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+  
+  val containerName = "sys.uniquedata"
+  var exitImmediately = true
+
+  private def CreateAdapter: DataStore = lock.synchronized {
+    return SimulateDeadlockSpec.getAdapter
+  }
 
   before {
     try {
       logger.info("starting...");
-
       serializer = SerializerManager.GetSerializer("kryo")
-      logger.info("Initialize SqlServerAdapter")
       adapter = CreateAdapter
     } catch {
       case e: StorageConnectionException => {
