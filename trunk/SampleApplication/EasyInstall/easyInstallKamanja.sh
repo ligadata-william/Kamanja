@@ -201,7 +201,6 @@ cp $ivyPath/cache/org.mortbay.jetty/servlet-api/jars/servlet-api-2.5.20110712-so
 cp $ivyPath/cache/com.google.collections/google-collections/jars/google-collections-1.0.jar $systemlib
 cp $ivyPath/cache/ch.qos.logback/logback-core/jars/logback-core-1.0.12.jar $systemlib
 cp $ivyPath/cache/io.netty/netty/bundles/netty-3.7.0.Final.jar $systemlib
-cp $ivyPath/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.1.1.6.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-httpx_2.11/bundles/spray-httpx_2.11-1.3.3.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-client_2.11/bundles/spray-client_2.11-1.3.3.jar $systemlib
 cp $ivyPath/cache/com.jamesmurty.utils/java-xmlbuilder/jars/java-xmlbuilder-0.4.jar $systemlib
