@@ -181,7 +181,7 @@
           "JarName": "kafkasimpleinputoutputadapters_2.11-1.0.jar",
           "DependencyJars": [
             "jopt-simple-3.2.jar",
-            "kafka_2.11-0.8.2.1.jar","kafka-clients-0.8.2.1.jar",
+            "kafka_2.11-0.8.2.2.jar","kafka-clients-0.8.2.2.jar",
             "metrics-core-2.2.0.jar",
             "zkclient-0.3.jar",
             "kamanjabase_2.11-1.0.jar",
@@ -200,7 +200,7 @@
           "JarName": "kafkasimpleinputoutputadapters_2.11-1.0.jar",
           "DependencyJars": [
             "jopt-simple-3.2.jar",
-            "kafka_2.11-0.8.2.1.jar","kafka-clients-0.8.2.1.jar",
+            "kafka_2.11-0.8.2.2.jar","kafka-clients-0.8.2.2.jar",
             "metrics-core-2.2.0.jar",
             "zkclient-0.3.jar",
             "kamanjabase_2.11-1.0.jar",
@@ -219,7 +219,7 @@
           "JarName": "kafkasimpleinputoutputadapters_2.11-1.0.jar",
           "DependencyJars": [
             "jopt-simple-3.2.jar",
-            "kafka_2.11-0.8.2.1.jar","kafka-clients-0.8.2.1.jar",
+            "kafka_2.11-0.8.2.2.jar","kafka-clients-0.8.2.2.jar",
             "metrics-core-2.2.0.jar",
             "zkclient-0.3.jar",
             "kamanjabase_2.11-1.0.jar",
@@ -237,7 +237,7 @@
           "JarName": "kafkasimpleinputoutputadapters_2.11-1.0.jar",
           "DependencyJars": [
             "jopt-simple-3.2.jar",
-            "kafka_2.11-0.8.2.1.jar","kafka-clients-0.8.2.1.jar",
+            "kafka_2.11-0.8.2.2.jar","kafka-clients-0.8.2.2.jar",
             "metrics-core-2.2.0.jar",
             "zkclient-0.3.jar",
             "kamanjabase_2.11-1.0.jar",
