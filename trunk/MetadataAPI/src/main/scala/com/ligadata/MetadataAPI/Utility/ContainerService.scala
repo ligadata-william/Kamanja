@@ -23,6 +23,9 @@ import com.ligadata.MetadataAPI.{MetadataAPIImpl,ApiResult,ErrorCodeConstants}
 import scala.io.Source
 
 import org.apache.logging.log4j._
+
+import scala.io.StdIn
+
 /**
  * Created by dhaval on 8/7/15.
  */
@@ -141,7 +144,7 @@ object ContainerService {
         println("["+srNo+"] "+containerKey)
       }
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > containerKeys.length) {
         response="Invalid choice " + choice + ",start with main menu..."
@@ -203,7 +206,7 @@ object ContainerService {
         contKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > contKeys.length) {
           return ("Invalid choice " + choice + ",start with main menu...")
@@ -246,7 +249,7 @@ object ContainerService {
       println("[" + srNo + "]" + container)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    val userOptions: List[Int] = Console.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+    val userOptions: List[Int] = StdIn.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
     //check if user input valid. If not exit
     for (userOption <- userOptions) {
       userOption match {

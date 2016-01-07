@@ -24,6 +24,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import org.apache.logging.log4j._
 
+import scala.io.StdIn
+
 /**
  * Created by dhaval on 8/7/15.
  */
@@ -169,7 +171,7 @@ object MessageService {
           println("[" + srno + "] " + messageKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > messageKeys.length) {
           val errormsg = "Invalid choice " + choice + ". Start with the main menu."
@@ -215,7 +217,7 @@ object MessageService {
         msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > msgKeys.length) {
           response = "Invalid choice " + choice + ",start with main menu..."
@@ -238,7 +240,7 @@ object MessageService {
 
     } catch {
       case e: Exception => {
-      e.getStackTraceString
+        e.getStackTrace.toString
       }
     }
   }
@@ -264,7 +266,7 @@ object MessageService {
       println("[" + srNo + "]" + message)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    val userOptions: List[Int] = Console.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+    val userOptions: List[Int] = StdIn.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
     //check if user input valid. If not exit
     for (userOption <- userOptions) {
       userOption match {
@@ -398,7 +400,7 @@ object MessageService {
           println("[" + srno + "] " + messageKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > outputMessageKeys.length) {
           val errormsg = "Invalid choice " + choice + ". Start with the main menu."
@@ -463,7 +465,7 @@ object MessageService {
       outputMessageKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > outputMessageKeys.length) {
         response = "Invalid choice " + choice + ",start with main menu..."

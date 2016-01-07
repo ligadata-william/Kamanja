@@ -250,7 +250,7 @@ trait MetadataAPIService extends HttpService {
         updateSourceModelService ! UpdateSourceModelService.UpdateScala(body)
       }catch {
         case e : Exception => {
-          logger.debug("Exception updating scala model "+e.getStackTraceString)
+          logger.debug("Exception updating scala model", e)
         }
       }
 

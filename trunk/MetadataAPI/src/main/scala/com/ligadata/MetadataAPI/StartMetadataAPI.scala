@@ -318,7 +318,7 @@ object StartMetadataAPI {
       }
     }
     catch {
-      case e: Exception => response = e.getStackTraceString
+      case e: Exception => response = e.getStackTrace.toString
     }
     response
   }

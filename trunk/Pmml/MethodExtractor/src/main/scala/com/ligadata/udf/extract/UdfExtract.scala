@@ -187,9 +187,9 @@ object MethodExtract extends App with LogTrait {
       val clz1 = Class.forName(clsName + "$", true, udfLoaderInfo.loader)
       val clz1Sym = mirror.classSymbol(clz1)
       val istrait = clz1Sym.isTrait
-      val isabstract = clz1Sym.isAbstractClass
+      val isabstract = clz1Sym.isAbstract
       val clsType = clz1Sym.toType
-      val members = clsType.declarations
+      val members = clsType.decls
       members.filter(_.toString.startsWith("method")).foreach(m => mbrs += m)
     } catch {
       case e: Exception => {
