@@ -94,7 +94,7 @@ class AuditHBaseAdapter extends AuditAdapter
         case e:Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
           logger.debug("Stacktrace:"+stackTrace)
-          throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+          throw ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage(), e)
         }
       }
       createTable(table)

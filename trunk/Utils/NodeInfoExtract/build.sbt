@@ -17,6 +17,7 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   {
     // case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
     // case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
+case PathList("META-INF", "maven","jline","jline", ps) if ps.startsWith("pom") => MergeStrategy.discard
     case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
     case x if x endsWith "google/common/annotations/GwtCompatible.class" => MergeStrategy.first
     case x if x endsWith "google/common/annotations/GwtIncompatible.class" => MergeStrategy.first
@@ -55,9 +56,13 @@ name := "NodeInfoExtract"
 
 version := "1.0"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.7"
 
 scalacOptions += "-deprecation"
+
+libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.9" 
+
+libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.9" 
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 

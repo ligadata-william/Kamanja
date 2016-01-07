@@ -230,7 +230,7 @@ object OutputMsgDefImpl {
       }
 
       if (containerDef == null && messageDef == null && modelDef == null) {
-        throw new ObjectNolongerExistsException(s"Either Model or Message or Container do not exists in Metadata for $fullpartionkey given in output Message definition.")
+        throw ObjectNolongerExistsException(s"Either Model or Message or Container do not exists in Metadata for $fullpartionkey given in output Message definition.", null)
       }
 
       val namespace = partionKeyParts.take(namespaceWords).mkString(".")

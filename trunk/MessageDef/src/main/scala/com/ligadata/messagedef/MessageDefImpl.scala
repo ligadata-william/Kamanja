@@ -78,10 +78,10 @@ class MessageDefImpl {
   val timePartitionTypeList: List[String] = List("yearly", "monthly", "daily") //"weekly", "30minutes", "60minutes", "15minutes", "5minutes", "1minute")
   val timePartitionFormatList: List[String] = List("epochtimeinmillis", "epochtimeinseconds", "epochtime")
   val timePartInfo: String = "TimePartitionInfo"
-
+/*
   private def error[T](prefix: String): Option[T] =
     throw MessageException("%s must be specified".format(prefix))
-
+*/
   //creates the class string
 
   private def getSerializedType(valType: String): String = {

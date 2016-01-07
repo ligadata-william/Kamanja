@@ -12,10 +12,10 @@
 #       a) Using the node config file Engine2BoxConfigV1.json 
 #       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
 #                               --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
-#                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
+#                               --KafkaInstallPath ~/tarballs/kafka/2.11/kafka_2.11-0.8.1.1
 #       b) Using the metadata found in the metadata store specified by the MetadataAPIConfig.properties
 #       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
-#                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
+#                               --KafkaInstallPath ~/tarballs/kafka/2.11/kafka_2.11-0.8.1.1
 #
 #   TarballPath distribution examples (when the tarball has been built outside this script):
 #       a) Using the node config file Engine2BoxConfigV1.json 
@@ -41,7 +41,9 @@
 #   NOTE: Only tar'd gzip files supported at the moment for the tarballs.
 #
 
-scalaversion="2.10"
+script_dir=$(dirname "$0")
+
+scalaversion="2.11"
 name1=$1
 
 Usage()
@@ -285,8 +287,8 @@ dtPrefix="Kamanja`date +"%Y%b%d"`"
 tarName="$dtPrefix.tgz"
 trunkDir=`pwd` #save the current trunk directory 
 
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
-installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
+installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g'`
 if [ -z "$tarballPath" ]; then
 	# 1 build the installation in the staging directory
 	stagingDir="$workDir/$installDirName"
@@ -421,13 +423,12 @@ while read LINE; do
     scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
 
     # Engine Logfile. For now all nodes log files are same. May be later we can change.
-    sed "s/{InstallPath}/$installDir_repl/g" ./engine_log4j2_template.xml > $workDir/engine_log4j2.xml
-    sed "s/{InstallPath}/$installDir_repl/g" ./restapi_log4j2_template.xml > $workDir/restapi_log4j2.xml
-    sed "s/{NodeId}/$id/g;s/{HostName}/$machine/g" ./ClusterCfgMetadataAPIConfig.properties > $workDir/MetadataAPIConfig_${id}.properties
+    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" $script_dir/engine_log4j2_template.xml > $workDir/engine_log4j2.xml
+    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" $script_dir/restapi_log4j2_template.xml > $workDir/restapi_log4j2.xml
+    sed "s/{NodeId}/$id/g;s/{HostName}/$machine/g" $script_dir/ClusterCfgMetadataAPIConfig.properties > $workDir/MetadataAPIConfig_${id}.properties
     scp -o StrictHostKeyChecking=no "$workDir/engine_log4j2.xml" "$machine:$targetPath/"
     scp -o StrictHostKeyChecking=no "$workDir/restapi_log4j2.xml" "$machine:$targetPath/"
     scp -o StrictHostKeyChecking=no "$workDir/MetadataAPIConfig_${id}.properties" "$machine:$targetPath/MetadataAPIConfig_${id}.properties"
-
 done
 exec 0<&12 12<&-
 

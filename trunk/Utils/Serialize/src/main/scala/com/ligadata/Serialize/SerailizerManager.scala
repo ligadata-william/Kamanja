@@ -29,14 +29,14 @@ object SerializerManager {
         case "kryo" => return new KryoSerializer
         case "protobuf" => return new ProtoBufSerializer
         case _ => {
-          throw new SerializerManagerException("Unknown Serializer Type : " + serializerType)
+          throw SerializerManagerException("Unknown Serializer Type : " + serializerType, null)
         }
       }
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-        throw new SerializerManagerException("Failed to create Serializer for : " + serializerType)
+        throw SerializerManagerException("Failed to create Serializer for : " + serializerType, e)
       }
     }
   }

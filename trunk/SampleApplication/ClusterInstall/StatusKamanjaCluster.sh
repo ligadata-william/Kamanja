@@ -16,7 +16,7 @@ Usage()
 }
 
 
-scalaversion="2.10"
+scalaversion="2.11"
 name1=$1
 
 if [ "$#" -eq 4 ]; then
@@ -61,7 +61,7 @@ workDir="/tmp"
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
 
 echo "...extract node information for the cluster to be started from the Metadata configuration information supplied"
 

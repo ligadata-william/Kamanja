@@ -338,7 +338,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
                                           KafkaSimpleConsumer.FETCHSIZE,
                                           KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
       } catch {
-        case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+        case e: Exception => throw FatalAdapterException("Unable to create connection to Kafka Server ", e)
       }
 
       try {
@@ -348,7 +348,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         var result = doSend(partConsumer,metaDataReq)
         while(result._1 == null && !isQuiesced) {
           if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
-            throw new FatalAdapterException("Failed to retrieve Topic Metadata for defined partitions", result._2)
+            throw FatalAdapterException("Failed to retrieve Topic Metadata for defined partitions", result._2)
           retryCount += 1
           Thread.sleep(1000)
           result = doSend(partConsumer,metaDataReq)
@@ -372,7 +372,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         case npe: NullPointerException => {
           if (isQuiesced) LOG.warn("Kafka Simple Consumer is shutting down during kafka call for partition information - ignoring the call")
         }
-        case e: Exception => throw new FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
+        case e: Exception => throw FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
@@ -463,7 +463,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
                                             KafkaSimpleConsumer.FETCHSIZE,
                                             KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
           } catch {
-            case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+            case e: Exception => throw FatalAdapterException("Unable to create connection to Kafka Server ", e)
           }
           val topics: Array[String] = Array(qc.topic)
           val llReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
@@ -477,7 +477,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             var result = doSend(llConsumer,llReq)
             while(result._1 == null && !isQuiesced) {
               if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
-                throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
+                throw FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
               retryCount += 1
               Thread.sleep(1000)
               result = doSend(llConsumer,llReq)
@@ -505,7 +505,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             case npe: NullPointerException => {
               if (isQuiesced) LOG.warn("Kafka Simple Consumer is shutting down during kafka call looking for leader - ignoring the call")
             }
-            case e: Exception => throw new FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
+            case e: Exception => throw FatalAdapterException("failed to SEND MetadataRequest to Kafka Server ", e)
           } finally {
             if (llConsumer != null) llConsumer.close()
           }
@@ -558,7 +558,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
                                                                KafkaSimpleConsumer.FETCHSIZE,
                                                                KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
     } catch {
-      case e: Exception => throw new FatalAdapterException("Unable to create connection to Kafka Server ", e)
+      case e: Exception => throw FatalAdapterException("Unable to create connection to Kafka Server ", e)
     }
 
     try {
@@ -574,7 +574,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       var result = doSendJavaConsumer(llConsumer,offsetRequest)
       while(result._1 == null && !isQuiesced) {
         if (retryCount > KafkaSimpleConsumer.MAX_FAILURES)
-          throw new FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
+          throw FatalAdapterException("Failed to retrieve Topic Metadata while searching for LEADER node", result._2)
         retryCount += 1
         Thread.sleep(1000)
         result = doSendJavaConsumer(llConsumer,offsetRequest)

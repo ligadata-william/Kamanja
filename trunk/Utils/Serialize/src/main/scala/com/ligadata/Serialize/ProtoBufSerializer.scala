@@ -165,7 +165,7 @@ class ProtoBufSerializer extends Serializer{
       case e:Exception => {
 	val stackTrace = StackTrace.ThrowableTraceString(e)
   logger.debug("StackTrace:"+stackTrace)
-	throw new ProtoBufSerializationException("Failed to Deserialize the object: " + e.getMessage())
+	throw ProtoBufSerializationException("Failed to Deserialize the object: " + e.getMessage(), e)
       }
     }
   }
@@ -191,7 +191,7 @@ class ProtoBufSerializer extends Serializer{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-	throw new ProtoBufSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
+	throw ProtoBufSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage(), e)
       }
     }
   }
@@ -213,21 +213,21 @@ class ProtoBufSerializer extends Serializer{
 	  mDef
 	}
         case _ => {
-	  throw new ProtoBufSerializationException("Failed to DeSerialize the object of type: " + objectType)
+	  throw ProtoBufSerializationException("Failed to DeSerialize the object of type: " + objectType, null)
 	}
       }
     }catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-	throw new ProtoBufSerializationException("Failed to DeSerialize the object:" + e.getMessage())
+	throw ProtoBufSerializationException("Failed to DeSerialize the object:" + e.getMessage(), e)
       }
     }
   }
 
 
   override def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
-    throw new ProtoBufSerializationException("Failed to DeSerialize the object: Unable to deserialize the object without ObjectType")
+    throw ProtoBufSerializationException("Failed to DeSerialize the object: Unable to deserialize the object without ObjectType", null)
   }
 
   override def SetClassLoader(cl : java.lang.ClassLoader): Unit = {

@@ -156,7 +156,7 @@ object MetadataAPIOutputMsg {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:" + stackTrace)
-        throw new UnexpectedMetadataAPIException(e.getMessage())
+        throw UnexpectedMetadataAPIException(e.getMessage(), e)
       }
     }
   }
@@ -203,7 +203,7 @@ object MetadataAPIOutputMsg {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:" + stackTrace)
-        throw new UnexpectedMetadataAPIException("Failed to fetch all the OutputMsgs:" + e.toString)
+        throw UnexpectedMetadataAPIException("Failed to fetch all the OutputMsgs:" + e.toString, e)
       }
     }
   }
