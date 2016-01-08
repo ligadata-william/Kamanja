@@ -510,7 +510,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -632,7 +632,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -690,7 +690,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -748,7 +748,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -816,7 +816,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == pmmlFiles.length + 1) {
         return
@@ -859,8 +859,8 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -926,8 +926,8 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -993,7 +993,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == cfgFiles.length + 1) {
         return
@@ -1039,7 +1039,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == cfgFiles.length + 1) {
         return
@@ -1082,7 +1082,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == jarFiles.length + 1) {
         return
@@ -1128,7 +1128,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == functionFiles.length + 1) {
         return
@@ -1175,7 +1175,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == functionFiles.length + 1) {
         return
@@ -1223,7 +1223,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == conceptFiles.length + 1) {
         return
@@ -1275,7 +1275,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == conceptFiles.length + 1) {
         return
@@ -1323,7 +1323,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == typeFiles.length + 1) {
         return
@@ -1373,7 +1373,7 @@ object TestApiService {
         seq += 1
         println("[" + seq + "] Main Menu")
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice <= typeMenu.size) {
           selectedType = "com.ligadata.kamanja.metadata." + typeMenu(choice)
           done = true
@@ -1414,8 +1414,8 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -1484,7 +1484,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == outputmsgFiles.length + 1)
         return
@@ -1606,7 +1606,7 @@ object TestApiService {
         for ((key, idx) <- topLevelMenu.zipWithIndex) { println("[" + (idx + 1) + "] " + key._1) }
         println("[" + (topLevelMenu.size + 1) + "] Exit")
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice <= topLevelMenu.size) {
           topLevelMenu(choice - 1)._2.apply
         } else if (choice == topLevelMenu.size + 1) {

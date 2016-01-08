@@ -91,7 +91,7 @@ object TestMetadataAPI {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == typFiles.length + 1) {
         return
@@ -133,7 +133,7 @@ object TestMetadataAPI {
       typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > typKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -184,7 +184,7 @@ object TestMetadataAPI {
       typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > typKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -242,7 +242,7 @@ object TestMetadataAPI {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == fcnFiles.length + 1) {
         return
@@ -290,7 +290,7 @@ object TestMetadataAPI {
       })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > fcnKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -330,7 +330,7 @@ object TestMetadataAPI {
       fcnKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > fcnKeys.length) {
         println("Invalid choice " + choice + ", start with main menu...")
@@ -427,7 +427,7 @@ object TestMetadataAPI {
       msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > msgKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -470,7 +470,7 @@ object TestMetadataAPI {
       msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > msgKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -514,7 +514,7 @@ object TestMetadataAPI {
       contKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > contKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -552,7 +552,7 @@ object TestMetadataAPI {
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > modKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -592,7 +592,7 @@ object TestMetadataAPI {
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > modKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -629,7 +629,7 @@ object TestMetadataAPI {
       msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > msgKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -667,7 +667,7 @@ object TestMetadataAPI {
       contKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > contKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -711,7 +711,7 @@ println("Getting Messages")
       msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > msgKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -749,7 +749,7 @@ println("Getting Messages")
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > modKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -788,7 +788,7 @@ println("Getting Messages")
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > modKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -826,7 +826,7 @@ println("Getting Messages")
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > modKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -864,7 +864,7 @@ println("Getting Messages")
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > modKeys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -1006,8 +1006,8 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -1081,8 +1081,8 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -1168,8 +1168,8 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -1240,8 +1240,8 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -1318,7 +1318,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == pmmlFiles.length + 1)
         return
@@ -1407,7 +1407,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == sourceFiles.length + 1) {
         return
@@ -1438,7 +1438,7 @@ println("Getting Messages")
       seq += 1
       println("[" + seq + "] Main Menu")      
       print("\nEnter your choice: ")
-      val choice2: Int = readInt()
+      val choice2: Int = StdIn.readInt()
       println("Entered CHOICE: "+choice2)
       if (choice2 == configsKeys.length + 1) {
         return
@@ -1497,7 +1497,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == sourceFiles.length + 1) {
         return
@@ -1529,7 +1529,7 @@ println("Getting Messages")
       seq += 1
       println("[" + seq + "] Main Menu")      
       print("\nEnter your choice: ")
-      val choice2: Int = readInt()
+      val choice2: Int = StdIn.readInt()
  
       if (choice2 == configsKeys.length + 1) {
         return
@@ -1588,7 +1588,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == pmmlFiles.length + 1) {
         return
@@ -1641,7 +1641,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == cfgFiles.length + 1) {
         return
@@ -1694,7 +1694,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == cfgFiles.length + 1) {
         return
@@ -1747,7 +1747,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == cfgFiles.length + 1) {
         return
@@ -1800,7 +1800,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == jarFiles.length + 1) {
         return
@@ -1852,7 +1852,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == functionFiles.length + 1) {
         return
@@ -1920,7 +1920,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == conceptFiles.length + 1) {
         return
@@ -1989,7 +1989,7 @@ println("Getting Messages")
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == typeFiles.length + 1) {
         return
@@ -2042,7 +2042,7 @@ println("Getting Messages")
         seq += 1
         println("[" + seq + "] Main Menu")
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice <= typeMenu.size) {
           selectedType = "com.ligadata.kamanja.metadata." + typeMenu(choice)
           done = true
@@ -2336,8 +2336,8 @@ println("Getting Messages")
 	      println("[" + seq + "] Main Menu")
 
 	      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-	      //val choice:Int = readInt()
-	      val choicesStr: String = readLine()
+	      //val choice:Int = StdIn.readInt()
+	      val choicesStr: String = StdIn.readLine()
 
 	      var valid: Boolean = true
 	      var choices: List[Int] = List[Int]()
@@ -2413,7 +2413,7 @@ println("Getting Messages")
 	      println("[" + seq + "] Main Menu")
 
 	      print("\nEnter your choice: ")
-	      val choice: Int = readInt()
+	      val choice: Int = StdIn.readInt()
 
 	      if (choice == outputmsgFiles.length + 1)
 	        return
@@ -2451,7 +2451,7 @@ println("Getting Messages")
 	      outputMsgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
 	      print("\nEnter your choice: ")
-	      val choice: Int = readInt()
+	      val choice: Int = StdIn.readInt()
 
 	      if (choice < 1 || choice > outputMsgKeys.length) {
 	        println("Invalid choice " + choice + ",start with main menu...")
@@ -2606,7 +2606,7 @@ println("Getting Messages")
         for ((key, idx) <- topLevelMenu.zipWithIndex) { println("[" + (idx + 1) + "] " + key._1) }
         println("[" + (topLevelMenu.size + 1) + "] Exit")
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice <= topLevelMenu.size) {
           topLevelMenu(choice - 1)._2.apply
         } else if (choice == topLevelMenu.size + 1) {

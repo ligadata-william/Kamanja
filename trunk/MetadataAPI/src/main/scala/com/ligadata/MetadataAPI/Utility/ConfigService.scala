@@ -22,6 +22,9 @@ import com.ligadata.MetadataAPI.MetadataAPIImpl
 
 import scala.io.Source
 import org.apache.logging.log4j._
+
+import scala.io.StdIn
+
 /**
  * Created by dhaval on 8/13/15.
  */
@@ -152,7 +155,7 @@ object ConfigService {
       println("[" + srNo + "]" + message)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    val userOptions: List[Int] = Console.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+    val userOptions: List[Int] = StdIn.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
     //check if user input valid. If not exit
     for (userOption <- userOptions) {
       userOption match {

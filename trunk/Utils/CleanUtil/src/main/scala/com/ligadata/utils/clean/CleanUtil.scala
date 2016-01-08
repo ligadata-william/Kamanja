@@ -156,7 +156,7 @@ object CleanUtil {
       case e: Exception => logger.error("Unexpected Exception caught", e)
     }
     finally {
-      if(config != null && config != "") {
+      if(config != null /* && config != "" */ ) {
         config.shutdown
       }
     }

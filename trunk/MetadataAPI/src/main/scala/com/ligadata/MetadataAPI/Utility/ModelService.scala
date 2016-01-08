@@ -24,6 +24,8 @@ import scala.io.Source
 
 import org.apache.logging.log4j._
 
+import scala.io.StdIn
+
 /**
  * Created by dhaval on 8/7/15.
  */
@@ -194,7 +196,7 @@ object ModelService {
               println("[" + srNo + "]" + configkey)
             }
             print("\nEnter your choice: \n")
-            var userOption = Console.readInt()
+            var userOption = StdIn.readInt()
 
             userOption match {
               case x if ((1 to srNo).contains(userOption)) => {
@@ -280,7 +282,7 @@ object ModelService {
                 println("[" + srNo + "]" + configkey)
               }
               print("\nEnter your choice: \n")
-              var userOption = Console.readInt()
+              var userOption = StdIn.readInt()
 
               userOption match {
                 case x if ((1 to srNo).contains(userOption)) => {
@@ -326,7 +328,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
           response=errormsg
@@ -339,7 +341,7 @@ object ModelService {
 
     } catch {
       case e: Exception => {
-        response=e.getStackTraceString
+        response=e.getStackTrace.toString
       }
     }
     response
@@ -425,7 +427,7 @@ object ModelService {
               println("[" + srNo + "]" + configkey)
             }
             print("\nEnter your choice: \n")
-            var userOption = Console.readInt()
+            var userOption = StdIn.readInt()
  
             userOption match {
               case x if ((1 to srNo).contains(userOption)) => {
@@ -509,7 +511,7 @@ object ModelService {
               println("[" + srNo + "]" + configkey)
             }
             print("\nEnter your choice: \n")
-            var userOption = Console.readInt()
+            var userOption = StdIn.readInt()
 
             userOption match {
               case x if ((1 to srNo).contains(userOption)) => {
@@ -559,7 +561,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -605,7 +607,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -654,7 +656,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -697,7 +699,7 @@ object ModelService {
       println("[" + srNo + "]" + model)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    var userOptions = Console.readLine().split(",")
+    var userOptions = StdIn.readLine().split(",")
     println("User selected the option(s) " + userOptions.length)
     //check if user input valid. If not exit
     for (userOption <- userOptions) {

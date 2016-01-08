@@ -12,7 +12,7 @@ shellPrompt := { state =>  "sbt (%s)> ".format(Project.extract(state).currentPro
 
 libraryDependencies ++= Seq (
   "com.101tec" % "zkclient" % "0.6",
-  "org.apache.kafka" % "kafka_2.10" % "0.8.2.2",
+  "org.apache.kafka" %% "kafka" % "0.8.2.2",
   "org.apache.logging.log4j" % "log4j-core" % "2.4.1",
   "org.json4s" %% "json4s-native" % "{latestVersion}",
   "org.json4s" %% "json4s-jackson" % "{latestVersion}",
