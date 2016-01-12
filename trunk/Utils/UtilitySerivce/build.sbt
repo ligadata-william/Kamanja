@@ -75,7 +75,7 @@ libraryDependencies ++= {
   "io.spray" %% "spray-testkit" % sprayVersion,
   "io.spray" %% "spray-client" % sprayVersion,
   "io.spray" %%  "spray-json" % "1.3.2",
-  "org.apache.kafka" %% "kafka" % "0.8.2.1"
+  "org.apache.kafka" %% "kafka" % "0.8.2.2"
        exclude("javax.jms", "jms")
        exclude("com.sun.jdmk", "jmxtools")
        exclude("com.sun.jmx", "jmxri"),

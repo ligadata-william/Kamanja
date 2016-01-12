@@ -50,7 +50,7 @@ libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.4.1"
 
 resolvers += "Apache repo" at "https://repository.apache.org/content/repositories/releases"
 
-libraryDependencies ++= Seq("org.apache.kafka" %% "kafka" % "0.8.2.1"
+libraryDependencies ++= Seq("org.apache.kafka" %% "kafka" % "0.8.2.2"
                               exclude("javax.jms", "jms")
                               exclude("com.sun.jdmk", "jmxtools")
                               exclude("com.sun.jmx", "jmxri")
