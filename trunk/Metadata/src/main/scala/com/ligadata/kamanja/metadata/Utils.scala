@@ -30,7 +30,7 @@ object Utils {
    */
   def parseNameToken(name: String): (String, String, String) = {
     var msgTokens = name.split("\\.")
-    if (msgTokens.length < 3) throw new InvalidArgumentException("Invalid Metadata Object Name, Unable to parse Namespace.Name.Version")
+    if (msgTokens.length < 3) throw InvalidArgumentException("Invalid Metadata Object Name, Unable to parse Namespace.Name.Version", null)
     return (msgTokens.dropRight(2).mkString("."), msgTokens(msgTokens.length-2), msgTokens(msgTokens.length-1))
   } 
   
@@ -41,7 +41,7 @@ object Utils {
    */
   def parseNameTokenNoVersion(name: String): (String, String) = {
     var msgTokens = name.split("\\.")
-    if (msgTokens.length < 2) throw new InvalidArgumentException("Invalid Metadata Object Name, Unable to parse Namespace.Name.Version")
+    if (msgTokens.length < 2) throw InvalidArgumentException("Invalid Metadata Object Name, Unable to parse Namespace.Name.Version", null)
     return (msgTokens.dropRight(1).mkString("."), msgTokens(msgTokens.length-1))
   }   
   

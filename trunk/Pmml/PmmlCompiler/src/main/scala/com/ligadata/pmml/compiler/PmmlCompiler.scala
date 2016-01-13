@@ -530,7 +530,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		
 		val modelNamespace = modelPkg
 		
-		val fqClassName : String = modelNamespace + "." + className 
+		val fqClassName : String = modelNamespace + "." + className + "Factory"
 		/** FIXME: This is hard coded now, but should be determined based upon the model type specified in the xml */
 		val modelType : String = "RuleSet" 
 		val inputVars : List[(String,String,String,String,Boolean,String)] = ctx.modelInputs.values.toList

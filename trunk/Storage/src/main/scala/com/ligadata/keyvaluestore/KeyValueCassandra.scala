@@ -95,7 +95,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
 	case e: Exception => {
     val stackTrace = StackTrace.ThrowableTraceString(e)
     logger.debug("StackTrace:"+stackTrace)
-	  throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
+	  throw CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
 	}
       }
       // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
@@ -110,7 +110,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
     case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
       logger.debug("StackTrace:"+stackTrace)
-      throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
+      throw ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
     }
   }
 
@@ -170,7 +170,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
       val rs = session.execute(selectStmt.bind(key1).setConsistencyLevel(consistencylevelRead))
 
       if (rs.getAvailableWithoutFetching() == 0) {
-        throw new KeyNotFoundException("Key Not found")
+        throw KeyNotFoundException("Key Not found")
       }
 
       // Construct the output value
@@ -182,7 +182,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
         while (buffer.hasRemaining())
           value += buffer.get()
       } else {
-        throw new KeyNotFoundException("Key Not found")
+        throw KeyNotFoundException("Key Not found")
       }
       handler(value)
     }
@@ -193,7 +193,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
       val rs = session.execute(selectStmt.bind(key1).setConsistencyLevel(consistencylevelRead))
 
       if (rs.getAvailableWithoutFetching() == 0) {
-        throw new KeyNotFoundException("Key Not found")
+        throw KeyNotFoundException("Key Not found")
       }
       // Construct the output value
       // BUGBUG-jh-20140703: There should be a more concise way to get the data
@@ -205,7 +205,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
         while (buffer.hasRemaining())
           value += buffer.get()
       } else {
-        throw new KeyNotFoundException("Key Not found")
+        throw KeyNotFoundException("Key Not found")
       }
       target.Construct(key, value)
     }

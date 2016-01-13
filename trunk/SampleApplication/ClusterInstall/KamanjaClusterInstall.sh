@@ -12,10 +12,10 @@
 #       a) Using the node config file Engine2BoxConfigV1.json 
 #       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
 #                               --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
-#                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
+#                               --KafkaInstallPath ~/tarballs/kafka/2.11/kafka_2.11-0.8.1.1
 #       b) Using the metadata found in the metadata store specified by the MetadataAPIConfig.properties
 #       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
-#                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
+#                               --KafkaInstallPath ~/tarballs/kafka/2.11/kafka_2.11-0.8.1.1
 #
 #   TarballPath distribution examples (when the tarball has been built outside this script):
 #       a) Using the node config file Engine2BoxConfigV1.json 
@@ -41,7 +41,9 @@
 #   NOTE: Only tar'd gzip files supported at the moment for the tarballs.
 #
 
-scalaversion="2.10"
+script_dir=$(dirname "$0")
+
+scalaversion="2.11"
 name1=$1
 
 Usage()
@@ -285,8 +287,8 @@ dtPrefix="Kamanja`date +"%Y%b%d"`"
 tarName="$dtPrefix.tgz"
 trunkDir=`pwd` #save the current trunk directory 
 
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
-installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
+installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g'`
 if [ -z "$tarballPath" ]; then
 	# 1 build the installation in the staging directory
 	stagingDir="$workDir/$installDirName"
@@ -328,7 +330,7 @@ if  [ -n "$nodeCfgGiven" ]; then
 	echo "installDir = $installDir"
 	echo "clusterId = $clusterId"
 	echo "...Command = NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
-	NodeInfoExtract-1.0 --MetadataAPIConfig "$metadataAPIConfig" --NodeConfigPath "$nodeConfigPath" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir" --clusterId "$clusterId"
+	./NodeInfoExtract-1.0 --MetadataAPIConfig "$metadataAPIConfig" --NodeConfigPath "$nodeConfigPath" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir" --clusterId "$clusterId"
 	# Check 15: Bad NodeInfoExtract-1.0 arguments
 	if [ "$?" -ne 0 ]; then
 		echo
@@ -338,7 +340,7 @@ if  [ -n "$nodeCfgGiven" ]; then
 	fi
 else # info is assumed to be present in the supplied metadata store... see trunk/utils/NodeInfoExtract for details 
 	echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
-		NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir" --clusterId "$clusterId"
+		./NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir" --clusterId "$clusterId"
 	# Check 15: Bad NodeInfoExtract-1.0 arguments
 	if [ "$?" -ne 0 ]; then
 		echo
@@ -376,6 +378,8 @@ echo "...copy is done"
 
 echo
 
+DATE=`date +%Y%m%d%H%M%S`
+
 # 5) untar/decompress tarballs there and move them into place
 echo "...for each directory specified on each machine participating in the cluster, untar and decompress the software to $workDir/$installDirName... then move to corresponding target path"
 exec 12<&0 # save current stdin
@@ -384,16 +388,18 @@ while read LINE; do
     machine=$LINE
     read LINE
     targetPath=$LINE
+    targetPath_date="$targetPath"_"$DATE"
     echo "Extract the tarball $tarName and copy it to $targetPath iff $workDir/$installDirName != $targetPath"
 	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
 	        cd $workDir
-		mkdir -p $workDir/$installDirName
-            rm -Rf $targetPath
-	        tar xzf $tarName -C $workDir/$installDirName --strip-components 1
-            if [ "$workDir/$installDirName" != "$targetPath" ]; then
-	           mkdir -p $targetPath
-	           cp -R $workDir/$installDirName/* $targetPath/
-            fi
+		if [ ! -L $targetPath ]; then
+			mv 	$targetPath "$targetPath"_pre			
+		else
+			unlink $targetPath
+		fi
+		mkdir -p $targetPath_date
+ 		tar xzf $tarName -C $targetPath_date --strip-components 1
+		ln -sf  $targetPath_date $targetPath
 EOF
 done
 exec 0<&12 12<&-
@@ -421,13 +427,12 @@ while read LINE; do
     scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
 
     # Engine Logfile. For now all nodes log files are same. May be later we can change.
-    sed "s/{InstallPath}/$installDir_repl/g" ./engine_log4j2_template.xml > $workDir/engine_log4j2.xml
-    sed "s/{InstallPath}/$installDir_repl/g" ./restapi_log4j2_template.xml > $workDir/restapi_log4j2.xml
-    sed "s/{NodeId}/$id/g;s/{HostName}/$machine/g" ./ClusterCfgMetadataAPIConfig.properties > $workDir/MetadataAPIConfig_${id}.properties
+    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" $script_dir/engine_log4j2_template.xml > $workDir/engine_log4j2.xml
+    sed "s/{InstallPath}/$installDir_repl/g;s/{NodeId}/$id/g" $script_dir/restapi_log4j2_template.xml > $workDir/restapi_log4j2.xml
+    sed "s/{NodeId}/$id/g;s/{HostName}/$machine/g" $script_dir/ClusterCfgMetadataAPIConfig.properties > $workDir/MetadataAPIConfig_${id}.properties
     scp -o StrictHostKeyChecking=no "$workDir/engine_log4j2.xml" "$machine:$targetPath/"
     scp -o StrictHostKeyChecking=no "$workDir/restapi_log4j2.xml" "$machine:$targetPath/"
     scp -o StrictHostKeyChecking=no "$workDir/MetadataAPIConfig_${id}.properties" "$machine:$targetPath/MetadataAPIConfig_${id}.properties"
-
 done
 exec 0<&12 12<&-
 
@@ -465,5 +470,4 @@ echo
 # EOF
 # done
 # exec 0<&12 12<&-
-
 

@@ -47,21 +47,41 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Utils.{ KamanjaLoaderInfo }
 
+import com.ligadata.Exceptions._
+
 class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig: String) extends DataStore {
   val adapterConfig = if (datastoreConfig != null) datastoreConfig.trim else ""
   val loggerName = this.getClass.getName
   val logger = LogManager.getLogger(loggerName)
 
-  //logger.setLevel(Level.DEBUG)
-
   private[this] val lock = new Object
   private var containerList: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+  private var msg: String = ""
 
   private var tablesMap: scala.collection.mutable.Map[String, HTreeMap[Array[Byte], Array[Byte]]] = new scala.collection.mutable.HashMap()
   private var dbStoreMap: scala.collection.mutable.Map[String, DB] = new scala.collection.mutable.HashMap()
 
+  private def CreateConnectionException(msg: String, ie: Exception): StorageConnectionException = {
+    logger.error(msg)
+    val ex = new StorageConnectionException("Failed to connect to Database", ie)
+    ex
+  }
+
+  private def CreateDMLException(msg: String, ie: Exception): StorageDMLException = {
+    logger.error(msg)
+    val ex = new StorageDMLException("Failed to execute select/insert/delete/update operation on Database", ie)
+    ex
+  }
+
+  private def CreateDDLException(msg: String, ie: Exception): StorageDDLException = {
+    logger.error(msg)
+    val ex = new StorageDDLException("Failed to execute create/drop operations on Database", ie)
+    ex
+  }
+
   if (adapterConfig.size == 0) {
-    throw new Exception("Not found valid HashMap Configuration.")
+    msg = "Invalid Cassandra Json Configuration string:" + adapterConfig
+    throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
   }
 
   logger.debug("HashMap configuration:" + adapterConfig)
@@ -75,8 +95,8 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
     parsed_json = json.values.asInstanceOf[Map[String, Any]]
   } catch {
     case e: Exception => {
-      logger.error("Failed to parse HashMap JSON configuration string:%s. Reason:%s Message:%s".format(adapterConfig, e.getCause, e.getMessage))
-      throw e
+      var msg = "Failed to parse Cassandra JSON configuration string:%s. Message:%s".format(adapterConfig, e.getMessage)
+      throw CreateConnectionException(msg, e)
     }
   }
 
@@ -89,14 +109,14 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       try {
         val json = parse(adapterSpecificStr)
         if (json == null || json.values == null) {
-          logger.error("Failed to parse HashMap Adapter Specific JSON configuration string:" + adapterSpecificStr)
-          throw new Exception("Failed to parse HashMap Adapter Specific JSON configuration string:" + adapterSpecificStr)
+          msg = "Failed to parse Cassandra JSON configuration string:" + adapterSpecificStr
+          throw CreateConnectionException(msg, new Exception("Invalid Configuration"))
         }
         adapterSpecificConfig_json = json.values.asInstanceOf[Map[String, Any]]
       } catch {
         case e: Exception => {
-          logger.error("Failed to parse HashMap Adapter Specific JSON configuration string:%s. Reason:%s Message:%s".format(adapterSpecificStr, e.getCause, e.getMessage))
-          throw e
+          msg = "Failed to parse Cassandra Adapter Specific JSON configuration string:%s. Message:%s".format(adapterSpecificStr, e.getMessage)
+          throw CreateConnectionException(msg, e)
         }
       }
     }
@@ -118,32 +138,40 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
 
   val path = if (parsed_json.contains("path")) parsed_json.getOrElse("path", ".").toString.trim else parsed_json.getOrElse("Location", ".").toString.trim
   val InMemory = getOptionalField("inmemory", parsed_json, adapterSpecificConfig_json, "false").toString.trim.toBoolean
-  val withTransactions = getOptionalField("withtransaction", parsed_json, adapterSpecificConfig_json, "false").toString.trim.toBoolean
+  val withTransactions = getOptionalField("withtransaction", parsed_json, adapterSpecificConfig_json, "true").toString.trim.toBoolean
 
   logger.info("Datastore initialization complete")
 
   private def createTable(tableName: String): Unit = {
-    var db: DB = null
-    if (InMemory == true) {
-      db = DBMaker.newMemoryDB().make()
-    } else {
-      val dir = new File(path);
-      if (!dir.exists()) {
-        // attempt to create the directory here
-        dir.mkdir();
+    logger.debug("Creating table:" + tableName)
+    try {
+      var db: DB = null
+      if (InMemory == true) {
+        db = DBMaker.newMemoryDB().make()
+      } else {
+        val dir = new File(path);
+        if (!dir.exists()) {
+          // attempt to create the directory here
+          dir.mkdir();
+        }
+        db = DBMaker.newFileDB(new File(path + "/" + tableName + ".hdb"))
+          .closeOnJvmShutdown()
+          .mmapFileEnable()
+          .transactionDisable()
+          .commitFileSyncDisable()
+          .make()
+        dbStoreMap.put(tableName, db)
+        var map = db.createHashMap(tableName)
+          .hasher(Hasher.BYTE_ARRAY)
+          .makeOrGet[Array[Byte], Array[Byte]]()
+        tablesMap.put(tableName, map)
       }
-      db = DBMaker.newFileDB(new File(path + "/" + tableName + ".hdb"))
-        .closeOnJvmShutdown()
-        .mmapFileEnable()
-        .transactionDisable()
-        .commitFileSyncDisable()
-        .make()
-      dbStoreMap.put(tableName, db)
-      var map = db.createHashMap(tableName)
-        .hasher(Hasher.BYTE_ARRAY)
-        .makeOrGet[Array[Byte], Array[Byte]]()
-      tablesMap.put(tableName, map)
+    } catch {
+      case e: Exception => {
+        throw CreateDDLException("Failed to create table " + tableName + ":" + e.getMessage(), e)
+      }
     }
+    logger.debug("Done creating table:" + tableName)
   }
 
   @throws(classOf[FileNotFoundException])
@@ -168,11 +196,15 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def CheckTableExists(containerName: String): Unit = {
+    logger.debug("CheckTableExists: " + containerName + ",this => " + this)
     if (containerList.contains(containerName)) {
       return
-    } else {
-      CreateContainer(containerName)
-      containerList.add(containerName)
+    }
+    lock.synchronized {
+      if (containerList.contains(containerName) == false) {
+        CreateContainer(containerName)
+        containerList.add(containerName)
+      }
     }
   }
 
@@ -190,14 +222,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def CreateContainer(containerName: String): Unit = lock.synchronized {
-    var tableName = toTableName(containerName)
-    var fullTableName = toFullTableName(containerName)
-    try {
-      createTable(fullTableName)
-    } catch {
-      case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+    if (containerList.contains(containerName) == false) {
+      var tableName = toTableName(containerName)
+      var fullTableName = toFullTableName(containerName)
+      try {
+        createTable(fullTableName)
+      } catch {
+        case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("Stacktrace:" + stackTrace)
+        }
       }
     }
   }
@@ -269,11 +303,9 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       Commit(tableName)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("Stacktrace:" + stackTrace)
         out.close()
         byteOs.close()
-        throw new Exception("Failed to save an object in HashMap table " + tableName + ":" + e.getMessage())
+        throw CreateDMLException("Failed to save an object in table " + tableName + ":" + e.getMessage(), e)
       }
     }
     out.close()
@@ -283,11 +315,12 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   override def put(data_list: Array[(String, Array[(Key, Value)])]): Unit = {
     var byteOs = new ByteArrayOutputStream(1024 * 1024);
     var out = new DataOutputStream(byteOs);
+    var tableName = ""
     try {
       data_list.foreach(li => {
         var containerName = li._1
         CheckTableExists(containerName)
-        var tableName = toFullTableName(containerName)
+        tableName = toFullTableName(containerName)
         var map = tablesMap(tableName)
         var keyValuePairs = li._2
         keyValuePairs.foreach(keyValuePair => {
@@ -297,12 +330,11 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
           var vba = byteOs.toByteArray()
           map.put(kba, vba)
         })
+        Commit(tableName)
       })
-      Commit
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to save an object in table " + tableName + ":" + e.getMessage(), e)
         out.close()
         byteOs.close()
       }
@@ -313,27 +345,28 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
 
   // delete operations
   override def del(containerName: String, keys: Array[Key]): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
       keys.foreach(key => {
         var kba = MakeCompositeKey(key)
         map.remove(kba)
       })
-      Commit
+      Commit(tableName)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to delete object(s) from table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def del(containerName: String, time: TimeRange, bucketKeys: Array[Array[String]]): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
         var bkey = bucketKey.mkString(".")
@@ -356,11 +389,10 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
           }
         }
       }
-      Commit
+      Commit(tableName)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to delete object(s) from table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
@@ -407,9 +439,10 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def get(containerName: String, callbackFunction: (Key, Value) => Unit): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
@@ -421,16 +454,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def getKeys(containerName: String, callbackFunction: (Key) => Unit): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
@@ -440,16 +473,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def getKeys(containerName: String, keys: Array[Key], callbackFunction: (Key) => Unit): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
       keys.foreach(key => {
         var kba = MakeCompositeKey(key)
@@ -468,9 +501,10 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   override def get(containerName: String, keys: Array[Key], callbackFunction: (Key, Value) => Unit): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
       keys.foreach(key => {
         var kba = MakeCompositeKey(key)
@@ -482,16 +516,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       })
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key, Value) => Unit): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
@@ -512,16 +546,16 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], callbackFunction: (Key) => Unit): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
@@ -538,13 +572,13 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def get(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+    var tableName = ""
     try {
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
@@ -553,7 +587,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       })
 
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
@@ -578,13 +612,13 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def getKeys(containerName: String, time_ranges: Array[TimeRange], bucketKeys: Array[Array[String]], callbackFunction: (Key) => Unit): Unit = {
+    var tableName = ""
     try {
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
@@ -593,7 +627,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       })
 
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
@@ -614,13 +648,13 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def get(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key, Value) => Unit): Unit = {
+    var tableName = ""
     try {
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
@@ -629,7 +663,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       })
 
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
@@ -649,13 +683,13 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
 
   override def getKeys(containerName: String, bucketKeys: Array[Array[String]], callbackFunction: (Key) => Unit): Unit = {
+    var tableName = ""
     try {
       var bucketKeyMap: scala.collection.mutable.Map[String, Boolean] = new scala.collection.mutable.HashMap()
       bucketKeys.foreach(bucketKey => {
@@ -664,7 +698,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       })
 
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
 
       var iter = map.keySet().iterator()
@@ -680,8 +714,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Failed to fetch data from the table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
@@ -711,20 +744,19 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       })
     } catch {
       case e: NullPointerException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDDLException("Failed to shutdown map " + ":" + e.getMessage(), e)
       }
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDDLException("Failed to shutdown map " + ":" + e.getMessage(), e)
       }
     }
   }
 
   private def TruncateContainer(containerName: String): Unit = {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       var map = tablesMap(tableName)
       var iter = map.keySet().iterator()
       while (iter.hasNext()) {
@@ -734,8 +766,7 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
       Commit
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDMLException("Unable to truncate table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }
@@ -749,14 +780,14 @@ class HashMapAdapter(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig
   }
 
   private def DropContainer(containerName: String): Unit = lock.synchronized {
+    var tableName = ""
     try {
       CheckTableExists(containerName)
-      var tableName = toFullTableName(containerName)
+      tableName = toFullTableName(containerName)
       dropTable(tableName)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:" + stackTrace)
+        throw CreateDDLException("Unable to drop table " + tableName + ":" + e.getMessage(), e)
       }
     }
   }

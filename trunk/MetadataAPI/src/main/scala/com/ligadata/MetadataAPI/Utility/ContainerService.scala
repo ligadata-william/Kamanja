@@ -18,11 +18,14 @@ package com.ligadata.MetadataAPI.Utility
 
 import java.io.File
 
-import com.ligadata.MetadataAPI.MetadataAPIImpl
+import com.ligadata.MetadataAPI.{MetadataAPIImpl,ApiResult,ErrorCodeConstants}
 
 import scala.io.Source
 
 import org.apache.logging.log4j._
+
+import scala.io.StdIn
+
 /**
  * Created by dhaval on 8/7/15.
  */
@@ -141,7 +144,7 @@ object ContainerService {
         println("["+srNo+"] "+containerKey)
       }
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > containerKeys.length) {
         response="Invalid choice " + choice + ",start with main menu..."
@@ -159,22 +162,22 @@ object ContainerService {
 
   def getAllContainers: String ={
     var response = ""
+    var containerKeysList = ""
     try {
       val containerKeys: Array[String] = MetadataAPIImpl GetAllContainersFromCache(true, userid)
+
       if (containerKeys.length == 0) {
-        response = "Sorry, No containers are available in the Metadata"
+        var emptyAlert = "Sorry, No containers are available in the Metadata"
+        response=(new ApiResult(ErrorCodeConstants.Success, "ContainerService",null, emptyAlert)).toString
       } else {
-        var srno = 0
-        //println("List of messages:")
-        for (containerKey <- containerKeys) {
-          //srno += 1
-          //println("[" + srno + "] " + containerKey)
-          response += containerKey + "\n"
-        }
+
+        response= (new ApiResult(ErrorCodeConstants.Success, "ContainerService", containerKeys.mkString(", "), "Successfully retrieved all the messages")).toString
+
       }
     } catch {
       case e: Exception => {
         response = e.getStackTrace.toString
+        response= (new ApiResult(ErrorCodeConstants.Failure, "ContainerService",null, response)).toString
       }
     }
     response
@@ -203,7 +206,7 @@ object ContainerService {
         contKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > contKeys.length) {
           return ("Invalid choice " + choice + ",start with main menu...")
@@ -246,7 +249,7 @@ object ContainerService {
       println("[" + srNo + "]" + container)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    val userOptions: List[Int] = Console.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+    val userOptions: List[Int] = StdIn.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
     //check if user input valid. If not exit
     for (userOption <- userOptions) {
       userOption match {

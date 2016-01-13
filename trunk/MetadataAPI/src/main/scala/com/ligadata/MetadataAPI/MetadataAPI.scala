@@ -20,6 +20,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.ligadata.Serialize.JsonSerializer
 
 /** A class that defines the result any of the API function uniformly
  * @constructor creates a new ApiResult with a statusCode,functionName,statusDescription,resultData
@@ -41,6 +42,33 @@ class ApiResult(var statusCode:Int, var functionName: String, var resultData: St
     pretty(render(json))
   }
 }
+
+/**
+ * A class that defines the result any of the API function - The ResultData reuturns a Complex Array of Values.
+ * @param statusCode
+ * @param functionName
+ * @param resultData
+ * @param description
+ */
+class ApiResultComplex (var statusCode:Int, var functionName: String, var resultData: String, var description: String){
+  /**
+   * Override toString to return ApiResult as a String
+   */
+  override def toString: String = {
+
+    val resultArray = parse(resultData).values.asInstanceOf[List[Map[String,Any]]]
+
+    var json = ("APIResults" -> ("Status Code" -> statusCode) ~
+                                ("Function Name" -> functionName) ~
+                                ("Result Data"  -> resultArray.map {nodeInfo => JsonSerializer.SerializeMapToJsonString(nodeInfo)}) ~
+                                ("Result Description" -> description))
+
+    pretty(render(json))
+  }
+}
+
+
+
 
 trait MetadataAPI {
   /** MetadataAPI defines the CRUD (create, read, update, delete) operations on metadata objects supported
@@ -69,8 +97,8 @@ trait MetadataAPI {
    * "TypeName" : "Char",
    * "PhysicalName" : "Char",
    * "Version" : 100,
-   * "JarName" : "basetypes_2.10-0.1.0.jar",
-   * "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+   * "JarName" : "basetypes_2.11-0.1.0.jar",
+   * "DependencyJars" : [ "metadata_2.11-1.0.jar" ],
    * "Implementation" : "com.ligadata.BaseTypes.CharImpl"
    * }
    * """
@@ -102,8 +130,8 @@ trait MetadataAPI {
    * "TypeName" : "Char",
    * "PhysicalName" : "Char",
    * "Version" : 101,
-   * "JarName" : "basetypes_2.10-0.1.0.jar",
-   * "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+   * "JarName" : "basetypes_2.11-0.1.0.jar",
+   * "DependencyJars" : [ "metadata_2.11-1.0.jar" ],
    * "Implementation" : "com.ligadata.BaseTypes.CharImpl"
    * }
    * """
@@ -172,7 +200,7 @@ trait MetadataAPI {
    *  } ],
    *  "Version" : 1,
    *  "JarName" : null,
-   *  "DependantJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ]
+   *  "DependantJars" : [ "basetypes_2.11-0.1.0.jar", "metadata_2.11-1.0.jar" ]
    *  }
    *"""
    *    var apiResult = MetadataAPIImpl.AddFunction(sampleFunctionStr,"JSON")
@@ -209,7 +237,7 @@ trait MetadataAPI {
    *  } ],
    *  "Version" : 1,
    *  "JarName" : null,
-   *  "DependantJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ]
+   *  "DependantJars" : [ "basetypes_2.11-0.1.0.jar", "metadata_2.11-1.0.jar" ]
    *  }
    *"""
    *    var apiResult = MetadataAPIImpl.UpdateFunction(sampleFunctionStr,"JSON")

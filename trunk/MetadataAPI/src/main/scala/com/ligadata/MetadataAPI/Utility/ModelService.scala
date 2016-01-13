@@ -18,11 +18,13 @@ package com.ligadata.MetadataAPI.Utility
 
 import java.io.File
 
-import com.ligadata.MetadataAPI.MetadataAPIImpl
+import com.ligadata.MetadataAPI.{MetadataAPIImpl,ApiResult,ErrorCodeConstants}
 
 import scala.io.Source
 
 import org.apache.logging.log4j._
+
+import scala.io.StdIn
 
 /**
  * Created by dhaval on 8/7/15.
@@ -194,7 +196,7 @@ object ModelService {
               println("[" + srNo + "]" + configkey)
             }
             print("\nEnter your choice: \n")
-            var userOption = Console.readInt()
+            var userOption = StdIn.readInt()
 
             userOption match {
               case x if ((1 to srNo).contains(userOption)) => {
@@ -280,7 +282,7 @@ object ModelService {
                 println("[" + srNo + "]" + configkey)
               }
               print("\nEnter your choice: \n")
-              var userOption = Console.readInt()
+              var userOption = StdIn.readInt()
 
               userOption match {
                 case x if ((1 to srNo).contains(userOption)) => {
@@ -326,7 +328,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
           response=errormsg
@@ -339,7 +341,7 @@ object ModelService {
 
     } catch {
       case e: Exception => {
-        response=e.getStackTraceString
+        response=e.getStackTrace.toString
       }
     }
     response
@@ -347,14 +349,19 @@ object ModelService {
 
   def getAllModels: String ={
     var response=""
-    val modelKeys = MetadataAPIImpl.GetAllModelsFromCache(true, userid)
-    if (modelKeys.length == 0) {
-      response="Sorry, No models available in the Metadata"
-    }else{
-      var srNo = 0
-      for(modelKey <- modelKeys){
-        srNo += 1
-        response+="[" + srNo + "]" + modelKey+"\n"
+    var modelKeysList=""
+    try{
+      val modelKeys:Array[String] = MetadataAPIImpl.GetAllModelsFromCache(true, userid)
+      if (modelKeys.length == 0) {
+       var emptyAlert="Sorry, No models available in the Metadata"
+        response=(new ApiResult(ErrorCodeConstants.Success, "ModelService",null, emptyAlert)).toString
+      }else{
+        response= (new ApiResult(ErrorCodeConstants.Success, "ModelService", modelKeys.mkString(", "), "Successfully retrieved all the messages")).toString
+      }
+    }catch {
+      case e: Exception => {
+        response = e.getStackTrace.toString
+        response= (new ApiResult(ErrorCodeConstants.Failure, "ModelService",null, response)).toString
       }
     }
     response
@@ -420,7 +427,7 @@ object ModelService {
               println("[" + srNo + "]" + configkey)
             }
             print("\nEnter your choice: \n")
-            var userOption = Console.readInt()
+            var userOption = StdIn.readInt()
  
             userOption match {
               case x if ((1 to srNo).contains(userOption)) => {
@@ -504,7 +511,7 @@ object ModelService {
               println("[" + srNo + "]" + configkey)
             }
             print("\nEnter your choice: \n")
-            var userOption = Console.readInt()
+            var userOption = StdIn.readInt()
 
             userOption match {
               case x if ((1 to srNo).contains(userOption)) => {
@@ -554,7 +561,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -600,7 +607,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -649,7 +656,7 @@ object ModelService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > modelKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -692,7 +699,7 @@ object ModelService {
       println("[" + srNo + "]" + model)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    var userOptions = Console.readLine().split(",")
+    var userOptions = StdIn.readLine().split(",")
     println("User selected the option(s) " + userOptions.length)
     //check if user input valid. If not exit
     for (userOption <- userOptions) {
