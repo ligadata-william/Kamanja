@@ -28,7 +28,7 @@ import header.Headers
 import header.HeaderName._
 
 import java.net.URL
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -44,7 +44,7 @@ case class ApiResultJsonProxy(ApiResults: ApiResultInfo)
 
 object TestApiService {
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   lazy val metadataAPIConfig = new Properties()
   var host_url: String = ""
@@ -137,10 +137,10 @@ object TestApiService {
       var database_schema = "metadata"
       var database_location = "/tmp"
       var jar_target_dir = "/tmp/KamanjaInstall"
-      var scala_home = root_dir + "/scala-2.10.4"
+      var scala_home = root_dir + "/scala-2.11"
       var java_home = root_dir + "/jdk1.8.0_05"
       var manifest_path = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf"
-      var classpath = ".:/tmp/KamanjaInstall/metadata_2.10-1.0.jar:/tmp/KamanjaInstall/basefunctions_2.10-0.1.0.jar:/tmp/KamanjaInstall/messagedef_2.10-1.0.jar:/tmp/KamanjaInstall/methodextractor_2.10-1.0.jar:/tmp/KamanjaInstall/pmmlcompiler_2.10-1.0.jar:/tmp/KamanjaInstall/bankenvcontext_2.10-1.0.jar:/tmp/KamanjaInstall/kamanjabase_2.10-1.0.jar:/tmp/KamanjaInstall/bankbootstrap_2.10-1.0.jar:/tmp/KamanjaInstall/bankmsgsandcontainers_2.10-1.0.jar:/tmp/KamanjaInstall/medicalbootstrap_2.10-1.0.jar:/tmp/KamanjaInstall/joda-time-2.3.jar:/tmp/KamanjaInstall/joda-convert-1.6.jar:/tmp/KamanjaInstall/basetypes_2.10-0.1.0.jar:/tmp/KamanjaInstall/pmmludfs_2.10-1.0.jar:/tmp/KamanjaInstall/pmmlruntime_2.10-1.0.jar:/tmp/KamanjaInstall/json4s-native_2.10-3.2.9.jar:/tmp/KamanjaInstall/json4s-core_2.10-3.2.9.jar:/tmp/KamanjaInstall/json4s-ast_2.10-3.2.9.jar:/tmp/KamanjaInstall/jackson-databind-2.3.1.jar:/tmp/KamanjaInstall/jackson-annotations-2.3.0.jar:/tmp/KamanjaInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/KamanjaInstall/jackson-core-2.3.1.jar:/tmp/KamanjaInstall/log4j-1.2.17.jar"
+      var classpath = ".:/tmp/KamanjaInstall/metadata_2.11-1.0.jar:/tmp/KamanjaInstall/basefunctions_2.11-0.1.0.jar:/tmp/KamanjaInstall/messagedef_2.11-1.0.jar:/tmp/KamanjaInstall/methodextractor_2.11-1.0.jar:/tmp/KamanjaInstall/pmmlcompiler_2.11-1.0.jar:/tmp/KamanjaInstall/bankenvcontext_2.11-1.0.jar:/tmp/KamanjaInstall/kamanjabase_2.11-1.0.jar:/tmp/KamanjaInstall/bankbootstrap_2.11-1.0.jar:/tmp/KamanjaInstall/bankmsgsandcontainers_2.11-1.0.jar:/tmp/KamanjaInstall/medicalbootstrap_2.11-1.0.jar:/tmp/KamanjaInstall/joda-time-2.3.jar:/tmp/KamanjaInstall/joda-convert-1.6.jar:/tmp/KamanjaInstall/basetypes_2.11-0.1.0.jar:/tmp/KamanjaInstall/pmmludfs_2.11-1.0.jar:/tmp/KamanjaInstall/pmmlruntime_2.11-1.0.jar:/tmp/KamanjaInstall/json4s-native_2.11-3.2.9.jar:/tmp/KamanjaInstall/json4s-core_2.11-3.2.9.jar:/tmp/KamanjaInstall/json4s-ast_2.11-3.2.9.jar:/tmp/KamanjaInstall/jackson-databind-2.3.1.jar:/tmp/KamanjaInstall/jackson-annotations-2.3.0.jar:/tmp/KamanjaInstall/json4s-jackson_2.11-3.2.9.jar:/tmp/KamanjaInstall/jackson-core-2.3.1.jar:/tmp/KamanjaInstall/log4j-1.2.17.jar"
       var notify_engine = "NO"
       var znode_path = "/ligadata/metadata"
       var zookeeper_connect_string = "localhost:2181"
@@ -319,7 +319,7 @@ object TestApiService {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("StackTrace:"+stackTrace)
-        throw new InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
+        throw InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage(), e)
       }
     }
   }
@@ -386,7 +386,7 @@ object TestApiService {
         case "XML" => bodyType = TEXT_XML
         case "JSON" => bodyType = APPLICATION_JSON
         case "BINARY_FILE" => bodyType = APPLICATION_OCTET_STREAM
-        case _ => throw new InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType)
+        case _ => throw InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType, null)
       }
       var apiParameters: Option[String] = None
       if (parameterValue != null) {
@@ -510,7 +510,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -632,7 +632,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -690,7 +690,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -748,7 +748,7 @@ object TestApiService {
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > keys.length) {
         println("Invalid choice " + choice + ",start with main menu...")
@@ -816,7 +816,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == pmmlFiles.length + 1) {
         return
@@ -859,8 +859,8 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -926,8 +926,8 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -993,7 +993,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == cfgFiles.length + 1) {
         return
@@ -1039,7 +1039,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == cfgFiles.length + 1) {
         return
@@ -1082,7 +1082,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == jarFiles.length + 1) {
         return
@@ -1128,7 +1128,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == functionFiles.length + 1) {
         return
@@ -1175,7 +1175,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == functionFiles.length + 1) {
         return
@@ -1223,7 +1223,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == conceptFiles.length + 1) {
         return
@@ -1275,7 +1275,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == conceptFiles.length + 1) {
         return
@@ -1323,7 +1323,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == typeFiles.length + 1) {
         return
@@ -1373,7 +1373,7 @@ object TestApiService {
         seq += 1
         println("[" + seq + "] Main Menu")
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice <= typeMenu.size) {
           selectedType = "com.ligadata.kamanja.metadata." + typeMenu(choice)
           done = true
@@ -1414,8 +1414,8 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr: String = readLine()
+      //val choice:Int = StdIn.readInt()
+      val choicesStr: String = StdIn.readLine()
 
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
@@ -1438,7 +1438,6 @@ object TestApiService {
           }
 
           val outputmsgDefFile = outputmsgFiles(choice - 1).toString
-          logger.setLevel(Level.TRACE);
           val outputmsgStr = Source.fromFile(outputmsgDefFile).mkString
           val res: String = MakeHttpRequest("post", host_url, "OutputMsg", "JSON", outputmsgStr)
           results += Tuple3(choice.toString, outputmsgDefFile, res)
@@ -1485,7 +1484,7 @@ object TestApiService {
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice == outputmsgFiles.length + 1)
         return
@@ -1607,7 +1606,7 @@ object TestApiService {
         for ((key, idx) <- topLevelMenu.zipWithIndex) { println("[" + (idx + 1) + "] " + key._1) }
         println("[" + (topLevelMenu.size + 1) + "] Exit")
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice <= topLevelMenu.size) {
           topLevelMenu(choice - 1)._2.apply
         } else if (choice == topLevelMenu.size + 1) {
@@ -1638,7 +1637,7 @@ object TestApiService {
         val cfgfile = args(0)
         if (cfgfile == null) {
           logger.error("Need configuration file as parameter")
-          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+          throw MissingArgumentException("Usage: configFile  supplied as --config myConfig.json", null)
         }
         myConfigFile = cfgfile
       }

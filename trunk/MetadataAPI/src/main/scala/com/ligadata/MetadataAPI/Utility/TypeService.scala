@@ -22,7 +22,10 @@ import com.ligadata.MetadataAPI.MetadataAPIImpl
 
 import scala.io.Source
 
-import org.apache.log4j._
+import org.apache.logging.log4j._
+
+import scala.io.StdIn
+
 
 /**
  * Created by dhaval on 8/12/15.
@@ -30,7 +33,7 @@ import org.apache.log4j._
 object TypeService {
   private val userid: Option[String] = Some("metadataapi")
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   def addType(input: String): String ={
     var response = ""
@@ -103,7 +106,7 @@ object TypeService {
           println("["+srno+"] "+typeKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > typeKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -155,7 +158,7 @@ object TypeService {
           println("["+srno+"] "+modelKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > typeKeys.length) {
           val errormsg="Invalid choice " + choice + ". Start with the main menu."
@@ -207,7 +210,7 @@ object TypeService {
         seq += 1
         println("[" + seq + "] Main Menu")
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
         if (choice <= typeMenu.size) {
           selectedType = "com.ligadata.kamanja.metadata." + typeMenu(choice)
           done = true
@@ -249,7 +252,7 @@ object TypeService {
       println("[" + srNo + "]" + message)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    val userOptions: List[Int] = Console.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+    val userOptions: List[Int] = StdIn.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
     //check if user input valid. If not exit
     for (userOption <- userOptions) {
       userOption match {

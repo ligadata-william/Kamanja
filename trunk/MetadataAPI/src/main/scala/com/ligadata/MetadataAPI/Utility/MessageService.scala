@@ -22,7 +22,9 @@ import com.ligadata.MetadataAPI.{MetadataAPIOutputMsg, MetadataAPIImpl,ApiResult
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import org.apache.log4j._
+import org.apache.logging.log4j._
+
+import scala.io.StdIn
 
 /**
  * Created by dhaval on 8/7/15.
@@ -30,7 +32,7 @@ import org.apache.log4j._
 object MessageService {
   private val userid: Option[String] = Some("metadataapi")
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
 
   def addMessage(input: String): String = {
     var response = ""
@@ -54,7 +56,7 @@ object MessageService {
               case option => {
                 val messageDefs = getUserInputFromMainMenu(messages)
                 for (messageDef <- messageDefs) {
-                  response += MetadataAPIImpl.AddContainer(messageDef.toString, "JSON", userid)
+                  response += MetadataAPIImpl.AddMessage(messageDef.toString, "JSON", userid)
                 }
               }
             }
@@ -70,7 +72,7 @@ object MessageService {
       var message = new File(input.toString)
       if(message.exists()){
         val messageDef = Source.fromFile(message).mkString
-        response = MetadataAPIImpl.AddContainer(messageDef, "JSON", userid)
+        response = MetadataAPIImpl.AddMessage(messageDef, "JSON", userid)
       }else{
         response="Message defintion file does not exist"
       }
@@ -137,7 +139,7 @@ object MessageService {
       //input provided
       var message = new File(input.toString)
       val messageDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.AddContainer(messageDef, "JSON", userid)
+      response = MetadataAPIImpl.UpdateMessage(messageDef, userid)
     }
     //Got the message. Now add them
     response
@@ -169,7 +171,7 @@ object MessageService {
           println("[" + srno + "] " + messageKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > messageKeys.length) {
           val errormsg = "Invalid choice " + choice + ". Start with the main menu."
@@ -215,7 +217,7 @@ object MessageService {
         msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
         print("\nEnter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > msgKeys.length) {
           response = "Invalid choice " + choice + ",start with main menu..."
@@ -238,7 +240,7 @@ object MessageService {
 
     } catch {
       case e: Exception => {
-      e.getStackTraceString
+        e.getStackTrace.toString
       }
     }
   }
@@ -264,7 +266,7 @@ object MessageService {
       println("[" + srNo + "]" + message)
     }
     print("\nEnter your choice(If more than 1 choice, please use commas to seperate them): \n")
-    val userOptions: List[Int] = Console.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+    val userOptions: List[Int] = StdIn.readLine().filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
     //check if user input valid. If not exit
     for (userOption <- userOptions) {
       userOption match {
@@ -398,7 +400,7 @@ object MessageService {
           println("[" + srno + "] " + messageKey)
         }
         println("Enter your choice: ")
-        val choice: Int = readInt()
+        val choice: Int = StdIn.readInt()
 
         if (choice < 1 || choice > outputMessageKeys.length) {
           val errormsg = "Invalid choice " + choice + ". Start with the main menu."
@@ -463,7 +465,7 @@ object MessageService {
       outputMessageKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice: Int = readInt()
+      val choice: Int = StdIn.readInt()
 
       if (choice < 1 || choice > outputMessageKeys.length) {
         response = "Invalid choice " + choice + ",start with main menu..."

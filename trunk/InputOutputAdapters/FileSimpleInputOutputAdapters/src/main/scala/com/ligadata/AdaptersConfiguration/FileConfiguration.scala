@@ -43,8 +43,10 @@ object FileAdapterConfiguration {
     fc.className = inputConfig.className
     fc.jarName = inputConfig.jarName
     fc.dependencyJars = inputConfig.dependencyJars
-    fc.delimiterString = if (inputConfig.delimiterString == null) null else inputConfig.delimiterString.trim
     fc.associatedMsg = if (inputConfig.associatedMsg == null) null else inputConfig.associatedMsg.trim
+    fc.keyAndValueDelimiter = if (inputConfig.keyAndValueDelimiter == null) null else inputConfig.keyAndValueDelimiter.trim
+    fc.fieldDelimiter = if (inputConfig.fieldDelimiter == null) null else inputConfig.fieldDelimiter.trim
+    fc.valueDelimiter = if (inputConfig.valueDelimiter == null) null else inputConfig.valueDelimiter.trim
 
     val adapCfg = parse(inputConfig.adapterSpecificCfg)
     if (adapCfg == null || adapCfg.values == null) {

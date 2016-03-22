@@ -16,9 +16,8 @@
 
 package com.ligadata.audit.adapters
 
-import com.ligadata.StorageBase.{ Key, Value}
 import com.ligadata.AuditAdapterInfo._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 import java.util.Date
 import java.util.Calendar
 import com.datastax.driver.core.ConsistencyLevel
@@ -44,7 +43,7 @@ import com.ligadata.Exceptions._
 
 class AuditCassandraAdapter extends AuditAdapter {
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   var adapterProperties: scala.collection.mutable.Map[String,String] = scala.collection.mutable.Map[String,String]()
 
@@ -109,7 +108,7 @@ class AuditCassandraAdapter extends AuditAdapter {
           case e: Exception => {
               val stackTrace =   StackTrace.ThrowableTraceString(e)
               logger.debug("Stacktrace:"+stackTrace)
-              throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()) 
+              throw CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage(), e) 
             }
         }
       
@@ -126,7 +125,7 @@ class AuditCassandraAdapter extends AuditAdapter {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("Stacktrace:"+stackTrace)
-        throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
+        throw ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage(), e)
       }
     } 
        

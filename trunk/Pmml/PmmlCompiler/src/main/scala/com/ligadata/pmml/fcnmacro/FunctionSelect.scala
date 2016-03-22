@@ -22,7 +22,7 @@ import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import scala.reflect.runtime.universe._
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import scala.reflect.runtime.{ universe => ru }
@@ -868,7 +868,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			  						/** take the first abstract class or trait */
 			  						val traitOrAbstractClasses : List[(String, ClassSymbol, Type)] = classesSuperClasseTriples.filter( triple => {
 			  							val (clssym, symbol, typ) : (String, ClassSymbol, Type) = triple
-						  				(symbol != null && (symbol.isAbstractClass || symbol.isTrait)) 
+						  				(symbol != null && (symbol.isAbstract || symbol.isTrait)) 
 			  						  
 			  						})
 			  						
@@ -1305,7 +1305,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 							val clsSymbol = pmmlLoader.mirror.classSymbol(clz)
 							// Info about the class
 							val isTrait = clsSymbol.isTrait			 
-							val isAbstractClass = clsSymbol.isAbstractClass
+							val isAbstractClass = clsSymbol.isAbstract
 							val isModule = clsSymbol.isModule
 							val subclasses : Set[reflect.runtime.universe.Symbol] = clsSymbol.knownDirectSubclasses 
 							// Convert the class symbol into a Type
@@ -1388,7 +1388,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			  		breakable {
 			  			argTypeInfo.foreach( triple => {
 			  				val (clssym, symbol, typ) : (String, ClassSymbol, Type) = triple
-			  				if (symbol != null && (symbol.isAbstractClass || symbol.isTrait)) {
+			  				if (symbol != null && (symbol.isAbstract || symbol.isTrait)) {
 			  					newType = symbol.fullName
 			  					break
 			  				} else {
@@ -1461,7 +1461,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			val clsSymbol = pmmlLoader.mirror.classSymbol(clz)
 			// Info about the class
 			val isTrait = clsSymbol.isTrait			 
-			val isAbstractClass = clsSymbol.isAbstractClass
+			val isAbstractClass = clsSymbol.isAbstract
 			val isModule = clsSymbol.isModule
 			val subclasses : Set[reflect.runtime.universe.Symbol] = clsSymbol.knownDirectSubclasses 
 			// Convert the class symbol into a Type

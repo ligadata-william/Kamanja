@@ -20,7 +20,7 @@ import java.util.Properties
 import java.io._
 import scala.Enumeration
 import scala.io.Source._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import scala.collection.JavaConversions._
 
@@ -38,12 +38,8 @@ import com.ligadata.Exceptions.StackTrace
 class ProtoBufSerializer extends Serializer{
 
   val loggerName = this.getClass.getName
-  lazy val logger = Logger.getLogger(loggerName)
+  lazy val logger = LogManager.getLogger(loggerName)
   private[this] var classLoader: java.lang.ClassLoader = null
-
-  def SetLoggerLevel(level: Level){
-    logger.setLevel(level);
-  }
 
   def buildProtoBaseElem(o: BaseElemDef) : ProtoBaseElem = {
     logger.debug("Build ProtoBaseElem from " + o.getClass().getName())
@@ -169,7 +165,7 @@ class ProtoBufSerializer extends Serializer{
       case e:Exception => {
 	val stackTrace = StackTrace.ThrowableTraceString(e)
   logger.debug("StackTrace:"+stackTrace)
-	throw new ProtoBufSerializationException("Failed to Deserialize the object: " + e.getMessage())
+	throw ProtoBufSerializationException("Failed to Deserialize the object: " + e.getMessage(), e)
       }
     }
   }
@@ -195,7 +191,7 @@ class ProtoBufSerializer extends Serializer{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-	throw new ProtoBufSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
+	throw ProtoBufSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage(), e)
       }
     }
   }
@@ -217,21 +213,21 @@ class ProtoBufSerializer extends Serializer{
 	  mDef
 	}
         case _ => {
-	  throw new ProtoBufSerializationException("Failed to DeSerialize the object of type: " + objectType)
+	  throw ProtoBufSerializationException("Failed to DeSerialize the object of type: " + objectType, null)
 	}
       }
     }catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-	throw new ProtoBufSerializationException("Failed to DeSerialize the object:" + e.getMessage())
+	throw ProtoBufSerializationException("Failed to DeSerialize the object:" + e.getMessage(), e)
       }
     }
   }
 
 
   override def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
-    throw new ProtoBufSerializationException("Failed to DeSerialize the object: Unable to deserialize the object without ObjectType")
+    throw ProtoBufSerializationException("Failed to DeSerialize the object: Unable to deserialize the object without ObjectType", null)
   }
 
   override def SetClassLoader(cl : java.lang.ClassLoader): Unit = {

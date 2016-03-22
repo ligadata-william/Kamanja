@@ -23,11 +23,12 @@ import com.ligadata.InputAdapters.KafkaSimpleConsumer
 import com.ligadata.InputOutputAdapterInfo._
 import com.ligadata.ZooKeeper.{ ZooKeeperListener, CreateClient }
 import org.apache.curator.framework.CuratorFramework
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 import scala.io.Source
 import org.json4s.jackson.JsonMethods._
 import scala.sys.process.{ ProcessIO, Process }
+import com.ligadata.KamanjaBase.DataDelimiters
 
 object SimpleStats extends CountersAdapter {
 
@@ -71,7 +72,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
   }
 
-  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, associatedMsg: String, delimiters: DataDelimiters): Unit = {
 
     if (format.equalsIgnoreCase("json")) {
       //if (data.charAt(0).toString.equals("{")) {
@@ -83,7 +84,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 }
 
 class KamanjaMonitor {
-  private val LOG = Logger.getLogger(getClass)
+  private val LOG = LogManager.getLogger(getClass)
   type OptionMap = Map[Symbol, Any]
   var isStarted: Boolean = false
   var zkNodeBasePath: String = null
@@ -306,7 +307,11 @@ class KamanjaMonitor {
         thisConf.jarName = qConf.getOrElse("JarName", "").toString
         thisConf.dependencyJars = qConf.getOrElse("DependencyJars", "").asInstanceOf[List[String]].toSet
         thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg", "").toString
-        thisConf.delimiterString = qConf.getOrElse("DelimiterString", "").toString
+        val delimiterString = qConf.getOrElse("DelimiterString", null)
+        thisConf.keyAndValueDelimiter = qConf.getOrElse("KeyAndValueDelimiter", "").toString
+        val fieldDelimiter = qConf.getOrElse("FieldDelimiter", null)
+        thisConf.fieldDelimiter = if (fieldDelimiter != null) fieldDelimiter.toString else if (delimiterString != null) delimiterString.toString else "" 
+        thisConf.valueDelimiter = qConf.getOrElse("ValueDelimiter", "").toString
         thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage", "").toString
 
         // Ignore if any value in the adapter was not set.
@@ -331,7 +336,11 @@ class KamanjaMonitor {
         thisConf.jarName = qConf.getOrElse("JarName", "").toString
         thisConf.dependencyJars = qConf.getOrElse("DependencyJars", "").asInstanceOf[List[String]].toSet
         thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg", "").toString
-        thisConf.delimiterString = qConf.getOrElse("DelimiterString", "").toString
+        val delimiterString = qConf.getOrElse("DelimiterString", null)
+        thisConf.keyAndValueDelimiter = qConf.getOrElse("KeyAndValueDelimiter", "").toString
+        val fieldDelimiter = qConf.getOrElse("FieldDelimiter", null)
+        thisConf.fieldDelimiter = if (fieldDelimiter != null) fieldDelimiter.toString else if (delimiterString != null) delimiterString.toString else "" 
+        thisConf.valueDelimiter = qConf.getOrElse("ValueDelimiter", "").toString
         thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage", "").toString
 
         // Ignore if any value in the adapter was not set.

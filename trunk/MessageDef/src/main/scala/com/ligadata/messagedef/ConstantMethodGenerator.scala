@@ -17,11 +17,11 @@
 package com.ligadata.messagedef
 
 import com.ligadata.Exceptions.StackTrace
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 class ConstantMethodGenerator {
   //populate method in msg-TransactionMsg class
-  private val LOG = Logger.getLogger(getClass)
-   def populate = {
+  private val LOG = LogManager.getLogger(getClass)
+  def populate = {
     """
   def populate(inputdata:InputData) = {
 	  if (inputdata.isInstanceOf[DelimitedData])	
@@ -30,7 +30,10 @@ class ConstantMethodGenerator {
 			populateJson(inputdata.asInstanceOf[JsonData])
 	  else if (inputdata.isInstanceOf[XmlData])
 			populateXml(inputdata.asInstanceOf[XmlData])
+      else if (inputdata.isInstanceOf[KvData])
+			populateKvData(inputdata.asInstanceOf[KvData])
 	  else throw new Exception("Invalid input data")
+      timePartitionData = ComputeTimePartitionData
     
     }
 		"""
@@ -46,11 +49,11 @@ class ConstantMethodGenerator {
    * """
    * }
    */
-   def populateMappedCSV(assignCsvdata: String, count: Int): String = {
+  def populateMappedCSV(assignCsvdata: String, count: Int): String = {
     """
   private def populateCSV(inputdata:DelimitedData): Unit = {
 	val list = inputdata.tokens
-    val arrvaldelim = "~"
+    val arrvaldelim = inputdata.delimiters.valueDelimiter
 	try{
 """ + "\t\tif(list.size < " + (count - 1) + ") throw new Exception(\"Incorrect input data size\")" + """
   """ + assignCsvdata +
@@ -67,11 +70,11 @@ class ConstantMethodGenerator {
   }
 
   ////populateCSV fucntion in msg class
-   def populatecsv(assignCsvdata: String, count: Int): String = {
+  def populatecsv(assignCsvdata: String, count: Int): String = {
     """
 	  private def populateCSV(inputdata:DelimitedData): Unit = {
 		val list = inputdata.tokens
-	    val arrvaldelim = "~"
+	    val arrvaldelim = inputdata.delimiters.valueDelimiter
 		try{
 	""" + "\t\tif(list.size < " + (count - 1) + ") throw new Exception(\"Incorrect input data size\")" + """
 	  """ + assignCsvdata +
@@ -87,7 +90,7 @@ class ConstantMethodGenerator {
 		  """
   }
 
-   def populateJson = {
+  def populateJson = {
     """
   private def populateJson(json:JsonData) : Unit = {
 	try{
@@ -104,7 +107,33 @@ class ConstantMethodGenerator {
 	  """
   }
 
-   def collectionsStr = {
+  def populateKvData(assignKVData: String) = {
+
+    """
+    private def populateKvData(kvData: KvData): Unit = {
+	  	 	try{ 
+	  		
+       	if (kvData == null)
+        	throw new Exception("Invalid KvData")
+       
+       val map: scala.collection.mutable.Map[String, String] = scala.collection.mutable.Map[String, String]();
+      	kvData.dataMap.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 });
+	 
+	  """ + assignKVData +
+      """
+	  }catch{
+  			case e:Exception =>{
+   				val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("Stacktrace:"+stackTrace)
+   			throw e	    	
+	  	}
+	}
+  }
+	"""
+
+  }
+
+  def collectionsStr = {
     """
     def CollectionAsArrString(v: Any): Array[String] = {
 	  if (v.isInstanceOf[Set[_]]) {
@@ -121,7 +150,7 @@ class ConstantMethodGenerator {
     """
 
   }
-   def assignJsonData(assignJsonData: String) = {
+  def assignJsonData(assignJsonData: String) = {
     collectionsStr +
       """
     private def assignJsonData(json: JsonData) : Unit =  {
@@ -148,7 +177,7 @@ class ConstantMethodGenerator {
   }
 	"""
   }
-   def assignMappedJsonData(assignJsonData: String) = {
+  def assignMappedJsonData(assignJsonData: String) = {
     collectionsStr +
       """
    	def ValueToString(v: Any): String = {
@@ -212,7 +241,45 @@ class ConstantMethodGenerator {
   """
   }
 
-   def addInputJsonLeftOverKeys = {
+  //assignKVData
+
+  def populateMappedMsgKvData(assignKvData: String) = {
+    """
+  private def populateKvData(kvData: KvData): Unit = {
+    try {
+      if (kvData == null)
+        throw new Exception("Invalid KvData")
+
+      val map: scala.collection.mutable.Map[String, String] = scala.collection.mutable.Map[String, String]();
+      kvData.dataMap.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 });
+      
+	  	// Traverse through whole map and make KEYS are lowercase and populate
+	  	map.foreach(kv => {
+        	val key = kv._1.toLowerCase
+        	val typConvidx = keys.getOrElse(key, -1)
+        	if (typConvidx > 0) {
+          	// Cast to correct type
+          	val v1 = typs(typConvidx).Input(kv._2.toString)
+	  	 	fields.put(key, (typConvidx, v1))
+        } else
+            fields.put(key, (0, ValueToString(kv._2)))
+     });
+    """ + assignKvData +
+      """
+     // fields.foreach(field => println("Key : "+ field._1 + "Idx " + field._2._1 +"Value" + field._2._2 ))
+   
+	  } catch {
+      	case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("Stacktrace:"+stackTrace)
+        throw e
+      }
+    }
+  }
+  """
+  }
+
+  def addInputJsonLeftOverKeys = {
     """
         var dataKeySet: Set[Any] = Set();
         dataKeySet = dataKeySet ++ map.keySet
@@ -225,7 +292,7 @@ class ConstantMethodGenerator {
       	}
    """
   }
-   def populateXml = {
+  def populateXml = {
     """
   private def populateXml(xmlData:XmlData) : Unit = {	  
 	try{
@@ -242,7 +309,7 @@ class ConstantMethodGenerator {
 	  """
   }
 
-   def assignXmlData(xmlData: String) = {
+  def assignXmlData(xmlData: String) = {
     """
   private def populateXml(xmlData:XmlData) : Unit = {
 	try{
@@ -261,7 +328,7 @@ class ConstantMethodGenerator {
 """
   }
 
-   def assignMappedXmlData(xmlData: String) = {
+  def assignMappedXmlData(xmlData: String) = {
     """
    private def populateXml(xmlData:XmlData) : Unit = {
 	try{
@@ -278,7 +345,7 @@ class ConstantMethodGenerator {
 """
   }
 
-   def assignJsonForArray(fname: String, typeImpl: String, msg: Message, typ: String): String = {
+  def assignJsonForArray(fname: String, typeImpl: String, msg: Message, typ: String): String = {
     var funcStr: String = ""
 
     val funcName = "fields(\"" + fname + "\")";
@@ -307,7 +374,36 @@ class ConstantMethodGenerator {
     funcStr
   }
 
-   def assignJsonForPrimArrayBuffer(fname: String, typeImpl: String, msg: Message, typ: String): String = {
+  //assignKvDataForArray
+
+  def assignKvDataForArray(fname: String, typeImpl: String, msg: Message, typ: String): String = {
+    var funcStr: String = ""
+
+    val funcName = "fields(\"" + fname + "\")";
+    if (msg.Fixed.toLowerCase().equals("true")) {
+      funcStr = """
+			if (map.contains("""" + fname + """")){
+				val arr = map.getOrElse("""" + fname + """", null)
+			if (arr != null) {
+				""" + fname + """  = arr.split(kvData.delimiters.valueDelimiter, -1).map(v => """ + typeImpl + """(v.toString)).toArray
+			} else """ + fname + """  = new """ + typ + """(0)
+	    }
+	      """
+    } else if (msg.Fixed.toLowerCase().equals("false")) {
+      funcStr = """
+			if (map.contains("""" + fname + """" )){
+				val arr = map.getOrElse("""" + fname + """", null)
+			if (arr != null) {				
+				""" + funcName + """   = (-1, arr.split(kvData.delimiters.valueDelimiter, -1).map(v =>  {""" + typeImpl + """(v.toString) } ).toArray)
+			}else 
+				""" + funcName + """   = (-1, new """ + typ + """(0))
+	    }
+	      """
+    }
+    funcStr
+  }
+
+  def assignJsonForPrimArrayBuffer(fname: String, typeImpl: String, msg: Message, typ: String): String = {
     var funcStr: String = ""
 
     val funcName = "fields(\"" + fname + "\")";
@@ -337,7 +433,37 @@ class ConstantMethodGenerator {
     funcStr
   }
 
-   def assignJsonForCntrArrayBuffer(fname: String, typeImpl: String) = {
+  //assignKvForPrimArrayBuffer
+  def assignKvForPrimArrayBuffer(fname: String, typeImpl: String, msg: Message, typ: String): String = {
+    var funcStr: String = ""
+
+    val funcName = "fields(\"" + fname + "\")";
+    if (msg.Fixed.toLowerCase().equals("true")) {
+      funcStr = """
+			if (map.contains("""" + fname + """")){
+				val arr = map.getOrElse("""" + fname + """", null)
+			if (arr != null) {
+				arr.split(kvData.delimiters.valueDelimiter, -1).foreach(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)})
+			}else """ + fname + """  = new """ + typ + """(0)
+	    }
+	      """
+    } else if (msg.Fixed.toLowerCase().equals("false")) {
+      funcStr = """
+			if (map.contains("""" + fname + """" )){
+				val arr = map.getOrElse("""" + fname + """", null)
+			if (arr != null) {
+				var """ + fname + """  = new """ + typ + """
+				arr.split(kvData.delimiters.valueDelimiter, -1).foreach(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)})
+				""" + funcName + """   = (-1, """ + fname + """)
+				}else 
+				""" + funcName + """   = (-1, new """ + typ + """(0))
+	    }
+	      """
+    }
+    funcStr
+  }
+
+  def assignJsonForCntrArrayBuffer(fname: String, typeImpl: String) = {
     """
 	 
 	    if (map.getOrElse("""" + fname + """", null).isInstanceOf[List[tMap]])
@@ -354,7 +480,7 @@ class ConstantMethodGenerator {
 	    }
 	    """
   }
-   def assignJsonDataMessage(mName: String) = {
+  def assignJsonDataMessage(mName: String) = {
     """  { 
         val inputData = new JsonData(json.dataInput)
         inputData.root_json = json.root_json
@@ -363,7 +489,7 @@ class ConstantMethodGenerator {
         """
   }
 
-   def getArrayStr(mbrVar: String, classname: String): String = {
+  def getArrayStr(mbrVar: String, classname: String): String = {
 
     "\t\tfor (i <- 0 until " + mbrVar + ".length) {\n" +
       "\t\t\tvar ctrVar: " + classname + " = i.asInstanceOf[" + classname + "]\n\t\t\t" +
@@ -381,7 +507,7 @@ class ConstantMethodGenerator {
     """
   }
 
-   def mappedToStringForKeys() = {
+  def mappedToStringForKeys() = {
 
     """
     private def toStringForKey(key: String): String = {
@@ -392,7 +518,7 @@ class ConstantMethodGenerator {
     """
   }
   // Default Array Buffer of message values in Mapped Messages
-   def getAddMappedMsgsInConstructor(mappedMsgFieldsVar: String): String = {
+  def getAddMappedMsgsInConstructor(mappedMsgFieldsVar: String): String = {
     if (mappedMsgFieldsVar == null || mappedMsgFieldsVar.trim() == "") return ""
     else return """
       AddMsgsInConstructor
@@ -405,7 +531,7 @@ class ConstantMethodGenerator {
   }
   // Default Array Buffer of primitive values in Mapped Messages
 
-   def getAddMappedArraysInConstructor(mappedArrayFieldsVar: String, mappedMsgFieldsArryBuffer: String): String = {
+  def getAddMappedArraysInConstructor(mappedArrayFieldsVar: String, mappedMsgFieldsArryBuffer: String): String = {
     if (mappedArrayFieldsVar == null || mappedArrayFieldsVar.trim() == "") return ""
     else return """
     AddArraysInConstructor
@@ -423,7 +549,7 @@ class ConstantMethodGenerator {
    *
    */
 
-   def getConvertOldVertoNewVer() = {
+  def getConvertOldVertoNewVer() = {
     """
      oldObj.fields.foreach(field => {
          if(field._2._1 >= 0)
@@ -438,8 +564,14 @@ class ConstantMethodGenerator {
   /*
    * function to convert the old version to new version in desrializarion of messages especially when ArrayBuffer/Array of child messages or Child Message occurs
    */
-   def getConvertOldVertoNewVer(convertStr: String, oldObj: String, newObj: Any): String = {
+  def getConvertOldVertoNewVer(convertStr: String, oldObj: String, newObj: Any, mesg: Message): String = {
+    var timePartitionData: String = ""
     var convertFuncStr: String = ""
+    if (mesg.Fixed.equalsIgnoreCase("true"))
+      timePartitionData = "timePartitionData = oldObj.timePartitionData;"
+    else if (mesg.Fixed.equalsIgnoreCase("false"))
+      timePartitionData = "timePartitionData = oldObj.fields(\"timePartitionData\")._2.asInstanceOf[Long]; \n fields(\"timePartitionData\") = (-1, timePartitionData);" /// check the mapped msgs
+
     // if (prevObjExists) {
     if (oldObj != null && oldObj.toString.trim() != "") {
       if (convertStr != null && convertStr.trim() != "") {
@@ -448,6 +580,7 @@ class ConstantMethodGenerator {
      def ConvertPrevToNewVerObj(oldObj : """ + oldObj + """) : Unit = {    
          if( oldObj != null){
            """ + convertStr + """
+         """ + timePartitionData + """  
          }  
        }"""
         //    }
@@ -461,7 +594,7 @@ class ConstantMethodGenerator {
     convertFuncStr
   }
 
-   def SerDeserStr = {
+  def SerDeserStr = {
     """
     override def Serialize(dos: DataOutputStream) : Unit = { }
 	override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = { }
@@ -469,7 +602,7 @@ class ConstantMethodGenerator {
   }
 
   //create the serialized function in generated scala class 
-   def getSerializedFunction(serStr: String): String = {
+  def getSerializedFunction(serStr: String): String = {
     var getSerFunc: String = ""
 
     if (serStr != null && serStr.trim() != "") {
@@ -477,6 +610,7 @@ class ConstantMethodGenerator {
     override def Serialize(dos: DataOutputStream) : Unit = {
         try {
     	   """ + serStr + """
+    	 com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, timePartitionData);
     	} catch {
     		case e: Exception => {
     	    val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -496,9 +630,12 @@ class ConstantMethodGenerator {
 
   //create the deserialized function in generated scala class 
 
-   def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile: Boolean): String = {
+  def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile: Boolean, fixed: Boolean): String = {
     var preVerDeserStr: String = ""
+    var timePartitionfldMapped: String = ""
     // if (recompile == false && prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
+    if (!fixed)
+      timePartitionfldMapped = "fields(\"timePartitionData\") = (-1, timePartitionData); "
 
     if (prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
       val prevVerObjStr = "val prevVerObj = new %s()".format(prevVerMsgObjstr)
@@ -507,6 +644,8 @@ class ConstantMethodGenerator {
                 """ + prevVerObjStr + """ 
                 prevVerObj.Deserialize(dis, mdResolver, loader, savedDataVersion)   
                """ + prevObjDeserStr + """ 
+               timePartitionData = prevVerObj.timePartitionData;
+                """ + timePartitionfldMapped + """             
            
 	     } else """
     }
@@ -514,20 +653,26 @@ class ConstantMethodGenerator {
     preVerDeserStr
   }
 
-   def getDeserStr(deserStr: String, fixed: Boolean): String = {
+  def getDeserStr(deserStr: String, fixed: Boolean): String = {
     var deSer: String = ""
-
+    var timePartitionFld: String = ""
+    if (!fixed) {
+      timePartitionFld = "fields(\"timePartitionData\") = (-1, timePartitionData)"
+    }
     if (deserStr != null && deserStr.trim() != "") {
       deSer = """
          if(prevVer == currentVer){  
               """ + deserStr + """
+         timePartitionData = com.ligadata.BaseTypes.LongImpl.DeserializeFromDataInputStream(dis)
+          """ + timePartitionFld + """
+      
         } else throw new Exception("Current Message/Container Version "+currentVer+" should be greater than Previous Message Version " +prevVer + "." )
      """
     }
     deSer
   }
 
-   def deSerializeStr(preVerDeserStr: String, deSer: String) = {
+  def deSerializeStr(preVerDeserStr: String, deSer: String) = {
 
     """
     override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {
@@ -549,12 +694,12 @@ class ConstantMethodGenerator {
      """
   }
 
-   def getDeserializedFunction(fixed: Boolean, deserStr: String, prevObjDeserStr: String, prevVerMsgObjstr: String, recompile: Boolean): String = {
+  def getDeserializedFunction(fixed: Boolean, deserStr: String, prevObjDeserStr: String, prevVerMsgObjstr: String, recompile: Boolean): String = {
 
     var getDeserFunc: String = ""
     var preVerDeserStr: String = ""
     var deSer: String = ""
-    preVerDeserStr = getPrevDeserStr(prevVerMsgObjstr, prevObjDeserStr, recompile)
+    preVerDeserStr = getPrevDeserStr(prevVerMsgObjstr, prevObjDeserStr, recompile, fixed)
     deSer = getDeserStr(deserStr, fixed)
 
     if (deserStr != null && deserStr.trim() != "")
@@ -564,7 +709,7 @@ class ConstantMethodGenerator {
   }
   /// DeSerialize Base Msg Types for mapped Mapped 
 
-   def MappedMsgDeserBaseTypes(baseTypesDeserialize: String) = {
+  def MappedMsgDeserBaseTypes(baseTypesDeserialize: String) = {
     """
 	  val desBaseTypes = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis)
 	  //println("desBaseTypes "+desBaseTypes)
@@ -584,7 +729,7 @@ class ConstantMethodGenerator {
 
   /// Serialize Base Msg Types for mapped Mapped 
 
-   def MappedMsgSerializeBaseTypes(baseTypesSerialize: String) = {
+  def MappedMsgSerializeBaseTypes(baseTypesSerialize: String) = {
     """
     private def SerializeBaseTypes(dos: DataOutputStream): Unit = {
   
@@ -614,7 +759,7 @@ class ConstantMethodGenerator {
 
   //Serialize function of mapped maeesge
 
-   def MappedMsgSerialize() = {
+  def MappedMsgSerialize() = {
     """
     override def Serialize(dos: DataOutputStream): Unit = {
     try {
@@ -622,6 +767,7 @@ class ConstantMethodGenerator {
       SerializeBaseTypes(dos)
        // Non Base Types
      SerializeNonBaseTypes(dos)
+     com.ligadata.BaseTypes.LongImpl.SerializeIntoDataOutputStream(dos, fields("timePartitionData")._2.asInstanceOf[Long])
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -633,15 +779,16 @@ class ConstantMethodGenerator {
   }
 
   // Mapped Messages Serialization for Array of primitives
-   def MappedMsgSerializeArrays(mappedMsgSerializeArray: String) = {
+  def MappedMsgSerializeArrays(mappedMsgSerializeArray: String) = {
     """
     private def SerializeNonBaseTypes(dos: DataOutputStream): Unit = {
     """ + mappedMsgSerializeArray + """
+    
     }
     """
   }
 
-   def mappedPrevObjTypNotMatchDeserializedBuf(prevObjTypNotMatchDeserializedBuf: String) = {
+  def mappedPrevObjTypNotMatchDeserializedBuf(prevObjTypNotMatchDeserializedBuf: String) = {
     """
     private def getStringIdxFromPrevFldValue(oldTypName: Any, value: Any): (String, Int) = {
 	  	var data: String = null    
@@ -656,7 +803,7 @@ class ConstantMethodGenerator {
 
   //mapped messages - block of prevObj version < current Obj version check 
 
-   def prevVerLessThanCurVerCheck(caseStmsts: String) = {
+  def prevVerLessThanCurVerCheck(caseStmsts: String) = {
     var caseStr: String = ""
     if (caseStmsts != null && caseStmsts.trim() != "") {
       caseStr = """prevObjfield._1 match{
@@ -704,6 +851,85 @@ class ConstantMethodGenerator {
 	 """
   }
 
+ //Handling the KeyValue Data with Native name for Fixed Messages
+
+ def getFixedMsgNativeKeyValueData(fixedKeyValueData: String) : String  = {
+
+    var retFixedKeyValueData: String = ""
+
+    if (fixedKeyValueData != null && fixedKeyValueData.trim() != "") {
+
+      retFixedKeyValueData = """
+    override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = {
+
+    var keyValues: scala.collection.mutable.Map[String, (String, Any)] = scala.collection.mutable.Map[String, (String, Any)]()
+
+    try {
+         """ + fixedKeyValueData + """  
+    } catch {
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:" + stackTrace)
+        throw e
+      }
+    }
+    return keyValues.toMap
+  }
+    """
+
+    } else {
+      retFixedKeyValueData = """
+    override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = { 
+   
+    	return null
+    }
+    """
+
+    }
+    retFixedKeyValueData
+  }
+
+  //Handling the KeyValue Data with Native name for Mapped Messages
+
+  def getMappedMsgNativeKeyValueData() = {
+
+    """
+    override def getNativeKeyValues(): scala.collection.immutable.Map[String, (String, Any)] = {
+	  var keyValues: scala.collection.mutable.Map[String, (String, Any)] = scala.collection.mutable.Map[String, (String, Any)]()
+	  try {
+      	if(fields != null) {
+	      	fields.foreach(field => {
+	        	if (nativeKeyMap != null && nativeKeyMap.contains(field._1))
+	          		keyValues(field._1) = (nativeKeyMap(field._1), field._2._2);
+	  			else
+	  				keyValues(field._1) = (field._1, field._2._2);
+	      	})
+	  	}
+	  } catch {
+      	case e: Exception => {
+        	val stackTrace = StackTrace.ThrowableTraceString(e)
+        	LOG.debug("StackTrace:" + stackTrace)
+        	throw e
+      	}
+	  }
+	  return keyValues.toMap
+	}
+"""
+  }
   
+  //NativeKey Variable in Message
+  
+  def getNativeKeyMapVar(nativeKeyMap: String ) = {
+    var nativeKeymap : String = ""
+    
+    if(nativeKeyMap != null && nativeKeyMap.trim() != "" && nativeKeyMap.size > 0)
+    	nativeKeymap = nativeKeyMap.substring(0, nativeKeyMap.length()-2)
+    
+    """
+    var nativeKeyMap  =  scala.collection.mutable.Map[String, String]("""+nativeKeymap+""")
+    """    
+    
+    
+  }
 
 }

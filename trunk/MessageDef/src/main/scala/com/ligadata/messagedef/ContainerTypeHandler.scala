@@ -23,16 +23,16 @@ import com.ligadata.kamanja.metadata.StructTypeDef
 import com.ligadata.kamanja.metadata.AttributeDef
 import com.ligadata.kamanja.metadata.MappedMsgTypeDef
 import scala.collection.mutable.ArrayBuffer
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 import com.ligadata.Exceptions.StackTrace
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{ Logger, LogManager }
 
 class ContainerTypeHandler {
 
   var methodGen = new ConstantMethodGenerator
     val logger = this.getClass.getName
-    lazy val log = Logger.getLogger(logger)
+    lazy val log = LogManager.getLogger(logger)
   def handleContainer(msg: Message, mdMgr: MdMgr, ftypeVersion: Long, f: Element, recompile: Boolean, childs: Map[String, Any]): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -59,6 +59,7 @@ class ContainerTypeHandler {
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
     var fromFuncBuf = new StringBuilder(8 * 1024)
+    var getNativeKeyValues = new StringBuilder(8 * 1024)
     var returnAB = new ArrayBuffer[String]
 
     try {
@@ -179,6 +180,8 @@ class ContainerTypeHandler {
         fromFuncBuf = fromFuncBuf.append("%s } %s ".format(pad2, newline))
         fromFuncBuf = fromFuncBuf.append("%s else %s = null; %s".format(pad2, f.Name, newline))
 
+	    getNativeKeyValues = getNativeKeyValues.append("%s keyValues(\"%s\") = (\"%s\", %s); %s".format(pad1, f.Name, f.NativeName, f.Name, newline)) 
+
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, ctrDef.PhysicalName, msg.Name, newline))
         withMethod = withMethod.append("%s fields(\"%s\") = (-1, value) %s".format(pad1, f.Name, newline))
@@ -188,6 +191,7 @@ class ContainerTypeHandler {
         fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
 
       }
+      var nativeKeyMap: String = "(\"%s\", \"%s\"), ".format(f.Name, f.NativeName)
 
       returnAB += scalaclass.toString
       returnAB += assignCsvdata.toString
@@ -204,6 +208,8 @@ class ContainerTypeHandler {
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
       returnAB += fromFuncBuf.toString
+      returnAB += nativeKeyMap.toString
+      returnAB += getNativeKeyValues.toString
 
     } catch {
       case e: Exception => {

@@ -31,7 +31,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
 import org.apache.hadoop.hbase._
-import org.apache.log4j._
+import org.apache.logging.log4j._
 
 import java.nio.ByteBuffer
 import java.io.IOException
@@ -68,7 +68,7 @@ class KeyValueHBaseTx(owner: DataStore) extends Transaction {
 
 class KeyValueHBase(parameter: PropertyMap) extends DataStore {
   val loggerName = this.getClass.getName
-  val logger = Logger.getLogger(loggerName)
+  val logger = LogManager.getLogger(loggerName)
 
   var keyspace = parameter.getOrElse("schema", "default");
   var hostnames = parameter.getOrElse("hostlist", "localhost");
@@ -140,7 +140,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
     case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
       logger.debug("StackTrace:"+stackTrace)
-      throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+      throw ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
     }
   }
 
@@ -232,7 +232,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-        throw new KeyNotFoundException(e.getMessage())
+        throw KeyNotFoundException(e.getMessage())
       }
     }
   }
@@ -257,7 +257,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("StackTrace:"+stackTrace)
-        throw new KeyNotFoundException(e.getMessage())
+        throw KeyNotFoundException(e.getMessage())
       }
     }
   }
